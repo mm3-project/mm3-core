@@ -70,6 +70,35 @@ Implements:
 - A security advisory that cannot be fixed yet may be added to
   `.pip-audit-ignore` only with a reason, a date and a tracking issue.
 
+### Major updates
+
+Renovate opens one pull request per major update and never merges it.
+
+**`ci-tooling`** (GitHub Actions, pre-commit hooks):
+
+1. Read the release notes in the PR for breaking changes that touch our
+   workflows (renamed inputs, runtime changes).
+2. CI green → merge. No spec change.
+
+**`needs-spec-review`** (runtime libraries in core spec 1.2):
+
+1. *Assess*: read the migration guide and decide: adopt now, later, or never.
+   To postpone, close the PR; Renovate ignores that major until the next one
+   (reopen it from the Dependency Dashboard).
+2. *Spec*: update core spec 1.2 with the new major, bump the core spec
+   version, and update `docs/spec/versions.toml` (CORE-74).
+3. *Code*: fix the single adapter that wraps the library (CORE-177) on the
+   Renovate branch or a new one; update the bound in `pyproject.toml` and
+   `uv.lock`; add a CHANGELOG entry.
+4. CI green → merge.
+
+**`module-api`** (Pydantic, FastAPI; MOD-94): a new major of either changes the
+Module API major. Do not merge until a Module API major is planned; keep the
+PR closed until then.
+
+The weekly canary (`newest-available` job) usually shows a breaking major
+before Renovate's PR arrives.
+
 ## Local setup
 
 Requires [uv](https://docs.astral.sh/uv/).
