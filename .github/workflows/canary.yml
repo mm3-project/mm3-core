@@ -1,0 +1,70 @@
+# Weekly canary (CORE-176): tests against the newest versions allowed by
+# pyproject.toml, against the newest versions available ignoring our upper
+# bounds, and on the next Python release. Never blocks merges; failures open
+# or update one issue labeled "canary".
+name: Canary
+
+on:
+  schedule:
+    - cron: "23 4 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: newest-allowed
+            python: "3.13"
+          - name: newest-available
+            python: "3.13"
+          - name: next-python
+            python: "3.14"
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: ${{ matrix.python }}
+
+      - name: Newest versions within our bounds
+        if: matrix.name != 'newest-available'
+        run: |
+          uv lock --upgrade
+          uv sync --all-extras
+
+      - name: Newest versions, upper bounds removed
+        if: matrix.name == 'newest-available'
+        run: |
+          uv venv
+          python3 - <<'EOF'
+          import re, tomllib
+          data = tomllib.load(open("pyproject.toml", "rb"))
+          reqs = list(data["project"]["dependencies"])
+          for extra in data["project"]["optional-dependencies"].values():
+              reqs += extra
+          names = {re.split(r"[\[<>=!~ ;]", r, maxsplit=1)[0] for r in reqs}
+          open("overrides.txt", "w").write("\n".join(sorted(names)) + "\n")
+          EOF
+          uv pip install --override overrides.txt -e ".[dev,migrate]"
+
+      - name: Test suite
+        id: tests
+        run: uv run --no-sync pytest -o addopts="" -q
+
+      - name: Report failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Canary failing: ${{ matrix.name }}"
+          body="Weekly canary job **${{ matrix.name }}** failed. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          gh label create canary --color FBCA04 2>/dev/null || true
+          num=$(gh issue list --label canary --state open --search "$title in:title" --json number -q '.[0].number')
+          if [ -n "$num" ]; then gh issue comment "$num" --body "$body"; else gh issue create --title "$title" --label canary --body "$body"; fi

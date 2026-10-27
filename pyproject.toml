@@ -25,26 +25,26 @@ classifiers = [
     "Typing :: Typed",
 ]
 dynamic = ["version"]
-# Approved stack: core spec section 1.2. Versions are lower bounds; tighten
-# when the first implementation lands.
+# Approved stack: core spec section 1.2. Ranges are bounded to the current
+# major (CORE-171); exact versions live in uv.lock. Renovate raises the bounds.
+# CalVer packages (structlog, argon2-cffi) are capped at the next year's major.
 dependencies = [
-    "fastapi>=0.115",
-    "uvicorn[standard]>=0.30",
-    "pydantic>=2.7",
-    "ruamel.yaml>=0.18",
-    "watchfiles>=0.22",
-    "apscheduler>=4.0.0a5",
-    "aiomqtt>=2.3",
-    "babel>=2.15",
-    "httpx>=0.27",
-    "structlog>=24.1",
-    "jinja2>=3.1",
-    "argon2-cffi>=23.1",
-    "pyotp>=2.9",
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.30,<1",
+    "pydantic>=2.7,<3",
+    "ruamel.yaml>=0.18,<0.20",
+    "watchfiles>=0.22,<2",
+    "aiomqtt>=2.3,<3",
+    "babel>=2.15,<3",
+    "httpx>=0.27,<1",
+    "structlog>=24.1,<27",
+    "jinja2>=3.1,<4",
+    "argon2-cffi>=23.1,<26",
+    "pyotp>=2.9,<3",
 ]
 
 [project.optional-dependencies]
-migrate = ["esprima>=4.0"]
+migrate = ["esprima>=4.0,<5"]
 dev = [
     "pytest>=8.2",
     "pytest-asyncio>=0.23",
@@ -99,6 +99,8 @@ testpaths = ["tests"]
 # Coverage is measured on the whole package; CORE-72 (>= 85 % on mm3.core)
 # is enforced per package once mm3.core has code.
 addopts = "--strict-markers --cov=mm3 --cov-report=term-missing"
+# CORE-175: deprecations from dependencies fail the suite.
+filterwarnings = ["error::DeprecationWarning", "error::PendingDeprecationWarning"]
 
 [tool.coverage.report]
 # CORE-72: >= 85 % line coverage on mm3.core. Enforced once mm3.core has code.

@@ -31,11 +31,24 @@ added to core spec section 1.2 once approved.
 - Mention affected requirement ids in the description.
 - CI (lint, types, tests, i18n checks) must be green.
 
+## Dependencies (core spec 10.9)
+
+- Add a dependency only after it is approved in core spec section 1.2.
+- Declare it in `pyproject.toml` with a range bounded to its current major,
+  then run `uv lock`. Commit `pyproject.toml` and `uv.lock` together.
+- Use each third-party library through one internal adapter in `mm3.core`;
+  never expose its types to modules (Module Contract MOD-94).
+- Renovate opens update pull requests. Patch and minor updates merge
+  automatically when CI is green; majors need a review and a spec update.
+- A security advisory that cannot be fixed yet may be added to
+  `.pip-audit-ignore` only with a reason, a date and a tracking issue.
+
 ## Local setup
 
+Requires [uv](https://docs.astral.sh/uv/).
+
 ```bash
-python3 -m venv .venv && . .venv/bin/activate
-pip install -e ".[dev,migrate]"
-pre-commit install
-pytest
+uv sync --all-extras
+uv run pre-commit install
+uv run pytest
 ```

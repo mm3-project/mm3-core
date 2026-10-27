@@ -1,0 +1,60 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "MM3 dependency policy: core spec section 10.9 (CORE-170..177).",
+  "extends": ["config:recommended", ":semanticCommitsDisabled"],
+  "timezone": "Europe/Rome",
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies"],
+  "prConcurrentLimit": 5,
+  "pre-commit": { "enabled": true },
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 6am on the first day of the month"],
+    "automerge": true
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": ["security"],
+    "schedule": ["at any time"]
+  },
+  "osvVulnerabilityAlerts": true,
+  "packageRules": [
+    {
+      "description": "Patch and minor updates: one weekly PR, merged automatically when CI is green.",
+      "matchManagers": ["pep621", "github-actions", "pre-commit"],
+      "matchUpdateTypes": ["minor", "patch", "digest", "pin"],
+      "groupName": "weekly non-major updates",
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "Major updates: one PR per package, manual review, core spec 1.2 updated first.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "labels": ["dependencies", "major", "needs-spec-review"]
+    },
+    {
+      "description": "Vendored front-end libraries: always reviewed in the live preview.",
+      "matchFileNames": ["src/mm3/core/web/vendor/vendor.json"],
+      "groupName": "vendored front-end libraries",
+      "automerge": false,
+      "labels": ["dependencies", "frontend"]
+    },
+    {
+      "description": "Pydantic and FastAPI are part of the Module API (MOD-94): never automerge.",
+      "matchPackageNames": ["pydantic", "fastapi"],
+      "automerge": false,
+      "labels": ["dependencies", "module-api"]
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Vendored JS libraries recorded in vendor.json (CORE-171).",
+      "managerFilePatterns": ["/^src/mm3/core/web/vendor/vendor\\.json$/"],
+      "matchStrings": [
+        "\"package\":\\s*\"(?<depName>[^\"]+)\",\\s*\"datasource\":\\s*\"(?<datasource>[^\"]+)\",\\s*\"version\":\\s*\"(?<currentValue>[^\"]+)\""
+      ]
+    }
+  ]
+}

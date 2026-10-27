@@ -1,0 +1,3 @@
+# Advisories ignored by the pip-audit CI job. One id per line, then a comment
+# with the reason, the decision date and the issue tracking the real fix.
+# Every entry must be reviewed at least monthly; remove it as soon as possible.

@@ -1,4 +1,5 @@
-# Publishes to PyPI with Trusted Publishing (core spec 10.6, MOD-96).
+# Publishes to PyPI with Trusted Publishing (core spec 10.6, MOD-96) and
+# attaches the tested constraints file to the GitHub release (CORE-172).
 # One-time setup on PyPI: add a trusted publisher for project "mm3-core",
 # owner "mm3-project", repository "mm3-core", workflow "release.yml",
 # environment "pypi".
@@ -16,15 +17,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - run: pip install build
-      - run: python -m build
+      - uses: astral-sh/setup-uv@v6
+      - run: uv lock --check
+      - run: uv build
+      - name: Constraints file from the lock, with hashes
+        run: uv export --frozen --no-dev --all-extras --no-emit-project --format requirements-txt -o dist-constraints.txt
       - uses: actions/upload-artifact@v4
         with:
           name: dist
           path: dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: constraints
+          path: dist-constraints.txt
 
   publish:
     needs: build
@@ -40,3 +45,18 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           attestations: true
+
+  constraints:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: constraints
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mv dist-constraints.txt "mm3-core-${{ github.event.release.tag_name }}-constraints.txt"
+          gh release upload "${{ github.event.release.tag_name }}" mm3-core-*-constraints.txt --repo "${{ github.repository }}"
