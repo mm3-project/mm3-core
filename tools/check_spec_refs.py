@@ -1,7 +1,7 @@
 """Check that source files cite the specification they implement.
 
 Implements:
-    CORE-74: Core spec 0.2, §10.3 Documentation and quality.
+    CORE-74: Core spec 0.4, §10.3 Documentation and quality.
 
 Rules checked for every ``.py`` file under ``src/mm3``:
 

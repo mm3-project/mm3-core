@@ -24,6 +24,36 @@ separately under **Module API** in each release (Module Contract, section 10).
 - Python 3.14 in the CI test matrix; the canary tests Python 3.15.
 - Renovate: workflow Python versions are never bumped automatically; CI
   tooling majors get their own label and are merged manually.
+- Milestone 1, bus, lifecycle and scheduler (Core spec 0.4, Module Contract
+  1.0 rev 4):
+  - `Notification` envelope with trace id, `ClientMessage`, payload checks
+    (CORE-20, CORE-26, CORE-111).
+  - Event bus with per-instance bounded inboxes (drop oldest, rate-limited
+    warning, drop counter), subscriptions, targeted delivery, sender
+    exclusion and endpoints for browsers and bridges (CORE-21..29).
+  - Module registry from `mm3.modules` entry points with API version checks
+    (CORE-03, MOD-90).
+  - Supervisor: eight-state lifecycle, one task group per instance, budgets
+    from `engine.timeouts`, restarts with 1/2/4/8 s backoff and DISABLED on
+    the fifth failure in 10 minutes, manual restart, live or restarting
+    reconfigure, suspend/resume, `CORE_MODULE_FAILED` (CORE-04, CORE-190..197).
+  - `MirrorModule`, `ModuleConfig`, `CronExpression` and the first
+    `ModuleContext` members: messaging, state, tasks, `run_blocking`,
+    scheduler, storage, logger (Contract §3–4, MOD-10..22).
+  - In-house scheduler: interval, cron and one-shot jobs on CLOCK_BOOTTIME,
+    DST rules, re-planning after clock jumps and time zone changes, no
+    overlap, pause on suspend (CORE-180..189).
+  - Per-instance storage directory and JSON key-value store (CORE-198).
+  - Structured JSON logging to stdout with trace ids and a 5 000-record ring
+    buffer (CORE-110, CORE-111).
+  - `mm3.testing.VirtualClock` for tests that do not wait.
+  - `Engine` wiring startup and shutdown with `CORE_READY` / `CORE_SHUTDOWN`.
+- Coverage gate of 85 % enforced (CORE-72).
+
+### Changed
+
+- Spec references moved to Core spec 0.4 and Module Contract 1.0 rev 4
+  (`docs/spec/versions.toml`).
 
 ### Removed
 
