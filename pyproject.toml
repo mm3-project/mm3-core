@@ -98,12 +98,12 @@ packages = ["mm3"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-# Coverage is measured on the whole package; CORE-72 (>= 85 % on mm3.core)
-# is enforced per package once mm3.core has code.
+# Coverage is measured on the whole package; CORE-72 (>= 85 %) is enforced
+# in [tool.coverage.report].
 addopts = "--strict-markers --cov=mm3 --cov-report=term-missing"
 # CORE-175: deprecations from dependencies fail the suite.
 filterwarnings = ["error::DeprecationWarning", "error::PendingDeprecationWarning"]
 
 [tool.coverage.report]
-# CORE-72: >= 85 % line coverage on mm3.core. Enforced once mm3.core has code.
-fail_under = 0
+# CORE-72: >= 85 % line coverage (measured on the whole mm3 package).
+fail_under = 85

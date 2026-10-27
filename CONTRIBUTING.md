@@ -34,15 +34,15 @@ requirements do the same in their own docstring. One entry per line:
 """Notification routing.
 
 Implements:
-    CORE-21, CORE-22: Core spec 0.2, §5.3 Routing rules.
-    CORE-180..186: Core spec 0.2, §3.3 Scheduler.
-    MOD-40: Module Contract 1.0 rev 3, §6.1 Messaging.
+    CORE-21, CORE-22: Core spec 0.4, §5.3 Routing rules.
+    CORE-180..186: Core spec 0.4, §3.3 Scheduler.
+    MOD-40: Module Contract 1.0 rev 4, §6.1 Messaging.
 """
 ```
 
 - Use `-` instead of ids when the code implements a section without ids.
 - Smaller fragments use a comment in the same form:
-  `# Implements CORE-184 (Core spec 0.2, §3.3 Scheduler): no overlap.`
+  `# Implements CORE-184 (Core spec 0.4, §3.3 Scheduler): no overlap.`
 - Current versions are in `docs/spec/versions.toml`. When a spec version
   changes, update that file and review every file citing the old version in
   the same pull request; `tools/check_spec_refs.py` (run in CI) lists them.

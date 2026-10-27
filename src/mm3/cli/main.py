@@ -5,7 +5,7 @@ Only ``--version`` is implemented so far. Subcommands (``run``, ``check-config``
 ``installer``) are added with their milestones.
 
 Implements:
-    -: Core spec 0.2, §10.2 Packaging and deployment.
+    -: Core spec 0.4, §10.2 Packaging and deployment.
 """
 
 from __future__ import annotations
