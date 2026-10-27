@@ -13,4 +13,7 @@ Subpackages, added milestone by milestone:
   installer client (CORE-08)
 
 Modules MUST NOT import from this package (Module Contract MOD rules).
+
+Implements:
+    CORE-01..08: Core spec 0.2, §3 Engine components.
 """

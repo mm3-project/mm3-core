@@ -20,6 +20,33 @@ added to core spec section 1.2 once approved.
 - No literal user-facing strings: use catalog keys; ship EN, IT, FR, ES, DE.
 - Front-end: vanilla Web Components, no build step.
 
+## Spec references in code (CORE-74)
+
+Every source file states what it implements in an `Implements:` section of
+its module docstring; public classes and functions that implement specific
+requirements do the same in their own docstring. One entry per line:
+
+```text
+<ids or ->: <spec name> <version>, §<section> <title>.
+```
+
+```python
+"""Notification routing.
+
+Implements:
+    CORE-21, CORE-22: Core spec 0.2, §5.3 Routing rules.
+    CORE-180..186: Core spec 0.2, §3.3 Scheduler.
+    MOD-40: Module Contract 1.0 rev 3, §6.1 Messaging.
+"""
+```
+
+- Use `-` instead of ids when the code implements a section without ids.
+- Smaller fragments use a comment in the same form:
+  `# Implements CORE-184 (Core spec 0.2, §3.3 Scheduler): no overlap.`
+- Current versions are in `docs/spec/versions.toml`. When a spec version
+  changes, update that file and review every file citing the old version in
+  the same pull request; `tools/check_spec_refs.py` (run in CI) lists them.
+
 ## Tests
 
 - Test names cite requirement ids: `test_core_21_broadcast_excludes_sender`.

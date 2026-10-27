@@ -17,6 +17,10 @@ separately under **Module API** in each release (Module Contract, section 10).
   Renovate configuration with automerge for tested patch/minor updates,
   pip-audit job, weekly canary workflow, deprecation warnings as errors,
   constraints file attached to releases.
+- Spec references in code (CORE-74): every source file cites the requirement
+  ids, spec version and section it implements; `docs/spec/versions.toml`
+  records the implemented versions (Core spec 0.2, Module Contract 1.0 rev 3)
+  and `tools/check_spec_refs.py` enforces it in CI.
 
 ### Removed
 
