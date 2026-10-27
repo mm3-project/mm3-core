@@ -32,11 +32,12 @@ The specifications are authoritative; see [`docs/spec/`](docs/spec/README.md).
 
 ## Development
 
+Requires [uv](https://docs.astral.sh/uv/).
+
 ```bash
-python3 -m venv .venv && . .venv/bin/activate
-pip install -e ".[dev,migrate]"
-pre-commit install
-pytest
+uv sync --all-extras          # creates .venv from uv.lock
+uv run pre-commit install
+uv run pytest
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for conventions.
