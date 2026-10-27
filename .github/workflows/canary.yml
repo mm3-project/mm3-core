@@ -21,11 +21,11 @@ jobs:
       matrix:
         include:
           - name: newest-allowed
-            python: "3.13"
-          - name: newest-available
-            python: "3.13"
-          - name: next-python
             python: "3.14"
+          - name: newest-available
+            python: "3.14"
+          - name: next-python
+            python: "3.15"
     name: ${{ matrix.name }}
     steps:
       - uses: actions/checkout@v4

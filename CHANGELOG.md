@@ -21,6 +21,9 @@ separately under **Module API** in each release (Module Contract, section 10).
   ids, spec version and section it implements; `docs/spec/versions.toml`
   records the implemented versions (Core spec 0.2, Module Contract 1.0 rev 3)
   and `tools/check_spec_refs.py` enforces it in CI.
+- Python 3.14 in the CI test matrix; the canary tests Python 3.15.
+- Renovate: workflow Python versions are never bumped automatically; CI
+  tooling majors get their own label and are merged manually.
 
 ### Removed
 
