@@ -3,6 +3,9 @@
 Only ``--version`` is implemented so far. Subcommands (``run``, ``check-config``,
 ``modules``, ``module check``, ``migrate``, ``i18n``, ``token``, ``diag``,
 ``installer``) are added with their milestones.
+
+Implements:
+    -: Core spec 0.2, §10.2 Packaging and deployment.
 """
 
 from __future__ import annotations
