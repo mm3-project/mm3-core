@@ -47,7 +47,7 @@ jobs:
       - run: uv export --frozen --all-extras --no-emit-project --format requirements-txt -o requirements.lock.txt
       # Every ignored advisory is listed in .pip-audit-ignore with its reason.
       - run: |
-          args=$(grep -v '^#' .pip-audit-ignore | awk 'NF {print "--ignore-vuln " $1}')
+          args=$(awk '!/^#/ && NF {print "--ignore-vuln " $1}' .pip-audit-ignore)
           uvx pip-audit -r requirements.lock.txt --disable-pip --require-hashes --strict $args
 
   build:

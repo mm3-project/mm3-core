@@ -9,7 +9,8 @@ Subpackages, added milestone by milestone:
 - ``mm3.core.bus``: notification routing (CORE-05, section 5)
 - ``mm3.core.web``: shell, ``/ws``, REST API, admin UI (CORE-06)
 - ``mm3.core.i18n``: catalogs and locale fallback (CORE-07, section 8)
-- ``mm3.core.services``: scheduler, HTTP, storage, MQTT bridge, installer client (CORE-08)
+- ``mm3.core.services``: scheduler (in-house, CORE-180..186), HTTP, storage, MQTT bridge,
+  installer client (CORE-08)
 
 Modules MUST NOT import from this package (Module Contract MOD rules).
 """

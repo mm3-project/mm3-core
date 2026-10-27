@@ -18,7 +18,8 @@ separately under **Module API** in each release (Module Contract, section 10).
   pip-audit job, weekly canary workflow, deprecation warnings as errors,
   constraints file attached to releases.
 
-### Security
+### Removed
 
-- APScheduler 4.0.0a6 advisory PYSEC-2026-282 (CVE-2026-31072) temporarily
-  ignored: only reachable through serializers, which MM3 does not use.
+- APScheduler dependency: version 4 is still alpha and has an unfixed
+  advisory (PYSEC-2026-282, CVE-2026-31072). Jobs will use the in-house
+  scheduler `mm3.core.services.scheduler` (core spec 3.3, CORE-180..186).
