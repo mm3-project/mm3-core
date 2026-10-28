@@ -1,57 +1,65 @@
-"""Check that source files cite the specification they implement.
+"""Check that code cites the specification it implements, per requirement.
 
 Implements:
-    CORE-74: Core spec 0.4, §10.3 Documentation and quality.
+    CORE-74, CORE-77: Core spec 0.6, §10.3 Documentation and quality.
 
-Rules checked for every ``.py`` file under ``src/mm3``:
+Checked for every ``.py`` file under ``src/mm3`` and ``tools/``:
 
-1. The module docstring has an ``Implements:`` section.
-2. Each entry in it has the form
-   ``<ids or ->: <spec name> <version>, §<section> <title>.``
-   where ``<spec name> <version>`` is one of the versions in
-   ``docs/spec/versions.toml``. Older versions are reported, so code
-   is revisited when a spec changes.
-3. Requirement ids look like ``CORE-12``, ``WGT-3``, ``MOD-40`` or ranges
-   such as ``CORE-180..186``.
+1. Files under ``src/mm3`` have an ``Implements:`` section in their module
+   docstring.
+2. Each entry has the form ``<ids or ->: <spec name> <version>, §<section> <title>.``
+   and comments use ``# Implements <ids> (<spec name> <version>, §<section> <title>)``.
+3. The spec and version exist in ``docs/spec/requirements.toml``; every cited
+   id exists, is active and belongs to that spec.
+4. A citation older than the requirement's ``changed_in`` is *stale*: the code
+   must be reviewed against the new text. Stale citations are errors only in
+   files changed since ``--base`` (the files a pull request touches);
+   elsewhere they are warnings, also reported by ``tools/trace_report.py``.
 
-Exit code 0 when every file passes, 1 otherwise.
+Exit code 0 when there are no errors, 1 otherwise.
 """
 
 from __future__ import annotations
 
+import argparse
 import ast
 import re
+import subprocess
 import sys
-import tomllib
+from dataclasses import dataclass
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+from spec_lib import ROOT, expand_ids, load_known_versions, load_requirements, version_key
+
 ID = r"(?:CORE|WGT|MOD)-\d+(?:\.\.\d+)?"
 ENTRY = re.compile(
     rf"^(?P<ids>(?:{ID})(?:,\s*{ID})*|-):\s+"
     r"(?P<spec>.+?)\s+(?P<version>\d+\.\d+(?:\s+rev\s+\d+)?),\s+"
     r"§(?P<section>\d+(?:\.\d+)*)\s+(?P<title>.+?)\.?$"
 )
+COMMENT = re.compile(
+    rf"#\s*Implements\s+(?P<ids>(?:{ID})(?:,\s*{ID})*)\s+\("
+    r"(?P<spec>[^)]+?)\s+(?P<version>\d+\.\d+(?:\s+rev\s+\d+)?),\s+§[^)]*\)"
+)
+SPEC_OF = {"CORE": "Core spec", "WGT": "Core spec", "MOD": "Module Contract"}
+DEFS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
 
 
-def load_versions(root: Path) -> dict[str, str]:
-    """Read the current spec versions.
+@dataclass(frozen=True)
+class Citation:
+    """One cited requirement (``rid`` is None for a section-only entry)."""
 
-    Args:
-        root: Repository root.
-
-    Returns:
-        Mapping of spec name (e.g. ``"Core spec"``) to its current version.
-    """
-    data = tomllib.loads((root / "docs/spec/versions.toml").read_text())
-    return {entry["name"]: entry["version"] for entry in data.values()}
+    path: Path
+    rid: str | None
+    spec: str
+    version: str
 
 
 def implements_entries(docstring: str) -> list[str] | None:
     """Extract the lines of the ``Implements:`` section of a docstring.
 
     Args:
-        docstring: The module docstring.
+        docstring: A docstring.
 
     Returns:
         The entry lines (continuation lines joined), or ``None`` when the
@@ -76,54 +84,138 @@ def implements_entries(docstring: str) -> list[str] | None:
     return None
 
 
-def check_file(path: Path, versions: dict[str, str]) -> list[str]:
-    """Check one source file.
+def _rel(path: Path) -> Path:
+    return path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
+
+
+def citations(
+    path: Path, *, require_module_section: bool = True
+) -> tuple[list[Citation], list[str]]:
+    """Collect every citation in a Python file.
+
+    Reads the ``Implements:`` sections of the module, class and function
+    docstrings and the ``# Implements`` comments.
 
     Args:
-        path: File to check.
-        versions: Current spec versions from :func:`load_versions`.
+        path: Python file.
+        require_module_section: Report a missing module-level section.
 
     Returns:
-        Error messages for this file; empty when it passes.
+        The citations and format errors.
     """
-    rel = path.relative_to(ROOT) if path.is_relative_to(ROOT) else path
-    docstring = ast.get_docstring(ast.parse(path.read_text()))
-    if not docstring:
-        return [f"{rel}: missing module docstring"]
-    entries = implements_entries(docstring)
-    if entries is None:
-        return [f"{rel}: module docstring has no 'Implements:' section"]
-    if not entries:
-        return [f"{rel}: 'Implements:' section is empty"]
+    source = path.read_text()
+    tree = ast.parse(source)
+    found: list[Citation] = []
     errors: list[str] = []
-    for entry in entries:
-        match = ENTRY.match(entry)
-        if not match:
-            errors.append(f"{rel}: malformed entry {entry!r}")
-            continue
-        spec, version = match["spec"], match["version"]
-        if spec not in versions:
-            errors.append(f"{rel}: unknown spec {spec!r} in {entry!r}")
-        elif versions[spec] != version:
-            errors.append(
-                f"{rel}: cites {spec} {version}, current is {versions[spec]}; "
-                "review the code against the new version and update the reference"
-            )
-    return errors
+    for node in [tree, *[n for n in ast.walk(tree) if isinstance(n, DEFS)]]:
+        doc = ast.get_docstring(node)
+        entries = implements_entries(doc) if doc else None
+        if node is tree and require_module_section and not entries:
+            errors.append(f"{_rel(path)}: module docstring has no 'Implements:' section")
+        for entry in entries or []:
+            m = ENTRY.match(entry)
+            if not m:
+                errors.append(f"{_rel(path)}: malformed entry {entry!r}")
+                continue
+            ids: list[str | None] = [] if m["ids"] == "-" else list(expand_ids(m["ids"]))
+            found += [Citation(path, rid, m["spec"], m["version"]) for rid in ids or [None]]
+    for m in COMMENT.finditer(source):
+        spec = m["spec"].strip()
+        found += [Citation(path, rid, spec, m["version"]) for rid in expand_ids(m["ids"])]
+    return found, errors
 
 
-def main() -> int:
-    """Check all source files and print the result.
+def check(
+    files: list[Path],
+    changed: set[Path],
+    requirements: dict[str, dict[str, str]],
+    versions: dict[str, list[str]],
+) -> tuple[list[str], list[str]]:
+    """Check the citations in ``files``.
+
+    Args:
+        files: Python files to check.
+        changed: Resolved paths where stale citations are errors.
+        requirements: Records from ``requirements.toml``.
+        versions: Known versions per spec.
+
+    Returns:
+        Errors and warnings.
+    """
+    errors: list[str] = []
+    warnings: list[str] = []
+    for path in files:
+        cites, errs = citations(path, require_module_section="src" in _rel(path).parts)
+        errors += errs
+        for c in cites:
+            where = f"{_rel(path)}: {c.rid or '-'} ({c.spec} {c.version})"
+            if c.spec not in versions:
+                errors.append(f"{where}: unknown spec")
+            elif c.version not in versions[c.spec]:
+                errors.append(f"{where}: version does not exist")
+            elif c.rid is None:
+                continue
+            elif (req := requirements.get(c.rid)) is None or SPEC_OF[c.rid.split("-")[0]] != c.spec:
+                errors.append(f"{where}: unknown requirement")
+            elif req["status"] != "active":
+                errors.append(f"{where}: requirement removed in {req.get('removed_in')}")
+            elif version_key(c.version) < version_key(req["changed_in"]):
+                msg = (
+                    f"{where}: changed in {req['changed_in']}; "
+                    "review the code, then update the citation"
+                )
+                (errors if path.resolve() in changed else warnings).append(msg)
+    return errors, warnings
+
+
+def changed_files(base: str) -> set[Path]:
+    """List the files changed since the merge base with ``base``.
+
+    Args:
+        base: Git ref, for example ``origin/main``.
+
+    Returns:
+        Resolved paths of the changed files.
+    """
+    out = subprocess.run(  # noqa: S603
+        ["git", "diff", "--name-only", f"{base}...HEAD"],  # noqa: S607
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    return {(ROOT / line).resolve() for line in out.split()}
+
+
+def source_files() -> list[Path]:
+    """List the files whose citations are checked.
+
+    Returns:
+        Python files under ``src/mm3`` and ``tools``.
+    """
+    return sorted((ROOT / "src" / "mm3").rglob("*.py")) + sorted((ROOT / "tools").glob("*.py"))
+
+
+def main(argv: list[str] | None = None) -> int:
+    """Check the repository.
+
+    Args:
+        argv: Command-line arguments.
 
     Returns:
         Process exit code.
     """
-    versions = load_versions(ROOT)
-    files = sorted((ROOT / "src" / "mm3").rglob("*.py"))
-    errors = [err for path in files for err in check_file(path, versions)]
-    for err in errors:
-        print(f"ERROR {err}")
-    print(f"{len(files)} files checked, {len(errors)} errors")
+    parser = argparse.ArgumentParser(description="Check spec citations (CORE-74, CORE-77)")
+    parser.add_argument("--base", help="git ref; stale citations in files changed since it fail")
+    args = parser.parse_args(argv)
+    files = source_files()
+    changed = changed_files(args.base) if args.base else set()
+    errors, warnings = check(files, changed, load_requirements(), load_known_versions())
+    for w in warnings:
+        print(f"WARNING {w}")
+    for e in errors:
+        print(f"ERROR {e}")
+    print(f"{len(files)} files checked, {len(errors)} errors, {len(warnings)} stale citations")
     return 1 if errors else 0
 
 

@@ -1,0 +1,51 @@
+# Implements CORE-78, CORE-79 (Core spec 0.6, §10.3 Documentation and quality)
+# Coverage matrix on every push to main, and one issue per closed milestone
+# whose requirements changed after it was closed or are not fully covered.
+name: Traceability
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "41 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.11"
+      - run: uv sync --frozen --all-extras
+      - name: Coverage matrix
+        run: |
+          uv run python tools/trace_report.py --out coverage.md --issues issues.json || true
+          cat coverage.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Milestone issues
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create spec-change --color D93F0B \
+            --description "Spec changed after a milestone was closed (CORE-79)" 2>/dev/null || true
+          jq -c '.[]' issues.json | while read -r item; do
+            title=$(jq -r '.title' <<<"$item")
+            body=$(jq -r '.body' <<<"$item")
+            open=$(jq -r '.open' <<<"$item")
+            num=$(gh issue list --label spec-change --state open --search "\"$title\" in:title" \
+                  --json number,title -q ".[] | select(.title == \"$title\") | .number" | head -1)
+            if [ "$open" = "true" ]; then
+              if [ -n "$num" ]; then
+                gh issue edit "$num" --body "$body"
+              else
+                gh issue create --title "$title" --label spec-change --body "$body"
+              fi
+            elif [ -n "$num" ]; then
+              gh issue close "$num" --comment "Covered again; closed by the traceability workflow."
+            fi
+          done

@@ -55,6 +55,19 @@ separately under **Module API** in each release (Module Contract, section 10).
 - Spec references moved to Core spec 0.4 and Module Contract 1.0 rev 4
   (`docs/spec/versions.toml`).
 
+- Requirements traceability (CORE-75..79): Markdown exports of both specs in
+  `docs/spec/`, `tools/spec_sync.py` generating `requirements.toml` with
+  `changed_in` per requirement, citations checked per requirement with stale
+  citations failing only in changed files, `docs/spec/milestones.toml`,
+  coverage matrix (`tools/trace_report.py`) and a Traceability workflow that
+  keeps one `spec-change` issue per closed milestone.
+
+### Changed
+
+- `docs/spec/versions.toml` is generated and records the current spec
+  versions (Core spec 0.6, Module Contract 1.0 rev 6); code may cite any
+  version at or after a requirement's last change.
+
 ### Removed
 
 - APScheduler dependency: version 4 is still alpha and has an unfixed

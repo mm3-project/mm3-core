@@ -11,6 +11,10 @@
 - Dependency policy: core spec 10.9 (bounded ranges, uv.lock, Renovate, pip-audit).
 - Every source file has an `Implements:` docstring section citing requirement
   ids, spec name and version, section number and title (CORE-74, see
-  CONTRIBUTING.md). Current spec versions: `docs/spec/versions.toml`.
-  Check with `uv run python tools/check_spec_refs.py`.
+  CONTRIBUTING.md). Citations are checked per requirement (CORE-77):
+  `uv run python tools/check_spec_refs.py`. Files you change must not keep
+  stale citations: review them against the current spec first.
+- Specs live in `docs/spec/` (exports, `requirements.toml`, `milestones.toml`,
+  `coverage.md`). After a spec change open a spec sync PR (CONTRIBUTING.md).
+  Coverage: `uv run python tools/trace_report.py`.
 - Update `CHANGELOG.md` under *Unreleased* and cite requirement ids.
