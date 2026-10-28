@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # merge base for the stale-citation check (CORE-77)
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.11"
@@ -33,7 +35,6 @@ jobs:
       - name: Spec references (CORE-74, CORE-77)
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
-            git fetch --no-tags --depth=200 origin "${{ github.base_ref }}"
             uv run python tools/check_spec_refs.py --base "origin/${{ github.base_ref }}"
           else
             uv run python tools/check_spec_refs.py
