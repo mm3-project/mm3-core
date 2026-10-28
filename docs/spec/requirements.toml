@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.9"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9"]
+version = "0.10"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10"]
 
 [[spec]]
 name = "Module Contract"
@@ -1087,9 +1087,9 @@ id = "CORE-155"
 spec = "Core spec"
 section = "6.8"
 title = "Configuration history, undo and redo"
-hash = "00873308bbed"
+hash = "e31902c99e7c"
 introduced_in = "0.5"
-changed_in = "0.5"
+changed_in = "0.10"
 status = "active"
 
 [[requirement]]
@@ -1597,9 +1597,9 @@ id = "CORE-216"
 spec = "Core spec"
 section = "6.8"
 title = "Configuration history, undo and redo"
-hash = "46fbec4e69f3"
+hash = "d97d6396401a"
 introduced_in = "0.5"
-changed_in = "0.5"
+changed_in = "0.10"
 status = "active"
 
 [[requirement]]

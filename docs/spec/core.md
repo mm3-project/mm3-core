@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.9 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.10 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -649,9 +649,9 @@ Every change to the configuration can be undone and redone, both while editing a
 **Saved versions**
 
 - CORE-153: Every valid saved configuration becomes a numbered version in `<state>/config-history/` (`<state>` as in 3.1), one directory per version. It holds the whole config set as it was (the main file, every included file and the widget templates, with their paths relative to the config directory) and `meta.json` with version, time (UTC), origin (initial, admin, file, cli, restore, undo, redo), author (admin client address, `cli:<user>` or `file`), parent version, changed sections and the SHA-256 of the set. The env file is never stored. When the history is empty, the engine records the running config as version 1 (origin initial). History is append-only; nothing is rewritten.
-- CORE-216: The sections are `engine`, `display`, `layout`, `backup`, each module instance (`modules/<id>`), the order of the modules list (`modules/_order`) and each widget template (`widget_templates/<name>`). Changed sections are computed on the resolved values before `!env` substitution; a change to comments or formatting only is a version with no changed sections.
+- CORE-216: The sections are `engine`, `display`, `layout`, pages, `backup`, each module instance (`modules/<id>`), the order of the modules list (`modules/_order`) and each widget template (`widget_templates/<name>`). Changed sections are computed on the resolved values before `!env` substitution; a change to comments or formatting only is a version with no changed sections.
 - CORE-154: Undo and redo of saves. An ordinary version's parent is the version current when it was made; an undo or redo version takes the parent of the version whose content it restores. "Undo last save" creates a new version (origin undo) with the content of the current version's parent. "Redo" creates a new version (origin redo) with the content undone most recently; it is offered while the latest versions are undos and redos, and any other save ends the redo chain. Example: after saves v1–v3, undo gives v4 = v2, a second undo v5 = v1, redo v6 = v2, redo v7 = v3. If the target no longer validates, nothing is applied and no version is created (CORE-156). Hot reload (6.3) applies each new version.
-- CORE-155: Section restore: from any version, a single section (one module instance by id, `engine`, `display`, `layout`, `backup`, a widget template) can be restored alone; the rest of the current config stays as it is. The section is written back into the file that holds it now; an instance that no longer exists is appended to the `modules` list, in the file that holds that list. The result is a new version.
+- CORE-155: Section restore: from any version, a single section (one module instance by id, `engine`, `display`, `layout`, pages, `backup`, a widget template) can be restored alone; the rest of the current config stays as it is. The section is written back into the file that holds it now; an instance that no longer exists is appended to the `modules` list, in the file that holds that list. The result is a new version.
 - The history view lists versions with their changed sections, shows the diff between any two versions as a whole or per section, and offers "Restore all", "Restore section" and "Open in editor".
 - CORE-156: A restored version or section always goes through full validation. If it fails (for example a module no longer installed), nothing is applied and it can be opened in the editor to fix.
 - CORE-217: The engine, the admin save and the `mm3 config` commands write config files and history under one lock (`<state>/config-history/.lock`, flock). Each file is written atomically (temp file + rename), keeping its owner and mode. When the watcher sees a config set whose SHA-256 equals the latest version's, it records no new version. `mm3 config` runs as the `mm3` user and works whether the engine runs or not; a running engine applies the result through its watcher. `mm3.service` therefore has write access to `/etc/mm3` and to its state directory (`ReadWritePaths`, CORE-65).
@@ -1204,6 +1204,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.10 | 2026-10-28 | pages is a configuration history section, shown in changed sections and restorable alone (CORE-216 and CORE-155 changed) |
 | 0.9 | 2026-10-28 | CORE\_CONFIG\_ERROR reserved (CORE-22 changed); CORE\_CONFIG\_CHANGED, CORE\_CONFIG\_ERROR and CORE\_LOCALE\_CHANGED registered in 5.5; CORE\_LOCALE\_CHANGED payload and delivery (CORE-245); default gap 16px and padding 32px (CORE-213 changed) |
 | 0.8 | 2026-10-28 | Validation codes CORE\_CFG\_\* with their severity, Pydantic mapping and params (CORE-243); backup block keys, defaults and checks (CORE-244) |
 | 0.7 | 2026-10-28 | Error reply codes transient, configuration and internal with REQUEST\_FAILED for bugs; an on\_request that exceeds its budget sends no reply (CORE-221 changed) |
