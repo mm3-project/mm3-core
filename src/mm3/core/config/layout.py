@@ -288,20 +288,26 @@ _IMPORT = re.compile(r"@import\b", re.I)
 _SCHEME = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*:")
 
 
-def check_css(css: str) -> str | None:
-    """Check ``appearance.css`` against the limits of CORE-214.
+def check_css(
+    css: str, *, max_bytes: int = CSS_MAX_BYTES, relative_to: str = "the module's files"
+) -> str | None:
+    """Check CSS against the limits of CORE-214 (and CORE-262 for custom.css).
 
     Args:
         css: The CSS.
+        max_bytes: Size limit in bytes: 16 KiB for ``appearance.css``,
+            64 KiB for custom.css.
+        relative_to: What relative ``url()`` paths point into, for the reason.
 
     Returns:
         ``None`` when allowed, otherwise the reason.
 
     Implements:
         CORE-214: Core spec 0.9, §6.5 Screen layout.
+        CORE-262: Core spec 0.11, §6.10 Theme and custom CSS.
     """
-    if len(css.encode("utf-8")) > CSS_MAX_BYTES:
-        return "larger than 16 KiB"
+    if len(css.encode("utf-8")) > max_bytes:
+        return f"larger than {max_bytes // 1024} KiB"
     if _IMPORT.search(css):
         return "@import is not allowed"
     for match in _URL.finditer(css):
@@ -310,7 +316,7 @@ def check_css(css: str) -> str | None:
             continue
         parts = target.replace("\\", "/").split("/")
         if _SCHEME.match(target) or target.startswith("/") or ".." in parts or not target:
-            return f"url({target}) must be a data: URI or a relative path to the module's files"
+            return f"url({target}) must be a data: URI or a relative path to {relative_to}"
     return None
 
 

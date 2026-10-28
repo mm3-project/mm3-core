@@ -14,7 +14,7 @@ Implements:
     CORE-30: Core spec 0.8, §6 Configuration.
     CORE-207: Core spec 0.8, §6.2 Rules.
     -: Core spec 0.8, §7.2 Error reporting.
-    CORE-208: Core spec 0.9, §6.3 Hot reload.
+    CORE-208: Core spec 0.11, §6.3 Hot reload.
 """
 
 from __future__ import annotations

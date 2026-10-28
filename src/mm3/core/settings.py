@@ -4,7 +4,9 @@ Every key is optional; defaults follow the table of CORE-201. The bus,
 supervisor and scheduler read their settings from this model.
 
 Implements:
-    CORE-201: Core spec 0.8, §6.2 Rules.
+    CORE-201: Core spec 0.11, §6.2 Rules.
+    CORE-61: Core spec 0.11, §10.1 Security.
+    CORE-62: Core spec 0.11, §10.1 Security.
     CORE-205: Core spec 0.8, §6.2 Rules.
     -: Core spec 0.8, §3.2 Concurrency rules.
     CORE-27: Core spec 0.4, §5.3 Routing rules.
@@ -20,7 +22,7 @@ from pathlib import Path
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import ConfigDict, Field, IPvAnyNetwork, SecretStr, field_validator
+from pydantic import ConfigDict, Field, IPvAnyNetwork, field_validator
 from pydantic_core import PydanticCustomError
 
 from mm3.config import LocaleTag, ModuleConfig
@@ -99,19 +101,43 @@ class BusSettings(_Block):
 
 
 class ServerSettings(_Block):
-    """Mirror display listener (``engine.server``): shell and ``/ws`` only."""
+    """Mirror display listener (``engine.server``): shell and ``/ws`` only.
+
+    Attributes:
+        host: Bind address.
+        port: Port.
+        allow: Sources other than loopback that may connect (CORE-61);
+            applies live, for connections made afterwards.
+
+    Implements:
+        CORE-201: Core spec 0.11, §6.2 Rules.
+        CORE-61: Core spec 0.11, §10.1 Security.
+    """
 
     host: str = "127.0.0.1"
     port: int = Field(default=8080, ge=1, le=65535)
+    allow: list[IPvAnyNetwork] = Field(default_factory=list)
 
 
 class AdminSettings(_Block):
-    """Admin listener (``engine.admin``): admin UI and REST API."""
+    """Admin listener (``engine.admin``): admin UI and REST API.
+
+    There is no token key: admin tokens live in the token store, never in
+    the configuration (CORE-62).
+
+    Attributes:
+        host: Bind address.
+        port: Port.
+        allow: Sources other than loopback that may connect (CORE-61).
+
+    Implements:
+        CORE-201: Core spec 0.11, §6.2 Rules.
+        CORE-62: Core spec 0.11, §10.1 Security.
+    """
 
     host: str = "127.0.0.1"
     port: int = Field(default=8081, ge=1, le=65535)
     allow: list[IPvAnyNetwork] = Field(default_factory=list)
-    token: SecretStr | None = Field(default=None, json_schema_extra={"secret": True})
 
 
 class MqttSettings(_Block):
@@ -154,7 +180,7 @@ class EngineSettings(_Block):
         input: Kiosk input settings.
 
     Implements:
-        CORE-201: Core spec 0.8, §6.2 Rules.
+        CORE-201: Core spec 0.11, §6.2 Rules.
     """
 
     locale: LocaleTag = "en"

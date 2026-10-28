@@ -7,7 +7,7 @@ geometry rules of screen layout, display and pages (core spec 6.5, 6.7,
 6.9) are added with the layout work of milestone 2.
 
 Implements:
-    CORE-201: Core spec 0.8, §6.2 Rules.
+    CORE-201: Core spec 0.11, §6.2 Rules.
     CORE-202: Core spec 0.8, §6.2 Rules.
     CORE-244: Core spec 0.8, §10.8 Backup and restore.
     CORE-91: Core spec 0.8, §6.5 Screen layout.
@@ -333,7 +333,7 @@ class MirrorConfig(_Model):
     """The whole configuration file (CORE-201, CORE-230).
 
     Implements:
-        CORE-201: Core spec 0.8, §6.2 Rules.
+        CORE-201: Core spec 0.11, §6.2 Rules.
     """
 
     config_version: Annotated[int, Field(ge=1)] = 1

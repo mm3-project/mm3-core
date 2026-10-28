@@ -51,9 +51,12 @@ requirements = [
 number = 2
 name = "Configuration, layout, display, history, pages"
 status = "done"
-done_at = { core = "0.10", contract = "1.0 rev 6" }
+done_at = { core = "0.11", contract = "1.0 rev 7" }
 # Split into four PRs: A config loading and check-config, B hot reload,
-#   C layout, display and pages, D history.
+#   C layout, display and pages, D history. Core spec 0.11 changes
+#   (CORE-153, 155, 201, 208, 216, 243: custom.css as a config section,
+#   server.allow, no admin.token) were redone in issue #19.
+# CORE-201: server.allow is applied live by the web gateway in milestone 3.
 # CORE-244: only the backup block schema here; backups run in milestone 7.
 # CORE-243: English messages live in mm3.core.config.records; the i18n
 #   service (milestone 3) compiles them into the engine catalog.

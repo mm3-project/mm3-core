@@ -11,7 +11,7 @@ engine catalog with the other ``CORE_*`` keys.
 
 Implements:
     CORE-206: Core spec 0.8, §6.2 Rules.
-    CORE-243: Core spec 0.8, §6.2 Rules.
+    CORE-243: Core spec 0.11, §6.2 Rules.
 """
 
 from __future__ import annotations
@@ -39,7 +39,7 @@ __all__ = [
 
 Severity = Literal["error", "warning"]
 
-# Implements CORE-243 (Core spec 0.8, §6.2 Rules): the code table, with the
+# Implements CORE-243 (Core spec 0.11, §6.2 Rules): the code table, with the
 # English message of each code; placeholders name the code's params.
 MESSAGES: dict[str, str] = {
     "CORE_CFG_YAML_SYNTAX": "Not valid YAML: {reason}",
@@ -79,7 +79,7 @@ MESSAGES: dict[str, str] = {
         "The area {width} x {height} px is smaller than the module's minimum "
         "{min_width} x {min_height} px"
     ),
-    "CORE_CFG_CSS": "appearance.css: {reason}",
+    "CORE_CFG_CSS": "CSS breaks a limit: {reason}",
     "CORE_CFG_PAGE_UNKNOWN": "Page {page} is not in pages.list",
     "CORE_CFG_DISPLAY_MODE": "Give width and height together; refresh needs both",
     "CORE_CFG_SECRETS_UNENCRYPTED": "backup.parts includes secrets but encrypt_to is not set",
@@ -278,7 +278,7 @@ def make_record(
         KeyError: ``code`` is not in the table (CORE-243).
 
     Implements:
-        CORE-243: Core spec 0.8, §6.2 Rules.
+        CORE-243: Core spec 0.11, §6.2 Rules.
     """
     template = MESSAGES[code]
     clean = {k: _json_safe(v) for k, v in (params or {}).items()}
@@ -310,7 +310,7 @@ def code_for_pydantic(err: ErrorDetails) -> tuple[str, dict[str, Any]]:
         ``(code, params)``.
 
     Implements:
-        CORE-243: Core spec 0.8, §6.2 Rules.
+        CORE-243: Core spec 0.11, §6.2 Rules.
     """
     t = err["type"]
     ctx: dict[str, Any] = dict(err.get("ctx") or {})

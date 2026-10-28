@@ -2,17 +2,17 @@
 
 Every valid configuration that is saved becomes a numbered version under
 ``<state>/config-history/``: a directory holding the whole config set (main
-file, included files, widget templates, with their paths relative to the
-config directory) and ``meta.json``. History is append-only. Undo, redo and
+file, included files, widget templates and custom.css, with their paths
+relative to the config directory) and ``meta.json``. History is append-only. Undo, redo and
 restore build a new config set, validate it in a scratch directory, and only
 then write it and record it as a new version; a running engine applies the
 result through its file watcher.
 
 Implements:
-    CORE-150: Core spec 0.10, §6.8 Configuration history, undo and redo.
-    CORE-153, CORE-154: Core spec 0.10, §6.8 Configuration history, undo and redo.
-    CORE-155, CORE-156: Core spec 0.10, §6.8 Configuration history, undo and redo.
-    CORE-216, CORE-217, CORE-218: Core spec 0.10, §6.8 Configuration history, undo and redo.
+    CORE-150, CORE-154, CORE-156: Core spec 0.10, §6.8 Configuration history, undo and redo.
+    CORE-153, CORE-155: Core spec 0.11, §6.8 Configuration history, undo and redo.
+    CORE-216: Core spec 0.11, §6.8 Configuration history, undo and redo.
+    CORE-217, CORE-218: Core spec 0.10, §6.8 Configuration history, undo and redo.
 """
 
 from __future__ import annotations
@@ -33,6 +33,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, SecretBytes, SecretStr
 
+from mm3.core.config.assets import CUSTOM_CSS, TEMPLATE_DIR
 from mm3.core.config.diff import changed_sections, unsubstituted
 from mm3.core.config.loader import dump_plain, include_target, rt_dump, rt_load
 from mm3.core.config.records import ValidationRecord
@@ -55,7 +56,6 @@ __all__ = [
 ]
 
 HISTORY_DIR = "config-history"
-TEMPLATE_DIR = "widget-templates"
 MASK = "**********"
 MAX_AGE = timedelta(days=180)
 TOP_SECTIONS = ("engine", "display", "layout", "pages", "backup")
@@ -93,7 +93,7 @@ class ConfigSet:
 
     @classmethod
     def collect(cls, main: Path, files: Sequence[Path]) -> ConfigSet:
-        """Read a config set from disk: the given files plus every widget template.
+        """Read a config set from disk: the given files, custom.css and every widget template.
 
         Args:
             main: The main file.
@@ -101,6 +101,9 @@ class ConfigSet:
 
         Returns:
             The set. The env file is never part of it (CORE-153).
+
+        Implements:
+            CORE-153: Core spec 0.11, §6.8 Configuration history, undo and redo.
         """
         root = main.parent
         out: dict[str, bytes] = {}
@@ -110,6 +113,10 @@ class ConfigSet:
                 continue
             with contextlib.suppress(OSError):
                 out[rel] = Path(path).read_bytes()
+        css = root / CUSTOM_CSS
+        if css.is_file():
+            with contextlib.suppress(OSError):
+                out[CUSTOM_CSS] = css.read_bytes()
         templates = root / TEMPLATE_DIR
         if templates.is_dir():
             for path in sorted(templates.rglob("*")):
@@ -188,7 +195,8 @@ class HistoryStore:
         now: Clock for version times and retention.
 
     Implements:
-        CORE-153, CORE-217, CORE-218: Core spec 0.10, §6.8 Configuration history, undo and redo.
+        CORE-153: Core spec 0.11, §6.8 Configuration history, undo and redo.
+        CORE-217, CORE-218: Core spec 0.10, §6.8 Configuration history, undo and redo.
     """
 
     def __init__(self, state_dir: Path, *, now: Any = None) -> None:
@@ -474,8 +482,8 @@ class ConfigHistory:
         now: Clock, for tests.
 
     Implements:
-        CORE-154, CORE-155: Core spec 0.10, §6.8 Configuration history, undo and redo.
-        CORE-156, CORE-217: Core spec 0.10, §6.8 Configuration history, undo and redo.
+        CORE-154, CORE-156, CORE-217: Core spec 0.10, §6.8 Configuration history, undo and redo.
+        CORE-155: Core spec 0.11, §6.8 Configuration history, undo and redo.
     """
 
     def __init__(
@@ -550,7 +558,8 @@ class ConfigHistory:
             are invalid and differ from it.
 
         Implements:
-            CORE-153, CORE-217: Core spec 0.10, §6.8 Configuration history, undo and redo.
+            CORE-153: Core spec 0.11, §6.8 Configuration history, undo and redo.
+            CORE-217: Core spec 0.10, §6.8 Configuration history, undo and redo.
         """
         disk = self._disk()
         latest = self.store.latest()
@@ -597,7 +606,8 @@ class ConfigHistory:
                     os.unlink(tmp)
                 raise
         for rel in current.files:
-            if rel not in target.files and rel.startswith(TEMPLATE_DIR + os.sep):
+            removable = rel == CUSTOM_CSS or rel.startswith(TEMPLATE_DIR + os.sep)
+            if rel not in target.files and removable:
                 with contextlib.suppress(FileNotFoundError):
                     (self.root / rel).unlink()
 
@@ -733,15 +743,16 @@ class ConfigHistory:
             version: The version to restore from.
             author: ``cli:<user>`` or the admin client address.
             section: ``engine``, ``display``, ``layout``, ``pages``, ``backup``,
-                ``modules/<id>``, ``modules/_order`` or ``widget_templates/<name>``;
-                ``None`` restores everything.
+                ``modules/<id>``, ``modules/_order``, ``custom_css`` or
+                ``widget_templates/<name>``; ``None`` restores everything.
             force: Overwrite invalid files on disk.
 
         Returns:
             The outcome.
 
         Implements:
-            CORE-155, CORE-156: Core spec 0.10, §6.8 Configuration history, undo and redo.
+            CORE-155: Core spec 0.11, §6.8 Configuration history, undo and redo.
+            CORE-156: Core spec 0.10, §6.8 Configuration history, undo and redo.
         """
         with self.store.lock():
             refused, current = self._prepare(force)
@@ -822,6 +833,8 @@ def _section_values(loaded: _Loaded, *, mask: bool = True) -> dict[str, Any]:
     for inst in result.instances:
         out[f"modules/{inst.id}"] = items[inst.index]
     out["modules/_order"] = [i.id for i in result.instances]
+    if (css := loaded.set.files.get(CUSTOM_CSS)) is not None:
+        out["custom_css"] = css.decode("utf-8", errors="replace")
     for rel, content in sorted(loaded.set.files.items()):
         if rel.startswith(TEMPLATE_DIR + os.sep):
             name = rel.split(os.sep, 1)[1]
@@ -850,7 +863,11 @@ def _set_text(config_set: ConfigSet, rel: str, doc: Any) -> ConfigSet:
 
 
 def _restore_section(current: _Loaded, source: _Loaded, section: str) -> ConfigSet:
-    """Build the config set with one section taken from another version (CORE-155)."""
+    """Build the config set with one section taken from another version (CORE-155).
+
+    custom.css and widget templates are files: restoring one copies it, or
+    removes it when that version had none.
+    """
     cur = current.set
     if section in TOP_SECTIONS:
         _, src_doc, src_inc = _doc_holding(source.set, section)
@@ -865,6 +882,8 @@ def _restore_section(current: _Loaded, source: _Loaded, section: str) -> ConfigS
         else:
             doc[section] = value
         return _set_text(cur, rel, doc)
+    if section == "custom_css":
+        return cur.with_file(CUSTOM_CSS, source.set.files.get(CUSTOM_CSS))
     if section.startswith("widget_templates/"):
         rel = os.path.join(TEMPLATE_DIR, section.split("/", 1)[1])
         return cur.with_file(rel, source.set.files.get(rel))
@@ -919,7 +938,8 @@ class HistoryRecorder:
         history: The history of the engine's configuration.
 
     Implements:
-        CORE-153, CORE-217: Core spec 0.10, §6.8 Configuration history, undo and redo.
+        CORE-153: Core spec 0.11, §6.8 Configuration history, undo and redo.
+        CORE-217: Core spec 0.10, §6.8 Configuration history, undo and redo.
     """
 
     def __init__(self, history: ConfigHistory) -> None:

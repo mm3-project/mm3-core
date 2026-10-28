@@ -205,20 +205,19 @@ def test_core_31_missing_include_and_no_code_execution(tmp_path: Path, registry:
 def test_core_200_env_file_before_process_environment(tmp_path: Path, registry: Registry) -> None:
     result = load(
         tmp_path,
-        "engine:\n  admin:\n    token: !env MM3_TOKEN\n    port: !env PORT\n"
+        "engine:\n  admin:\n    host: !env MM3_HOST\n    port: !env PORT\n"
         "  locale: !env [LANG_TAG, fr]\n",
         registry,
-        env="# comment\n\nMM3_TOKEN='s3cr=t'\nPORT=\"9000\"\n",
-        environ={"MM3_TOKEN": "other", "PORT": "1"},
+        env="# comment\n\nMM3_HOST='h=st'\nPORT=\"9000\"\n",
+        environ={"MM3_HOST": "other", "PORT": "1"},
     )
     assert result.ok, result.records
     assert result.config is not None
     admin = result.config.engine.admin
-    assert admin.token is not None
-    assert admin.token.get_secret_value() == "s3cr=t"
+    assert admin.host == "h=st"
     assert admin.port == 9000
     assert result.config.engine.locale == "fr"
-    assert result.loaded.env_refs["/engine/admin/token"].as_written() == "!env MM3_TOKEN"
+    assert result.loaded.env_refs["/engine/admin/host"].as_written() == "!env MM3_HOST"
 
 
 def test_core_200_process_environment_and_missing_variable(
@@ -273,9 +272,24 @@ def test_core_201_engine_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
         [],
     )
     assert s.mqtt is None
-    assert s.admin.token is None
+    assert s.server.allow == []
     assert (s.bus.queue_size, s.threads, s.log_level) == (1000, 8, "info")
     assert (s.debug_ttl, s.history.keep, s.input.touch) == (timedelta(minutes=30), 200, False)
+
+
+def test_core_201_admin_token_is_not_a_config_key(tmp_path: Path, registry: Registry) -> None:
+    result = load(tmp_path, "engine:\n  admin:\n    token: abc\n", registry)
+    (rec,) = result.errors
+    assert (rec.code, rec.path) == ("CORE_CFG_UNKNOWN_KEY", "/engine/admin/token")
+
+
+def test_core_201_server_allow_is_a_cidr_list(tmp_path: Path, registry: Registry) -> None:
+    ok = load(tmp_path, "engine:\n  server:\n    allow: [192.168.1.0/24, 10.0.0.7/32]\n", registry)
+    assert ok.ok, ok.records
+    assert ok.config is not None
+    assert [str(n) for n in ok.config.engine.server.allow] == ["192.168.1.0/24", "10.0.0.7/32"]
+    bad = load(tmp_path, "engine:\n  server:\n    allow: [not-a-net]\n", registry)
+    assert [r.path for r in bad.errors] == ["/engine/server/allow/0"]
 
 
 def test_core_201_system_timezone_fallback(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -774,3 +788,46 @@ def test_core_32_module_defaults_then_yaml_and_unknown_keys(
     assert [(r.code, r.path) for r in bad.errors] == [
         ("CORE_CFG_UNKNOWN_KEY", "/modules/0/config/size")
     ]
+
+
+# --- CORE-262: custom.css limits (CORE_CFG_CSS, CORE-243) -----------------------------
+
+
+@pytest.mark.parametrize(
+    ("css", "reason"),
+    [
+        (b"@import 'x.css';", "@import is not allowed"),
+        (b"body { background: url(https://example.com/a.png); }", "url(https://example.com/a.png)"),
+        (b"body { background: url(/etc/passwd); }", "url(/etc/passwd)"),
+        (b"\xff\xfe", "not UTF-8"),
+        (b"a{}" + b" " * (64 * 1024), "larger than 64 KiB"),
+    ],
+)
+def test_core_262_custom_css_limits(
+    tmp_path: Path, registry: Registry, css: bytes, reason: str
+) -> None:
+    write(tmp_path / "etc" / "config.yaml", "{}\n")
+    (tmp_path / "etc" / "custom.css").write_bytes(css)
+    result = load(tmp_path, "{}\n", registry)
+    (rec,) = result.errors
+    assert (rec.code, rec.path) == ("CORE_CFG_CSS", "/custom_css")
+    assert reason in rec.params["reason"]
+    assert rec.file.endswith("custom.css")
+    assert result.config is None
+
+
+def test_core_262_custom_css_may_be_up_to_64_kib(tmp_path: Path, registry: Registry) -> None:
+    css = "body { background: url(data:image/png;base64,AAAA); }\n" + "/* x */\n" * 4000
+    assert 16 * 1024 < len(css) < 64 * 1024
+    write(tmp_path / "etc" / "config.yaml", "{}\n")
+    (tmp_path / "etc" / "custom.css").write_text(css)
+    result = load(tmp_path, "{}\n", registry)
+    assert result.ok, result.records
+    assert result.assets.custom_css_text() == css
+
+
+def test_core_243_css_code_message_names_the_reason(tmp_path: Path, registry: Registry) -> None:
+    write(tmp_path / "etc" / "config.yaml", "{}\n")
+    (tmp_path / "etc" / "custom.css").write_text("@import 'x';")
+    (rec,) = load(tmp_path, "{}\n", registry).errors
+    assert rec.message == "CSS breaks a limit: @import is not allowed"
