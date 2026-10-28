@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.7"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7"]
+version = "0.8"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8"]
 
 [[spec]]
 name = "Module Contract"
@@ -1830,6 +1830,26 @@ title = "Pages and visibility"
 hash = "a252a9b53eeb"
 introduced_in = "0.6"
 changed_in = "0.6"
+status = "active"
+
+[[requirement]]
+id = "CORE-243"
+spec = "Core spec"
+section = "6.2"
+title = "Rules"
+hash = "f59086c25b03"
+introduced_in = "0.8"
+changed_in = "0.8"
+status = "active"
+
+[[requirement]]
+id = "CORE-244"
+spec = "Core spec"
+section = "10.8"
+title = "Backup and restore"
+hash = "886ea92d39d5"
+introduced_in = "0.8"
+changed_in = "0.8"
 status = "active"
 
 [[requirement]]
