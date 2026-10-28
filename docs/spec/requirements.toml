@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.11"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11"]
+version = "0.12"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12"]
 
 [[spec]]
 name = "Module Contract"
@@ -997,9 +997,9 @@ id = "CORE-143"
 spec = "Core spec"
 section = "6.7"
 title = "Display output"
-hash = "96c3a25a2a3c"
+hash = "2b2e1e2e2808"
 introduced_in = "0.1"
-changed_in = "0.11"
+changed_in = "0.12"
 status = "active"
 
 [[requirement]]
