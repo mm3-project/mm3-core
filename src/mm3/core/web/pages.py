@@ -6,9 +6,9 @@ below are the source of the engine catalog entries, which the i18n service
 compiles with the other ``CORE_*`` keys (core spec 8.3).
 
 Implements:
-    CORE-63: Core spec 0.11, §10.1 Security.
-    CORE-253: Core spec 0.11, §10.1 Security.
-    CORE-254: Core spec 0.11, §10.1 Security.
+    CORE-63: Core spec 0.12, §10.1 Security.
+    CORE-253: Core spec 0.12, §10.1 Security.
+    CORE-254: Core spec 0.12, §10.1 Security.
 """
 
 from __future__ import annotations
@@ -69,7 +69,7 @@ def login_page(error_key: str | None = None) -> str:
     body = (
         f"<h1>{t('CORE_WEB_LOGIN_TITLE')}</h1>\n{error}"
         '<form method="post" action="/admin/login">\n'
-        f'<label>{t("CORE_WEB_LOGIN_TOKEN")} '
+        f"<label>{t('CORE_WEB_LOGIN_TOKEN')} "
         '<input type="password" name="token" autocomplete="off" required autofocus></label>\n'
         f'<button type="submit">{t("CORE_WEB_LOGIN_SUBMIT")}</button>\n</form>'
     )

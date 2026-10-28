@@ -12,8 +12,8 @@ so ``mm3 token revoke`` takes effect at once for a running engine. This is
 the single adapter for argon2-cffi (core spec 10.9).
 
 Implements:
-    CORE-62: Core spec 0.11, §10.1 Security.
-    -: Core spec 0.11, §10.9 Dependency management.
+    CORE-62: Core spec 0.12, §10.1 Security.
+    -: Core spec 0.12, §10.9 Dependency management.
 """
 
 from __future__ import annotations
@@ -109,7 +109,7 @@ class TokenStore:
         now: Clock, for tests.
 
     Implements:
-        CORE-62: Core spec 0.11, §10.1 Security.
+        CORE-62: Core spec 0.12, §10.1 Security.
     """
 
     def __init__(self, state_dir: Path, *, now: Callable[[], datetime] = _now) -> None:

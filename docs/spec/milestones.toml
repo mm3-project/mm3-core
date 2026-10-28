@@ -81,7 +81,7 @@ requirements = [
 [[milestone]]
 number = 3
 name = "Web shell, WebSocket, i18n, kiosk, visibility"
-status = "not_started"
+status = "in_progress"
 requirements = [
   "CORE-06", "CORE-07", "CORE-11", "CORE-12", "CORE-40..42", "CORE-60..64",
   "CORE-95", "CORE-103", "CORE-117", "CORE-143..146", "CORE-223", "CORE-233..235",

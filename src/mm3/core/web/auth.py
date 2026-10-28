@@ -8,9 +8,9 @@ act for the admin. The mirror listener knows display sessions only; a
 display token or session grants nothing on the admin listener.
 
 Implements:
-    CORE-62: Core spec 0.11, §10.1 Security.
-    CORE-253: Core spec 0.11, §10.1 Security.
-    CORE-254: Core spec 0.11, §10.1 Security.
+    CORE-62: Core spec 0.12, §10.1 Security.
+    CORE-253: Core spec 0.12, §10.1 Security.
+    CORE-254: Core spec 0.12, §10.1 Security.
 """
 
 from __future__ import annotations
@@ -47,7 +47,7 @@ def origin_matches(conn: HTTPConnection) -> bool:
         Whether ``Origin`` equals ``<scheme>://<Host header>``.
 
     Implements:
-        CORE-253: Core spec 0.11, §10.1 Security.
+        CORE-253: Core spec 0.12, §10.1 Security.
     """
     origin = conn.headers.get("origin")
     host = conn.headers.get("host")
@@ -112,8 +112,8 @@ class WebAuth:
             The outcome.
 
         Implements:
-            CORE-62: Core spec 0.11, §10.1 Security.
-            CORE-253: Core spec 0.11, §10.1 Security.
+            CORE-62: Core spec 0.12, §10.1 Security.
+            CORE-253: Core spec 0.12, §10.1 Security.
         """
         auth = conn.headers.get("authorization", "")
         scheme, _, value = auth.partition(" ")
@@ -142,7 +142,7 @@ class WebAuth:
             The token record, or ``None`` without a valid display session.
 
         Implements:
-            CORE-254: Core spec 0.11, §10.1 Security.
+            CORE-254: Core spec 0.12, §10.1 Security.
         """
         sid = conn.cookies.get(DISPLAY_COOKIE)
         if not sid:

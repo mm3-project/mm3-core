@@ -1,13 +1,14 @@
 """Entry point of the ``mm3`` command.
 
-Implemented so far: ``--version``, ``mm3 check-config``, ``mm3 run`` and
-``mm3 config`` (history, diff, undo, redo, restore).
+Implemented so far: ``--version``, ``mm3 check-config``, ``mm3 run``,
+``mm3 config`` (history, diff, undo, redo, restore) and ``mm3 token``
+(new, list, revoke).
 ``mm3 run`` loads and validates the configuration, refuses to start with
-exit code 2 when it has errors, runs the module instances until SIGTERM or
-SIGINT, and reloads the configuration when its files change or on SIGHUP;
-the web gateway joins it in milestone 3.
+exit code 2 when it has errors, runs the module instances and the web
+gateway (mirror and admin listeners) until SIGTERM or SIGINT, and reloads
+the configuration when its files change or on SIGHUP.
 The other subcommands (``modules``, ``module check``, ``migrate``, ``i18n``,
-``token``, ``diag``, ``installer``) are added with their milestones.
+``kiosk``, ``diag``, ``installer``) are added with their milestones.
 
 Implements:
     -: Core spec 0.8, §10.2 Packaging and deployment.
@@ -15,6 +16,8 @@ Implements:
     CORE-207: Core spec 0.8, §6.2 Rules.
     -: Core spec 0.8, §7.2 Error reporting.
     CORE-208: Core spec 0.11, §6.3 Hot reload.
+    CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
+    CORE-62: Core spec 0.12, §10.1 Security.
 """
 
 from __future__ import annotations
@@ -27,10 +30,11 @@ import signal
 import sys
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TextIO
+from typing import Any, TextIO
 
 from mm3.__about__ import MODULE_API_VERSION, __version__
 from mm3.cli.config_cmd import add_config_parser, run_config
+from mm3.cli.token_cmd import add_token_parser, run_token
 from mm3.core.config import DEFAULT_CONFIG, DEFAULT_ENV_FILE, ConfigResult, load_config
 from mm3.core.registry import Registry
 
@@ -64,6 +68,7 @@ def build_parser() -> argparse.ArgumentParser:
     run = sub.add_parser("run", help="run the engine")
     _config_args(run)
     add_config_parser(sub, _config_args)
+    add_token_parser(sub, _config_args)
     return parser
 
 
@@ -134,6 +139,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.config.manager import ConfigManager
     from mm3.core.engine import Engine
     from mm3.core.services.storage import resolve_state_dir
+    from mm3.core.web.gateway import WebGateway
 
     assert result.config is not None  # noqa: S101 - checked by the caller
     state_dir = resolve_state_dir()
@@ -149,11 +155,20 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
             loop.add_signal_handler(sig, stop.set)
     with contextlib.suppress(NotImplementedError, RuntimeError, AttributeError):
         loop.add_signal_handler(signal.SIGHUP, manager.request_reload, "sighup")
+
+    def server_allow() -> list[Any]:
+        # server.allow applies live, to connections made afterwards (CORE-201).
+        current = manager.current.config
+        return list(current.engine.server.allow) if current is not None else []
+
+    gateway = WebGateway(result.config.engine, state_dir, server_allow=server_allow)
     await engine.start(result.instance_specs())
     await manager.start()
     try:
+        await gateway.start()
         await stop.wait()
     finally:
+        await gateway.stop()
         await manager.close()
         await engine.stop()
 
@@ -210,6 +225,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run(args.config, args.env_file)
     if args.command == "config":
         return run_config(args, registry=_discover())
+    if args.command == "token":
+        return run_token(args)
     parser.print_help()
     return 0
 

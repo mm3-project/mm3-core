@@ -12,9 +12,9 @@ Both applications are wrapped in the allow list (CORE-61) and the security
 headers (CORE-63), the headers outermost so that refusals carry them too.
 
 Implements:
-    CORE-60: Core spec 0.11, §10 Security, packaging, deployment, quality.
-    CORE-61, CORE-62, CORE-63: Core spec 0.11, §10.1 Security.
-    CORE-253, CORE-254: Core spec 0.11, §10.1 Security.
+    CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
+    CORE-61, CORE-62, CORE-63: Core spec 0.12, §10.1 Security.
+    CORE-253, CORE-254: Core spec 0.12, §10.1 Security.
 """
 
 from __future__ import annotations
@@ -61,9 +61,7 @@ def _client(request: Request) -> str:
 
 async def _form_field(request: Request, name: str) -> str | None:
     """Read one field of a small ``application/x-www-form-urlencoded`` body."""
-    if not request.headers.get("content-type", "").startswith(
-        "application/x-www-form-urlencoded"
-    ):
+    if not request.headers.get("content-type", "").startswith("application/x-www-form-urlencoded"):
         return None
     body = await request.body()
     if len(body) > MAX_FORM_BYTES:
@@ -92,7 +90,7 @@ def protect(app: ASGIApp, networks: Callable[[], Sequence[Network]], listener: s
         The wrapped application.
 
     Implements:
-        CORE-61, CORE-63: Core spec 0.11, §10.1 Security.
+        CORE-61, CORE-63: Core spec 0.12, §10.1 Security.
     """
     return SecurityHeaders(AllowList(app, networks, listener=listener))
 
@@ -107,7 +105,7 @@ def mirror_app(auth: WebAuth) -> FastAPI:
         The application.
 
     Implements:
-        CORE-254: Core spec 0.11, §10.1 Security.
+        CORE-254: Core spec 0.12, §10.1 Security.
     """
     app = _bare()
 
@@ -151,8 +149,8 @@ def admin_app(auth: WebAuth) -> FastAPI:
         The application.
 
     Implements:
-        CORE-62: Core spec 0.11, §10.1 Security.
-        CORE-253: Core spec 0.11, §10.1 Security.
+        CORE-62: Core spec 0.12, §10.1 Security.
+        CORE-253: Core spec 0.12, §10.1 Security.
     """
     app = _bare()
 

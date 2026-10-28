@@ -7,8 +7,8 @@ at most once a minute per address. Every HTTP response carries the security
 headers of CORE-63.
 
 Implements:
-    CORE-61: Core spec 0.11, §10.1 Security.
-    CORE-63: Core spec 0.11, §10.1 Security.
+    CORE-61: Core spec 0.12, §10.1 Security.
+    CORE-63: Core spec 0.12, §10.1 Security.
 """
 
 from __future__ import annotations
@@ -99,7 +99,7 @@ class AllowList:
         clock: Monotonic time source, for tests.
 
     Implements:
-        CORE-61: Core spec 0.11, §10.1 Security.
+        CORE-61: Core spec 0.12, §10.1 Security.
     """
 
     def __init__(
@@ -182,7 +182,7 @@ class SecurityHeaders:
         app: The application.
 
     Implements:
-        CORE-63: Core spec 0.11, §10.1 Security.
+        CORE-63: Core spec 0.12, §10.1 Security.
     """
 
     def __init__(self, app: ASGIApp) -> None:
