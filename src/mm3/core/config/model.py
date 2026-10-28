@@ -13,6 +13,8 @@ Implements:
     CORE-91: Core spec 0.8, §6.5 Screen layout.
     -: Core spec 0.8, §6.7 Display output.
     -: Core spec 0.8, §6.9 Pages and visibility.
+    CORE-213: Core spec 0.9, §6.5 Screen layout.
+    CORE-230: Core spec 0.9, §6.9 Pages and visibility.
 """
 
 from __future__ import annotations
@@ -199,7 +201,11 @@ class GridSize(_Model):
 
 
 class LayoutConfig(_Model):
-    """The ``layout`` block (core spec 6.5)."""
+    """The ``layout`` block (core spec 6.5); gap 16px and padding 32px by default.
+
+    Implements:
+        CORE-213: Core spec 0.9, §6.5 Screen layout.
+    """
 
     grid: GridSize = GridSize()
     gap: Pixels = 16
@@ -223,6 +229,17 @@ class PageConfig(_Model):
     id: str = Field(pattern=PAGE_ID_PATTERN)
     title: LocalizedText | None = None
     rotate: timedelta | None = None
+
+    def resolved_title(self, locale: str) -> str:
+        """Return the page title for a locale; the id when no title is set (CORE-230).
+
+        Args:
+            locale: The locale.
+
+        Returns:
+            The title.
+        """
+        return self.title.resolve(locale) if self.title is not None else self.id
 
 
 class PagesConfig(_Model):

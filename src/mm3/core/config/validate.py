@@ -26,6 +26,7 @@ from pydantic import BaseModel, ValidationError
 
 from mm3.config import ModuleConfig, iter_localized
 from mm3.core.config.envfile import DEFAULT_ENV_FILE, EnvFile, read_env_file
+from mm3.core.config.layout import LayoutResult, check_layout
 from mm3.core.config.loader import LoadedConfig, load_yaml
 from mm3.core.config.model import INSTANCE_ID_PATTERN, InstanceConfig, MirrorConfig
 from mm3.core.config.records import (
@@ -83,6 +84,8 @@ class ConfigResult:
         records: Every problem, errors and warnings.
         config: The validated model; ``None`` when there are errors.
         instances: Instances with their validated configuration.
+        layout: Viewport, cell size and placements per page (core spec 6.5,
+            6.7, 6.9); ``None`` when there are errors.
     """
 
     path: Path
@@ -91,6 +94,7 @@ class ConfigResult:
     records: list[ValidationRecord] = field(default_factory=list)
     config: MirrorConfig | None = None
     instances: list[ResolvedInstance] = field(default_factory=list)
+    layout: LayoutResult | None = None
 
     @property
     def errors(self) -> list[ValidationRecord]:
@@ -301,6 +305,7 @@ def load_config(
     Implements:
         CORE-02: Core spec 0.8, §3 Engine components.
         CORE-30: Core spec 0.8, §6 Configuration.
+        CORE-232: Core spec 0.9, §6.9 Pages and visibility.
     """
     env = read_env_file(env_file)
     loaded = load_yaml(
@@ -313,7 +318,12 @@ def load_config(
         return result
     config, instances, records = validate(loaded, registry)
     result.records.extend(records)
+    layout = None
+    if config is not None:
+        layout = check_layout(config, instances, registry, loaded.sources)
+        result.records.extend(layout.records)
     if result.ok:
         result.config = config
         result.instances = instances
+        result.layout = layout
     return result

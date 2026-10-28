@@ -9,6 +9,16 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Screen layout, display and pages (milestone 2, part C; Core spec 0.9):
+  `mm3.core.config.layout` resolves presets to grid cells (CORE-90, CORE-92),
+  checks rectangles against the grid (CORE-91, CORE-94), overlaps per `z`
+  with MM²-style stacks on a preset (CORE-93, CORE-212), cell size with the
+  16px / 32px defaults (CORE-213), `min_size_px` (CORE-96), appearance CSS
+  limits and headers (CORE-214, MOD-67), positions required or forbidden
+  (CORE-33), the logical viewport from the `display` block, assumed until a
+  kiosk reports one (CORE-140..142, CORE-215), and the `pages` block with
+  per-page validation that names the page (CORE-230..232). `mm3
+  check-config` states the assumed viewport.
 - Hot reload (milestone 2, part B; Core spec 0.9): the main file, included
   files, the env file and `widget-templates/` are watched; a reload starts
   500 ms after the last change or on SIGHUP, one at a time with exactly one

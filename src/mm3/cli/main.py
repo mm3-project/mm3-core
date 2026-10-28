@@ -105,16 +105,25 @@ def check_config(
     stream = out or sys.stdout
     result = load_config(config, registry=registry or _discover(), env_file=env_file)
     failed = bool(result.errors) or (strict and bool(result.warnings))
+    view = result.layout.viewport if result.layout is not None else None
     if as_json:
-        doc = {
+        doc: dict[str, object] = {
             "ok": not failed,
             "errors": len(result.errors),
             "warnings": len(result.warnings),
             "records": [r.as_dict() for r in result.records],
         }
+        if view is not None:
+            doc["viewport"] = {"width": view.width, "height": view.height, "assumed": True}
         print(json.dumps(doc, indent=2, ensure_ascii=False), file=stream)
     else:
         _print_records(result, stream)
+        if view is not None:
+            # Implements CORE-215 (Core spec 0.9, §6.7 Display output): say the viewport is assumed.
+            print(
+                f"viewport {view.width}x{view.height} CSS px (assumed, no kiosk report)",
+                file=stream,
+            )
     return EXIT_CONFIG_INVALID if failed else 0
 
 
