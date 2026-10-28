@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.6"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6"]
+version = "0.7"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7"]
 
 [[spec]]
 name = "Module Contract"
@@ -1647,9 +1647,9 @@ id = "CORE-221"
 spec = "Core spec"
 section = "5.4"
 title = "Request and reply"
-hash = "057b55567a9d"
+hash = "0721bd5241ad"
 introduced_in = "0.6"
-changed_in = "0.6"
+changed_in = "0.7"
 status = "active"
 
 [[requirement]]

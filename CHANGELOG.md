@@ -67,6 +67,9 @@ separately under **Module API** in each release (Module Contract, section 10).
 - `docs/spec/versions.toml` is generated and records the current spec
   versions (Core spec 0.6, Module Contract 1.0 rev 6); code may cite any
   version at or after a requirement's last change.
+- Spec sync to Core spec 0.7: error replies carry `code` `transient`,
+  `configuration` or `internal` (`REQUEST_FAILED` for bugs), and an
+  `on_request` over its budget sends no reply (CORE-221).
 
 ### Removed
 
