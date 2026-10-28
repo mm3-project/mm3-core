@@ -1,6 +1,6 @@
 # MM3 Module Contract v1.0
 
-Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 6 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 7 (draft)
 
 ## 1. Scope and conformance
 
@@ -240,7 +240,8 @@ customElements.define("mm3-weather", WeatherElement);
 | `this.send(type, payload)` | Message to own backend (`on_client_message`) |
 | `this.notify(name, payload)` | Bus notification |
 | `this.requestRender()` | Re-render with current state |
-| `html` tagged template | Auto-escaping templates (CORE-64) |
+| `html` tagged template | Auto-escaping templates (CORE-64): lit-html 3 `html`, `svg` and `nothing`, re-exported by `/core/mm3.js` (MOD-37) |
+| `this.hide({fade}), this.show({fade})` | Hide or show this element, fading over 300 ms or the given milliseconds (core CORE-259) |
 | this.log.debug/info/warn/error | Structured logging forwarded to the server log (MOD-80) |
 | this.setInterval, this.setTimeout | Timers cleared automatically when the element disconnects (MOD-35) |
 | this.request(name, payload, {target, timeout}) | Request on the bus, resolves with the reply (core 5.4) |
@@ -251,10 +252,11 @@ customElements.define("mm3-weather", WeatherElement);
 - MOD-30: The tag MUST be `mm3-<name>`; the file MUST define exactly that element and nothing global.
 - MOD-31: Rendering MUST use `html` or DOM APIs; assigning untrusted data to `innerHTML` is forbidden.
 - MOD-32: The element MUST NOT call `fetch`, `XMLHttpRequest`, `WebSocket` or `EventSource` to any origin; data comes from its backend (CORE-12).
-- MOD-33: CSS MUST stay inside the shadow root; no styles on `document`, no global fonts except via the theme variables.
+- MOD-33: CSS MUST stay inside the shadow root; no styles on `document`, no global fonts. Colours, sizes and fonts SHOULD use the theme variables of core spec 6.10 (CORE-261), so the theme and `custom.css` apply to the module.
 - MOD-34: `render` MUST be pure with respect to `state` (same state, same output) and SHOULD finish in under 16 ms.
 - MOD-35: Timers MUST be created with `this.setInterval` / `this.setTimeout` (cleared automatically on disconnect), not `window.setInterval`.
 - MOD-36: The element MUST render something sensible for an empty state `{}` (e.g. a skeleton), because it may receive one before data arrives.
+- MOD-37: The element MUST import templating only from `/core/mm3.js` and MUST NOT import scripts from outside its own `static/` directory and `/core/`; lit-html is an engine detail behind `/core/mm3.js`, not part of the Module API (MOD-94).
 
 ## 6. Messaging, configuration, layout and preview
 
@@ -410,6 +412,7 @@ A module is compliant when every MUST below passes; `mm3 module check` runs all 
 | MOD-34 | Pure `render`, < 16 ms | MUST / SHOULD | harness |
 | MOD-35 | Timers via `this.setInterval/setTimeout` | MUST | static |
 | MOD-36 | Renders empty state `{}` | MUST | harness |
+| MOD-37 | Templating and imports only from /core/mm3.js and own static/ | MUST | static |
 | MOD-40 | `UPPER_SNAKE` notification names | MUST | static |
 | MOD-41 | Notifications documented in README | MUST | static (README vs code) |
 | MOD-42 | Payload size, no secrets, ISO times | MUST | test kit |
@@ -641,6 +644,7 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
+| 1.0 rev 7 | 2026-10-28 | Aligned with core spec 0.11: theme variables of core 6.10 (MOD-33 changed); templating and imports only through /core/mm3.js, lit-html behind it (MOD-37 added, §5.2, §11); this.hide/show with fade (§5.2) |
 | 1.0 rev 6 | 2026-10-28 | Aligned with core spec 0.6: ctx.request, on\_request, this.request, RequestTimeoutError, RemoteError (MOD-24–26, §3.2, §4, §5.2); registered notification payloads (MOD-40 changed); ctx.page, ctx.pages, this.page, onPageChange; frequent hide/show (MOD-27); capability layout.control (§8) |
 | 1.0 rev 5 | 2026-10-28 | Aligned with core spec 0.5: HEADER catalog key (MOD-67, §7); LocalizedText resolved by the engine for front-ends and with resolve() in the backend, timedelta formats, current ctx.locale, timezone and units after reload (§6.2, §5.2) |
 | 1.0 rev 4 | 2026-10-27 | Aligned with core spec 0.3: timeout semantics (§3.2), handlers called in order (MOD-18), restart creates a new instance (MOD-19), async key-value store, CronExpression config type (§6.2) |

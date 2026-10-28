@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.10 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.11 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -14,8 +14,8 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 
 | Topic | Decision |
 | --- | --- |
-| Target | Debian 12+ on x86-64, Python ≥ 3.11 |
-| Rendering | Web server + Chromium kiosk; any LAN browser MAY be an extra client |
+| Target | Debian 12+ on x86-64, Python ≥ 3.11; the kiosk needs Debian 13+ (cage ≥ 0.1.5, 6.7) |
+| Rendering | Web server + Chromium kiosk; any LAN browser in server.allow MAY be an extra client, view-only unless paired with a display token (10.1) |
 | Module shape | Python backend (optional) + JavaScript Web Component front-end (optional) |
 | MM² compatibility | Concepts and naming; migration tool mm3 migrate for config and modules (10.4) |
 | Config | YAML, edited as a file or in the admin web editor, both validated by Pydantic v2; hot reload |
@@ -24,7 +24,7 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | Isolation | In-process asyncio; faulty modules are contained and restarted |
 | i18n | Babel/gettext `.po` per module, compiled to JSON for the browser; EN, IT, FR, ES, DE shipped |
 | Core services | Hot reload, remote-control API, admin web UI with validated YAML editor, MQTT bus with Home Assistant discovery. Presence & power is a module (mm3-presence) |
-| Deployment | systemd + virtualenv; LAN-only by default; token auth on remote API |
+| Deployment | systemd + virtualenv; LAN-only by default; named admin and display tokens stored as argon2 hashes, admin sessions by cookie (10.1) |
 | Layout | Configurable cell grid (default 12 × 12); position, size, layer and appearance per instance; MM² region names kept as presets (6.5) |
 | Custom widgets | No-code widget builder module mm3-widget: MQTT, HA, bus and HTTP sources; extensible elements; touch actions; templates (11) |
 | Kiosk display | Wayland with cage + Chromium by default; wlr-randr for power (X11 driver remains available in mm3-presence) |
@@ -41,6 +41,9 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | Requests between modules | ctx.request / on\_request with replies on the bus; registry of shared notification names, validated by the engine (5.4, 5.5) |
 | Pages and visibility | Pages in the core: own layout per page, all-pages instances, rotation, notifications, swipe, HA select; one set of visibility rules; runtime stop and start (6.9) |
 | Requirements traceability | Specs synced to the repository with changed\_in per requirement; review only of code citing changed requirements; coverage matrix; issues for closed milestones (10.3) |
+| Shell and WebSocket | hello/welcome handshake with client roles kiosk, browser, preview; bounded queues with coalesced state; full resync on reconnect; templates with lit-html behind /core/mm3.js (5.6, 6.5) |
+| Theme | MM²-like core theme as CSS variables, Roboto Condensed vendored; optional /etc/mm3/custom.css in the config set (6.10) |
+| Kiosk | System unit as user mm3-kiosk running cage with a kiosk agent that applies the display block live and supervises Chromium; Debian 13+ (6.7) |
 
 ### 1.2 Approved frameworks (27 Oct 2026)
 
@@ -65,6 +68,8 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | Backup encryption | age (Debian package age), invoked as a subprocess | Standard, audited format; passphrase and public-key modes, so scheduled backups need no secret on the mirror |
 | Remote backup copy | rclone (Debian package), invoked as a subprocess | One tool for SFTP, SMB, WebDAV, S3 and 70+ other targets |
 | Dependency management | uv (lockfile), Renovate (update bot), pip-audit (vulnerability scan) | Reproducible installs with hashes; tested update PRs incl. vendored JS; known-CVE gate |
+| Front-end templates | lit-html 3 (BSD-3-Clause), vendored ES module, re-exported only through /core/mm3.js | Escaping by default, in-place DOM updates keep element state, event bindings for touch; no build step (decided 28 Oct) |
+| Shell font | Roboto Condensed (Apache-2.0), vendored woff2 | The MagicMirror² look; served locally, no external fonts (CSP) |
 
 ### 1.3 Non-goals for v1
 
@@ -281,11 +286,13 @@ class Notification(BaseModel, frozen=True):
 | Module private | backend → own element | `client` | `send_to_client(type, payload)` |
 | Module private | element → own backend | `client` | `this.send(type, payload)` |
 | State | backend → element | `state` | Full snapshot on connect and on `set_state` |
-| Control | core → shell | `control` | `show`, `hide`, `reload`, `locale`, `layout` |
+| Control | core → shell | `control` | `show`, `hide`, `reload`, `locale`, `layout`, `page`, `styles` |
 | Hello | shell → core | `hello` | Client id, screen size, protocol version |
 | Diagnostics | shell → core | log | Browser errors and forwarded console output (CORE-114) |
+| Welcome | core → shell | `welcome` | Engine build, role, layout, pages, instances with public config and catalog version (CORE-246) |
+| Error | core → shell | `error` | A refused inbound frame: code, message key, reference (CORE-248) |
 
-WebSocket frames are JSON: `{"kind": "notify", "instance": "weather_1", "data": {...}}`. Endpoint `/ws`; one connection per browser.
+WebSocket frames are JSON objects `{"v": 1, "kind": "notify", "instance": "weather_1", "data": {...}}` (5.6). Endpoint `/ws`; one connection per browser.
 
 ### 5.3 Routing rules
 
@@ -330,6 +337,18 @@ Names used by more than one module are registered here with their payload, and t
 
 `LocalizedText` in a payload is a string or a map from BCP 47 tags to strings (CORE-101).
 
+### 5.6 WebSocket protocol
+
+Every browser holds one `/ws` connection that starts with a handshake, carries frames in both directions within limits, and recovers from any loss by a full resync (CORE-246).
+
+- CORE-246: Frames are JSON objects `{v: 1, kind, instance?, data}`. The shell's first frame is `hello` with `{protocol: 1, client_id, role, viewport: [w, h], dpr, key?}`; `client_id` is a random UUID kept in `sessionStorage`, `role` is `kiosk`, `browser` or `preview`. The engine answers with `welcome` `{engine_build, client_id, role, interactive, layout, page, pages, locale, instances: [{id, module, element, config, catalog}]}`, where `config` is the public config (CORE-13, CORE-101) and `catalog` the version of its catalog URL, then one `state` frame per instance. Another first frame, or an unsupported protocol, closes the connection with code 4400.
+- CORE-247: Roles. `kiosk` is accepted only from a loopback address with the key the kiosk agent got from the engine (CORE-268); `preview` only on the admin listener with an admin session (CORE-253); any other client is `browser`. A role that cannot be verified closes the connection with code 4403. The kiosk and preview clients are interactive; a browser is interactive only with a display session (CORE-254). `welcome.interactive` tells the shell which one it is.
+- CORE-248: Inbound limits. Frames from a client that is not interactive are dropped and counted, except `hello` and `log`; this covers `notify`, `client`, requests and touch. A frame larger than 512 KiB closes the connection with code 1009. A frame that names a `CORE_*` notification, an instance the client does not show, or a registered name with an invalid payload (CORE-225) is not delivered and gets an `error` frame `{code, message_key, ref}`. Notifications and requests from an element have source `<module>/<instance>` of that element and start a new trace (CORE-111).
+- CORE-249: Outbound limits. Each client has a queue of 1000 frames; a newer `state` frame for an instance replaces one still queued. When the queue is full the engine closes the connection with code 1013 and the client resyncs on reconnect. A notification goes to a browser once, with the list of its instances whose `subscribes` match (CORE-25; unset means all).
+- CORE-250: Reconnect. After a lost connection the shell keeps the last render and reconnects after 0.5 s, doubling up to 10 s, with ±20 % jitter. Every reconnect is a full resync through `hello` and `welcome`. When `engine_build` differs from the build the page was loaded with, the shell reloads the page.
+- CORE-251: Liveness. The engine sends a WebSocket ping every 15 s and drops a client that has not answered for 30 s.
+- CORE-252: URLs. The mirror listener serves only `/` (the shell), `/core/…` (engine scripts, styles, fonts and vendored libraries), `/modules/<module>/<version>/…` (static files of installed modules, `Cache-Control: public, max-age=31536000, immutable`), `/i18n/<instance>.json?v=<hash>`, `/custom.css` (CORE-262), `/pair` (CORE-254), `/ws` and `/ws/kiosk-agent` (CORE-268); anything else is 404. The admin listener serves the same shell in preview mode under `/admin/preview` (6.6).
+
 ## 6. Configuration
 
 One file, `/etc/mm3/config.yaml` (override with `--config`), validated against the engine model plus each module's `config_model`; any error aborts startup with the YAML line number (CORE-30).
@@ -344,11 +363,12 @@ engine:
   server:               # mirror display listener: shell + /ws only
     host: 127.0.0.1
     port: 8080
+    allow: []           # extra LAN browsers (CIDR); view-only unless paired
   admin:                # admin UI + REST API, never shown on the mirror
     host: 0.0.0.0
     port: 8081
     allow: ["192.168.1.0/24"]
-    token: !env MM3_TOKEN
+                        # tokens: mm3 token new (10.1), never in this file
   mqtt:
     url: mqtt://broker.lan:1883
     base_topic: mm3/mirror1
@@ -409,7 +429,8 @@ modules:
 | `timezone` | IANA name | system time zone, else UTC | live (CORE-189) |
 | `units` | `metric`, `imperial` | `metric` | live; instances with a backend restart |
 | `server.host`, `server.port` | address, port | `127.0.0.1`, `8080` | next engine restart |
-| `admin.host`, `admin.port`, `admin.allow`, `admin.token` | address, port, CIDR list, secret | `127.0.0.1`, `8081`, `[]`, none | next engine restart |
+| `server.allow` | CIDR list (CORE-61) | `[]` (loopback only) | live, for connections made afterwards |
+| `admin.host`, `admin.port`, `admin.allow` | address, port, CIDR list (no token: CORE-62) | `127.0.0.1`, `8081`, `[]` | next engine restart |
 | `mqtt` | see 9.3 | absent: bridge off | live (reconnect) |
 | `timeouts.*` | seconds | as in 3.2 | live, for calls started afterwards |
 | `bus.queue_size` | integer ≥ 1 | 1000 | live, for inboxes created afterwards |
@@ -471,7 +492,7 @@ modules:
 | `CORE_CFG_OVERLAP` | error | Overlapping enabled instances on the same `z` (CORE-93) | `other` |
 | `CORE_CFG_CELL_TOO_SMALL` | error | A grid cell smaller than 1 px (CORE-213) | `width`, `height` |
 | `CORE_CFG_MIN_SIZE` | warning | An instance's area is below its `min_size_px` (CORE-96) | `width`, `height`, `min_width`, `min_height` |
-| `CORE_CFG_CSS` | error | `appearance.css` breaks a limit of CORE-214 | `reason` |
+| `CORE_CFG_CSS` | error | `appearance.css` or custom.css breaks a limit of CORE-214 or CORE-262 | `reason` |
 | `CORE_CFG_PAGE_UNKNOWN` | error | A page id that is not in `pages.list` (CORE-230, CORE-231) | `page` |
 | `CORE_CFG_DISPLAY_MODE` | error | `width` without `height`, or `refresh` without both (CORE-215) | — |
 | `CORE_CFG_SECRETS_UNENCRYPTED` | error | `backup.parts` includes `secrets` without `encrypt_to` (CORE-244) | — |
@@ -497,13 +518,14 @@ Watchfiles detects a change, the new file is validated in full, then the engine 
 | display changed | Kiosk re-applies mode, rotation and scale live; emit CORE\_DISPLAY\_CHANGED, re-layout (6.7) |
 | pages block changed | Re-layout; current page kept if it still exists, otherwise default (CORE-233) |
 | Instance pages or positions changed | Front-end re-layout only, backend untouched |
+| `custom.css` changed | Every shell reloads its styles (control `styles`), no re-render, backends untouched (CORE-262) |
 
-- CORE-208: A reload starts on a change to the main file, an included file, the widget template directory or the env file (all watched), on SIGHUP, and after a history operation (6.8). It starts 500 ms after the last change event. Reloads run one at a time; changes that arrive during a reload cause exactly one more.
+- CORE-208: A reload starts on a change to the main file, an included file, the widget template directory, custom.css or the env file (all watched), on SIGHUP, and after a history operation (6.8). It starts 500 ms after the last change event. Reloads run one at a time; changes that arrive during a reload cause exactly one more.
 - CORE-209: An invalid configuration never replaces the running one, whatever started the reload. The engine keeps its current version, logs every record (CORE-206), emits `CORE_CONFIG_ERROR` with `{count, errors}` (file, line, path and code of the first 20) and reports `config: {version, disk_valid: false}` in `GET /api/v1/status`. Invalid files never become history versions.
 - CORE-210: Once validation passes, the new version is recorded (6.8) and applied in this order: stop removed and replaced instances; call `reconfigure()` on instances whose config changed, restarting those that return False; start added instances; push layout and display changes to browsers. A DISABLED instance whose config changed is restarted (CORE-195). Then the engine emits `CORE_CONFIG_CHANGED` with `{version, sections}`.
 - CORE-211: `ctx.locale`, `ctx.timezone` and `ctx.units` always hold the current values. Changes to `engine.locale`, `engine.timezone` or an instance `locale` are applied live; a change to `engine.units` restarts every running instance that has a backend.
 
-- CORE-245: `CORE_LOCALE_CHANGED` carries `{locale}`. A change to `engine.locale` broadcasts it with the new `engine.locale`; a change to an instance's `locale` sends it only to that instance, with the instance's new locale. Modules read `ctx.locale` for the locale that applies to them.
+* CORE-245: `CORE_LOCALE_CHANGED` carries `{locale}`. A change to `engine.locale` broadcasts it with the new `engine.locale`; a change to an instance's `locale` sends it only to that instance, with the instance's new locale. Modules read `ctx.locale` for the locale that applies to them.
 
 ### 6.4 Web configuration editor
 
@@ -585,6 +607,11 @@ modules:
 - The shell renders the grid with CSS Grid (`repeat(columns, 1fr)` × `repeat(rows, 1fr)`); each element gets `grid-area` and `z-index`, and appearance values become CSS custom properties (`--mm3-scale`, `--mm3-align`, …).
 - CORE-95: `MirrorElement` calls `onResize(widthPx, heightPx)` whenever its cell area changes; modules SHOULD adapt (for example a compact mode) rather than overflow.
 - CORE-96: A module MAY declare `min_size_px = (w, h)`; the layout view and validator warn when an instance's area at the configured resolution is smaller.
+- CORE-255: Element setup. For each visible instance the shell creates its element, adopts the module styles, the appearance variables and `appearance.css` as constructable stylesheets, calls `onResize` with its area, then `render` with the snapshot (`{}` until one arrives, Contract MOD-36). An exception in `render` or in any callback is caught and logged through the element's logger, and the cell shows the failure placeholder (CORE-117) until the next successful render.
+- CORE-256: Header and size. With `appearance.header` the shell draws the header above the element, outside its shadow root, styled by the theme (6.10). `onResize` reports the area below the header in whole CSS pixels and is called at most once per animation frame.
+- CORE-257: In a preset stack (CORE-212) each element's `onResize` gets the preset width and the preset height divided by the number of visible instances in the stack, as the validator assumes.
+- CORE-258: `overflow: fit` scales the element down uniformly with a CSS transform until its content fits its area, never up; it is recomputed after every render and resize. `scroll` makes the area scrollable by touch with no visible scrollbar.
+- CORE-259: Transitions. `this.hide()` and `this.show()`, and visibility changes (CORE-239), fade over 300 ms; `this.hide({fade: ms})` and `this.show({fade: ms})` set another duration, 0 for none. A page change cross-fades over the page transition (CORE-237). Hidden elements stay in the DOM with `display: none` and keep their state.
 
 ### 6.6 Live layout preview
 
@@ -630,10 +657,13 @@ The whole block is optional; without it the monitor's preferred mode is used, un
 
 **Applying it**
 
-- CORE-143: `mm3-kiosk.service` starts `mm3 kiosk`, which runs cage, applies output, mode, refresh, rotation and scale through the compositor's output management (`wlr-randr`), then starts Chromium. Display changes on hot reload are re-applied live; no restart of the kiosk.
+- CORE-143: `mm3-kiosk.service` is a system unit running as the user `mm3-kiosk` (groups `video`, `input`, `render`; no write access to `/etc/mm3` or the engine state directory) with `PAMName=login` and `TTYPath=/dev/tty1`, so it owns a logind seat session. It runs `cage -- mm3 kiosk session`. The kiosk session applies output, mode, refresh, rotation and scale through the compositor's output management (`wlr-randr`), then starts Chromium. Display changes on hot reload are re-applied live; no restart of the kiosk. The kiosk needs cage ≥ 0.1.5 (wlr-output-management) and is supported on Debian 13 and later; on an older system `mm3 kiosk session` refuses to start and says why.
 - CORE-144: The kiosk reports the outputs, the modes each supports, and the applied viewport and device pixel ratio in its `hello` frame and after every change. The admin form offers `output` and the mode as dropdowns of these reported values.
 - CORE-145: If the requested mode is not supported, the kiosk uses the closest supported mode (same aspect ratio first, then the largest not above the request). The mismatch is shown in the admin and the debug page, and the engine uses the viewport actually applied.
 - CORE-146: When the applied viewport changes, the engine emits `CORE_DISPLAY_CHANGED` with `{viewport: [w, h], scale, rotation}`, and every element receives `onResize` (CORE-95).
+- CORE-268: Kiosk agent. The kiosk session connects to `/ws/kiosk-agent` on the mirror listener, which accepts only loopback connections that present the agent key the engine writes at start to `/run/mm3/kiosk.key` (mode 0640, group `mm3-kiosk`). Over it the engine sends the `display` block, and the agent applies it and reports outputs, modes, the applied mode and failures (CORE-144, CORE-145). For each Chromium launch the engine issues a one-time kiosk key, which the agent passes in the start URL fragment (`/#kiosk=<key>`) so the shell can claim the `kiosk` role (CORE-247).
+- CORE-269: Supervision. The agent starts Chromium only once the mirror listener answers (the screen stays black meanwhile). It restarts Chromium when it exits, and when the engine reports that the kiosk shell has not connected or answered pings for 60 s, with backoff from 1 s to 30 s. After 5 restarts in 10 minutes it stops trying, and the engine reports the kiosk as failed in `GET /api/v1/status` and on the debug page.
+- CORE-270: Chromium runs with a profile in the kiosk user's state directory and at least `--kiosk`, `--ozone-platform=wayland`, `--no-first-run`, `--noerrdialogs`, `--disable-session-crashed-bubble`, `--disable-translate`, `--disable-pinch`, `--overscroll-history-navigation=0` and `--autoplay-policy=no-user-gesture-required`; the pointer cursor is hidden. The full list lives in `mm3.core.kiosk` and is shown by `mm3 kiosk session --print-command`.
 - The `display` block describes the local kiosk only. Other LAN browsers showing the shell render at their own window size with the same grid.
 
 ### 6.8 Configuration history, undo and redo
@@ -648,10 +678,10 @@ Every change to the configuration can be undone and redone, both while editing a
 
 **Saved versions**
 
-- CORE-153: Every valid saved configuration becomes a numbered version in `<state>/config-history/` (`<state>` as in 3.1), one directory per version. It holds the whole config set as it was (the main file, every included file and the widget templates, with their paths relative to the config directory) and `meta.json` with version, time (UTC), origin (initial, admin, file, cli, restore, undo, redo), author (admin client address, `cli:<user>` or `file`), parent version, changed sections and the SHA-256 of the set. The env file is never stored. When the history is empty, the engine records the running config as version 1 (origin initial). History is append-only; nothing is rewritten.
-- CORE-216: The sections are `engine`, `display`, `layout`, pages, `backup`, each module instance (`modules/<id>`), the order of the modules list (`modules/_order`) and each widget template (`widget_templates/<name>`). Changed sections are computed on the resolved values before `!env` substitution; a change to comments or formatting only is a version with no changed sections.
+- CORE-153: Every valid saved configuration becomes a numbered version in `<state>/config-history/` (`<state>` as in 3.1), one directory per version. It holds the whole config set as it was (the main file, every included file, the widget templates and custom.css, with their paths relative to the config directory) and `meta.json` with version, time (UTC), origin (initial, admin, file, cli, restore, undo, redo), author (admin client address, `cli:<user>` or `file`), parent version, changed sections and the SHA-256 of the set. The env file is never stored. When the history is empty, the engine records the running config as version 1 (origin initial). History is append-only; nothing is rewritten.
+- CORE-216: The sections are `engine`, `display`, `layout`, pages, `backup`, each module instance (`modules/<id>`), the order of the modules list (`modules/_order`), custom\_css (CORE-262) and each widget template (`widget_templates/<name>`). Changed sections are computed on the resolved values before `!env` substitution; a change to comments or formatting only is a version with no changed sections.
 - CORE-154: Undo and redo of saves. An ordinary version's parent is the version current when it was made; an undo or redo version takes the parent of the version whose content it restores. "Undo last save" creates a new version (origin undo) with the content of the current version's parent. "Redo" creates a new version (origin redo) with the content undone most recently; it is offered while the latest versions are undos and redos, and any other save ends the redo chain. Example: after saves v1–v3, undo gives v4 = v2, a second undo v5 = v1, redo v6 = v2, redo v7 = v3. If the target no longer validates, nothing is applied and no version is created (CORE-156). Hot reload (6.3) applies each new version.
-- CORE-155: Section restore: from any version, a single section (one module instance by id, `engine`, `display`, `layout`, pages, `backup`, a widget template) can be restored alone; the rest of the current config stays as it is. The section is written back into the file that holds it now; an instance that no longer exists is appended to the `modules` list, in the file that holds that list. The result is a new version.
+- CORE-155: Section restore: from any version, a single section (one module instance by id, `engine`, `display`, `layout`, pages, `backup`, a widget template, custom\_css) can be restored alone; the rest of the current config stays as it is. The section is written back into the file that holds it now; an instance that no longer exists is appended to the `modules` list, in the file that holds that list. The result is a new version.
 - The history view lists versions with their changed sections, shows the diff between any two versions as a whole or per section, and offers "Restore all", "Restore section" and "Open in editor".
 - CORE-156: A restored version or section always goes through full validation. If it fails (for example a module no longer installed), nothing is applied and it can be opened in the editor to fix.
 - CORE-217: The engine, the admin save and the `mm3 config` commands write config files and history under one lock (`<state>/config-history/.lock`, flock). Each file is written atomically (temp file + rename), keeping its owner and mode. When the watcher sees a config set whose SHA-256 equals the latest version's, it records no new version. `mm3 config` runs as the `mm3` user and works whether the engine runs or not; a running engine applies the result through its watcher. `mm3.service` therefore has write access to `/etc/mm3` and to its state directory (`ReadWritePaths`, CORE-65).
@@ -700,6 +730,7 @@ modules:
 - CORE-233: The engine keeps one current page for all displays. It changes on `PAGE_NEXT` and `PAGE_PREV` (cyclic, in list order), `PAGE_SET` (an unknown id is ignored with a warning), rotation, touch, REST and Home Assistant. At start the current page is `default`; on reload it is kept if it still exists, otherwise `default`. With `reset_on_resume: true` (default), `CORE_RESUME` returns to `default`.
 - CORE-234: Rotation: when `rotate` is above 0 (per page, else global) the engine moves to the next page after that time. Any page change not made by rotation, and any touch on the kiosk, pauses rotation for `pause_on_interaction` (default 2 min). Rotation stops while the mirror is suspended.
 - CORE-235: Touch: with `engine.input.touch`, a horizontal swipe across at least 25 % of the viewport width changes page (swipe left = next, right = previous). A swipe that starts on the element of a module with the `input.touch` capability goes to that element and does not change page.
+- CORE-260: A swipe is a single-pointer gesture whose horizontal travel is at least 25 % of the viewport width and at least twice its vertical travel, completed within 1 s. Swipes, and touches that pause rotation (CORE-234), count only from interactive clients (CORE-247); preview clients never change the page (CORE-239).
 - CORE-236: Control surfaces: REST `GET /api/v1/pages` (list and current page), `POST /api/v1/pages/{id}`, `/pages/next`, `/pages/prev`; a Home Assistant select entity "page" (options are the page titles, state is the current page) through MQTT discovery (9.3).
 - CORE-237: After each change the engine emits `CORE_PAGE_CHANGED` (5.5; `reason` is rotate, notification, touch, rest, ha, resume, reload or start) and sends a `control` frame `page` to every shell, which switches with the configured transition (fade 300 ms, or none). `ctx.page` (current page id) and `ctx.pages` (ids and resolved titles) are always current; front-ends read `this.page`.
 
@@ -710,6 +741,13 @@ modules:
 - CORE-240: Runtime stop and start: REST `/api/v1/modules/{id}/stop` and `/start`, the admin and the Home Assistant "enabled" switch stop or start an instance without changing the configuration (state STOPPED, reason runtime). This is not recorded in the history and is lost on engine restart, when the instance returns to its configured state; any config change to the instance clears it. The admin offers "Save as disabled", which writes `disabled: true` through the normal save (6.4).
 - CORE-241: A module with the capability `layout.control` may call `ctx.layout.hide(instance_id)` and `ctx.layout.show(instance_id)` on other instances (reason `module:<own id>`). Hide reasons set by a module are cleared when that module stops. Without the capability a module can only change pages, through the notifications above.
 - CORE-242: The admin layout view (6.6) has a page selector: position edits apply to the selected page, or to every page for `pages: all` instances, and the live preview renders the selected page.
+
+### 6.10 Theme and custom CSS
+
+The shell looks like MagicMirror² by default, and every colour, size and font is a CSS variable that modules use and the user can override in one file (CORE-261).
+
+- CORE-261: The shell defines the theme variables on `:root`; they are inherited into every shadow root. Font: `--mm3-font-family` (Roboto Condensed, vendored, then `sans-serif`). Sizes, all multiplied by the instance's `--mm3-scale`: `--mm3-size-xsmall` 15px, `--mm3-size-small` 20px, `--mm3-size-medium` 30px, `--mm3-size-large` 65px, `--mm3-size-xlarge` 75px, with `--mm3-font-size` equal to small. Colours: `--mm3-color-bg` #000, `--mm3-color-fg` #aaa, `--mm3-color-bright` #fff, `--mm3-color-dimmed` #666, and the state tokens `--mm3-color-good`, `--mm3-color-warning`, `--mm3-color-critical`, `--mm3-color-accent`, `--mm3-color-muted` (also used by WGT-11). Spacing: `--mm3-gap` (from `layout.gap`). The list is part of the Module API (Contract MOD-33): adding a variable is a minor change, removing or renaming one is a major change.
+- CORE-262: The optional file `custom.css` next to the main config file (`/etc/mm3/custom.css`) is served at `/custom.css` and loaded after the theme. It may set theme variables for the whole mirror or for one instance (`[data-instance="weather_home"]`), and style the shell: page background, cells, headers. It cannot reach inside shadow roots. It follows the limits of CORE-214 except that it may be up to 64 KiB, and a file that breaks them is a validation error `CORE_CFG_CSS` with path `/custom_css`. It belongs to the config set as the history section `custom_css` (CORE-153, CORE-216) and is watched for hot reload (CORE-208).
 
 ## 7. Lifecycle and error handling
 
@@ -772,6 +810,16 @@ The engine has its own catalog for shell and admin UI strings (`CORE_*` keys). T
 - CORE-41: CI fails if any shipped locale lacks a key present in `en`.
 - CORE-42: CI fails if a placeholder set differs between `en` and a translation.
 
+### 8.5 Catalogs at run time
+
+Catalogs are compiled before they reach a mirror, looked up in a fixed order, and swapped live when a locale changes (CORE-263).
+
+- CORE-263: Catalogs are compiled when a package is built: every module wheel and `mm3-core` ship a `.mo` and a `messages.json` next to each `.po`, and the engine never compiles at run time. `mm3 i18n compile` builds them; CI fails when one is missing or older than its `.po` (8.4). The English messages of the validation codes (CORE-243) are part of the core catalog.
+- CORE-264: A key is looked up along the instance's locale chain (8.2) in the module's catalog, then along the same chain in the core catalog. Locale packages (`mm3.locales`, 8.3) add locales and keys a module lacks; a key the module ships itself always wins.
+- CORE-265: Placeholders are `{name}`. An entry with plural forms is stored in `messages.json` as an object keyed by CLDR plural category (`zero`, `one`, `two`, `few`, `many`, `other`), converted from the `.po` plural indices at compile time; `t(key, {count})` picks the form with `Intl.PluralRules` in the browser and Babel in the backend. A variable missing from the call renders as `{name}` and is logged once.
+- CORE-266: `this.fmtDate` and `this.fmtNumber` use the element's locale, and `fmtDate` uses `engine.timezone`, not the browser's time zone, so every client shows the mirror's time. `fmtDate(d, style)` takes `short`, `medium`, `long`, `full`, `time` or an `Intl.DateTimeFormat` options object; `fmtNumber(n, unit)` takes an `Intl` unit identifier and formats without converting.
+- CORE-267: On a locale change for an instance (CORE-245) the shell fetches its catalog again (new `v` hash), receives its public config with `LocalizedText` resolved for the new locale (CORE-101), updates `this.locale` and calls `onLocaleChange`, which re-renders by default.
+
 ## 9. Built-in services
 
 Remote control and the MQTT bridge are engine services; presence and power is a module that uses generic engine hooks. Everything is driven through ordinary bus notifications (CORE-50).
@@ -828,9 +876,11 @@ The server binds to `127.0.0.1` by default, and nothing beyond the shell itself 
 
 ### 10.1 Security
 
-- CORE-61: Exposure needs explicit `server.host` plus a CIDR `allow` list; requests from other sources get 403.
-- CORE-62: `/api/*`, `/admin` and remote WebSocket commands require `Authorization: Bearer <token>`; tokens are stored as argon2 hashes, generated by `mm3 token new`.
-- CORE-63: Shell responses send a strict Content-Security-Policy: scripts only from self, no inline script, `connect-src` self.
+- CORE-61: Both listeners always accept loopback. Other sources need the listener's allow list, `server.allow` or `admin.allow` (CIDR lists, default `[]`), and `server.host` or `admin.host` bound to a non-loopback address; requests from other sources get 403 and are logged at info level, at most once a minute per address.
+- CORE-62: `/api/*`, `/admin` and the admin WebSocket require an admin token, sent as `Authorization: Bearer <token>` or held in an admin session (CORE-253). `mm3 token new <name> [--display]` creates a token and shows it once; tokens are stored as argon2 hashes with name, kind (admin or display), creation and last-use time in `<state>/tokens.json` (0600, owner `mm3`). `mm3 token list` shows them and `mm3 token revoke <name>` revokes one and ends its sessions at once. No token is ever kept in the configuration.
+- CORE-63: Every response of both listeners sends `Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'` (`frame-ancestors 'self'` for `/admin/preview`), `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, a `Permissions-Policy` that denies camera, microphone, geolocation, USB, serial, Bluetooth and payment, and `Cache-Control: no-store` except on versioned static files (CORE-252). Pages use no inline script or style.
+- CORE-253: Admin sessions. `/admin/login` exchanges an admin token for a session cookie (HttpOnly, SameSite=Strict, Path=/) valid 30 days from its last use. Requests with unsafe methods also need an `Origin` header matching the admin listener. Five failed logins from one address lock logins from it for 15 minutes.
+- CORE-254: Display pairing. `mm3 token new <name> --display` prints a link `http://<host>:<port>/pair#<token>`. The pairing page sends the token from the fragment to `/pair`, which sets a display session cookie (as CORE-253, valid until the token is revoked) and redirects to `/`; that browser is then interactive (CORE-247). A display token grants nothing on the admin listener.
 - CORE-64: Front-end templates MUST escape data; `MirrorElement` offers an `html` tagged template that escapes by default.
 - CORE-65: Service runs as unprivileged user `mm3`; systemd hardening (`ProtectSystem=strict`, `NoNewPrivileges=yes`, `PrivateTmp=yes`).
 - CORE-66: Only modules installed in the engine's venv load. The engine process itself never installs anything: installs go through the CLI or the separate installer service (10.7), from the signed catalog.
@@ -843,11 +893,11 @@ The server binds to `127.0.0.1` by default, and nothing beyond the shell itself 
 | `mm3-modules-default` | clock, calendar, weather, newsfeed, compliments, alert, presence, widget (each also separate) |
 | `mm3-install.sh` | Creates `mm3` user, venv in `/opt/mm3`, config in `/etc/mm3`, systemd units |
 | `mm3.service` | Engine (`Type=notify`, watchdog via sd\_notify) |
-| `mm3-kiosk.service` | User unit running mm3 kiosk: applies the display block (6.7), then launches `chromium --kiosk --app=http://127.0.0.1:8080` under a minimal Wayland compositor (cage) |
+| `mm3-kiosk.service` | System unit as user `mm3-kiosk` on tty1 running `cage -- mm3 kiosk session`: applies the display block (6.7), then launches and supervises Chromium on `http://127.0.0.1:8080` (CORE-143, CORE-268–270) |
 | mm3-installer.service | Privileged installer for admin-initiated installs, Unix socket only (10.7) |
 | mm3-backup.timer | Scheduled backup and remote copy, run as the installer user (10.8) |
 
-CLI: `mm3 run`, `mm3 check-config`, `mm3 modules list`, `mm3 new-module <name>` (scaffold with all five locales), `mm3 i18n compile`, `mm3 token new`.
+CLI: `mm3 run`, `mm3 check-config`, `mm3 modules list`, `mm3 new-module <name>` (scaffold with all five locales), `mm3 i18n compile`, `mm3 token new|list|revoke`, `mm3 kiosk session`.
 
 ### 10.3 Documentation and quality
 
@@ -1204,6 +1254,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.11 | 2026-10-28 | Milestone 3 settled: WebSocket handshake, roles, limits, reconnect, liveness and URLs (CORE-246–252); allow lists on both listeners, named tokens in a token store, no token in the config, admin sessions, display pairing, security headers (CORE-61–63 changed, CORE-201 changed, CORE-253, CORE-254); element setup, header and size, stacks, fit, transitions (CORE-255–259); swipe (CORE-260); theme variables and custom.css as a config section (CORE-261, CORE-262; CORE-153, CORE-155, CORE-208, CORE-216, CORE-243 changed); catalogs compiled at build, lookup, plurals, formatting, locale change (CORE-263–267); kiosk as a system unit with an agent, Debian 13+ (CORE-143 changed, CORE-268–270); lit-html and Roboto Condensed approved (1.2) |
 | 0.10 | 2026-10-28 | pages is a configuration history section, shown in changed sections and restorable alone (CORE-216 and CORE-155 changed) |
 | 0.9 | 2026-10-28 | CORE\_CONFIG\_ERROR reserved (CORE-22 changed); CORE\_CONFIG\_CHANGED, CORE\_CONFIG\_ERROR and CORE\_LOCALE\_CHANGED registered in 5.5; CORE\_LOCALE\_CHANGED payload and delivery (CORE-245); default gap 16px and padding 32px (CORE-213 changed) |
 | 0.8 | 2026-10-28 | Validation codes CORE\_CFG\_\* with their severity, Pydantic mapping and params (CORE-243); backup block keys, defaults and checks (CORE-244) |

@@ -81,16 +81,24 @@ name = "Web shell, WebSocket, i18n, kiosk, visibility"
 status = "not_started"
 requirements = [
   "CORE-06", "CORE-07", "CORE-11", "CORE-12", "CORE-40..42", "CORE-60..64",
-  "CORE-95", "CORE-103", "CORE-143..146", "CORE-223", "CORE-233..235",
-  "CORE-237..239", "CORE-241",
+  "CORE-95", "CORE-103", "CORE-117", "CORE-143..146", "CORE-223", "CORE-233..235",
+  "CORE-237..239", "CORE-241", "CORE-246..270",
 ]
+# Settled in core spec 0.11 / contract 1.0 rev 7. CORE-117 moved here from
+#   milestone 6: the shell draws the failure placeholder.
+# Changed in 0.11 but kept in milestone 2 (spec-change issue): CORE-201
+#   (server.allow, no admin.token), CORE-153, CORE-155, CORE-208, CORE-216 and
+#   CORE-243 (custom.css as config section custom_css). The shell side of
+#   custom.css is CORE-262 here.
+# CORE-253: the login endpoint and session cookie come here; the admin pages
+#   that use them come in milestone 6.
 
 [[milestone]]
 number = 4
 name = "Test kit and module check"
 status = "not_started"
 requirements = [
-  "MOD-01..08", "MOD-10..17", "MOD-24..27", "MOD-30..36", "MOD-40..44", "MOD-51..54",
+  "MOD-01..08", "MOD-10..17", "MOD-24..27", "MOD-30..37", "MOD-40..44", "MOD-51..54",
   "MOD-60..66", "MOD-70..73", "MOD-80..86", "MOD-95",
 ]
 
@@ -107,7 +115,7 @@ status = "not_started"
 # Also serves the CORE-113 health record (assigned to milestone 1) at
 #   GET /api/v1/modules/{id}/health, with the rest of the REST API.
 requirements = [
-  "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..117",
+  "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
 ]
 
