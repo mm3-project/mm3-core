@@ -16,6 +16,7 @@ Implements:
     CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
     MOD-18, MOD-19: Module Contract 1.0 rev 6, §3.3 Rules.
     CORE-202: Core spec 0.8, §6.2 Rules.
+    CORE-211: Core spec 0.9, §6.3 Hot reload.
 """
 
 from __future__ import annotations
@@ -26,7 +27,7 @@ import traceback
 from collections import deque
 from collections.abc import Callable, Coroutine, Mapping
 from concurrent.futures import Executor
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from enum import StrEnum
 from pathlib import Path
@@ -118,6 +119,36 @@ class _Incarnation:
     host: asyncio.Task[None] | None = None
     consumer: asyncio.Task[None] | None = None
     ending: bool = False
+
+
+_BACKEND_HOOKS = (
+    "start",
+    "stop",
+    "suspend",
+    "resume",
+    "reconfigure",
+    "on_notification",
+    "on_client_message",
+    "on_request",
+    "snapshot",
+)
+
+
+def has_backend(cls: type[MirrorModule]) -> bool:
+    """Tell whether a module has a backend: it overrides at least one hook.
+
+    Front-end-only modules ship the class with no hooks (Contract section 1).
+
+    Args:
+        cls: The module class.
+
+    Returns:
+        True when any hook of ``MirrorModule`` is overridden.
+
+    Implements:
+        CORE-211: Core spec 0.9, §6.3 Hot reload.
+    """
+    return any(getattr(cls, h) is not getattr(MirrorModule, h) for h in _BACKEND_HOOKS)
 
 
 def _leaves(exc: BaseException) -> list[BaseException]:
@@ -467,7 +498,7 @@ class ManagedInstance:
             config: The new raw configuration block.
         """
         async with self._lock:
-            self.spec = InstanceSpec(self.spec.instance_id, self.spec.module, dict(config))
+            self.spec = replace(self.spec, config=dict(config))
             inc = self._inc
             if self.state not in (State.RUNNING, State.SUSPENDED) or inc is None:
                 if self.state in (State.DISABLED, State.FAILED):
@@ -496,6 +527,24 @@ class ManagedInstance:
             else:
                 await self._teardown(call_stop=True)
                 await self._launch()
+
+    def set_locale(self, locale: str | None) -> None:
+        """Change the instance ``locale`` override; the running context follows it.
+
+        Args:
+            locale: New override, ``None`` to follow ``engine.locale``.
+
+        Implements:
+            CORE-211: Core spec 0.9, §6.3 Hot reload.
+        """
+        self.spec = replace(self.spec, locale=locale)
+        if self._inc is not None:
+            self._inc.ctx.update(locale=locale or self._sup.settings.locale)
+
+    @property
+    def context(self) -> EngineContext | None:
+        """The context of the current incarnation, if any."""
+        return self._inc.ctx if self._inc is not None else None
 
     async def set_suspended(self, suspended: bool) -> None:
         """Call ``suspend()`` or ``resume()`` on a running instance.
@@ -768,9 +817,34 @@ class Supervisor:
         """
         self.timezone = ZoneInfo(timezone)
         for inst in self._instances.values():
-            obj_ctx = inst._inc.ctx if inst._inc else None
-            if obj_ctx is not None:
-                obj_ctx.engine_scheduler.set_timezone(self.timezone)
+            if (ctx := inst.context) is not None:
+                ctx.update(timezone=self.timezone)
+
+    def apply_settings(self, settings: EngineSettings) -> None:
+        """Use reloaded engine settings for everything that changes live.
+
+        Time budgets apply to calls started afterwards, ``bus.queue_size`` to
+        inboxes created afterwards; ``engine.locale`` and ``engine.timezone``
+        reach every running context (CORE-211). ``engine.units`` is applied
+        by restarting instances (see :func:`has_backend`).
+
+        Args:
+            settings: The new ``engine`` block.
+
+        Implements:
+            CORE-211: Core spec 0.9, §6.3 Hot reload.
+        """
+        old = self.settings
+        self.settings = settings
+        if settings.timezone != old.timezone:
+            self.set_timezone(settings.timezone)
+        for inst in self._instances.values():
+            if (ctx := inst.context) is not None:
+                ctx.update(
+                    locale=inst.spec.locale or settings.locale,
+                    units=settings.units,
+                    timeouts=settings.timeouts,
+                )
 
     def deliver_client_message(self, instance_id: str, msg: ClientMessage) -> bool:
         """Queue a front-end message for its instance.

@@ -2,8 +2,9 @@
 
 Implemented so far: ``--version``, ``mm3 check-config`` and ``mm3 run``.
 ``mm3 run`` loads and validates the configuration, refuses to start with
-exit code 2 when it has errors, and runs the module instances until SIGTERM
-or SIGINT; the web gateway and SIGHUP reload join it in later milestones.
+exit code 2 when it has errors, runs the module instances until SIGTERM or
+SIGINT, and reloads the configuration when its files change or on SIGHUP;
+the web gateway joins it in milestone 3.
 The other subcommands (``modules``, ``module check``, ``migrate``, ``i18n``,
 ``token``, ``diag``, ``installer``, ``config``) are added with their
 milestones.
@@ -13,6 +14,7 @@ Implements:
     CORE-30: Core spec 0.8, §6 Configuration.
     CORE-207: Core spec 0.8, §6.2 Rules.
     -: Core spec 0.8, §7.2 Error reporting.
+    CORE-208: Core spec 0.9, §6.3 Hot reload.
 """
 
 from __future__ import annotations
@@ -116,20 +118,26 @@ def check_config(
     return EXIT_CONFIG_INVALID if failed else 0
 
 
-async def _serve(result: ConfigResult, registry: Registry) -> None:
+async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> None:
+    from mm3.core.config.manager import ConfigManager
     from mm3.core.engine import Engine
 
     assert result.config is not None  # noqa: S101 - checked by the caller
     engine = Engine(result.config.engine, registry=registry)
+    manager = ConfigManager(engine, result, registry=registry, env_file=env_file)
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
         with contextlib.suppress(NotImplementedError, RuntimeError):
             loop.add_signal_handler(sig, stop.set)
+    with contextlib.suppress(NotImplementedError, RuntimeError, AttributeError):
+        loop.add_signal_handler(signal.SIGHUP, manager.request_reload, "sighup")
     await engine.start(result.instance_specs())
+    await manager.start()
     try:
         await stop.wait()
     finally:
+        await manager.close()
         await engine.stop()
 
 
@@ -164,7 +172,7 @@ def run(
     log = get_logger(subsystem="config")
     for rec in result.warnings:
         log.warning("config_warning", **rec.as_dict())
-    asyncio.run(_serve(result, registry))
+    asyncio.run(_serve(result, registry, env_file))
     return 0
 
 

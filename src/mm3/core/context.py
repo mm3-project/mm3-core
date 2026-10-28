@@ -14,6 +14,7 @@ Implements:
     CORE-225: Core spec 0.7, §5.5 Shared notification registry.
     CORE-111, CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
     CORE-185, CORE-193, CORE-197: Core spec 0.7, §7 Lifecycle and error handling.
+    CORE-211: Core spec 0.9, §6.3 Hot reload.
 """
 
 from __future__ import annotations
@@ -184,6 +185,37 @@ class EngineContext:
         """Close the context and cancel its jobs (MOD-22)."""
         self._closed = True
         self._scheduler.cancel_all()
+
+    def update(
+        self,
+        *,
+        locale: str | None = None,
+        timezone: ZoneInfo | None = None,
+        units: Literal["metric", "imperial"] | None = None,
+        timeouts: Timeouts | None = None,
+    ) -> None:
+        """Apply reloaded engine values, so the context always holds the current ones.
+
+        A new time zone also re-plans wall-clock jobs (CORE-189).
+
+        Args:
+            locale: New active locale.
+            timezone: New engine time zone.
+            units: New unit system.
+            timeouts: New time budgets, used by calls started afterwards.
+
+        Implements:
+            CORE-211: Core spec 0.9, §6.3 Hot reload.
+        """
+        if locale is not None:
+            self._locale = locale
+        if timezone is not None:
+            self._timezone = timezone
+            self._scheduler.set_timezone(timezone)
+        if units is not None:
+            self._units = units
+        if timeouts is not None:
+            self._timeouts = timeouts
 
     @property
     def engine_scheduler(self) -> InstanceScheduler:

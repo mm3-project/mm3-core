@@ -58,6 +58,10 @@ status = "in_progress"
 #   service (milestone 3) compiles them into the engine catalog.
 # CORE-101: resending configs on a locale change comes with hot reload and
 #   the shell; one form field per locale comes with the editor (milestone 6).
+# CORE-209: GET /api/v1/status serves ConfigManager.status() in milestone 6.
+# CORE-210: pushing layout and display changes to browsers plugs into
+#   ConfigManager.layout_listeners with the shell (milestone 3); versions come
+#   from the configuration history (PR D) instead of the in-memory counter.
 requirements = [
   "CORE-02", "CORE-30..33", "CORE-90..94", "CORE-96", "CORE-101",
   "CORE-140..142", "CORE-150", "CORE-153..156", "CORE-200..219",

@@ -9,6 +9,20 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Hot reload (milestone 2, part B; Core spec 0.9): the main file, included
+  files, the env file and `widget-templates/` are watched; a reload starts
+  500 ms after the last change or on SIGHUP, one at a time with exactly one
+  more for changes during a reload (CORE-208). An invalid configuration is
+  never applied: the records are logged, `CORE_CONFIG_ERROR` is emitted and
+  `disk_valid` turns false (CORE-209). A valid one gets a version and is
+  applied per instance in the order of CORE-210 (stop, reconfigure or
+  restart, start, re-layout), then `CORE_CONFIG_CHANGED` with the changed
+  sections (CORE-216). `ctx.locale`, `ctx.timezone` and `ctx.units` follow
+  the reload, with `CORE_LOCALE_CHANGED` broadcast or sent to one instance
+  (CORE-211, CORE-245); `reconfigure()` returning True keeps the instance
+  running (MOD-50).
+- The registry includes `CORE_CONFIG_CHANGED`, `CORE_CONFIG_ERROR` and
+  `CORE_LOCALE_CHANGED`; its test now reads the spec table.
 - Configuration loading and validation (milestone 2, part A; Core spec 0.8):
   `mm3.core.config` reads `/etc/mm3/config.yaml` (`--config`) with `!include`
   confined to the config directory, 8 levels deep, no cycles (CORE-31), and
