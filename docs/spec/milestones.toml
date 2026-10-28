@@ -77,6 +77,8 @@ requirements = ["MOD-23"]
 number = 6
 name = "Admin: REST API, config editor, preview, debug page"
 status = "not_started"
+# Also serves the CORE-113 health record (assigned to milestone 1) at
+#   GET /api/v1/modules/{id}/health, with the rest of the REST API.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..117",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
