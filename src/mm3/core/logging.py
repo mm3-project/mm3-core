@@ -24,7 +24,14 @@ import structlog
 
 from mm3.core.trace import current_trace
 
-__all__ = ["RING_SIZE", "Logger", "configure_logging", "get_logger", "recent_records"]
+__all__ = [
+    "RING_SIZE",
+    "Logger",
+    "configure_logging",
+    "get_logger",
+    "recent_records",
+    "set_log_level",
+]
 
 RING_SIZE = 5000
 """Records kept in memory for the admin debug page (CORE-110)."""
@@ -80,6 +87,15 @@ def configure_logging(
         logger_factory=structlog.PrintLoggerFactory(file=out),
         cache_logger_on_first_use=False,
     )
+
+
+def set_log_level(level: str) -> None:
+    """Change the minimum log level live (``engine.log_level`` on hot reload).
+
+    Args:
+        level: ``debug``, ``info``, ``warning`` or ``error``.
+    """
+    structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(_LEVELS[level]))
 
 
 def recent_records() -> list[dict[str, Any]]:

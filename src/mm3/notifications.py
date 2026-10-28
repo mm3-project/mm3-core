@@ -9,6 +9,8 @@ them (MOD-43).
 
 Implements:
     CORE-224, CORE-225, CORE-226: Core spec 0.7, §5.5 Shared notification registry.
+    -: Core spec 0.9, §5.5 Shared notification registry.
+    CORE-245: Core spec 0.9, §6.3 Hot reload.
     MOD-40: Module Contract 1.0 rev 6, §6.1 Messaging.
 """
 
@@ -23,8 +25,12 @@ from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 __all__ = [
     "REGISTRY",
+    "ConfigChanged",
+    "ConfigError",
+    "ConfigErrorItem",
     "CorePageChanged",
     "HideAlert",
+    "LocaleChanged",
     "LocalizedTextValue",
     "NoPayload",
     "PageInfoPayload",
@@ -149,6 +155,57 @@ def _rows(*rows: RegisteredName) -> Mapping[str, RegisteredName]:
     return MappingProxyType({r.name: r for r in rows})
 
 
+class ConfigChanged(_Payload):
+    """Payload of ``CORE_CONFIG_CHANGED`` (core spec 6.3).
+
+    Attributes:
+        version: The configuration version now applied.
+        sections: Changed sections (CORE-216).
+    """
+
+    version: int
+    sections: list[str]
+
+
+class ConfigErrorItem(_Payload):
+    """One error of ``CORE_CONFIG_ERROR``.
+
+    Attributes:
+        file: File of the error.
+        line: 1-based line, 0 when unknown.
+        path: JSON Pointer into the configuration.
+        code: ``CORE_CFG_*`` code.
+    """
+
+    file: str | None
+    line: int
+    path: str
+    code: str
+
+
+class ConfigError(_Payload):
+    """Payload of ``CORE_CONFIG_ERROR`` (CORE-209).
+
+    Attributes:
+        count: Number of errors.
+        errors: The first 20 errors.
+    """
+
+    count: int
+    errors: list[ConfigErrorItem] = Field(max_length=20)
+
+
+class LocaleChanged(_Payload):
+    """Payload of ``CORE_LOCALE_CHANGED`` (CORE-245).
+
+    Attributes:
+        locale: The new locale: ``engine.locale`` when broadcast, the
+            instance's locale when sent to one instance.
+    """
+
+    locale: str
+
+
 REGISTRY: Mapping[str, RegisteredName] = _rows(
     RegisteredName("PRESENCE_DETECTED", "event", PresenceEvent),
     RegisteredName("PRESENCE_CLEARED", "event", PresenceEvent),
@@ -158,6 +215,9 @@ REGISTRY: Mapping[str, RegisteredName] = _rows(
     RegisteredName("PAGE_PREV", "command", NoPayload),
     RegisteredName("PAGE_SET", "command", PageSet),
     RegisteredName("CORE_PAGE_CHANGED", "event", CorePageChanged, engine_only=True),
+    RegisteredName("CORE_CONFIG_CHANGED", "event", ConfigChanged, engine_only=True),
+    RegisteredName("CORE_CONFIG_ERROR", "event", ConfigError, engine_only=True),
+    RegisteredName("CORE_LOCALE_CHANGED", "event", LocaleChanged, engine_only=True),
 )
 """Registered names, as in the core spec §5.5 table (CORE-224)."""
 

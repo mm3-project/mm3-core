@@ -293,18 +293,27 @@ async def test_core_222_late_reply_dropped(make_engine: EngineFactory, clock: Vi
 # --- shared notification registry -----------------------------------------------
 
 
+def _spec_registry() -> dict[str, str]:
+    import re
+    from pathlib import Path
+
+    text = (Path(__file__).resolve().parents[1] / "docs" / "spec" / "core.md").read_text()
+    section = text[text.index("### 5.5") : text.index("## 6. Configuration")]
+    rows: dict[str, str] = {}
+    for line in section.splitlines():
+        cells = [c.strip() for c in line.replace("\\|", "/").strip("|").split("|")]
+        if len(cells) == 4 and cells[0].startswith("`"):
+            for name in re.findall(r"`([A-Z0-9_]+)`", cells[0]):
+                rows[name] = cells[1]
+    return rows
+
+
 def test_core_224_registry_matches_spec_table() -> None:
-    assert set(REGISTRY) == {
-        "PRESENCE_DETECTED",
-        "PRESENCE_CLEARED",
-        "SHOW_ALERT",
-        "HIDE_ALERT",
-        "PAGE_NEXT",
-        "PAGE_PREV",
-        "PAGE_SET",
-        "CORE_PAGE_CHANGED",
-    }
-    assert REGISTRY["CORE_PAGE_CHANGED"].engine_only
+    table = _spec_registry()
+    assert set(REGISTRY) == set(table)
+    for name, kind in table.items():
+        assert REGISTRY[name].kind == kind.split(",")[0]
+        assert REGISTRY[name].engine_only == ("engine only" in kind)
     assert {r.kind for r in REGISTRY.values()} == {"event", "command"}
     schema = json_schema("SHOW_ALERT")
     assert set(schema["required"]) == {"message", "level"}
