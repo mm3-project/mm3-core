@@ -41,7 +41,7 @@ class Engine:
             ``mm3.modules`` entry points.
         clock: Time source; the system clock by default.
         clients: Path to front-end elements; dropped until the web gateway exists.
-        state_dir: State directory; default from ``settings`` or the environment.
+        state_dir: State directory; default from the environment (CORE-198).
     """
 
     def __init__(
@@ -70,7 +70,7 @@ class Engine:
             clients=clients or NullClientChannel(),
             clock=self.clock,
             executor=self.executor,
-            state_dir=state_dir or self.settings.state_dir or resolve_state_dir(),
+            state_dir=state_dir or resolve_state_dir(),
         )
         self.running = False
 

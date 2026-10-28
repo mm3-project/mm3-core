@@ -11,7 +11,7 @@ Implements:
 """
 
 from mm3.__about__ import MODULE_API_VERSION, __version__
-from mm3.config import CronExpression, ModuleConfig
+from mm3.config import CronExpression, LocaleTag, LocalizedText, ModuleConfig
 from mm3.context import ModuleContext
 from mm3.errors import ConfigurationError, RemoteError, RequestTimeoutError, TransientError
 from mm3.messages import ClientMessage, Notification
@@ -22,6 +22,8 @@ __all__ = [
     "ClientMessage",
     "ConfigurationError",
     "CronExpression",
+    "LocaleTag",
+    "LocalizedText",
     "MirrorModule",
     "ModuleConfig",
     "ModuleContext",
