@@ -2,13 +2,14 @@
 
 The plan says, per instance id, what hot reload does (core spec 6.3 table):
 start, stop, replace, reconfigure, restart, update the locale, or only
-re-layout the front-end; and which ``engine`` keys change live or at the
-next engine restart.
+re-layout the front-end; which ``engine`` keys change live or at the
+next engine restart; and whether custom.css changed.
 
 Implements:
     CORE-02: Core spec 0.9, §3 Engine components.
     -: Core spec 0.9, §6.3 Hot reload.
-    CORE-216: Core spec 0.10, §6.8 Configuration history, undo and redo.
+    CORE-201: Core spec 0.11, §6.2 Rules.
+    CORE-216: Core spec 0.11, §6.8 Configuration history, undo and redo.
 """
 
 from __future__ import annotations
@@ -21,10 +22,24 @@ from typing import Any
 from mm3.core.config.loader import LoadedConfig
 from mm3.core.config.validate import ConfigResult, ResolvedInstance
 
-__all__ = ["RESTART_KEYS", "ReloadPlan", "changed_sections", "plan_reload", "unsubstituted"]
+__all__ = [
+    "LIVE_SUBKEYS",
+    "RESTART_KEYS",
+    "ReloadPlan",
+    "changed_sections",
+    "plan_reload",
+    "unsubstituted",
+]
 
 RESTART_KEYS = frozenset({"server", "admin", "threads"})
-"""``engine`` keys applied only at the next engine restart (CORE-201)."""
+"""``engine`` keys applied only at the next engine restart (CORE-201).
+
+``server.allow`` is the exception: it applies live, for connections made
+afterwards, and is reported as the live key ``server.allow``.
+"""
+
+LIVE_SUBKEYS = {"server": frozenset({"allow"})}
+"""Sub-keys of restart keys that apply live (CORE-201)."""
 
 _TOP_SECTIONS = ("engine", "display", "layout", "pages", "backup")
 _LAYOUT_KEYS = ("position", "positions", "pages", "appearance")
@@ -76,10 +91,11 @@ def changed_sections(old: ConfigResult, new: ConfigResult) -> list[str]:
     Returns:
         Changed sections in a stable order: ``engine``, ``display``,
         ``layout``, ``pages``, ``backup``, then ``modules/<id>`` in file order (removed
-        ones last), then ``modules/_order``.
+        ones last), then ``modules/_order``, ``custom_css`` and
+        ``widget_templates/<name>`` in name order.
 
     Implements:
-        CORE-216: Core spec 0.10, §6.8 Configuration history, undo and redo.
+        CORE-216: Core spec 0.11, §6.8 Configuration history, undo and redo.
     """
     a, b = unsubstituted(old.loaded), unsubstituted(new.loaded)
     am = a if isinstance(a, Mapping) else {}
@@ -95,6 +111,12 @@ def changed_sections(old: ConfigResult, new: ConfigResult) -> list[str]:
     common = [i for i in old_by_id if i in new_by_id]
     if common != [i for i in new_by_id if i in old_by_id]:
         out.append("modules/_order")
+    if old.assets.custom_css != new.assets.custom_css:
+        out.append("custom_css")
+    ta, tb = old.assets.templates, new.assets.templates
+    out.extend(
+        f"widget_templates/{n}" for n in sorted(ta.keys() | tb.keys()) if ta.get(n) != tb.get(n)
+    )
     return out
 
 
@@ -115,6 +137,7 @@ class ReloadPlan:
         display: Whether the ``display`` block changed.
         layout: Whether the ``layout`` block changed.
         pages: Whether the ``pages`` block changed.
+        custom_css: Whether custom.css changed (CORE-262).
         sections: Changed sections (CORE-216).
     """
 
@@ -130,6 +153,7 @@ class ReloadPlan:
     display: bool = False
     layout: bool = False
     pages: bool = False
+    custom_css: bool = False
     sections: list[str] = field(default_factory=list)
 
     @property
@@ -148,6 +172,7 @@ class ReloadPlan:
             or self.display
             or self.layout
             or self.pages
+            or self.custom_css
             or self.sections
         )
 
@@ -171,6 +196,7 @@ def plan_reload(old: ConfigResult, new: ConfigResult) -> ReloadPlan:
 
     Implements:
         -: Core spec 0.9, §6.3 Hot reload.
+        CORE-201: Core spec 0.11, §6.2 Rules.
     """
     if old.config is None or new.config is None:
         raise ValueError("both configurations must be valid")
@@ -178,14 +204,23 @@ def plan_reload(old: ConfigResult, new: ConfigResult) -> ReloadPlan:
     old_engine = old.config.engine.model_dump(mode="json")
     new_engine = new.config.engine.model_dump(mode="json")
     for key in old_engine.keys() | new_engine.keys():
-        if old_engine.get(key) != new_engine.get(key):
-            (plan.engine_restart if key in RESTART_KEYS else plan.engine_live).add(key)
-    if old.config.engine.admin.token != new.config.engine.admin.token:
-        # The JSON dump masks secrets; compare the token itself.
-        plan.engine_restart.add("admin")
+        before, after = old_engine.get(key), new_engine.get(key)
+        if before == after:
+            continue
+        if key not in RESTART_KEYS:
+            plan.engine_live.add(key)
+            continue
+        live = LIVE_SUBKEYS.get(key, frozenset())
+        was = before if isinstance(before, dict) else {}
+        now = after if isinstance(after, dict) else {}
+        changed = {k for k in was.keys() | now.keys() if was.get(k) != now.get(k)}
+        plan.engine_live.update(f"{key}.{k}" for k in changed & live)
+        if changed - live:
+            plan.engine_restart.add(key)
     plan.display = _dump(old.config.display) != _dump(new.config.display)
     plan.layout = _dump(old.config.layout) != _dump(new.config.layout)
     plan.pages = _dump(old.config.pages) != _dump(new.config.pages)
+    plan.custom_css = old.assets.custom_css != new.assets.custom_css
 
     old_by_id = {i.id: i for i in old.instances}
     for inst in new.instances:

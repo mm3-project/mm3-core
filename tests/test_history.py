@@ -356,17 +356,15 @@ def test_core_218_young_versions_are_kept(s: Setup) -> None:
 
 def test_core_218_diff_masks_secrets_and_shows_env_as_written(s: Setup) -> None:
     s.save(
-        "engine:\n  admin: {token: plain-one}\nmodules:\n  - module: weather\n"
+        "engine:\n  locale: it\nmodules:\n  - module: weather\n"
         "    position: top_left\n    config: {api_key: !env [KEY, k1], lat: 1}\n"
     )
     s.save(
-        "engine:\n  admin: {token: plain-two}\nmodules:\n  - module: weather\n"
+        "engine:\n  locale: de\nmodules:\n  - module: weather\n"
         "    position: top_left\n    config: {api_key: hard-coded, lat: 2}\n"
     )
     changes = s.history.diff(1, 2)
     text = json.dumps(changes)
-    assert "plain-one" not in text
-    assert "plain-two" not in text
     assert "hard-coded" not in text
     assert MASK in changes["modules/weather"][1]
     assert "!env [KEY, k1]" in changes["modules/weather"][0]
@@ -423,3 +421,41 @@ def test_core_219_validation_failure_exit_2(s: Setup) -> None:
     assert code == 2
     assert "CORE_CFG_MODULE_MISSING" not in err  # message text, not codes
     assert "not installed" in err
+
+
+# --- custom.css in the config set (CORE-153, CORE-155, CORE-216) ----------------------
+
+
+def test_core_153_custom_css_is_part_of_the_set(s: Setup) -> None:
+    (s.etc / "custom.css").write_text("body { --mm3-bg: #000; }\n")
+    v = s.save(cfg("it"))
+    stored = s.history.store.read_set(v)
+    assert stored.files["custom.css"] == b"body { --mm3-bg: #000; }\n"
+
+
+def test_core_216_custom_css_is_a_section(s: Setup) -> None:
+    s.save(cfg("it"))
+    (s.etc / "custom.css").write_text("body { color: red; }\n")
+    v = s.save(cfg("it"))
+    assert s.history.store.meta(v).sections == ["custom_css"]
+    changes = s.history.diff(1, v)
+    assert set(changes) == {"custom_css"}
+    assert "color: red" in changes["custom_css"][1]
+
+
+def test_core_155_restore_custom_css_alone(s: Setup) -> None:
+    s.save(cfg("it"))
+    (s.etc / "custom.css").write_text("body { color: red; }\n")
+    s.save(cfg("de"))
+    (s.etc / "custom.css").write_text("body { color: blue; }\n")
+    s.save(cfg("de"))
+    res = s.history.restore(2, "cli:t", section="custom_css")
+    assert res.code == 0, res.message
+    assert s.text("custom.css") == "body { color: red; }\n"
+    assert "locale: de" in s.text()
+    assert s.history.store.meta(res.version).sections == ["custom_css"]
+    # Restoring from a version without custom.css removes the file.
+    res = s.history.restore(1, "cli:t", section="custom_css")
+    assert res.code == 0, res.message
+    assert not (s.etc / "custom.css").exists()
+    assert "locale: de" in s.text()

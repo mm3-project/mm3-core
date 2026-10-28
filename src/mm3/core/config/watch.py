@@ -1,12 +1,14 @@
 """File watching for hot reload: the single watchfiles adapter.
 
 The watcher observes the directories that hold the configuration files and
-reports a change when one of the watched files, or anything in the widget
-template directory, changes. Watching directories rather than files keeps
-working when editors replace a file by renaming a new one over it.
+reports a change when one of the watched files (main file, includes,
+custom.css, env file), or anything in the widget template directory,
+changes; a watched file that does not exist yet is noticed when it appears.
+Watching directories rather than files keeps working when editors replace a
+file by renaming a new one over it.
 
 Implements:
-    CORE-208: Core spec 0.9, §6.3 Hot reload.
+    CORE-208: Core spec 0.11, §6.3 Hot reload.
     -: Core spec 0.9, §10.9 Dependency management.
 """
 
@@ -30,13 +32,14 @@ class ConfigWatcher:
     """Watch configuration files and call back on every relevant change.
 
     Args:
-        files: Returns the files to watch now (main file, includes, env file).
+        files: Returns the files to watch now (main file, includes,
+            custom.css, env file).
         directories: Returns directories whose whole content is watched
             (the widget template directory).
         on_change: Called for each batch of relevant file events.
 
     Implements:
-        CORE-208: Core spec 0.9, §6.3 Hot reload.
+        CORE-208: Core spec 0.11, §6.3 Hot reload.
     """
 
     def __init__(

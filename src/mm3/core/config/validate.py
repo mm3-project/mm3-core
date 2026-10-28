@@ -9,6 +9,7 @@ Implements:
     CORE-30: Core spec 0.8, §6 Configuration.
     CORE-32: Core spec 0.8, §6.2 Rules.
     CORE-202, CORE-203, CORE-204, CORE-206: Core spec 0.8, §6.2 Rules.
+    CORE-262: Core spec 0.11, §6.10 Theme and custom CSS.
     MOD-49: Module Contract 1.0 rev 6, §6.2 Configuration.
 """
 
@@ -25,6 +26,7 @@ from typing import Any
 from pydantic import BaseModel, ValidationError
 
 from mm3.config import ModuleConfig, iter_localized
+from mm3.core.config.assets import ConfigAssets, read_assets
 from mm3.core.config.envfile import DEFAULT_ENV_FILE, EnvFile, read_env_file
 from mm3.core.config.layout import LayoutResult, check_layout
 from mm3.core.config.loader import LoadedConfig, load_yaml
@@ -86,6 +88,7 @@ class ConfigResult:
         instances: Instances with their validated configuration.
         layout: Viewport, cell size and placements per page (core spec 6.5,
             6.7, 6.9); ``None`` when there are errors.
+        assets: custom.css and the widget templates (CORE-216, CORE-262).
     """
 
     path: Path
@@ -95,6 +98,7 @@ class ConfigResult:
     config: MirrorConfig | None = None
     instances: list[ResolvedInstance] = field(default_factory=list)
     layout: LayoutResult | None = None
+    assets: ConfigAssets = field(default_factory=ConfigAssets)
 
     @property
     def errors(self) -> list[ValidationRecord]:
@@ -306,6 +310,7 @@ def load_config(
         CORE-02: Core spec 0.8, §3 Engine components.
         CORE-30: Core spec 0.8, §6 Configuration.
         CORE-232: Core spec 0.9, §6.9 Pages and visibility.
+        CORE-262: Core spec 0.11, §6.10 Theme and custom CSS.
     """
     env = read_env_file(env_file)
     loaded = load_yaml(
@@ -314,6 +319,8 @@ def load_config(
     result = ConfigResult(path=path, env=env, loaded=loaded)
     result.records.extend(env.records)
     result.records.extend(loaded.records)
+    result.assets, asset_records = read_assets(path.parent)
+    result.records.extend(asset_records)
     if loaded.data is None and loaded.records:
         return result
     config, instances, records = validate(loaded, registry)

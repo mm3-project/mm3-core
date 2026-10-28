@@ -9,6 +9,16 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Changed
 
+- Milestone 2 rework for core spec 0.11 (issue #19). custom.css next to the
+  main file is part of the config set: stored in the history (CORE-153),
+  compared as the section `custom_css` (CORE-216), restorable alone with
+  `mm3 config restore --section custom_css` (CORE-155) and watched for hot
+  reload even before it exists (CORE-208). It is validated with the limits
+  of CORE-214 up to 64 KiB; a breach is `CORE_CFG_CSS` at `/custom_css`
+  (CORE-243, CORE-262). Widget templates are now listed as changed sections
+  too. `engine.server.allow` added and applied live as `server.allow`;
+  `engine.admin.token` removed: a config that sets it fails with
+  `CORE_CFG_UNKNOWN_KEY` (CORE-201, CORE-62).
 - Spec sync: Core spec 0.12. CORE-143 changed: `mm3 kiosk session` checks the
   version printed by `cage -v`, comparing only the leading
   `MAJOR.MINOR.PATCH` (Debian 13 ships `0.1.5+20240127`), not the Debian

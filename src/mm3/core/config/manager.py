@@ -1,6 +1,7 @@
 """Hot reload: triggers, validation, and applying the new configuration.
 
-A reload starts 500 ms after the last change to a watched file, on SIGHUP,
+A reload starts 500 ms after the last change to a watched file (main file,
+includes, widget templates, custom.css, env file), on SIGHUP,
 or after a history operation. Reloads run one at a time, and changes that
 arrive during a reload cause exactly one more. An invalid configuration
 never replaces the running one; a valid one is recorded as a version and
@@ -8,7 +9,8 @@ then applied in the order of CORE-210.
 
 Implements:
     CORE-02: Core spec 0.9, §3 Engine components.
-    CORE-208, CORE-209, CORE-210, CORE-211, CORE-245: Core spec 0.9, §6.3 Hot reload.
+    CORE-208: Core spec 0.11, §6.3 Hot reload.
+    CORE-209, CORE-210, CORE-211, CORE-245: Core spec 0.9, §6.3 Hot reload.
     MOD-50: Module Contract 1.0 rev 6, §6.2 Configuration.
 """
 
@@ -21,6 +23,7 @@ from dataclasses import replace
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Protocol
 
+from mm3.core.config.assets import CUSTOM_CSS, TEMPLATE_DIR
 from mm3.core.config.diff import ReloadPlan, plan_reload
 from mm3.core.config.validate import ConfigResult, load_config
 from mm3.core.config.watch import ConfigWatcher
@@ -42,7 +45,6 @@ __all__ = [
 
 DEBOUNCE_S = 0.5
 ERRORS_IN_EVENT = 20
-TEMPLATE_DIR = "widget-templates"
 Origin = Literal["initial", "file", "sighup", "history"]
 
 _log = get_logger(subsystem="config")
@@ -106,7 +108,8 @@ class ConfigManager:
         environ: Process environment for ``!env``; ``os.environ`` by default.
 
     Implements:
-        CORE-208, CORE-209, CORE-210: Core spec 0.9, §6.3 Hot reload.
+        CORE-208: Core spec 0.11, §6.3 Hot reload.
+        CORE-209, CORE-210: Core spec 0.9, §6.3 Hot reload.
     """
 
     def __init__(
@@ -155,9 +158,14 @@ class ConfigManager:
         """Return the files whose changes start a reload (CORE-208).
 
         Returns:
-            The main file, every included file seen, and the env file.
+            The main file, every included file seen, custom.css (whether it
+            exists or not) and the env file.
+
+        Implements:
+            CORE-208: Core spec 0.11, §6.3 Hot reload.
         """
-        return {*self.current.loaded.files, *self._attempted_files, self.env_file}
+        css = self.current.path.parent / CUSTOM_CSS
+        return {*self.current.loaded.files, *self._attempted_files, css, self.env_file}
 
     def watched_directories(self) -> set[Path]:
         """Return the directories watched as a whole: the widget template directory.
@@ -364,6 +372,6 @@ class ConfigManager:
         if "locale" in plan.engine_live:
             sup.emit("CORE_LOCALE_CHANGED", {"locale": settings.locale})
         # 4. Push layout and display changes to the browsers.
-        if plan.relayout or plan.layout or plan.display or plan.pages:
+        if plan.relayout or plan.layout or plan.display or plan.pages or plan.custom_css:
             for listener in self.layout_listeners:
                 await listener(new, plan)

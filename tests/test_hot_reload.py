@@ -414,3 +414,54 @@ async def test_core_216_env_values_change_no_section(mirror: Harness, tmp_path: 
     assert list(plan.reconfigure) == ["a"]
     assert await m.manager.reload()
     assert ("reconfigure", "a") in EVENTS
+
+
+# --- custom.css and server.allow (CORE-208, CORE-216, CORE-201) -----------------------
+
+
+async def test_core_208_custom_css_is_watched_and_reloads(mirror: Harness) -> None:
+    m = await mirror(BASE, watch=True)
+    css = m.path.parent / "custom.css"
+    assert css in m.manager.watched_files()
+    seen: list[Any] = []
+
+    async def listener(new: Any, plan: Any) -> None:
+        seen.append(plan)
+
+    m.manager.layout_listeners.append(listener)
+    await asyncio.sleep(0.3)  # let the watcher start
+    css.write_text("body { color: red; }\n")
+    for _ in range(200):
+        if m.manager.version >= 2:
+            break
+        await asyncio.sleep(0.05)
+    await m.manager.idle()
+    assert m.manager.version == 2
+    assert [p.sections for p in seen] == [["custom_css"]]
+    assert seen[0].custom_css
+    assert m.manager.current.assets.custom_css == b"body { color: red; }\n"
+
+
+async def test_core_208_invalid_custom_css_keeps_the_running_config(mirror: Harness) -> None:
+    m = await mirror(BASE)
+    (m.path.parent / "custom.css").write_text("@import 'x';")
+    assert not await m.reload()
+    assert not m.manager.disk_valid
+    assert m.manager.current.assets.custom_css is None
+
+
+async def test_core_201_server_allow_is_live_host_needs_restart(mirror: Harness) -> None:
+    from mm3.core.config.diff import plan_reload
+
+    m = await mirror(BASE)
+    old = m.manager.current
+    m.write("engine:\n  server: {allow: [192.168.1.0/24]}\n" + BASE)
+    new = load_config(m.path, registry=m.engine.registry, env_file=m.manager.env_file, environ={})
+    plan = plan_reload(old, new)
+    assert plan.engine_live == {"server.allow"}
+    assert plan.engine_restart == set()
+    m.write("engine:\n  server: {allow: [192.168.1.0/24], port: 9000}\n" + BASE)
+    new2 = load_config(m.path, registry=m.engine.registry, env_file=m.manager.env_file, environ={})
+    plan2 = plan_reload(old, new2)
+    assert plan2.engine_live == {"server.allow"}
+    assert plan2.engine_restart == {"server"}
