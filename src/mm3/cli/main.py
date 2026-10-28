@@ -1,13 +1,13 @@
 """Entry point of the ``mm3`` command.
 
-Implemented so far: ``--version``, ``mm3 check-config`` and ``mm3 run``.
+Implemented so far: ``--version``, ``mm3 check-config``, ``mm3 run`` and
+``mm3 config`` (history, diff, undo, redo, restore).
 ``mm3 run`` loads and validates the configuration, refuses to start with
 exit code 2 when it has errors, runs the module instances until SIGTERM or
 SIGINT, and reloads the configuration when its files change or on SIGHUP;
 the web gateway joins it in milestone 3.
 The other subcommands (``modules``, ``module check``, ``migrate``, ``i18n``,
-``token``, ``diag``, ``installer``, ``config``) are added with their
-milestones.
+``token``, ``diag``, ``installer``) are added with their milestones.
 
 Implements:
     -: Core spec 0.8, §10.2 Packaging and deployment.
@@ -30,6 +30,7 @@ from pathlib import Path
 from typing import TextIO
 
 from mm3.__about__ import MODULE_API_VERSION, __version__
+from mm3.cli.config_cmd import add_config_parser, run_config
 from mm3.core.config import DEFAULT_CONFIG, DEFAULT_ENV_FILE, ConfigResult, load_config
 from mm3.core.registry import Registry
 
@@ -62,6 +63,7 @@ def build_parser() -> argparse.ArgumentParser:
     check.add_argument("--json", action="store_true", help="print the records as JSON")
     run = sub.add_parser("run", help="run the engine")
     _config_args(run)
+    add_config_parser(sub, _config_args)
     return parser
 
 
@@ -128,12 +130,18 @@ def check_config(
 
 
 async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> None:
+    from mm3.core.config.history import ConfigHistory, HistoryRecorder
     from mm3.core.config.manager import ConfigManager
     from mm3.core.engine import Engine
+    from mm3.core.services.storage import resolve_state_dir
 
     assert result.config is not None  # noqa: S101 - checked by the caller
-    engine = Engine(result.config.engine, registry=registry)
-    manager = ConfigManager(engine, result, registry=registry, env_file=env_file)
+    state_dir = resolve_state_dir()
+    engine = Engine(result.config.engine, registry=registry, state_dir=state_dir)
+    history = ConfigHistory(result.path, env_file=env_file, registry=registry, state_dir=state_dir)
+    manager = ConfigManager(
+        engine, result, registry=registry, env_file=env_file, recorder=HistoryRecorder(history)
+    )
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
@@ -200,6 +208,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return check_config(args.config, args.env_file, strict=args.strict, as_json=args.json)
     if args.command == "run":
         return run(args.config, args.env_file)
+    if args.command == "config":
+        return run_config(args, registry=_discover())
     parser.print_help()
     return 0
 

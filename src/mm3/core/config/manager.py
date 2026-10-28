@@ -51,8 +51,14 @@ _log = get_logger(subsystem="config")
 class VersionRecorder(Protocol):
     """Records valid configurations as numbered versions (core spec 6.8)."""
 
-    async def record(self, result: ConfigResult, sections: list[str], origin: Origin) -> int:
-        """Record a configuration and return its version number."""
+    async def record(
+        self, result: ConfigResult, sections: list[str], origin: Origin, changed: bool = True
+    ) -> int:
+        """Record a configuration and return its version number.
+
+        ``changed`` is False when applying it changes nothing (formatting
+        only); a recorder may still make a version (CORE-216).
+        """
         ...
 
 
@@ -65,18 +71,22 @@ class MemoryVersions:
     def __init__(self) -> None:
         self.version = 0
 
-    async def record(self, result: ConfigResult, sections: list[str], origin: Origin) -> int:
-        """Return the next version number.
+    async def record(
+        self, result: ConfigResult, sections: list[str], origin: Origin, changed: bool = True
+    ) -> int:
+        """Return the next version number, or the same one when nothing changed.
 
         Args:
             result: The configuration (unused).
             sections: Its changed sections (unused).
             origin: What caused it (unused).
+            changed: Whether applying it changes anything.
 
         Returns:
-            The new version number.
+            The version number.
         """
-        self.version += 1
+        if changed or self.version == 0:
+            self.version += 1
         return self.version
 
 
@@ -258,7 +268,15 @@ class ConfigManager:
             _log.warning("config_warning", **rec.as_dict())
         plan = plan_reload(self.current, new)
         if plan.empty:
+            # Formatting only: no change to apply, but the history may record
+            # a version with no changed sections (CORE-216).
             self.current = new
+            version = await self.recorder.record(new, [], origin, changed=False)
+            if version != self.version:
+                self.version = version
+                self.engine.supervisor.emit(
+                    "CORE_CONFIG_CHANGED", {"version": version, "sections": []}
+                )
             return False
         self.version = await self.recorder.record(new, plan.sections, origin)
         old = self.current

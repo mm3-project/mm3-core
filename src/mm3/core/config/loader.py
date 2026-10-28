@@ -14,6 +14,7 @@ Implements:
 
 from __future__ import annotations
 
+import io
 import re
 from collections.abc import Mapping
 from dataclasses import dataclass, field
@@ -26,7 +27,17 @@ from ruamel.yaml.error import MarkedYAMLError, YAMLError
 
 from mm3.core.config.records import SourceMap, ValidationRecord, make_record, pointer
 
-__all__ = ["MAX_INCLUDE_DEPTH", "EnvRef", "LoadedConfig", "load_yaml", "read_yaml_file"]
+__all__ = [
+    "MAX_INCLUDE_DEPTH",
+    "EnvRef",
+    "LoadedConfig",
+    "dump_plain",
+    "include_target",
+    "load_yaml",
+    "read_yaml_file",
+    "rt_dump",
+    "rt_load",
+]
 
 MAX_INCLUDE_DEPTH = 8
 _DUP_KEY = re.compile(r'duplicate key "(.*?)"')
@@ -317,3 +328,63 @@ def load_yaml(
     loader = _Loader(path, env_file or {}, environ or {})
     loader.load()
     return loader.result
+
+
+def rt_load(text: str) -> Any:
+    """Parse YAML in round-trip mode, keeping comments, order and tags.
+
+    Args:
+        text: YAML text.
+
+    Returns:
+        The document (``CommentedMap``, ``CommentedSeq`` or a scalar).
+    """
+    return _yaml().load(text)
+
+
+def rt_dump(doc: Any) -> str:
+    """Write a round-trip document back to YAML text.
+
+    Args:
+        doc: A document from :func:`rt_load`, possibly edited.
+
+    Returns:
+        The YAML text.
+    """
+    out = io.StringIO()
+    _yaml().dump(doc, out)
+    return out.getvalue()
+
+
+def include_target(node: Any) -> str | None:
+    """Return the path of an ``!include`` node, or ``None`` for any other node.
+
+    Args:
+        node: A round-trip node.
+
+    Returns:
+        The path as written.
+    """
+    if _tag(node) == "!include" and isinstance(node, TaggedScalar):
+        value = node.value
+        return value if isinstance(value, str) else None
+    return None
+
+
+def dump_plain(value: Any) -> str:
+    """Write plain data (dicts, lists, scalars) as block-style YAML.
+
+    Args:
+        value: The data.
+
+    Returns:
+        The YAML text; ``""`` for ``None``.
+    """
+    if value is None:
+        return ""
+    y = YAML(typ="safe", pure=True)
+    y.default_flow_style = False
+    y.sort_base_mapping_type_on_output = False  # type: ignore[assignment]
+    out = io.StringIO()
+    y.dump(value, out)
+    return out.getvalue()
