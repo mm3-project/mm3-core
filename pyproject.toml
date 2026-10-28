@@ -85,6 +85,8 @@ ignore = ["D105", "D107"]
 
 [tool.ruff.lint.pydocstyle]
 # Implements CORE-70 (Core spec 0.6, §10.3 Documentation and quality)
+# Implements CORE-14 (Core spec 0.7, §4.4 Contract rules): Google-style
+# docstrings on every public class and method (rule set "D" above).
 convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
