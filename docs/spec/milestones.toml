@@ -48,11 +48,14 @@ requirements = [
 [[milestone]]
 number = 2
 name = "Configuration, layout, display, history, pages"
-status = "not_started"
+status = "in_progress"
+# Split into four PRs: A config loading and check-config, B hot reload,
+#   C layout, display and pages, D history.
+# CORE-244: only the backup block schema here; backups run in milestone 7.
 requirements = [
   "CORE-02", "CORE-30..33", "CORE-90..94", "CORE-96", "CORE-101",
   "CORE-140..142", "CORE-150", "CORE-153..156", "CORE-200..219",
-  "CORE-230..232", "MOD-45..50", "MOD-67",
+  "CORE-230..232", "CORE-243", "CORE-244", "MOD-45..50", "MOD-67",
 ]
 
 [[milestone]]

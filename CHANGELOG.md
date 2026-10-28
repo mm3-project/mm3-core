@@ -93,6 +93,10 @@ separately under **Module API** in each release (Module Contract, section 10).
 - Spec sync to Core spec 0.7: error replies carry `code` `transient`,
   `configuration` or `internal` (`REQUEST_FAILED` for bugs), and an
   `on_request` over its budget sends no reply (CORE-221).
+- Spec sync to Core spec 0.8: the list of `CORE_CFG_*` validation codes with
+  severity, Pydantic mapping and params (CORE-243), and the `backup` block
+  keys, defaults and checks (CORE-244); both assigned to milestone 2, which
+  is now in progress.
 
 ### Removed
 

@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.7 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.8 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -427,6 +427,52 @@ modules:
 
 - CORE-206: Validation collects every problem instead of stopping at the first. Each one is a record `{file, line, col, severity, path, code, params, message}`: severity is error or warning, `path` is a JSON Pointer into the resolved config (`/modules/2/config/lat`), `code` is an engine catalog key `CORE_CFG_*` (8.3) with `params`, and `message` is the English text. Pydantic error types are mapped to codes, so the admin shows messages in the user's language. Warnings never block loading; they are logged at start.
 - CORE-207: `mm3 check-config [--config PATH] [--env-file PATH] [--strict] [--json]` runs the same validation as startup and the admin (CORE-36) against the installed modules, without starting anything. It prints one line per record (`file:line:col severity path message`) or JSON. Exit code 0 when there is no error (warnings are printed), 2 when there are errors, as at startup (7.2); `--strict` treats warnings as errors.
+
+**Validation codes**
+
+- CORE-243: Every record's `code` is one of the codes below, and the engine catalog (8.3) has an English message for each that uses its `params`. Pydantic error types map to codes as listed; any other Pydantic type maps to `CORE_CFG_INVALID`, and a `ValueError` raised by a validator in a `ModuleConfig` gives `CORE_CFG_INVALID` with its text as `reason`. Records about layout (6.5–6.9) carry `page` in `params` when a `pages` block exists. Adding, removing or renaming a code is a spec change.
+
+| Code | Severity | Raised when | Params |
+| --- | --- | --- | --- |
+| `CORE_CFG_YAML_SYNTAX` | error | A file is not valid YAML | `reason` |
+| `CORE_CFG_YAML_TAG` | error | A tag other than `!env` and `!include` | `tag` |
+| `CORE_CFG_DUPLICATE_KEY` | error | A key repeated in one mapping | `key` |
+| `CORE_CFG_FILE_UNREADABLE` | error | The main file or an included file is missing or unreadable | `file` |
+| `CORE_CFG_INCLUDE_OUTSIDE` | error | An `!include` path resolves outside the config directory (CORE-31) | `path` |
+| `CORE_CFG_INCLUDE_CYCLE` | error | An `!include` cycle | `path` |
+| `CORE_CFG_INCLUDE_DEPTH` | error | More than 8 nested `!include` levels | `limit` |
+| `CORE_CFG_ENV_MISSING` | error | `!env NAME` without a default and no value (CORE-200) | `name` |
+| `CORE_CFG_ENV_FILE_SYNTAX` | error | An env file line that is not `KEY=VALUE`, a comment or blank; the value is never shown | — |
+| `CORE_CFG_ENV_FILE_MODE` | warning | The env file is readable by other users | `mode` |
+| `CORE_CFG_VERSION` | error | `config_version` above the engine's own (CORE-201) | `value`, `max` |
+| `CORE_CFG_UNKNOWN_KEY` | error | Pydantic `extra_forbidden` | `key` |
+| `CORE_CFG_REQUIRED` | error | Pydantic `missing` | — |
+| `CORE_CFG_TYPE` | error | Pydantic `*_type` and `*_parsing` types | `expected` |
+| `CORE_CFG_RANGE` | error | Pydantic `greater_than`, `greater_than_equal`, `less_than`, `less_than_equal`, `multiple_of` | the bound: `gt`, `ge`, `lt`, `le` or `multiple_of` |
+| `CORE_CFG_LENGTH` | error | Pydantic `too_short`, `too_long`, `string_too_short`, `string_too_long` | `min`, `max` |
+| `CORE_CFG_PATTERN` | error | Pydantic `string_pattern_mismatch` | `pattern` |
+| `CORE_CFG_CHOICE` | error | Pydantic `literal_error` and `enum` | `allowed` |
+| `CORE_CFG_DURATION` | error | Not a duration in a form of CORE-205 | `value` |
+| `CORE_CFG_TIMEZONE` | error | Not an IANA time zone name | `value` |
+| `CORE_CFG_LOCALE` | error | Not a valid BCP 47 tag | `value` |
+| `CORE_CFG_CRON` | error | Invalid or never-matching cron expression (CORE-181, CORE-188) | `reason` |
+| `CORE_CFG_LOCALIZED_NO_EN` | warning | A `LocalizedText` map without `en` (CORE-101) | — |
+| `CORE_CFG_ID_DUPLICATE` | error | An instance id or page id used twice | `id` |
+| `CORE_CFG_ID_REQUIRED` | error | A module used by more than one instance, and an instance without `id` (CORE-202) | `module` |
+| `CORE_CFG_MODULE_MISSING` | error | An enabled instance of a module that is not installed (CORE-203) | `module` |
+| `CORE_CFG_MODULE_UNAVAILABLE` | warning | The module fails to import or fails the API check; the instance is DISABLED (CORE-203) | `module`, `reason` |
+| `CORE_CFG_POSITION_REQUIRED` | error | A module with a front-end and no `position` (CORE-33) | `module` |
+| `CORE_CFG_POSITION_FORBIDDEN` | error | `position`, `positions` or `pages` on a backend-only module (CORE-33, CORE-231) | `key` |
+| `CORE_CFG_OUT_OF_GRID` | error | A rectangle that does not fit inside the grid (CORE-91, CORE-94) | `columns`, `rows` |
+| `CORE_CFG_PRESET_EMPTY` | error | A used preset that is empty on the configured grid (CORE-92) | `preset` |
+| `CORE_CFG_OVERLAP` | error | Overlapping enabled instances on the same `z` (CORE-93) | `other` |
+| `CORE_CFG_CELL_TOO_SMALL` | error | A grid cell smaller than 1 px (CORE-213) | `width`, `height` |
+| `CORE_CFG_MIN_SIZE` | warning | An instance's area is below its `min_size_px` (CORE-96) | `width`, `height`, `min_width`, `min_height` |
+| `CORE_CFG_CSS` | error | `appearance.css` breaks a limit of CORE-214 | `reason` |
+| `CORE_CFG_PAGE_UNKNOWN` | error | A page id that is not in `pages.list` (CORE-230, CORE-231) | `page` |
+| `CORE_CFG_DISPLAY_MODE` | error | `width` without `height`, or `refresh` without both (CORE-215) | — |
+| `CORE_CFG_SECRETS_UNENCRYPTED` | error | `backup.parts` includes `secrets` without `encrypt_to` (CORE-244) | — |
+| `CORE_CFG_INVALID` | error | Any other problem | `reason` |
 
 ### 6.3 Hot reload
 
@@ -958,6 +1004,17 @@ backup:
   remote: { name: nas, path: mm3/mirror1 }   # rclone remote, configured in the admin
 ```
 
+- CORE-244: The `backup` block is optional, every key in it is optional, and any other key is an error (`extra="forbid"`). `secrets` in `parts` without `encrypt_to` is an error (CORE-161), and so is `keep` with all three counts at 0. A change applies from the next scheduled backup.
+
+| Key | Values | Default |
+| --- | --- | --- |
+| `schedule` | `HH:MM`, 24-hour, in `engine.timezone` | `03:30` |
+| `parts` | Non-empty list of distinct values from `config`, `data`, `modules`, `secrets` | `config`, `data`, `modules`, plus `secrets` when `encrypt_to` is set |
+| `encrypt_to` | age X25519 public key (`age1…`) | none |
+| `keep.daily`, `keep.weekly`, `keep.monthly` | integer 0–1000 | 7, 4, 6 |
+| `remote.name` | rclone remote configured in the admin, matching `[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}`; required when `remote` is given | none: no remote copy |
+| `remote.path` | Path on that remote | `""` (the remote's root) |
+
 **Restore**
 
 - Sources: a file uploaded in the admin, an entry in the local list, an entry on the remote, or `mm3 backup restore <file>`.
@@ -1142,6 +1199,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.8 | 2026-10-28 | Validation codes CORE\_CFG\_\* with their severity, Pydantic mapping and params (CORE-243); backup block keys, defaults and checks (CORE-244) |
 | 0.7 | 2026-10-28 | Error reply codes transient, configuration and internal with REQUEST\_FAILED for bugs; an on\_request that exceeds its budget sends no reply (CORE-221 changed) |
 | 0.6 | 2026-10-28 | Request and reply on the bus, envelope fields expects\_reply and reply\_to (CORE-20, CORE-220–223); shared notification registry (CORE-224–226); CORE\_PAGE\_CHANGED reserved (CORE-22); pages, per-page positions, rotation, swipe, HA select (CORE-230–237); visibility reasons, runtime stop and start, layout.control, page selector in the admin (CORE-238–242); requirements traceability: spec sync, history rows list ids, citations checked per requirement, coverage matrix, issues for closed milestones (CORE-74 changed, CORE-75–79) |
 | 0.5 | 2026-10-28 | Milestone 2 settled: !include replaces a node inside the config directory (CORE-31); env file and !env defaults (CORE-200); top-level and engine keys with reload behaviour (CORE-201); instance keys, ids required for modules used more than once (CORE-202); missing and broken modules, disabled instances, durations (CORE-203–205); error records and mm3 check-config (CORE-206–207); reload triggers, invalid config never applied, apply order, current values in ctx (CORE-208–211); position required for front-ends (CORE-33); preset table and MM²-style stacks (CORE-92, CORE-93, CORE-212); spacing and appearance checks, header and classes only under appearance (CORE-213, CORE-214, 10.4); viewport rounding and assumed viewport (CORE-215); LocalizedText resolution (CORE-101); history stores the whole config set, sections, parents for undo and redo, lock and hash, retention, CLI exit codes (CORE-153–155, CORE-216–219) |
