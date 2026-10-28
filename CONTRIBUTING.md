@@ -42,10 +42,31 @@ Implements:
 
 - Use `-` instead of ids when the code implements a section without ids.
 - Smaller fragments use a comment in the same form:
-  `# Implements CORE-184 (Core spec 0.4, §3.3 Scheduler): no overlap.`
-- Current versions are in `docs/spec/versions.toml`. When a spec version
-  changes, update that file and review every file citing the old version in
-  the same pull request; `tools/check_spec_refs.py` (run in CI) lists them.
+  `# Implements CORE-184 (Core spec 0.5, §3.3 Scheduler): no overlap.`
+  Workflow and TOML files use the same comment.
+- Cite the version of the spec you implemented against. A citation stays
+  valid until the cited requirement changes (CORE-77); there is no need to
+  touch code when the spec version moves on.
+
+## Specs in the repository (CORE-75..79)
+
+- `docs/spec/core.md` and `docs/spec/contract.md` are Markdown exports of the
+  specs. Every spec change ends with a **spec sync PR**: export both docs,
+  run `uv run python tools/spec_sync.py`, assign new requirements to a
+  milestone in `docs/spec/milestones.toml`, and regenerate
+  `docs/spec/coverage.md` with `uv run python tools/trace_report.py --out docs/spec/coverage.md`.
+- `spec_sync.py` writes `requirements.toml` (one record per requirement with
+  `changed_in`) and `versions.toml`. It fails if a requirement changed
+  without being listed in a Document history row (CORE-76).
+- `check_spec_refs.py` fails on unknown ids or versions. A citation older
+  than the requirement's `changed_in` is *stale*: in a pull request it fails
+  only in the files the PR changes, so touching a file means reviewing it
+  against the current spec. Other stale citations show up in the coverage
+  matrix and in the milestone issue.
+- `trace_report.py` builds the coverage matrix (implemented = cited by code,
+  tested = cited by a test name). The Traceability workflow keeps one
+  `spec-change` issue per closed milestone that has changed or uncovered
+  requirements (CORE-79). Close it by doing the work and updating `done_at`.
 
 ## Tests
 

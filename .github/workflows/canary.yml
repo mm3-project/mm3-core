@@ -1,3 +1,4 @@
+# Implements CORE-176 (Core spec 0.6, §10.9 Dependency management)
 # Weekly canary (CORE-176): tests against the newest versions allowed by
 # pyproject.toml, against the newest versions available ignoring our upper
 # bounds, and on the next Python release. Never blocks merges; failures open

@@ -1,5 +1,8 @@
 name: CI
 
+# Implements CORE-170 (Core spec 0.6, §10.9 Dependency management)
+# Implements CORE-72 (Core spec 0.6, §10.3 Documentation and quality)
+
 on:
   push:
     branches: [main]
@@ -16,14 +19,28 @@ jobs:
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.11"
+      # Implements CORE-171 (Core spec 0.6, §10.9 Dependency management)
       - name: Lockfile matches pyproject (CORE-171)
         run: uv lock --check
       - run: uv sync --frozen --all-extras
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy
-      - name: Spec references (CORE-74)
-        run: uv run python tools/check_spec_refs.py
+      # Implements CORE-75, CORE-76 (Core spec 0.6, §10.3 Documentation and quality)
+      - name: Spec sync up to date (CORE-75, CORE-76)
+        run: uv run python tools/spec_sync.py --check
+      # Implements CORE-74, CORE-77 (Core spec 0.6, §10.3 Documentation and quality)
+      - name: Spec references (CORE-74, CORE-77)
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags --depth=200 origin "${{ github.base_ref }}"
+            uv run python tools/check_spec_refs.py --base "origin/${{ github.base_ref }}"
+          else
+            uv run python tools/check_spec_refs.py
+          fi
+      # Implements CORE-78 (Core spec 0.6, §10.3 Documentation and quality)
+      - name: Coverage matrix (CORE-78)
+        run: uv run python tools/trace_report.py --out coverage.md && cat coverage.md >> "$GITHUB_STEP_SUMMARY"
 
   test:
     runs-on: ubuntu-latest
@@ -40,6 +57,7 @@ jobs:
       # Deprecation warnings fail the suite (CORE-175), see pyproject.toml.
       - run: uv run pytest
 
+  # Implements CORE-174 (Core spec 0.6, §10.9 Dependency management)
   audit:
     name: pip-audit (CORE-174)
     runs-on: ubuntu-latest

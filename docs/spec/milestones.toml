@@ -1,0 +1,107 @@
+# Requirements per milestone of the implementation plan (CORE-78).
+# Edited by hand: assign every new requirement to a milestone in the spec sync PR.
+# status: not_started | in_progress | done.
+# done_at: spec versions when the milestone was closed; requirements changed
+#   later reopen the milestone in a spec-change issue (CORE-79).
+# waive: requirement satisfied without code citing it (reason).
+# waive_tests: requirement implemented but not testable by name (reason).
+# Ranges use "..": "CORE-20..29" means CORE-20 to CORE-29.
+
+[[milestone]]
+number = 0
+name = "Setup: repositories, CI, dependency management, traceability"
+status = "done"
+done_at = { core = "0.6", contract = "1.0 rev 6" }
+requirements = ["CORE-70..79", "CORE-170..177"]
+[milestone.waive]
+"CORE-173" = "Renovate policy lives in renovate.json, which cannot carry comments"
+"CORE-177" = "Architecture rule (one adapter per library), checked in review"
+[milestone.waive_tests]
+"CORE-70" = "Enforced by ruff pydocstyle rules in CI"
+"CORE-72" = "CI gate configuration"
+"CORE-170" = "Process requirement"
+"CORE-171" = "CI step uv lock --check"
+"CORE-172" = "Release workflow"
+"CORE-174" = "CI job pip-audit"
+"CORE-175" = "pytest configuration"
+"CORE-176" = "Scheduled canary workflow"
+
+[[milestone]]
+number = 1
+name = "Bus, lifecycle, scheduler"
+status = "done"
+done_at = { core = "0.4", contract = "1.0 rev 4" }
+requirements = [
+  "CORE-01", "CORE-03..05", "CORE-08", "CORE-10", "CORE-13", "CORE-14",
+  "CORE-20..29", "CORE-110", "CORE-111", "CORE-113",
+  "CORE-180..198", "CORE-220..222", "CORE-224..226",
+  "MOD-18..22", "MOD-90..94",
+]
+
+[[milestone]]
+number = 2
+name = "Configuration, layout, display, history, pages"
+status = "not_started"
+requirements = [
+  "CORE-02", "CORE-30..33", "CORE-90..94", "CORE-96", "CORE-101",
+  "CORE-140..142", "CORE-150", "CORE-153..156", "CORE-200..219",
+  "CORE-230..232", "MOD-45..50", "MOD-67",
+]
+
+[[milestone]]
+number = 3
+name = "Web shell, WebSocket, i18n, kiosk, visibility"
+status = "not_started"
+requirements = [
+  "CORE-06", "CORE-07", "CORE-11", "CORE-12", "CORE-40..42", "CORE-60..64",
+  "CORE-95", "CORE-103", "CORE-143..146", "CORE-223", "CORE-233..235",
+  "CORE-237..239", "CORE-241",
+]
+
+[[milestone]]
+number = 4
+name = "Test kit and module check"
+status = "not_started"
+requirements = [
+  "MOD-01..08", "MOD-10..17", "MOD-24..27", "MOD-30..36", "MOD-40..44", "MOD-51..54",
+  "MOD-60..66", "MOD-70..73", "MOD-80..86", "MOD-95",
+]
+
+[[milestone]]
+number = 5
+name = "Reference modules: greeting, clock, weather"
+status = "not_started"
+requirements = ["MOD-23"]
+
+[[milestone]]
+number = 6
+name = "Admin: REST API, config editor, preview, debug page"
+status = "not_started"
+requirements = [
+  "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..117",
+  "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
+]
+
+[[milestone]]
+number = 7
+name = "Services: MQTT/HA, presence, installer, catalog, backup"
+status = "not_started"
+requirements = [
+  "CORE-50..53", "CORE-66", "CORE-100", "CORE-120..126", "CORE-130..136",
+  "CORE-160..165", "MOD-96..99",
+]
+
+[[milestone]]
+number = 8
+name = "Extensions: widget builder, MM2 migration, default modules"
+status = "not_started"
+requirements = [
+  "CORE-80..83", "WGT-01..05", "WGT-10..12", "WGT-20..23", "WGT-30", "WGT-31",
+  "WGT-40", "WGT-41",
+]
+
+[[milestone]]
+number = 9
+name = "Release 1.0"
+status = "not_started"
+requirements = ["CORE-65"]

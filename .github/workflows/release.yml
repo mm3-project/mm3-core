@@ -1,3 +1,4 @@
+# Implements CORE-172 (Core spec 0.6, §10.9 Dependency management)
 # Publishes to PyPI with Trusted Publishing (core spec 10.6, MOD-96) and
 # attaches the tested constraints file to the GitHub release (CORE-172).
 # One-time setup on PyPI: add a trusted publisher for project "mm3-core",

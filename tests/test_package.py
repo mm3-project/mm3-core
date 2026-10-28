@@ -6,7 +6,7 @@ import mm3
 from mm3.cli.main import main
 
 
-def test_version_is_semver() -> None:
+def test_core_73_version_is_semver() -> None:
     parts = mm3.__version__.split(".")
     assert len(parts) == 3
     assert all(p.isdigit() for p in parts)
