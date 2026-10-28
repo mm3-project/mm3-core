@@ -27,6 +27,10 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Changed
 
+- Spec sync: Core spec 0.13. New: WebSocket frame contents and `ref`
+  (CORE-271), error and reply codes (CORE-272), `/ws` and
+  `/admin/preview/ws` endpoints, 10 s hello timeout and `engine_build`
+  (CORE-273), the `layout` object (CORE-274); all assigned to milestone 3.
 - Milestone 2 rework for core spec 0.11 (issue #19). custom.css next to the
   main file is part of the config set: stored in the history (CORE-153),
   compared as the section `custom_css` (CORE-216), restorable alone with
