@@ -7,6 +7,24 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed
+
+- Spec sync: Core spec 0.11 and Module Contract 1.0 rev 7 (milestone 3
+  requirements settled). New: WebSocket handshake, roles, limits, reconnect,
+  liveness and URLs (CORE-246..252); admin sessions and display pairing
+  (CORE-253, CORE-254); element setup, header, stacks, fit and transitions
+  (CORE-255..259); swipe (CORE-260); theme variables and `custom.css`
+  (CORE-261, CORE-262); catalogs at run time (CORE-263..267); kiosk agent,
+  supervision and Chromium flags (CORE-268..270); MOD-37 (templating only
+  through `/core/mm3.js`). Changed: CORE-61..63 (allow lists on both
+  listeners, token store, security headers), CORE-143 (kiosk system unit,
+  Debian 13+), CORE-201 (`server.allow`, no `admin.token`), CORE-153,
+  CORE-155, CORE-208, CORE-216, CORE-243 (`custom.css` as section
+  `custom_css`), MOD-33 (theme variables). lit-html 3 and Roboto Condensed
+  approved (core spec 1.2). CORE-117 moved to milestone 3; MOD-37 assigned to
+  milestone 4. Milestone 2 code citing the changed requirements is listed in
+  the coverage matrix for review.
+
 ### Added
 
 - Configuration history (milestone 2, part D; Core spec 0.10): every valid

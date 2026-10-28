@@ -3,14 +3,14 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.10"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10"]
+version = "0.11"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11"]
 
 [[spec]]
 name = "Module Contract"
 file = "contract.md"
-version = "1.0 rev 6"
-versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6"]
+version = "1.0 rev 7"
+versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7"]
 
 [[requirement]]
 id = "CORE-01"
@@ -407,9 +407,9 @@ id = "CORE-61"
 spec = "Core spec"
 section = "10.1"
 title = "Security"
-hash = "74d09dacf71c"
+hash = "a4f723a2a07f"
 introduced_in = "0.1"
-changed_in = "0.1"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -417,9 +417,9 @@ id = "CORE-62"
 spec = "Core spec"
 section = "10.1"
 title = "Security"
-hash = "cb62e6b2adb9"
+hash = "df073a941ab9"
 introduced_in = "0.1"
-changed_in = "0.1"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -427,9 +427,9 @@ id = "CORE-63"
 spec = "Core spec"
 section = "10.1"
 title = "Security"
-hash = "80f2a0317e31"
+hash = "4db29ad7bd8e"
 introduced_in = "0.1"
-changed_in = "0.1"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -997,9 +997,9 @@ id = "CORE-143"
 spec = "Core spec"
 section = "6.7"
 title = "Display output"
-hash = "b7ab28d7290a"
+hash = "96c3a25a2a3c"
 introduced_in = "0.1"
-changed_in = "0.1"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -1067,9 +1067,9 @@ id = "CORE-153"
 spec = "Core spec"
 section = "6.8"
 title = "Configuration history, undo and redo"
-hash = "f3c283f3bab8"
+hash = "6c073e6b68ff"
 introduced_in = "0.5"
-changed_in = "0.5"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -1087,9 +1087,9 @@ id = "CORE-155"
 spec = "Core spec"
 section = "6.8"
 title = "Configuration history, undo and redo"
-hash = "e31902c99e7c"
+hash = "6a5efff7e911"
 introduced_in = "0.5"
-changed_in = "0.10"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -1449,7 +1449,7 @@ section = "6.2"
 title = "Rules"
 hash = "47aac27c33a3"
 introduced_in = "0.5"
-changed_in = "0.5"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -1517,9 +1517,9 @@ id = "CORE-208"
 spec = "Core spec"
 section = "6.3"
 title = "Hot reload"
-hash = "e28a9807c630"
+hash = "2884da35b431"
 introduced_in = "0.5"
-changed_in = "0.5"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -1597,9 +1597,9 @@ id = "CORE-216"
 spec = "Core spec"
 section = "6.8"
 title = "Configuration history, undo and redo"
-hash = "d97d6396401a"
+hash = "63b9a2dde259"
 introduced_in = "0.5"
-changed_in = "0.10"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -1839,7 +1839,7 @@ section = "6.2"
 title = "Rules"
 hash = "f59086c25b03"
 introduced_in = "0.8"
-changed_in = "0.8"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -1860,6 +1860,256 @@ title = "Hot reload"
 hash = "5be4e66c359c"
 introduced_in = "0.9"
 changed_in = "0.9"
+status = "active"
+
+[[requirement]]
+id = "CORE-246"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "f6a31c9a9b64"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-247"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "92b6a4e500de"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-248"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "33b88e9edba8"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-249"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "27aa95afbe7b"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-250"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "f3cd708efe92"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-251"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "66dd27c372a8"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-252"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "9f98396be5fe"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-253"
+spec = "Core spec"
+section = "10.1"
+title = "Security"
+hash = "6dc8de81c495"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-254"
+spec = "Core spec"
+section = "10.1"
+title = "Security"
+hash = "f2476a9cb926"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-255"
+spec = "Core spec"
+section = "6.5"
+title = "Screen layout"
+hash = "59b9a60d3992"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-256"
+spec = "Core spec"
+section = "6.5"
+title = "Screen layout"
+hash = "a293351132be"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-257"
+spec = "Core spec"
+section = "6.5"
+title = "Screen layout"
+hash = "02086e5b2140"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-258"
+spec = "Core spec"
+section = "6.5"
+title = "Screen layout"
+hash = "6806f2fe1c27"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-259"
+spec = "Core spec"
+section = "6.5"
+title = "Screen layout"
+hash = "c4ea5a2c95d9"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-260"
+spec = "Core spec"
+section = "6.9"
+title = "Pages and visibility"
+hash = "48eb750a27c0"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-261"
+spec = "Core spec"
+section = "6.10"
+title = "Theme and custom CSS"
+hash = "80a2a8731afa"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-262"
+spec = "Core spec"
+section = "6.10"
+title = "Theme and custom CSS"
+hash = "ca2fb0724f1e"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-263"
+spec = "Core spec"
+section = "8.5"
+title = "Catalogs at run time"
+hash = "cec0d5cf188b"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-264"
+spec = "Core spec"
+section = "8.5"
+title = "Catalogs at run time"
+hash = "ec8375e0bbfc"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-265"
+spec = "Core spec"
+section = "8.5"
+title = "Catalogs at run time"
+hash = "8fd36e4da3cc"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-266"
+spec = "Core spec"
+section = "8.5"
+title = "Catalogs at run time"
+hash = "4baf82e3e5cf"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-267"
+spec = "Core spec"
+section = "8.5"
+title = "Catalogs at run time"
+hash = "22d602a2c598"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-268"
+spec = "Core spec"
+section = "6.7"
+title = "Display output"
+hash = "9efb7f14f0a3"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-269"
+spec = "Core spec"
+section = "6.7"
+title = "Display output"
+hash = "41208655e7c5"
+introduced_in = "0.11"
+changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-270"
+spec = "Core spec"
+section = "6.7"
+title = "Display output"
+hash = "89611a0a3e3d"
+introduced_in = "0.11"
+changed_in = "0.11"
 status = "active"
 
 [[requirement]]
@@ -2317,9 +2567,9 @@ id = "MOD-33"
 spec = "Module Contract"
 section = "5.3"
 title = "Rules"
-hash = "57a7be4c09e5"
+hash = "20fe7e648fac"
 introduced_in = "1.0 rev 1"
-changed_in = "1.0 rev 1"
+changed_in = "1.0 rev 7"
 status = "active"
 
 [[requirement]]
@@ -2350,6 +2600,16 @@ title = "Rules"
 hash = "7672d2193ea0"
 introduced_in = "1.0 rev 1"
 changed_in = "1.0 rev 1"
+status = "active"
+
+[[requirement]]
+id = "MOD-37"
+spec = "Module Contract"
+section = "5.3"
+title = "Rules"
+hash = "f54661b07721"
+introduced_in = "1.0 rev 7"
+changed_in = "1.0 rev 7"
 status = "active"
 
 [[requirement]]
