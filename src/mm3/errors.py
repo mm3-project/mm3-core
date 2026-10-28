@@ -70,7 +70,7 @@ class ReservedNameError(MM3Error, ValueError):
     """A module tried to send a notification whose name starts with ``CORE_``.
 
     Implements:
-        CORE-22: Core spec 0.7, §5.3 Routing rules.
+        CORE-22: Core spec 0.9, §5.3 Routing rules.
     """
 
 

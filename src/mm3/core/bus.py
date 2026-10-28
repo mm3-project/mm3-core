@@ -7,7 +7,7 @@ notifications; replies bypass inboxes and resolve the waiting request.
 
 Implements:
     CORE-05: Core spec 0.7, §3 Engine components.
-    CORE-21..29: Core spec 0.7, §5.3 Routing rules.
+    CORE-21..29: Core spec 0.9, §5.3 Routing rules.
     CORE-220, CORE-222: Core spec 0.7, §5.4 Request and reply.
 """
 
@@ -152,7 +152,7 @@ class Bus:
     """Routes notifications to instance inboxes and endpoints.
 
     Implements:
-        CORE-21..29: Core spec 0.7, §5.3 Routing rules.
+        CORE-21..29: Core spec 0.9, §5.3 Routing rules.
         CORE-220, CORE-222: Core spec 0.7, §5.4 Request and reply.
     """
 

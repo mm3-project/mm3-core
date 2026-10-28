@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.8"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8"]
+version = "0.9"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9"]
 
 [[spec]]
 name = "Module Contract"
@@ -167,9 +167,9 @@ id = "CORE-22"
 spec = "Core spec"
 section = "5.3"
 title = "Routing rules"
-hash = "116f28b87d9d"
+hash = "5212fecf69db"
 introduced_in = "0.6"
-changed_in = "0.6"
+changed_in = "0.9"
 status = "active"
 
 [[requirement]]
@@ -1567,9 +1567,9 @@ id = "CORE-213"
 spec = "Core spec"
 section = "6.5"
 title = "Screen layout"
-hash = "1fafad426ce6"
+hash = "04d12823e2b8"
 introduced_in = "0.5"
-changed_in = "0.5"
+changed_in = "0.9"
 status = "active"
 
 [[requirement]]
@@ -1850,6 +1850,16 @@ title = "Backup and restore"
 hash = "886ea92d39d5"
 introduced_in = "0.8"
 changed_in = "0.8"
+status = "active"
+
+[[requirement]]
+id = "CORE-245"
+spec = "Core spec"
+section = "6.3"
+title = "Hot reload"
+hash = "5be4e66c359c"
+introduced_in = "0.9"
+changed_in = "0.9"
 status = "active"
 
 [[requirement]]

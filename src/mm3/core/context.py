@@ -8,7 +8,8 @@ Implements:
     -: Module Contract 1.0 rev 6, §4.1 Exceptions raised by the context.
     MOD-21, MOD-22: Module Contract 1.0 rev 6, §4.2 Guarantees.
     MOD-91: Module Contract 1.0 rev 6, §10 API versioning and deprecation.
-    CORE-22, CORE-26, CORE-29: Core spec 0.7, §5.3 Routing rules.
+    CORE-22: Core spec 0.9, §5.3 Routing rules.
+    CORE-26, CORE-29: Core spec 0.7, §5.3 Routing rules.
     CORE-220, CORE-221, CORE-222: Core spec 0.7, §5.4 Request and reply.
     CORE-225: Core spec 0.7, §5.5 Shared notification registry.
     CORE-111, CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
