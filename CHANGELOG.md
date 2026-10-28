@@ -7,6 +7,24 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added
+
+- Milestone 3 part A: web gateway with the mirror and admin listeners
+  (`mm3 run` starts both, `127.0.0.1:8080` and `:8081` by default, CORE-60).
+  Both accept loopback plus `server.allow` / `admin.allow`; other sources
+  get 403 (WebSockets are closed) and are logged at most once a minute per
+  address; `server.allow` applies live (CORE-61). Token store
+  `<state>/tokens.json` with named argon2-hashed admin and display tokens;
+  `mm3 token new <name> [--display]`, `mm3 token list`, `mm3 token revoke`;
+  `/api/*` and `/admin` need an admin token (Bearer) or session (CORE-62).
+  Security headers and `Cache-Control: no-store` on every response, no inline
+  script or style (CORE-63). Admin sessions via `/admin/login` (HttpOnly,
+  SameSite=Strict cookie, 30 days from last use, matching `Origin` for unsafe
+  requests, five failures lock an address for 15 minutes) and `/admin/logout`
+  (CORE-253). Display pairing: `mm3 token new --display` prints
+  `http://<host>:<port>/pair#<token>`; `/pair` sets a display session cookie
+  valid until the token is revoked (CORE-254).
+
 ### Changed
 
 - Milestone 2 rework for core spec 0.11 (issue #19). custom.css next to the
