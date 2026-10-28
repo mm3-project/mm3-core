@@ -62,6 +62,11 @@ status = "in_progress"
 # CORE-210: pushing layout and display changes to browsers plugs into
 #   ConfigManager.layout_listeners with the shell (milestone 3); versions come
 #   from the configuration history (PR D) instead of the in-memory counter.
+# CORE-94: the "rescale proportionally" action comes with the layout editor
+#   (milestone 6); here out-of-bounds positions fail validation.
+# CORE-142, CORE-212: the shell renders the grid and stacks (milestone 3); the
+#   admin shows pixel sizes and the preview uses the viewport (milestone 6).
+# MOD-67: mm3 module check flags a missing HEADER key (milestone 4).
 requirements = [
   "CORE-02", "CORE-30..33", "CORE-90..94", "CORE-96", "CORE-101",
   "CORE-140..142", "CORE-150", "CORE-153..156", "CORE-200..219",
