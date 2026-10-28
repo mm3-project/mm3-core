@@ -134,6 +134,8 @@ separately under **Module API** in each release (Module Contract, section 10).
   `CORE_LOCALE_CHANGED` (CORE-245); `layout.gap` and `layout.padding`
   default to 16px and 32px (CORE-213). Milestone 1 stays done at core 0.9
   after reviewing CORE-22 (no code change).
+- Spec sync to Core spec 0.10: `pages` is a configuration history section,
+  shown in changed sections and restorable alone (CORE-216, CORE-155).
 
 ### Removed
 
