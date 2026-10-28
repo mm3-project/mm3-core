@@ -49,6 +49,29 @@ separately under **Module API** in each release (Module Contract, section 10).
   - `mm3.testing.VirtualClock` for tests that do not wait.
   - `Engine` wiring startup and shutdown with `CORE_READY` / `CORE_SHUTDOWN`.
 - Coverage gate of 85 % enforced (CORE-72).
+- Milestone 1 spec changes, Core spec 0.7 and Module Contract 1.0 rev 6
+  (issue #8):
+  - Envelope fields `expects_reply` and `reply_to` (CORE-20).
+  - `ctx.request()` and `MirrorModule.on_request()`: targeted or broadcast
+    requests, first reply wins, replies bypass the inbox and `subscribes`,
+    timeouts of 0.1–60 s; error replies with `code` `transient`,
+    `configuration` or `internal`; `RequestTimeoutError` and `RemoteError`
+    in `mm3.errors` (CORE-220..222).
+  - `mm3.notifications`: the shared notification registry with payload
+    models and JSON Schemas; payloads of registered names are validated
+    when modules or the engine send them (CORE-224..226).
+  - `public_config()` removes secret fields before a configuration leaves
+    the engine (CORE-13).
+  - Health record completed with the time of the last message out
+    (CORE-113); `ctx.deprecated()` logs `deprecated_api` once per instance
+    (MOD-91).
+  - Tests for every milestone 1 requirement (CORE-01, 05, 08, 10, 24, 195,
+    197, MOD-18..20, 90, 94).
+
+#### Module API
+
+- Added in 1.0: `ctx.request()`, `MirrorModule.on_request()`,
+  `RequestTimeoutError`, `RemoteError`, `mm3.notifications`.
 
 ### Changed
 

@@ -6,12 +6,15 @@ cancels only that group. Failures restart the instance with backoff; the
 fifth failure in a sliding 10-minute window disables it.
 
 Implements:
-    CORE-04: Core spec 0.4, §3 Engine components.
-    -: Core spec 0.4, §3.2 Concurrency rules.
-    CORE-28, CORE-29: Core spec 0.4, §5.3 Routing rules.
-    CORE-190..196: Core spec 0.4, §7 Lifecycle and error handling.
-    -: Core spec 0.4, §7.2 Error reporting.
-    MOD-18, MOD-19: Module Contract 1.0 rev 4, §3.3 Rules.
+    CORE-04: Core spec 0.7, §3 Engine components.
+    -: Core spec 0.7, §3.2 Concurrency rules.
+    CORE-28, CORE-29: Core spec 0.7, §5.3 Routing rules.
+    CORE-221, CORE-222: Core spec 0.7, §5.4 Request and reply.
+    CORE-225: Core spec 0.7, §5.5 Shared notification registry.
+    CORE-190..196: Core spec 0.7, §7 Lifecycle and error handling.
+    -: Core spec 0.7, §7.2 Error reporting.
+    CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
+    MOD-18, MOD-19: Module Contract 1.0 rev 6, §3.3 Rules.
 """
 
 from __future__ import annotations
@@ -35,14 +38,20 @@ from pydantic import ValidationError
 from mm3.config import ModuleConfig
 from mm3.core.bus import Bus, ClientChannel, Inbox
 from mm3.core.clock import Clock
-from mm3.core.context import EngineContext, InstanceCounters
+from mm3.core.context import (
+    REQUEST_FAILED,
+    EngineContext,
+    InstanceCounters,
+    error_reply_payload,
+)
 from mm3.core.logging import get_logger
 from mm3.core.registry import Registry
 from mm3.core.settings import EngineSettings
 from mm3.core.trace import current_trace, trace_scope
 from mm3.errors import ConfigurationError, TransientError
-from mm3.messages import ClientMessage, Notification
+from mm3.messages import ClientMessage, Notification, check_payload
 from mm3.module import MirrorModule
+from mm3.notifications import validate_payload
 
 __all__ = [
     "BACKOFF_S",
@@ -122,7 +131,7 @@ class ManagedInstance:
         spec: What to run.
 
     Implements:
-        CORE-190..196: Core spec 0.4, §7 Lifecycle and error handling.
+        CORE-190..196: Core spec 0.7, §7 Lifecycle and error handling.
     """
 
     def __init__(self, supervisor: Supervisor, spec: InstanceSpec) -> None:
@@ -168,7 +177,7 @@ class ManagedInstance:
             await self._launch()
 
     async def _launch(self) -> None:
-        # Implements CORE-191 (Core spec 0.4, §7 Lifecycle and error handling):
+        # Implements CORE-191 (Core spec 0.7, §7 Lifecycle and error handling):
         # a restart builds a new object with a new context.
         sup = self._sup
         entry = sup.registry.get(self.spec.module)
@@ -286,7 +295,7 @@ class ManagedInstance:
             await self._fail(reason, exc)
 
     async def _consume(self, inc: _Incarnation) -> None:
-        # Implements CORE-28 (Core spec 0.4, §5.3 Routing rules): one item at a
+        # Implements CORE-28 (Core spec 0.7, §5.3 Routing rules): one item at a
         # time, in arrival order; CORE-193 handler budget.
         budget = self._sup.settings.timeouts.handler
         loop = asyncio.get_running_loop()
@@ -299,10 +308,12 @@ class ManagedInstance:
             with trace_scope(item.trace):
                 try:
                     async with cm:
-                        if isinstance(item, Notification):
-                            await inc.obj.on_notification(item)
-                        else:
+                        if isinstance(item, ClientMessage):
                             await inc.obj.on_client_message(item)
+                        elif item.is_request:
+                            await self._answer(inc, item)
+                        else:
+                            await inc.obj.on_notification(item)
                     self._consecutive_timeouts = 0
                 except TimeoutError:
                     if not cm.expired():
@@ -322,6 +333,29 @@ class ManagedInstance:
             self.counters.durations.append(loop.time() - started)
             del self.counters.durations[:-200]
 
+    async def _answer(self, inc: _Incarnation, req: Notification) -> None:
+        # Implements CORE-221 (Core spec 0.7, §5.4 Request and reply): a dict is
+        # the reply, None sends nothing; a raising on_request sends an error
+        # reply and still counts as a handler failure. A cancelled (timed out)
+        # on_request sends no reply.
+        try:
+            result = await inc.obj.on_request(req)
+            if result is not None:
+                if not isinstance(result, dict):
+                    raise TypeError(f"on_request returned {type(result).__name__}, not dict")
+                check_payload(result)
+        except TransientError as exc:
+            inc.ctx.send_reply(req, error_reply_payload("transient", exc.message_key))
+            raise
+        except ConfigurationError as exc:
+            inc.ctx.send_reply(req, error_reply_payload("configuration", exc.message_key))
+            raise
+        except Exception:
+            inc.ctx.send_reply(req, error_reply_payload("internal", REQUEST_FAILED))
+            raise
+        if result is not None:
+            inc.ctx.send_reply(req, result)
+
     # --- failure handling -------------------------------------------------------
 
     def _record_error(self, reason: str, exc: BaseException | None) -> None:
@@ -338,7 +372,7 @@ class ManagedInstance:
         }
 
     async def _fail(self, reason: str, exc: BaseException | None) -> None:
-        # Implements CORE-194 (Core spec 0.4, §7 Lifecycle and error handling).
+        # Implements CORE-194 (Core spec 0.7, §7 Lifecycle and error handling).
         self._record_error(reason, exc)
         get_logger(self.spec.module, self.instance_id).error(
             "instance_failed", reason=reason, error=self.last_error and self.last_error["message"]
@@ -483,10 +517,17 @@ class ManagedInstance:
         self._set(State.SUSPENDED if suspended else State.RUNNING)
 
     def health(self) -> dict[str, Any]:
-        """Return the instance's health record (CORE-113, partial).
+        """Return the instance's health record.
+
+        Served over REST by the admin API (core spec 9.1, milestone 6).
 
         Returns:
-            State, start time, restarts, last error and counters.
+            State, start time, restarts, last error, handler calls, p95
+            duration and timeouts, queue depth, and time of the last message
+            in and out.
+
+        Implements:
+            CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
         """
         durations = sorted(self.counters.durations)
         p95 = durations[int(0.95 * (len(durations) - 1))] if durations else None
@@ -507,6 +548,7 @@ class ManagedInstance:
             "queue_depth": len(self.inbox),
             "dropped": self.inbox.dropped,
             "last_in": self.last_in.isoformat() if self.last_in else None,
+            "last_out": out.isoformat() if (out := self.counters.last_out) else None,
         }
 
 
@@ -523,7 +565,7 @@ class Supervisor:
         state_dir: Engine state directory.
 
     Implements:
-        CORE-04: Core spec 0.4, §3 Engine components.
+        CORE-04: Core spec 0.7, §3 Engine components.
     """
 
     def __init__(
@@ -595,9 +637,10 @@ class Supervisor:
 
         Args:
             name: Notification name.
-            payload: Payload.
+            payload: Payload; checked against the registry (CORE-225).
             target: Target instance, if any.
         """
+        validate_payload(name, payload)
         nid = uuid4()
         self.bus.publish(
             Notification(

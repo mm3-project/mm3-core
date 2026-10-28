@@ -1,10 +1,15 @@
 """``MirrorModule``: base class of every module backend.
 
+Every hook has a default, so a backend-only module overrides what it
+needs and a front-end-only module ships the class with no hooks at all.
+
 Implements:
-    -: Core spec 0.4, §4.2 Backend interface (Python).
-    MOD-10, MOD-11: Module Contract 1.0 rev 4, §3.3 Rules.
-    -: Module Contract 1.0 rev 4, §3.1 Class attributes.
-    -: Module Contract 1.0 rev 4, §3.2 Hooks.
+    -: Core spec 0.7, §4.2 Backend interface (Python).
+    CORE-10: Core spec 0.7, §4.4 Contract rules.
+    CORE-221: Core spec 0.7, §5.4 Request and reply.
+    MOD-10, MOD-11: Module Contract 1.0 rev 6, §3.3 Rules.
+    -: Module Contract 1.0 rev 6, §3.1 Class attributes.
+    -: Module Contract 1.0 rev 6, §3.2 Hooks.
 """
 
 from __future__ import annotations
@@ -30,7 +35,8 @@ class MirrorModule(abc.ABC):
         config: The validated instance configuration.
 
     Implements:
-        -: Module Contract 1.0 rev 4, §3.2 Hooks.
+        -: Module Contract 1.0 rev 6, §3.2 Hooks.
+        CORE-10: Core spec 0.7, §4.4 Contract rules.
     """
 
     name: ClassVar[str]
@@ -78,6 +84,18 @@ class MirrorModule(abc.ABC):
 
     async def on_client_message(self, msg: ClientMessage) -> None:  # noqa: B027
         """Handle a message from this module's own front-end."""
+
+    async def on_request(self, req: Notification) -> dict[str, Any] | None:
+        """Answer a request delivered to this instance (core spec 5.4).
+
+        Args:
+            req: The request (``expects_reply`` is true).
+
+        Returns:
+            The reply payload, or ``None`` when the request is not for this
+            module (MOD-24); ``None`` sends nothing.
+        """
+        return None
 
     def snapshot(self) -> dict[str, Any]:
         """Return the last renderable state, sent to every browser that connects."""

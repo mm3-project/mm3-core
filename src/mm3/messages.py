@@ -4,10 +4,11 @@ One envelope is used in Python, on the WebSocket and on MQTT, so a
 notification can cross any boundary unchanged.
 
 Implements:
-    CORE-20: Core spec 0.4, §5 Messaging protocol.
-    CORE-111: Core spec 0.4, §5.1 Envelope.
-    CORE-26: Core spec 0.4, §5.3 Routing rules.
-    MOD-40, MOD-42: Module Contract 1.0 rev 4, §6.1 Messaging.
+    CORE-20: Core spec 0.7, §5 Messaging protocol.
+    CORE-111: Core spec 0.7, §5.1 Envelope.
+    CORE-220, CORE-221: Core spec 0.7, §5.4 Request and reply.
+    CORE-26: Core spec 0.7, §5.3 Routing rules.
+    MOD-40, MOD-42: Module Contract 1.0 rev 6, §6.1 Messaging.
 """
 
 from __future__ import annotations
@@ -46,7 +47,7 @@ def check_payload(payload: Any) -> None:
             JSON-serialisable, or is larger than 256 KiB.
 
     Implements:
-        CORE-26: Core spec 0.4, §5.3 Routing rules.
+        CORE-26: Core spec 0.7, §5.3 Routing rules.
     """
     if not isinstance(payload, dict):
         raise ValueError("payload must be a JSON object (dict)")
@@ -70,11 +71,14 @@ class Notification(BaseModel):
         name: ``UPPER_SNAKE`` name, e.g. ``CALENDAR_EVENTS``.
         source: ``"<module>/<instance>"``, ``"core"``, ``"remote"`` or ``"mqtt"``.
         target: ``None`` for a broadcast, otherwise an instance id.
+        expects_reply: True on a request (core spec 5.4).
+        reply_to: On a reply, the id of the request it answers.
         payload: JSON object, at most 256 KiB.
 
     Implements:
-        CORE-20: Core spec 0.4, §5.1 Envelope.
-        CORE-111: Core spec 0.4, §10.5 Diagnostics and debugging.
+        CORE-20: Core spec 0.7, §5.1 Envelope.
+        CORE-220, CORE-221: Core spec 0.7, §5.4 Request and reply.
+        CORE-111: Core spec 0.7, §10.5 Diagnostics and debugging.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")
@@ -86,7 +90,19 @@ class Notification(BaseModel):
     name: str
     source: str
     target: str | None = None
+    expects_reply: bool = False
+    reply_to: UUID | None = None
     payload: dict[str, Any] = Field(default_factory=dict)
+
+    @property
+    def is_request(self) -> bool:
+        """True when this notification asks for a reply."""
+        return self.expects_reply and self.reply_to is None
+
+    @property
+    def is_reply(self) -> bool:
+        """True when this notification answers a request."""
+        return self.reply_to is not None
 
     @field_validator("name")
     @classmethod
@@ -124,7 +140,7 @@ class ClientMessage(BaseModel):
         trace: Trace id under which the message is handled.
 
     Implements:
-        CORE-28: Core spec 0.4, §5.3 Routing rules.
+        CORE-28: Core spec 0.7, §5.3 Routing rules.
     """
 
     model_config = ConfigDict(frozen=True, extra="forbid")

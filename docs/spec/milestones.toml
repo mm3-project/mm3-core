@@ -30,13 +30,20 @@ requirements = ["CORE-70..79", "CORE-170..177"]
 number = 1
 name = "Bus, lifecycle, scheduler"
 status = "done"
-done_at = { core = "0.4", contract = "1.0 rev 4" }
+done_at = { core = "0.7", contract = "1.0 rev 6" }
 requirements = [
   "CORE-01", "CORE-03..05", "CORE-08", "CORE-10", "CORE-13", "CORE-14",
   "CORE-20..29", "CORE-110", "CORE-111", "CORE-113",
   "CORE-180..198", "CORE-220..222", "CORE-224..226",
   "MOD-18..22", "MOD-90..94",
 ]
+# CORE-01: the Engine object wires the subsystems here; command line, config
+#   loading, Uvicorn and SIGTERM/SIGHUP handling complete it in milestones 2-3.
+[milestone.waive]
+"MOD-92" = "Release process: each release's CHANGELOG lists Module API additions and deprecations"
+"MOD-93" = "Guidance for module authors (lowest api_version); no engine code"
+[milestone.waive_tests]
+"CORE-14" = "Enforced by ruff pydocstyle rules in CI"
 
 [[milestone]]
 number = 2

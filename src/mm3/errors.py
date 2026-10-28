@@ -6,9 +6,10 @@ Modules signal expected failures with :class:`TransientError` and
 (section 4.1).
 
 Implements:
-    -: Module Contract 1.0 rev 4, §3.4 Error semantics.
-    -: Module Contract 1.0 rev 4, §4.1 Exceptions raised by the context.
-    CORE-192: Core spec 0.4, §7 Lifecycle and error handling.
+    -: Module Contract 1.0 rev 6, §3.4 Error semantics.
+    -: Module Contract 1.0 rev 6, §4.1 Exceptions raised by the context.
+    CORE-220, CORE-221: Core spec 0.7, §5.4 Request and reply.
+    CORE-192: Core spec 0.7, §7 Lifecycle and error handling.
 """
 
 from __future__ import annotations
@@ -17,6 +18,8 @@ __all__ = [
     "ConfigurationError",
     "ContextClosedError",
     "MM3Error",
+    "RemoteError",
+    "RequestTimeoutError",
     "ReservedNameError",
     "TransientError",
 ]
@@ -36,7 +39,7 @@ class TransientError(MM3Error):
         message_key: Catalog key describing the problem (MOD-17).
 
     Implements:
-        CORE-192: Core spec 0.4, §7 Lifecycle and error handling.
+        CORE-192: Core spec 0.7, §7 Lifecycle and error handling.
     """
 
     def __init__(self, message_key: str) -> None:
@@ -54,7 +57,7 @@ class ConfigurationError(MM3Error):
         message_key: Catalog key describing the problem (MOD-17).
 
     Implements:
-        CORE-192, CORE-195: Core spec 0.4, §7 Lifecycle and error handling.
+        CORE-192, CORE-195: Core spec 0.7, §7 Lifecycle and error handling.
     """
 
     def __init__(self, field: str, message_key: str) -> None:
@@ -67,7 +70,7 @@ class ReservedNameError(MM3Error, ValueError):
     """A module tried to send a notification whose name starts with ``CORE_``.
 
     Implements:
-        CORE-22: Core spec 0.4, §5.3 Routing rules.
+        CORE-22: Core spec 0.7, §5.3 Routing rules.
     """
 
 
@@ -75,5 +78,44 @@ class ContextClosedError(MM3Error, RuntimeError):
     """A context member was used after the instance's ``stop()`` returned.
 
     Implements:
-        CORE-191: Core spec 0.4, §7 Lifecycle and error handling.
+        CORE-191: Core spec 0.7, §7 Lifecycle and error handling.
     """
+
+
+class RequestTimeoutError(MM3Error):
+    """No reply to ``ctx.request`` arrived within its timeout.
+
+    Callers MUST handle it and keep working without the reply (MOD-26).
+
+    Args:
+        name: Name of the request.
+        timeout: The timeout that expired, in seconds.
+
+    Implements:
+        CORE-220: Core spec 0.7, §5.4 Request and reply.
+    """
+
+    def __init__(self, name: str, timeout: float) -> None:
+        super().__init__(f"no reply to {name} within {timeout} s")
+        self.name = name
+        self.timeout = timeout
+
+
+class RemoteError(MM3Error):
+    """The responder's ``on_request`` raised; carries its error reply.
+
+    Args:
+        code: ``transient``, ``configuration`` or ``internal``.
+        message_key: Catalog key describing the problem (``REQUEST_FAILED``
+            for ``internal``).
+        source: Who answered, ``"<module>/<instance>"``.
+
+    Implements:
+        CORE-221: Core spec 0.7, §5.4 Request and reply.
+    """
+
+    def __init__(self, code: str, message_key: str, source: str) -> None:
+        super().__init__(f"{source}: {code}: {message_key}")
+        self.code = code
+        self.message_key = message_key
+        self.source = source

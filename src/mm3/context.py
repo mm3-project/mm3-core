@@ -7,8 +7,9 @@ Contract section 4 (``http``, ``health``, ``t``, ``format_date``,
 milestones (implementation plan 3, 5, 6 and 7).
 
 Implements:
-    -: Module Contract 1.0 rev 4, §4 ModuleContext reference.
-    MOD-20, MOD-21, MOD-22: Module Contract 1.0 rev 4, §4.2 Guarantees.
+    -: Module Contract 1.0 rev 6, §4 ModuleContext reference.
+    MOD-20, MOD-21, MOD-22: Module Contract 1.0 rev 6, §4.2 Guarantees.
+    CORE-220: Core spec 0.7, §5.4 Request and reply.
 """
 
 from __future__ import annotations
@@ -81,7 +82,7 @@ class ModuleContext(Protocol):
     Every member raises ``ContextClosedError`` once the instance has stopped.
 
     Implements:
-        -: Module Contract 1.0 rev 4, §4 ModuleContext reference.
+        -: Module Contract 1.0 rev 6, §4 ModuleContext reference.
     """
 
     @property
@@ -135,8 +136,27 @@ class ModuleContext(Protocol):
         """Send a notification; broadcast when ``target`` is ``None``.
 
         Raises:
-            ValueError: Bad name or payload.
+            ValueError: Bad name or payload, or the payload of a registered
+                name does not match its schema (CORE-225).
             ReservedNameError: The name starts with ``CORE_``.
+        """
+        ...
+
+    async def request(
+        self,
+        name: str,
+        payload: dict[str, Any] | None = None,
+        *,
+        target: str | None = None,
+        timeout: float = 5.0,  # noqa: ASYNC109 - signature fixed by Contract §4
+    ) -> dict[str, Any]:
+        """Ask another module and wait for the first reply (core spec 5.4).
+
+        Raises:
+            ValueError: Bad name, payload or timeout (0.1 to 60 s).
+            ReservedNameError: The name starts with ``CORE_``.
+            RequestTimeoutError: No reply within ``timeout``.
+            RemoteError: The responder's ``on_request`` raised.
         """
         ...
 
