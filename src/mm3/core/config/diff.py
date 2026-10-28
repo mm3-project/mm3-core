@@ -8,7 +8,7 @@ next engine restart.
 Implements:
     CORE-02: Core spec 0.9, §3 Engine components.
     -: Core spec 0.9, §6.3 Hot reload.
-    CORE-216: Core spec 0.9, §6.8 Configuration history, undo and redo.
+    CORE-216: Core spec 0.10, §6.8 Configuration history, undo and redo.
 """
 
 from __future__ import annotations
@@ -26,7 +26,7 @@ __all__ = ["RESTART_KEYS", "ReloadPlan", "changed_sections", "plan_reload", "uns
 RESTART_KEYS = frozenset({"server", "admin", "threads"})
 """``engine`` keys applied only at the next engine restart (CORE-201)."""
 
-_TOP_SECTIONS = ("engine", "display", "layout", "backup")
+_TOP_SECTIONS = ("engine", "display", "layout", "pages", "backup")
 _LAYOUT_KEYS = ("position", "positions", "pages", "appearance")
 
 
@@ -75,11 +75,11 @@ def changed_sections(old: ConfigResult, new: ConfigResult) -> list[str]:
 
     Returns:
         Changed sections in a stable order: ``engine``, ``display``,
-        ``layout``, ``backup``, then ``modules/<id>`` in file order (removed
+        ``layout``, ``pages``, ``backup``, then ``modules/<id>`` in file order (removed
         ones last), then ``modules/_order``.
 
     Implements:
-        CORE-216: Core spec 0.9, §6.8 Configuration history, undo and redo.
+        CORE-216: Core spec 0.10, §6.8 Configuration history, undo and redo.
     """
     a, b = unsubstituted(old.loaded), unsubstituted(new.loaded)
     am = a if isinstance(a, Mapping) else {}

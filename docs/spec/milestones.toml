@@ -50,7 +50,8 @@ requirements = [
 [[milestone]]
 number = 2
 name = "Configuration, layout, display, history, pages"
-status = "in_progress"
+status = "done"
+done_at = { core = "0.10", contract = "1.0 rev 6" }
 # Split into four PRs: A config loading and check-config, B hot reload,
 #   C layout, display and pages, D history.
 # CORE-244: only the backup block schema here; backups run in milestone 7.
@@ -60,8 +61,9 @@ status = "in_progress"
 #   the shell; one form field per locale comes with the editor (milestone 6).
 # CORE-209: GET /api/v1/status serves ConfigManager.status() in milestone 6.
 # CORE-210: pushing layout and display changes to browsers plugs into
-#   ConfigManager.layout_listeners with the shell (milestone 3); versions come
-#   from the configuration history (PR D) instead of the in-memory counter.
+#   ConfigManager.layout_listeners with the shell (milestone 3).
+# CORE-150: editor-level undo and redo (CORE-151, CORE-152) and the history
+#   view with "Open in editor" come with the admin (milestone 6).
 # CORE-94: the "rescale proportionally" action comes with the layout editor
 #   (milestone 6); here out-of-bounds positions fail validation.
 # CORE-142, CORE-212: the shell renders the grid and stacks (milestone 3); the

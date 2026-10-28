@@ -9,6 +9,17 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Configuration history (milestone 2, part D; Core spec 0.10): every valid
+  configuration is a numbered version in `<state>/config-history/` with the
+  whole config set (main file, includes, widget templates; never the env
+  file) and `meta.json` (CORE-153); undo and redo of saves with the parents
+  of CORE-154, section restore into the file that holds the section
+  (CORE-155), full validation before anything is written (CORE-156),
+  sections including `pages` (CORE-216), one flock and atomic writes, no new
+  version when the set's hash is unchanged (CORE-217), retention and masked
+  secrets in diffs (CORE-218). `mm3 config history|diff|undo|redo|restore`
+  with exit codes 0-3 and `--force` (CORE-219). `mm3 run` records versions
+  through the history. Milestone 2 is done (53 of 53 requirements).
 - Screen layout, display and pages (milestone 2, part C; Core spec 0.9):
   `mm3.core.config.layout` resolves presets to grid cells (CORE-90, CORE-92),
   checks rectangles against the grid (CORE-91, CORE-94), overlaps per `z`
