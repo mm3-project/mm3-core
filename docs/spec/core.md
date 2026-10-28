@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.11 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.12 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -657,7 +657,7 @@ The whole block is optional; without it the monitor's preferred mode is used, un
 
 **Applying it**
 
-- CORE-143: `mm3-kiosk.service` is a system unit running as the user `mm3-kiosk` (groups `video`, `input`, `render`; no write access to `/etc/mm3` or the engine state directory) with `PAMName=login` and `TTYPath=/dev/tty1`, so it owns a logind seat session. It runs `cage -- mm3 kiosk session`. The kiosk session applies output, mode, refresh, rotation and scale through the compositor's output management (`wlr-randr`), then starts Chromium. Display changes on hot reload are re-applied live; no restart of the kiosk. The kiosk needs cage ≥ 0.1.5 (wlr-output-management) and is supported on Debian 13 and later; on an older system `mm3 kiosk session` refuses to start and says why.
+- CORE-143: `mm3-kiosk.service` is a system unit running as the user `mm3-kiosk` (groups `video`, `input`, `render`; no write access to `/etc/mm3` or the engine state directory) with `PAMName=login` and `TTYPath=/dev/tty1`, so it owns a logind seat session. It runs `cage -- mm3 kiosk session`. The kiosk session applies output, mode, refresh, rotation and scale through the compositor's output management (`wlr-randr`), then starts Chromium. Display changes on hot reload are re-applied live; no restart of the kiosk. The kiosk needs cage ≥ 0.1.5 (wlr-output-management) and is supported on Debian 13 and later. Before anything else, `mm3 kiosk session` reads the version printed by `cage -v` and compares only its leading `MAJOR.MINOR.PATCH`, ignoring any suffix (Debian 13 ships `0.1.5+20240127`); it does not check the Debian release. If the version cannot be read or is older than 0.1.5, it refuses to start and says why. The kiosk uses no cage option or behaviour added after 0.1.5.
 - CORE-144: The kiosk reports the outputs, the modes each supports, and the applied viewport and device pixel ratio in its `hello` frame and after every change. The admin form offers `output` and the mode as dropdowns of these reported values.
 - CORE-145: If the requested mode is not supported, the kiosk uses the closest supported mode (same aspect ratio first, then the largest not above the request). The mismatch is shown in the admin and the debug page, and the engine uses the viewport actually applied.
 - CORE-146: When the applied viewport changes, the engine emits `CORE_DISPLAY_CHANGED` with `{viewport: [w, h], scale, rotation}`, and every element receives `onResize` (CORE-95).
@@ -1254,6 +1254,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.12 | 2026-10-28 | Kiosk version check reads cage -v and compares the leading MAJOR.MINOR.PATCH, not the Debian release; no cage feature after 0.1.5 is used (CORE-143 changed) |
 | 0.11 | 2026-10-28 | Milestone 3 settled: WebSocket handshake, roles, limits, reconnect, liveness and URLs (CORE-246–252); allow lists on both listeners, named tokens in a token store, no token in the config, admin sessions, display pairing, security headers (CORE-61–63 changed, CORE-201 changed, CORE-253, CORE-254); element setup, header and size, stacks, fit, transitions (CORE-255–259); swipe (CORE-260); theme variables and custom.css as a config section (CORE-261, CORE-262; CORE-153, CORE-155, CORE-208, CORE-216, CORE-243 changed); catalogs compiled at build, lookup, plurals, formatting, locale change (CORE-263–267); kiosk as a system unit with an agent, Debian 13+ (CORE-143 changed, CORE-268–270); lit-html and Roboto Condensed approved (1.2) |
 | 0.10 | 2026-10-28 | pages is a configuration history section, shown in changed sections and restorable alone (CORE-216 and CORE-155 changed) |
 | 0.9 | 2026-10-28 | CORE\_CONFIG\_ERROR reserved (CORE-22 changed); CORE\_CONFIG\_CHANGED, CORE\_CONFIG\_ERROR and CORE\_LOCALE\_CHANGED registered in 5.5; CORE\_LOCALE\_CHANGED payload and delivery (CORE-245); default gap 16px and padding 32px (CORE-213 changed) |

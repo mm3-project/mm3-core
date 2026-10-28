@@ -9,6 +9,10 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Changed
 
+- Spec sync: Core spec 0.12. CORE-143 changed: `mm3 kiosk session` checks the
+  version printed by `cage -v`, comparing only the leading
+  `MAJOR.MINOR.PATCH` (Debian 13 ships `0.1.5+20240127`), not the Debian
+  release, and uses no cage option or behaviour added after 0.1.5.
 - Spec sync: Core spec 0.11 and Module Contract 1.0 rev 7 (milestone 3
   requirements settled). New: WebSocket handshake, roles, limits, reconnect,
   liveness and URLs (CORE-246..252); admin sessions and display pairing
