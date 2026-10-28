@@ -30,13 +30,15 @@ requirements = ["CORE-70..79", "CORE-170..177"]
 number = 1
 name = "Bus, lifecycle, scheduler"
 status = "done"
-done_at = { core = "0.7", contract = "1.0 rev 6" }
+done_at = { core = "0.9", contract = "1.0 rev 6" }
 requirements = [
   "CORE-01", "CORE-03..05", "CORE-08", "CORE-10", "CORE-13", "CORE-14",
   "CORE-20..29", "CORE-110", "CORE-111", "CORE-113",
   "CORE-180..198", "CORE-220..222", "CORE-224..226",
   "MOD-18..22", "MOD-90..94",
 ]
+# CORE-22: reviewed for core 0.9 (CORE_CONFIG_ERROR added to the reserved
+#   names); the prefix rule needed no code change.
 # CORE-01: the Engine object wires the subsystems here; command line, config
 #   loading, Uvicorn and SIGTERM/SIGHUP handling complete it in milestones 2-3.
 [milestone.waive]
@@ -59,7 +61,7 @@ status = "in_progress"
 requirements = [
   "CORE-02", "CORE-30..33", "CORE-90..94", "CORE-96", "CORE-101",
   "CORE-140..142", "CORE-150", "CORE-153..156", "CORE-200..219",
-  "CORE-230..232", "CORE-243", "CORE-244", "MOD-45..50", "MOD-67",
+  "CORE-230..232", "CORE-243..245", "MOD-45..50", "MOD-67",
 ]
 
 [[milestone]]

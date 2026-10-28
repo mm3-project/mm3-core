@@ -114,6 +114,12 @@ separately under **Module API** in each release (Module Contract, section 10).
   severity, Pydantic mapping and params (CORE-243), and the `backup` block
   keys, defaults and checks (CORE-244); both assigned to milestone 2, which
   is now in progress.
+- Spec sync to Core spec 0.9: `CORE_CONFIG_ERROR` is a reserved name
+  (CORE-22); `CORE_CONFIG_CHANGED`, `CORE_CONFIG_ERROR` and
+  `CORE_LOCALE_CHANGED` are registered engine events, with the delivery of
+  `CORE_LOCALE_CHANGED` (CORE-245); `layout.gap` and `layout.padding`
+  default to 16px and 32px (CORE-213). Milestone 1 stays done at core 0.9
+  after reviewing CORE-22 (no code change).
 
 ### Removed
 

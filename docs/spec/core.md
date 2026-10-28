@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.8 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.9 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -290,7 +290,7 @@ WebSocket frames are JSON: `{"kind": "notify", "instance": "weather_1", "data": 
 ### 5.3 Routing rules
 
 - CORE-21: Broadcasts reach every backend and every browser except both halves of the sender instance: its backend and its own elements.
-- CORE-22: Names starting with `CORE_` are reserved; only the engine emits them (`CORE_READY`, `CORE_CONFIG_CHANGED`, `CORE_SUSPEND`, `CORE_RESUME`, `CORE_PRESENCE`, `CORE_LOCALE_CHANGED`, CORE\_DISPLAY\_CHANGED, CORE\_PAGE\_CHANGED).
+- CORE-22: Names starting with `CORE_` are reserved; only the engine emits them (`CORE_READY`, `CORE_CONFIG_CHANGED`, `CORE_SUSPEND`, `CORE_RESUME`, `CORE_PRESENCE`, `CORE_LOCALE_CHANGED`, CORE\_DISPLAY\_CHANGED, CORE\_PAGE\_CHANGED, CORE\_CONFIG\_ERROR).
 - CORE-23: Delivery order is preserved per sender; no global ordering guarantee.
 - CORE-24: Delivery is at-most-once inside the process; each receiver has its own bounded queue (CORE-27).
 - CORE-25: A module MAY declare `subscribes: ClassVar[set[str]]`; when set, only those names are delivered to it (glob patterns allowed, e.g. `CALENDAR_*`).
@@ -324,6 +324,9 @@ Names used by more than one module are registered here with their payload, and t
 | `PAGE_NEXT`, `PAGE_PREV` | command | `{}` | any → engine (6.9) |
 | `PAGE_SET` | command | `{page: str}` | any → engine (6.9) |
 | `CORE_PAGE_CHANGED` | event, engine only | `{page, index, count, pages: [{id, title}], reason}` | engine → any (6.9) |
+| `CORE_CONFIG_CHANGED` | event, engine only | `{version: int, sections: [str]}` | engine → any (6.3) |
+| `CORE_CONFIG_ERROR` | event, engine only | `{count: int, errors: [{file, line, path, code}]}` (the first 20 errors) | engine → any (6.3) |
+| `CORE_LOCALE_CHANGED` | event, engine only | `{locale: str}` | engine → any, or one instance (CORE-245) |
 
 `LocalizedText` in a payload is a string or a map from BCP 47 tags to strings (CORE-101).
 
@@ -500,6 +503,8 @@ Watchfiles detects a change, the new file is validated in full, then the engine 
 - CORE-210: Once validation passes, the new version is recorded (6.8) and applied in this order: stop removed and replaced instances; call `reconfigure()` on instances whose config changed, restarting those that return False; start added instances; push layout and display changes to browsers. A DISABLED instance whose config changed is restarted (CORE-195). Then the engine emits `CORE_CONFIG_CHANGED` with `{version, sections}`.
 - CORE-211: `ctx.locale`, `ctx.timezone` and `ctx.units` always hold the current values. Changes to `engine.locale`, `engine.timezone` or an instance `locale` are applied live; a change to `engine.units` restarts every running instance that has a backend.
 
+- CORE-245: `CORE_LOCALE_CHANGED` carries `{locale}`. A change to `engine.locale` broadcasts it with the new `engine.locale`; a change to an instance's `locale` sends it only to that instance, with the instance's new locale. Modules read `ctx.locale` for the locale that applies to them.
+
 ### 6.4 Web configuration editor
 
 The configuration can be edited through three synchronized views (layout, forms, YAML) at `/admin/config`, on the admin listener only; the mirror display never serves or shows it (CORE-34).
@@ -560,7 +565,7 @@ modules:
 **Stacks, spacing and appearance checks**
 
 - CORE-212: Enabled instances on the same preset form a stack in file order, as MM² regions do: the shell lays them out as a column inside the preset rectangle, each as tall as its content, separated by `layout.gap`, aligned to the top, or to the bottom for `bottom_*` and `bottom_bar`. Each element receives `onResize` with its own area. For `min_size_px` (CORE-96) the validator uses the preset width and the preset height divided by the number of stacked instances.
-- CORE-213: `layout.gap` and `layout.padding` are pixel lengths (`16px` or a number), 0–500. A cell measures (viewport − 2 × padding − (n − 1) × gap) / n on each axis, as a fraction of a pixel; a cell smaller than 1 px is a validation error.
+- CORE-213: `layout.gap` and `layout.padding` are pixel lengths (`16px` or a number), 0–500; defaults: gap 16px, padding 32px. A cell measures (viewport − 2 × padding − (n − 1) × gap) / n on each axis, as a fraction of a pixel; a cell smaller than 1 px is a validation error.
 - CORE-214: `appearance.css` is at most 16 KiB and contains no `@import` and no `url()` other than `data:` URIs and relative paths to the module's own static files. `classes` entries match `[A-Za-z_][A-Za-z0-9_-]*`. `header` is false, true (the module's catalog key `HEADER`, or else the module name; Contract MOD-67) or a `LocalizedText`. `header` and `classes` exist only under `appearance`.
 
 **Appearance (common to every instance)**
@@ -1199,6 +1204,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.9 | 2026-10-28 | CORE\_CONFIG\_ERROR reserved (CORE-22 changed); CORE\_CONFIG\_CHANGED, CORE\_CONFIG\_ERROR and CORE\_LOCALE\_CHANGED registered in 5.5; CORE\_LOCALE\_CHANGED payload and delivery (CORE-245); default gap 16px and padding 32px (CORE-213 changed) |
 | 0.8 | 2026-10-28 | Validation codes CORE\_CFG\_\* with their severity, Pydantic mapping and params (CORE-243); backup block keys, defaults and checks (CORE-244) |
 | 0.7 | 2026-10-28 | Error reply codes transient, configuration and internal with REQUEST\_FAILED for bugs; an on\_request that exceeds its budget sends no reply (CORE-221 changed) |
 | 0.6 | 2026-10-28 | Request and reply on the bus, envelope fields expects\_reply and reply\_to (CORE-20, CORE-220–223); shared notification registry (CORE-224–226); CORE\_PAGE\_CHANGED reserved (CORE-22); pages, per-page positions, rotation, swipe, HA select (CORE-230–237); visibility reasons, runtime stop and start, layout.control, page selector in the admin (CORE-238–242); requirements traceability: spec sync, history rows list ids, citations checked per requirement, coverage matrix, issues for closed milestones (CORE-74 changed, CORE-75–79) |
