@@ -9,6 +9,23 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Configuration loading and validation (milestone 2, part A; Core spec 0.8):
+  `mm3.core.config` reads `/etc/mm3/config.yaml` (`--config`) with `!include`
+  confined to the config directory, 8 levels deep, no cycles (CORE-31), and
+  `!env` from the env file `/etc/mm3/mm3.env` (`--env-file`) or the process
+  environment, with defaults (CORE-200). It validates the engine model with
+  every key of CORE-201, the instance keys and ids (CORE-202), missing,
+  unavailable and disabled modules (CORE-203, CORE-204), durations
+  (CORE-205), the `backup` block (CORE-244), and each module's
+  `config_model` (CORE-32, MOD-45, MOD-49). Every problem becomes a record
+  with file, line, column, JSON Pointer and a `CORE_CFG_*` code (CORE-206,
+  CORE-243).
+- `mm3 check-config [--config] [--env-file] [--strict] [--json]` (CORE-207),
+  and `mm3 run`, which refuses to start with exit code 2 on an invalid
+  configuration (CORE-30).
+- `LocalizedText` and `LocaleTag` in `mm3.config`, resolved through the
+  locale chain and in the public config sent to browsers (CORE-101, MOD-48).
+- Static checks of a `config_model` for `mm3 module check` (MOD-45 to MOD-47).
 - Repository scaffold: packaging (hatchling), MIT license, ruff, mypy, pytest,
   pre-commit, GitHub Actions CI.
 - Package skeleton `mm3` with `mm3.core`, `mm3.testing`, `mm3.cli`.

@@ -1,34 +1,84 @@
-"""Engine settings used by the bus, supervisor and scheduler.
+"""The ``engine`` block of the configuration.
 
-These are the fields of the ``engine`` configuration block that this
-milestone needs. Loading them from ``config.yaml`` and the full engine model
-come with the configuration milestone (core spec 6).
+Every key is optional; defaults follow the table of CORE-201. The bus,
+supervisor and scheduler read their settings from this model.
 
 Implements:
-    -: Core spec 0.4, §3.2 Concurrency rules.
+    CORE-201: Core spec 0.8, §6.2 Rules.
+    CORE-205: Core spec 0.8, §6.2 Rules.
+    -: Core spec 0.8, §3.2 Concurrency rules.
     CORE-27: Core spec 0.4, §5.3 Routing rules.
     CORE-197: Core spec 0.4, §7 Lifecycle and error handling.
 """
 
 from __future__ import annotations
 
+import contextlib
+import os
+from datetime import timedelta
 from pathlib import Path
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import ConfigDict, Field, IPvAnyNetwork, SecretStr, field_validator
+from pydantic_core import PydanticCustomError
 
-__all__ = ["BusSettings", "EngineSettings", "Timeouts"]
+from mm3.config import LocaleTag, ModuleConfig
+
+__all__ = [
+    "AdminSettings",
+    "BusSettings",
+    "EngineSettings",
+    "HistorySettings",
+    "InputSettings",
+    "MqttSettings",
+    "ServerSettings",
+    "Timeouts",
+    "system_timezone",
+]
 
 
-class Timeouts(BaseModel):
+def system_timezone(root: Path = Path("/")) -> str:
+    """Return the system's IANA time zone, or ``UTC`` when it cannot be found.
+
+    Looks at ``$TZ``, ``/etc/timezone`` and the ``/etc/localtime`` link.
+
+    Args:
+        root: File system root, for tests.
+
+    Returns:
+        A zone name that ``zoneinfo`` knows.
+    """
+    candidates: list[str] = []
+    if tz := os.environ.get("TZ", "").lstrip(":"):
+        candidates.append(tz)
+    with contextlib.suppress(OSError):
+        candidates.append((root / "etc/timezone").read_text().strip())
+    try:
+        target = os.readlink(root / "etc/localtime")
+        if "zoneinfo/" in target:
+            candidates.append(target.split("zoneinfo/", 1)[1])
+    except OSError:
+        pass
+    for name in candidates:
+        try:
+            ZoneInfo(name)
+        except (ZoneInfoNotFoundError, ValueError):
+            continue
+        return name
+    return "UTC"
+
+
+class _Block(ModuleConfig):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+
+class Timeouts(_Block):
     """Time budgets in seconds (``engine.timeouts``, core spec 3.2).
 
     Implements:
-        -: Core spec 0.4, §3.2 Concurrency rules.
+        -: Core spec 0.8, §3.2 Concurrency rules.
     """
-
-    model_config = ConfigDict(extra="forbid", frozen=True)
 
     start: float = Field(default=15.0, gt=0)
     stop: float = Field(default=10.0, gt=0)
@@ -38,42 +88,88 @@ class Timeouts(BaseModel):
     job: float = Field(default=60.0, gt=0)
 
 
-class BusSettings(BaseModel):
+class BusSettings(_Block):
     """Bus settings (``engine.bus``).
 
     Implements:
         CORE-27: Core spec 0.4, §5.3 Routing rules.
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
     queue_size: int = Field(default=1000, ge=1)
 
 
-class EngineSettings(BaseModel):
-    """Engine settings needed by this milestone.
+class ServerSettings(_Block):
+    """Mirror display listener (``engine.server``): shell and ``/ws`` only."""
+
+    host: str = "127.0.0.1"
+    port: int = Field(default=8080, ge=1, le=65535)
+
+
+class AdminSettings(_Block):
+    """Admin listener (``engine.admin``): admin UI and REST API."""
+
+    host: str = "127.0.0.1"
+    port: int = Field(default=8081, ge=1, le=65535)
+    allow: list[IPvAnyNetwork] = Field(default_factory=list)
+    token: SecretStr | None = Field(default=None, json_schema_extra={"secret": True})
+
+
+class MqttSettings(_Block):
+    """MQTT bridge (``engine.mqtt``, core spec 9.3); absent means the bridge is off."""
+
+    url: str = Field(pattern=r"^mqtts?://")
+    base_topic: str = Field(min_length=1)
+    ha_discovery: bool = False
+    export: list[str] = Field(default_factory=list)
+
+
+class HistorySettings(_Block):
+    """Configuration history (``engine.history``, core spec 6.8)."""
+
+    keep: int = Field(default=200, ge=10)
+
+
+class InputSettings(_Block):
+    """Kiosk input (``engine.input``)."""
+
+    touch: bool = False
+
+
+class EngineSettings(_Block):
+    """The ``engine`` block (CORE-201).
 
     Attributes:
-        timezone: IANA zone for wall-clock jobs (``engine.timezone``).
-        locale: Active locale (``engine.locale``).
-        units: Unit system (``engine.units``).
-        threads: Workers of the shared ``run_blocking`` pool (CORE-197).
-        log_level: Default log level (CORE-110).
-        state_dir: Override of the state directory (CORE-198).
+        locale: Active locale.
+        timezone: IANA zone; default the system's, else UTC.
+        units: Unit system.
+        server: Mirror display listener.
+        admin: Admin listener.
+        mqtt: MQTT bridge, ``None`` when off.
         timeouts: Time budgets.
         bus: Bus settings.
+        threads: Workers of the shared ``run_blocking`` pool (CORE-197).
+        log_level: Default log level (CORE-110).
+        debug_ttl: How long debug logging stays on.
+        history: Configuration history settings.
+        input: Kiosk input settings.
+
+    Implements:
+        CORE-201: Core spec 0.8, §6.2 Rules.
     """
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
-
-    timezone: str = "UTC"
-    locale: str = "en"
+    locale: LocaleTag = "en"
+    timezone: str = Field(default_factory=system_timezone)
     units: Literal["metric", "imperial"] = "metric"
-    threads: int = Field(default=8, ge=1)
-    log_level: Literal["debug", "info", "warning", "error"] = "info"
-    state_dir: Path | None = None
+    server: ServerSettings = ServerSettings()
+    admin: AdminSettings = AdminSettings()
+    mqtt: MqttSettings | None = None
     timeouts: Timeouts = Timeouts()
     bus: BusSettings = BusSettings()
+    threads: int = Field(default=8, ge=1)
+    log_level: Literal["debug", "info", "warning", "error"] = "info"
+    debug_ttl: timedelta = timedelta(minutes=30)
+    history: HistorySettings = HistorySettings()
+    input: InputSettings = InputSettings()
 
     @field_validator("timezone")
     @classmethod
@@ -81,5 +177,7 @@ class EngineSettings(BaseModel):
         try:
             ZoneInfo(value)
         except (ZoneInfoNotFoundError, ValueError) as exc:
-            raise ValueError(f"unknown time zone {value!r}") from exc
+            raise PydanticCustomError(
+                "CORE_CFG_TIMEZONE", "unknown time zone", {"value": value}
+            ) from exc
         return value

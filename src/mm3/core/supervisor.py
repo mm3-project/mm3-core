@@ -15,6 +15,7 @@ Implements:
     -: Core spec 0.7, §7.2 Error reporting.
     CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
     MOD-18, MOD-19: Module Contract 1.0 rev 6, §3.3 Rules.
+    CORE-202: Core spec 0.8, §6.2 Rules.
 """
 
 from __future__ import annotations
@@ -99,11 +100,13 @@ class InstanceSpec:
         instance_id: Instance id.
         module: Module name.
         config: Raw ``config`` block, validated by the module's ``config_model``.
+        locale: Instance ``locale`` overriding ``engine.locale`` (CORE-202).
     """
 
     instance_id: str
     module: str
     config: Mapping[str, Any] = field(default_factory=dict)
+    locale: str | None = None
 
 
 @dataclass
@@ -614,7 +617,7 @@ class Supervisor:
             executor=self.executor,
             timeouts=self.settings.timeouts,
             timezone=self.timezone,
-            locale=self.settings.locale,
+            locale=inst.spec.locale or self.settings.locale,
             units=self.settings.units,
             state_dir=self.state_dir,
             counters=inst.counters,
