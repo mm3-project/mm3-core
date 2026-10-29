@@ -3,7 +3,7 @@
 
 [core]
 name = "Core spec"
-version = "0.14"
+version = "0.15"
 url = "https://claude.ai/artifact/FMsTUUoBP9wHzFtruUa6FV"
 
 [contract]
