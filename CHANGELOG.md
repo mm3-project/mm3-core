@@ -54,7 +54,7 @@ separately under **Module API** in each release (Module Contract, section 10).
   `appearance` and `status`, and `welcome.custom_css` (CORE-246);
   `/appearance/<instance>.css` (CORE-252); `visibility`, `touch` and the
   `status` action (CORE-271); outputs reported by the kiosk agent
-  (CORE-144); `welcome.timezone` (CORE-246) and the grid size, gap and
+  (CORE-144); `welcome.timezone` and `welcome.touch` (CORE-246) and the grid size, gap and
   padding in the `layout` object (CORE-274). All in milestone 3. Shell font
   licence corrected to SIL OFL 1.1 (core spec 1.2).
 - Spec sync: Core spec 0.13. New: WebSocket frame contents and `ref`
