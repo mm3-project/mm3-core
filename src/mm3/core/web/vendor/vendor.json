@@ -1,0 +1,29 @@
+{
+  "vendored": [
+    {
+      "name": "lit-html",
+      "version": "3.3.2",
+      "license": "BSD-3-Clause",
+      "source": "https://registry.npmjs.org/lit-html/-/lit-html-3.3.2.tgz",
+      "files": {
+        "lit-html/LICENSE": "2b66f9390afde29edfe4314daff93f01fb182e1178053e228120178987e5db75",
+        "lit-html/lit-html.js": "5b38623fdb1513e0a559fc25d516f669027f937c86d4451f7e704d37c298e061"
+      }
+    },
+    {
+      "name": "roboto-condensed",
+      "version": "5.3.0 (@fontsource/roboto-condensed)",
+      "license": "OFL-1.1",
+      "source": "https://registry.npmjs.org/@fontsource/roboto-condensed/-/roboto-condensed-5.3.0.tgz",
+      "files": {
+        "roboto-condensed/LICENSE": "82baba1bc6be17e47b138e90ab99ad134168f931282b68bc560102ab1db743c1",
+        "roboto-condensed/roboto-condensed-latin-300-normal.woff2": "0caeba0462a43d7bea073fe7a5b9faab86647c7b8bbe2d9bb9d2c924ad131983",
+        "roboto-condensed/roboto-condensed-latin-400-normal.woff2": "543c03fff71d1b39590af102e0852c2dbce46f4dbe4faaebafbef6edc82e78f5",
+        "roboto-condensed/roboto-condensed-latin-700-normal.woff2": "ab74f0c2d7ec37e44e017b9586675dd00c519591207dc3bbc8e003c5628dc9b7",
+        "roboto-condensed/roboto-condensed-latin-ext-300-normal.woff2": "f3e264593648be4d4ea842bedf8adbf27f7ee4f159f1cdc04e9a5d2e19e97e84",
+        "roboto-condensed/roboto-condensed-latin-ext-400-normal.woff2": "ca2b9eabacfab99dade007dddad623bb6895c445529d24fd70540c3fcc84eb39",
+        "roboto-condensed/roboto-condensed-latin-ext-700-normal.woff2": "b7afcd7367b91f6fafbd05ab4ac6195ebd95794e354c368a0dcb1abb5ffc87ed"
+      }
+    }
+  ]
+}

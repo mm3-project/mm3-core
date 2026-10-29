@@ -45,9 +45,7 @@ CSP = _CSP_BASE + "frame-ancestors 'none'"
 CSP_PREVIEW = _CSP_BASE + "frame-ancestors 'self'"
 """Content-Security-Policy of ``/admin/preview``, which the admin frames (CORE-63)."""
 
-PERMISSIONS_POLICY = (
-    "camera=(), microphone=(), geolocation=(), usb=(), serial=(), bluetooth=(), payment=()"
-)
+PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), usb=(), serial=(), payment=()"
 """Features denied to every page (CORE-63)."""
 
 LOG_EVERY_S = 60.0

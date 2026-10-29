@@ -139,10 +139,11 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.config.history import ConfigHistory, HistoryRecorder
     from mm3.core.config.manager import ConfigManager
     from mm3.core.engine import Engine
+    from mm3.core.pages import PageService
     from mm3.core.services.storage import resolve_state_dir
-    from mm3.core.web.apps import STATIC_DIR
     from mm3.core.web.auth import WebAuth
     from mm3.core.web.gateway import WebGateway
+    from mm3.core.web.shell import STATIC_DIR, ShellSources
     from mm3.core.web.view import cached_view
     from mm3.core.web.ws import ClientHub, engine_build
 
@@ -166,20 +167,34 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         current = manager.current.config
         return list(current.engine.server.allow) if current is not None else []
 
+    view = cached_view(lambda: manager.current, registry)
     hub = ClientHub(
-        cached_view(lambda: manager.current, registry),
+        view,
         WebAuth.open(state_dir),
         engine_build(STATIC_DIR),
     )
     engine.attach_clients(hub)
-    gateway = WebGateway(result.config.engine, state_dir, server_allow=server_allow, hub=hub)
+    pages = PageService(result, engine.supervisor, engine.clock)
+    engine.supervisor.pages = pages
+    engine.bus.add_endpoint(pages)
+    hub.attach_pages(pages, engine.supervisor)
+    manager.layout_listeners.append(hub.reloaded)
+    gateway = WebGateway(
+        result.config.engine,
+        state_dir,
+        server_allow=server_allow,
+        hub=hub,
+        sources=ShellSources(view, lambda: manager.current),
+    )
     await engine.start(result.instance_specs())
     await manager.start()
+    await pages.start()
     try:
         await gateway.start()
         await stop.wait()
     finally:
         await gateway.stop()
+        await pages.close()
         await manager.close()
         await engine.stop()
 

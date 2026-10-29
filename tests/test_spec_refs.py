@@ -79,6 +79,22 @@ def test_core_74_function_docstrings_and_comments(tmp_path: Path) -> None:
     assert {c.rid for c in cites} == {None, "CORE-21", "MOD-40"}
 
 
+def test_core_74_front_end_comments(tmp_path: Path) -> None:
+    js = tmp_path / "shell.js"
+    js.write_text(
+        "// Implements CORE-21, CORE-22 (Core spec 0.6, §5.3 Routing rules)\nconst x = 1;\n"
+    )
+    css = tmp_path / "theme.css"
+    css.write_text("/* Implements MOD-40 (Module Contract 1.0 rev 4, §6.1 Messaging) */\n")
+    bare = tmp_path / "bare.js"
+    bare.write_text("const y = 2;\n")
+    assert {c.rid for c in citations(js)[0]} == {"CORE-21", "CORE-22"}
+    assert {c.rid for c in citations(css)[0]} == {"MOD-40"}
+    assert "no 'Implements' comment" in citations(bare)[1][0]
+    assert any(p.name == "shell.js" for p in source_files())
+    assert not any("vendor" in p.parts for p in source_files())
+
+
 def test_core_77_older_version_of_unchanged_requirement_is_valid(tmp_path: Path) -> None:
     path = _src(tmp_path, "X.\n\nImplements:\n    CORE-21: Core spec 0.3, §5.3 Routing rules.\n")
     assert check([path], set(), REQS, VERSIONS) == ([], [])

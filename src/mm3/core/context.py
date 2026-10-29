@@ -21,16 +21,17 @@ from __future__ import annotations
 
 import asyncio
 import functools
-from collections.abc import Callable, Coroutine, Mapping
+from collections.abc import Callable, Coroutine, Mapping, Sequence
 from concurrent.futures import Executor
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Literal, TypeVar
+from typing import Any, Literal, Protocol, TypeVar
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 
+from mm3.context import PageInfo
 from mm3.core.bus import Bus, ClientChannel
 from mm3.core.clock import Clock
 from mm3.core.logging import Logger, get_logger
@@ -50,10 +51,13 @@ from mm3.notifications import validate_payload
 from mm3.scheduler import JobFn
 
 __all__ = [
+    "IMPLICIT_PAGE",
     "REQUEST_FAILED",
     "REQUEST_TIMEOUT_RANGE",
     "EngineContext",
     "InstanceCounters",
+    "LayoutControl",
+    "PageControl",
     "error_reply_payload",
 ]
 
@@ -89,6 +93,58 @@ def _as_error_reply(payload: dict[str, Any]) -> tuple[str, str] | None:
 
 
 T = TypeVar("T")
+
+IMPLICIT_PAGE = "main"
+"""The single page of a mirror without a ``pages`` block (CORE-230)."""
+
+
+class PageControl(Protocol):
+    """What contexts need from the page service (core spec 6.9)."""
+
+    @property
+    def page(self) -> str:
+        """Current page id."""
+        ...
+
+    def page_infos(self) -> list[PageInfo]:
+        """Pages with resolved titles."""
+        ...
+
+    def set_module_reason(self, by: str, target: str, hidden: bool) -> None:
+        """Set or clear the hide reason ``module:<by>`` on ``target``."""
+        ...
+
+
+class LayoutControl:
+    """``ctx.layout``: hide and show other instances (CORE-241).
+
+    Args:
+        pages: The page service.
+        owner: Id of the instance that uses it.
+
+    Implements:
+        CORE-241: Core spec 0.14, §6.9 Pages and visibility.
+    """
+
+    def __init__(self, pages: PageControl, owner: str) -> None:
+        self._pages = pages
+        self._owner = owner
+
+    def hide(self, instance_id: str) -> None:
+        """Hide an instance with the reason ``module:<own id>``.
+
+        Args:
+            instance_id: The instance to hide.
+        """
+        self._pages.set_module_reason(self._owner, instance_id, True)
+
+    def show(self, instance_id: str) -> None:
+        """Clear this module's hide reason on an instance.
+
+        Args:
+            instance_id: The instance.
+        """
+        self._pages.set_module_reason(self._owner, instance_id, False)
 
 
 @dataclass
@@ -132,9 +188,13 @@ class EngineContext:
         state_dir: Engine state directory.
         counters: Health counters of the instance.
         spawn: Starts a coroutine in the instance's task group.
+        pages: Current page, pages and visibility control; ``None`` until
+            the page service runs (one implicit page ``main``).
+        capabilities: The module's declared capabilities.
 
     Implements:
         -: Module Contract 1.0 rev 6, §4 ModuleContext reference.
+        CORE-237, CORE-241: Core spec 0.14, §6.9 Pages and visibility.
     """
 
     def __init__(
@@ -153,6 +213,8 @@ class EngineContext:
         state_dir: Path,
         counters: InstanceCounters,
         spawn: Callable[[Coroutine[Any, Any, Any], str], asyncio.Task[Any]],
+        pages: PageControl | None = None,
+        capabilities: frozenset[str] = frozenset(),
     ) -> None:
         self._instance_id = instance_id
         self._module_name = module_name
@@ -166,6 +228,8 @@ class EngineContext:
         self._units = units
         self._counters = counters
         self._spawn = spawn
+        self._pages = pages
+        self._capabilities = capabilities
         self._closed = False
         self._state: dict[str, Any] = {}
         self._log = get_logger(module_name, instance_id)
@@ -342,6 +406,39 @@ class EngineContext:
         """Unit system."""
         self._guard()
         return self._units
+
+    # --- pages and layout -------------------------------------------------------
+
+    @property
+    def page(self) -> str:
+        """Current page id (CORE-237)."""
+        self._guard()
+        return self._pages.page if self._pages is not None else IMPLICIT_PAGE
+
+    @property
+    def pages(self) -> Sequence[PageInfo]:
+        """Page ids and resolved titles, always current (CORE-237)."""
+        self._guard()
+        if self._pages is None:
+            return (PageInfo(IMPLICIT_PAGE, IMPLICIT_PAGE),)
+        return tuple(self._pages.page_infos())
+
+    @property
+    def layout(self) -> LayoutControl:
+        """Hide or show other instances (CORE-241).
+
+        Raises:
+            PermissionError: The module does not declare ``layout.control`` (MOD-70).
+
+        Implements:
+            CORE-241: Core spec 0.14, §6.9 Pages and visibility.
+        """
+        self._guard()
+        if "layout.control" not in self._capabilities:
+            raise PermissionError("capability layout.control is not declared")
+        if self._pages is None:
+            raise RuntimeError("the page service is not running")
+        return LayoutControl(self._pages, self._instance_id)
 
     # --- messaging and state --------------------------------------------------
 

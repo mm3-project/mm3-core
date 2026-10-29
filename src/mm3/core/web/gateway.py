@@ -28,6 +28,7 @@ from mm3.core.settings import EngineSettings
 from mm3.core.web.apps import admin_app, mirror_app, protect
 from mm3.core.web.auth import WebAuth
 from mm3.core.web.security import Network
+from mm3.core.web.shell import ShellSources
 from mm3.core.web.ws import MAX_FRAME_BYTES, PING_INTERVAL_S, PING_TIMEOUT_S, ClientHub
 
 __all__ = ["Listener", "ListenerError", "WebGateway"]
@@ -129,6 +130,7 @@ class WebGateway:
             connections made afterwards (CORE-201). Default: the start value.
         hub: Connected shells; without one, ``/ws`` is not served.
         auth: Token store and sessions; opened in ``state_dir`` by default.
+        sources: The shell's files; without them only ``/core`` is served.
 
     Implements:
         CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
@@ -143,6 +145,7 @@ class WebGateway:
         server_allow: Callable[[], Sequence[Network]] | None = None,
         hub: ClientHub | None = None,
         auth: WebAuth | None = None,
+        sources: ShellSources | None = None,
     ) -> None:
         self.auth = auth or (hub.auth if hub is not None else WebAuth.open(state_dir))
         self.hub = hub
@@ -150,13 +153,15 @@ class WebGateway:
         admin_allow: Sequence[Network] = list(settings.admin.allow)
         self.mirror = Listener(
             "mirror",
-            protect(mirror_app(self.auth, hub), server_allow or (lambda: start_allow), "mirror"),
+            protect(
+                mirror_app(self.auth, hub, sources), server_allow or (lambda: start_allow), "mirror"
+            ),
             settings.server.host,
             settings.server.port,
         )
         self.admin = Listener(
             "admin",
-            protect(admin_app(self.auth, hub), lambda: admin_allow, "admin"),
+            protect(admin_app(self.auth, hub, sources), lambda: admin_allow, "admin"),
             settings.admin.host,
             settings.admin.port,
         )

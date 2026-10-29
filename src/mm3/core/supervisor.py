@@ -17,6 +17,7 @@ Implements:
     MOD-18, MOD-19: Module Contract 1.0 rev 6, §3.3 Rules.
     CORE-202: Core spec 0.8, §6.2 Rules.
     CORE-211: Core spec 0.9, §6.3 Hot reload.
+    CORE-239: Core spec 0.14, §6.9 Pages and visibility.
 """
 
 from __future__ import annotations
@@ -44,6 +45,7 @@ from mm3.core.context import (
     REQUEST_FAILED,
     EngineContext,
     InstanceCounters,
+    PageControl,
     error_reply_payload,
 )
 from mm3.core.logging import get_logger
@@ -184,6 +186,7 @@ class ManagedInstance:
         self._timer: asyncio.Task[None] | None = None
         self._consecutive_timeouts = 0
         self.last_in: datetime | None = None
+        self.hidden = False
 
     @property
     def instance_id(self) -> str:
@@ -201,7 +204,9 @@ class ManagedInstance:
     def _set(self, state: State) -> None:
         if state != self.state:
             _log.info("instance_state", instance=self.instance_id, old=self.state, new=state)
-            self.state = state
+            old, self.state = self.state, state
+            for listener in list(self._sup.state_listeners):
+                listener(self.instance_id, old, state)
 
     # --- launch -----------------------------------------------------------------
 
@@ -262,7 +267,7 @@ class ManagedInstance:
             self._consume(inc), name=f"{self.instance_id}:inbox"
         )
         self._set(State.RUNNING)
-        if sup.suspended:
+        if sup.suspended or self.hidden:
             await self._transition_suspend(inc, True)
 
     async def _host(self, inc: _Incarnation) -> None:
@@ -546,6 +551,23 @@ class ManagedInstance:
         """The context of the current incarnation, if any."""
         return self._inc.ctx if self._inc is not None else None
 
+    async def set_hidden(self, hidden: bool) -> None:
+        """Mark the instance hidden or visible and suspend or resume it (CORE-239).
+
+        A hidden instance stays suspended while the mirror is resumed; a
+        visible one follows the mirror.
+
+        Args:
+            hidden: Whether the instance is hidden.
+
+        Implements:
+            CORE-239: Core spec 0.14, §6.9 Pages and visibility.
+        """
+        if hidden == self.hidden:
+            return
+        self.hidden = hidden
+        await self.set_suspended(hidden or self._sup.suspended)
+
     async def set_suspended(self, suspended: bool) -> None:
         """Call ``suspend()`` or ``resume()`` on a running instance.
 
@@ -642,6 +664,8 @@ class Supervisor:
         self.suspended = False
         self._instances: dict[str, ManagedInstance] = {}
         self._background: set[asyncio.Task[Any]] = set()
+        self.state_listeners: list[Callable[[str, State, State], None]] = []
+        self.pages: PageControl | None = None
 
     def make_context(
         self,
@@ -657,6 +681,8 @@ class Supervisor:
         Returns:
             The context.
         """
+        entry = self.registry.get(inst.spec.module)
+        cls = entry.cls if entry is not None else None
         return EngineContext(
             instance_id=inst.instance_id,
             module_name=inst.spec.module,
@@ -671,6 +697,8 @@ class Supervisor:
             state_dir=self.state_dir,
             counters=inst.counters,
             spawn=spawn,
+            pages=self.pages,
+            capabilities=frozenset(cls.capabilities) if cls is not None else frozenset(),
         )
 
     def background(self, coro: Coroutine[Any, Any, Any], name: str) -> None:
@@ -807,7 +835,9 @@ class Supervisor:
             return
         self.suspended = suspended
         self.emit("CORE_SUSPEND" if suspended else "CORE_RESUME", {})
-        await asyncio.gather(*(i.set_suspended(suspended) for i in self._instances.values()))
+        await asyncio.gather(
+            *(i.set_suspended(suspended or i.hidden) for i in self._instances.values())
+        )
 
     def set_timezone(self, timezone: str) -> None:
         """Change ``engine.timezone`` and re-plan wall-clock jobs (CORE-189).

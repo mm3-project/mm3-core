@@ -105,6 +105,7 @@ testpaths = ["tests"]
 # Coverage is measured on the whole package; CORE-72 (>= 85 %) is enforced
 # in [tool.coverage.report].
 addopts = "--strict-markers --cov=mm3 --cov-report=term-missing"
+markers = ["browser: needs Chromium (Playwright); skipped when it cannot start"]
 # Implements CORE-175 (Core spec 0.6, §10.9 Dependency management)
 filterwarnings = ["error::DeprecationWarning", "error::PendingDeprecationWarning"]
 

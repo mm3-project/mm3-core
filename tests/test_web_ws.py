@@ -246,6 +246,9 @@ async def test_core_246_welcome_then_one_state_per_instance(mirror: Mirror) -> N
             "page",
             "pages",
             "locale",
+            "timezone",
+            "touch",
+            "custom_css",
             "instances",
         }
         assert (data["engine_build"], data["role"], data["interactive"]) == (
@@ -267,7 +270,12 @@ async def test_core_246_welcome_then_one_state_per_instance(mirror: Mirror) -> N
             "element": "mm3-weather",
             "config": {"label": "Meteo"},
             "catalog": None,
+            "scripts": [],
+            "styles": [],
+            "appearance": home["appearance"],
+            "status": "ok",
         }
+        assert home["appearance"]["scale"] == 1
         assert [(s["kind"], s["instance"]) for s in states] == [
             ("state", "home"),
             ("state", "away"),
@@ -382,7 +390,8 @@ async def test_core_274_layout_object(mirror: Mirror) -> None:
     ws, welcome, _ = await connect(mirror.ws_url)
     async with ws:
         layout = welcome["data"]["layout"]
-    assert set(layout) == {"viewport", "cell", "pages"}
+    assert set(layout) == {"viewport", "cell", "grid", "pages"}
+    assert set(layout["grid"]) == {"columns", "rows", "gap", "padding"}
     assert layout["viewport"] == [1920, 1080]
     assert len(layout["cell"]) == 2
     (placements,) = layout["pages"].values()
@@ -411,7 +420,15 @@ def test_core_274_layout_object_matches_the_engine_layout(tmp_path: Path) -> Non
         registry.add(cls)
     result = load_config(etc / "config.yaml", registry=registry, env_file=etc / "none.env")
     assert result.layout is not None
-    obj = layout_object(result.layout)
+    assert result.config is not None
+    lc = result.config.layout
+    grid = {
+        "columns": lc.grid.columns,
+        "rows": lc.grid.rows,
+        "gap": float(lc.gap),
+        "padding": float(lc.padding),
+    }
+    obj = layout_object(result.layout, grid)
     assert json.loads(json.dumps(obj)) == obj
     view = shell_view(result, registry)
     assert view.layout == obj

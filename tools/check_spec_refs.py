@@ -38,7 +38,7 @@ ENTRY = re.compile(
     r"§(?P<section>\d+(?:\.\d+)*)\s+(?P<title>.+?)\.?$"
 )
 COMMENT = re.compile(
-    rf"#\s*Implements\s+(?P<ids>(?:{ID})(?:,\s*{ID})*)\s+\("
+    rf"(?:#|//|/\*)\s*Implements\s+(?P<ids>(?:{ID})(?:,\s*{ID})*)\s+\("
     r"(?P<spec>[^)]+?)\s+(?P<version>\d+\.\d+(?:\s+rev\s+\d+)?),\s+§[^)]*\)"
 )
 SPEC_OF = {"CORE": "Core spec", "WGT": "Core spec", "MOD": "Module Contract"}
@@ -91,22 +91,30 @@ def _rel(path: Path) -> Path:
 def citations(
     path: Path, *, require_module_section: bool = True
 ) -> tuple[list[Citation], list[str]]:
-    """Collect every citation in a Python file.
+    """Collect every citation in a source file.
 
     Reads the ``Implements:`` sections of the module, class and function
-    docstrings and the ``# Implements`` comments.
+    docstrings and the ``# Implements`` comments of a Python file, and the
+    ``// Implements`` and ``/* Implements`` comments of a front-end file.
 
     Args:
-        path: Python file.
+        path: Python, JavaScript or CSS file.
         require_module_section: Report a missing module-level section.
 
     Returns:
         The citations and format errors.
     """
     source = path.read_text()
-    tree = ast.parse(source)
     found: list[Citation] = []
     errors: list[str] = []
+    if path.suffix != ".py":
+        for m in COMMENT.finditer(source):
+            spec = m["spec"].strip()
+            found += [Citation(path, rid, spec, m["version"]) for rid in expand_ids(m["ids"])]
+        if require_module_section and not found:
+            errors.append(f"{_rel(path)}: no 'Implements' comment")
+        return found, errors
+    tree = ast.parse(source)
     for node in [tree, *[n for n in ast.walk(tree) if isinstance(n, DEFS)]]:
         doc = ast.get_docstring(node)
         entries = implements_entries(doc) if doc else None
@@ -191,9 +199,13 @@ def source_files() -> list[Path]:
     """List the files whose citations are checked.
 
     Returns:
-        Python files under ``src/mm3`` and ``tools``.
+        Python files under ``src/mm3`` and ``tools``, and the engine's
+        front-end files (``static/*.js``, ``static/*.css``; vendored
+        libraries are not ours to cite).
     """
-    return sorted((ROOT / "src" / "mm3").rglob("*.py")) + sorted((ROOT / "tools").glob("*.py"))
+    src = ROOT / "src" / "mm3"
+    front = sorted(src.rglob("static/*.js")) + sorted(src.rglob("static/*.css"))
+    return sorted(src.rglob("*.py")) + sorted((ROOT / "tools").glob("*.py")) + front
 
 
 def main(argv: list[str] | None = None) -> int:

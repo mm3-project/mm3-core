@@ -1,8 +1,9 @@
 """``ModuleContext``: a module's only door into the engine.
 
-This milestone provides identity, messaging, state, tasks, ``run_blocking``,
-the scheduler, storage and the logger. The remaining members of Module
-Contract section 4 (``http``, ``health``, ``t``, ``format_date``,
+Provided so far: identity, messaging, state, tasks, ``run_blocking``, the
+scheduler, storage, the logger, the current page and pages, and
+``layout`` (capability ``layout.control``). The remaining members of
+Module Contract section 4 (``http``, ``health``, ``t``, ``format_date``,
 ``format_number``, ``mqtt``, ``system``, ``router``) are added with their
 milestones (implementation plan 3, 5, 6 and 7).
 
@@ -10,12 +11,14 @@ Implements:
     -: Module Contract 1.0 rev 6, §4 ModuleContext reference.
     MOD-20, MOD-21, MOD-22: Module Contract 1.0 rev 6, §4.2 Guarantees.
     CORE-220: Core spec 0.7, §5.4 Request and reply.
+    CORE-237, CORE-241: Core spec 0.14, §6.9 Pages and visibility.
 """
 
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Callable, Coroutine, Mapping
+from collections.abc import Callable, Coroutine, Mapping, Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, Protocol, TypeVar
 from uuid import UUID
@@ -23,7 +26,7 @@ from zoneinfo import ZoneInfo
 
 from mm3.scheduler import Scheduler
 
-__all__ = ["Logger", "ModuleContext", "Storage"]
+__all__ = ["Layout", "Logger", "ModuleContext", "PageInfo", "Storage"]
 
 T = TypeVar("T")
 
@@ -73,6 +76,31 @@ class Storage(Protocol):
 
     async def kv_delete(self, key: str) -> None:
         """Remove ``key``; nothing happens if it is absent."""
+        ...
+
+
+@dataclass(frozen=True)
+class PageInfo:
+    """A page as modules see it (core spec 6.9).
+
+    Attributes:
+        id: Page id.
+        title: Title resolved for the engine locale.
+    """
+
+    id: str
+    title: str
+
+
+class Layout(Protocol):
+    """Hide and show other instances (capability ``layout.control``, CORE-241)."""
+
+    def hide(self, instance_id: str) -> None:
+        """Hide an instance with the reason ``module:<own id>``."""
+        ...
+
+    def show(self, instance_id: str) -> None:
+        """Clear this module's hide reason on an instance."""
         ...
 
 
@@ -172,6 +200,21 @@ class ModuleContext(Protocol):
 
     def patch_state(self, delta: dict[str, Any]) -> None:
         """Shallow-merge into the snapshot and push the delta."""
+        ...
+
+    @property
+    def page(self) -> str:
+        """Current page id (CORE-237)."""
+        ...
+
+    @property
+    def pages(self) -> Sequence[PageInfo]:
+        """Page ids and resolved titles, always current (CORE-237)."""
+        ...
+
+    @property
+    def layout(self) -> Layout:
+        """Hide or show other instances; needs ``layout.control`` (CORE-241)."""
         ...
 
     def create_task(self, coro: Coroutine[Any, Any, Any], *, name: str) -> asyncio.Task[Any]:

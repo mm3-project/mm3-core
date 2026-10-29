@@ -1,0 +1,71 @@
+/* Theme variables and the vendored font. */
+/* Implements CORE-261 (Core spec 0.14, §6.10 Theme and custom CSS) */
+@font-face {
+  font-family: "Roboto Condensed";
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  src: url("/core/vendor/roboto-condensed/roboto-condensed-latin-300-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+  src: url("/core/vendor/roboto-condensed/roboto-condensed-latin-ext-300-normal.woff2") format("woff2");
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/core/vendor/roboto-condensed/roboto-condensed-latin-400-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("/core/vendor/roboto-condensed/roboto-condensed-latin-ext-400-normal.woff2") format("woff2");
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/core/vendor/roboto-condensed/roboto-condensed-latin-700-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Roboto Condensed";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("/core/vendor/roboto-condensed/roboto-condensed-latin-ext-700-normal.woff2") format("woff2");
+  unicode-range: U+0100-02AF, U+0304, U+0308, U+0329, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+:root {
+  --mm3-font-family: "Roboto Condensed", sans-serif;
+  --mm3-scale: 1;
+  --mm3-size-xsmall: calc(15px * var(--mm3-scale));
+  --mm3-size-small: calc(20px * var(--mm3-scale));
+  --mm3-size-medium: calc(30px * var(--mm3-scale));
+  --mm3-size-large: calc(65px * var(--mm3-scale));
+  --mm3-size-xlarge: calc(75px * var(--mm3-scale));
+  --mm3-font-size: var(--mm3-size-small);
+  --mm3-color-bg: #000;
+  --mm3-color-fg: #aaa;
+  --mm3-color-bright: #fff;
+  --mm3-color-dimmed: #666;
+  --mm3-color-good: #4caf50;
+  --mm3-color-warning: #ffb300;
+  --mm3-color-critical: #e53935;
+  --mm3-color-accent: #4fc3f7;
+  --mm3-color-muted: #444;
+  --mm3-gap: 0px;
+}
