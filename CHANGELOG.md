@@ -117,6 +117,12 @@ separately under **Module API** in each release (Module Contract, section 10).
   are skipped where Chromium cannot start; `MM3_CHROMIUM` selects the
   executable.
 
+- Spec sync: Core spec 0.16 (kiosk details). Changed: CORE-268 (agent key as
+  `Authorization: Bearer`, 4403 otherwise), CORE-277 (`outputs[].current`,
+  the agent picks the mode), CORE-146 (the applied mode re-validates the
+  running configuration, resync, `CORE_DISPLAY_CHANGED`), CORE-143
+  (`wlr-randr --json`, unit file shipped with `mm3 kiosk unit`); `websockets`
+  approved for the kiosk agent (1.2).
 - Spec sync: Core spec 0.15 (i18n details). Changed: CORE-264 (merged
   catalog at `/i18n/<instance>.json` and its version; locale packages per
   module or `mm3`), CORE-263 (`mm3 i18n check` fails on compiled files that
