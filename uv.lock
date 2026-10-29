@@ -1315,6 +1315,7 @@ dependencies = [
     { name = "structlog" },
     { name = "uvicorn", extra = ["standard"] },
     { name = "watchfiles" },
+    { name = "websockets" },
 ]
 
 [package.optional-dependencies]
@@ -1359,6 +1360,7 @@ requires-dist = [
     { name = "structlog", specifier = ">=24.1,<27" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.30,<1" },
     { name = "watchfiles", specifier = ">=0.22,<2" },
+    { name = "websockets", specifier = ">=13,<18" },
 ]
 provides-extras = ["dev", "docs", "migrate"]
 

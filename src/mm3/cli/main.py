@@ -1,14 +1,15 @@
 """Entry point of the ``mm3`` command.
 
 Implemented so far: ``--version``, ``mm3 check-config``, ``mm3 run``,
-``mm3 config`` (history, diff, undo, redo, restore) and ``mm3 token``
-(new, list, revoke).
+``mm3 config`` (history, diff, undo, redo, restore), ``mm3 token``
+(new, list, revoke), ``mm3 i18n`` (compile, check) and ``mm3 kiosk``
+(session, unit).
 ``mm3 run`` loads and validates the configuration, refuses to start with
 exit code 2 when it has errors, runs the module instances and the web
 gateway (mirror and admin listeners) until SIGTERM or SIGINT, and reloads
 the configuration when its files change or on SIGHUP.
-The other subcommands (``modules``, ``module check``, ``migrate``, ``i18n``,
-``kiosk``, ``diag``, ``installer``) are added with their milestones.
+The other subcommands (``modules``, ``module check``, ``migrate``,
+``diag``, ``installer``) are added with their milestones.
 
 Implements:
     -: Core spec 0.8, §10.2 Packaging and deployment.
@@ -31,14 +32,22 @@ import signal
 import sys
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, TextIO
+from typing import TYPE_CHECKING, Any, TextIO
 
 from mm3.__about__ import MODULE_API_VERSION, __version__
 from mm3.cli.config_cmd import add_config_parser, run_config
 from mm3.cli.i18n_cmd import add_i18n_parser, run_i18n
+from mm3.cli.kiosk_cmd import add_kiosk_parser, run_kiosk
 from mm3.cli.token_cmd import add_token_parser, run_token
 from mm3.core.config import DEFAULT_CONFIG, DEFAULT_ENV_FILE, ConfigResult, load_config
 from mm3.core.registry import Registry
+
+if TYPE_CHECKING:
+    from mm3.core.config.diff import ReloadPlan
+    from mm3.core.config.manager import ConfigManager
+    from mm3.core.engine import Engine
+    from mm3.core.web.kiosk import KioskAgents
+    from mm3.core.web.ws import ClientHub
 
 __all__ = ["EXIT_CONFIG_INVALID", "build_parser", "main"]
 
@@ -72,6 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_config_parser(sub, _config_args)
     add_token_parser(sub, _config_args)
     add_i18n_parser(sub)
+    add_kiosk_parser(sub)
     return parser
 
 
@@ -137,6 +147,38 @@ def check_config(
     return EXIT_CONFIG_INVALID if failed else 0
 
 
+def _kiosk_agents(hub: ClientHub, manager: ConfigManager, engine: Engine) -> KioskAgents | None:
+    """Write the agent key and build ``/ws/kiosk-agent``; ``None`` when the key cannot be written.
+
+    Implements:
+        CORE-268: Core spec 0.16, §6.7 Display output.
+    """
+    from mm3.core.logging import get_logger
+    from mm3.core.web.kiosk import AgentKey, KioskAgents, runtime_dir
+
+    log = get_logger(subsystem="kiosk")
+    key = AgentKey(runtime_dir())
+    try:
+        path = key.write()
+    except OSError as exc:
+        log.warning("kiosk_agent_key_unwritable", error=str(exc))
+        return None
+    log.info("kiosk_agent_key_written", path=str(path))
+
+    def display() -> dict[str, Any]:
+        config = manager.current.config
+        return config.display.model_dump(mode="json") if config is not None else {}
+
+    agents = KioskAgents(key, hub, display, manager.set_applied, engine.clock)
+
+    async def on_reload(new: ConfigResult, plan: ReloadPlan) -> None:
+        if plan.display:
+            await agents.display_changed()
+
+    manager.layout_listeners.append(on_reload)
+    return agents
+
+
 async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> None:
     from mm3.core.config.history import ConfigHistory, HistoryRecorder
     from mm3.core.config.manager import ConfigManager
@@ -181,20 +223,27 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     engine.bus.add_endpoint(pages)
     hub.attach_pages(pages, engine.supervisor)
     manager.layout_listeners.append(hub.reloaded)
+    agents = _kiosk_agents(hub, manager, engine)
     gateway = WebGateway(
         result.config.engine,
         state_dir,
         server_allow=server_allow,
         hub=hub,
         sources=ShellSources(view, lambda: manager.current, engine.i18n),
+        agents=agents,
     )
     await engine.start(result.instance_specs())
     await manager.start()
     await pages.start()
+    watchdog = asyncio.create_task(agents.watchdog(), name="mm3-kiosk-watchdog") if agents else None
     try:
         await gateway.start()
         await stop.wait()
     finally:
+        if watchdog is not None:
+            watchdog.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await watchdog
         await gateway.stop()
         await pages.close()
         await manager.close()
@@ -257,6 +306,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_token(args)
     if args.command == "i18n":
         return run_i18n(args)
+    if args.command == "kiosk":
+        return run_kiosk(args)
     parser.print_help()
     return 0
 

@@ -1,0 +1,36 @@
+# MM3 kiosk: cage + Chromium on tty1 as the user mm3-kiosk.
+# Implements CORE-143 (Core spec 0.16, §6.7 Display output)
+[Unit]
+Description=MM3 kiosk (cage and Chromium)
+Documentation=https://github.com/mm3-project/mm3-core
+Wants=mm3.service
+After=mm3.service systemd-user-sessions.service getty@tty1.service plymouth-quit-wait.service
+Conflicts=getty@tty1.service
+
+[Service]
+Type=simple
+User=mm3-kiosk
+Group=mm3-kiosk
+SupplementaryGroups=video input render
+PAMName=login
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+StandardInput=tty-fail
+StandardOutput=journal
+StandardError=journal
+UtmpIdentifier=tty1
+UtmpMode=user
+StateDirectory=mm3-kiosk
+StateDirectoryMode=0700
+Environment=XDG_SESSION_TYPE=wayland
+ExecStart=/usr/bin/cage -- /opt/mm3/venv/bin/mm3 kiosk session
+Restart=always
+RestartSec=2
+ProtectSystem=full
+ReadOnlyPaths=/etc/mm3
+InaccessiblePaths=-/var/lib/mm3
+
+[Install]
+WantedBy=graphical.target

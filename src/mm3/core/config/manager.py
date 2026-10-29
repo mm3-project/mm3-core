@@ -136,6 +136,7 @@ class ConfigManager:
         self.disk_valid = True
         self.last_records: list[Any] = []
         self.layout_listeners: list[LayoutListener] = []
+        self.applied: tuple[int, int] | None = None
         self._attempted_files: set[Path] = set(current.loaded.files)
         self._timer: asyncio.TimerHandle | None = None
         self._task: asyncio.Task[None] | None = None
@@ -263,6 +264,7 @@ class ConfigManager:
             registry=self.registry,
             env_file=self.env_file,
             environ=self.environ,
+            applied=self.applied,
         )
         self._attempted_files = set(new.loaded.files)
         self.last_records = list(new.records)
@@ -294,6 +296,60 @@ class ConfigManager:
             "CORE_CONFIG_CHANGED", {"version": self.version, "sections": plan.sections}
         )
         _log.info("config_applied", version=self.version, origin=origin, sections=plan.sections)
+        return True
+
+    async def set_applied(self, mode: tuple[int, int] | None) -> bool:
+        """Use the mode the kiosk applied for the layout (CORE-145, CORE-146, CORE-215).
+
+        The running configuration is validated again with that mode. When it
+        stays valid it replaces the running one (no new version: no file
+        changed), the shells resync and ``CORE_DISPLAY_CHANGED`` is emitted
+        if the viewport changed. When it does not, the running configuration
+        stays and the errors are reported as for a reload (CORE-209).
+
+        Args:
+            mode: ``(width, height)`` as applied, in the monitor's orientation.
+
+        Returns:
+            True when the viewport changed.
+
+        Implements:
+            CORE-146: Core spec 0.16, §6.7 Display output.
+        """
+        if mode == self.applied:
+            return False
+        self.applied = mode
+        new = await asyncio.to_thread(
+            load_config,
+            self.current.path,
+            registry=self.registry,
+            env_file=self.env_file,
+            environ=self.environ,
+            applied=mode,
+        )
+        if not new.ok or new.config is None or new.layout is None:
+            self._reject(new)
+            return False
+        old = self.current.layout
+        self.current = new
+        view = new.layout.viewport
+        if old is not None and (old.viewport.width, old.viewport.height) == (
+            view.width,
+            view.height,
+        ):
+            return False
+        for listener in self.layout_listeners:
+            await listener(new, ReloadPlan(display=True))
+        display = new.config.display
+        self.engine.supervisor.emit(
+            "CORE_DISPLAY_CHANGED",
+            {
+                "viewport": [view.width, view.height],
+                "scale": display.scale,
+                "rotation": display.rotation,
+            },
+        )
+        _log.info("display_applied", width=view.width, height=view.height)
         return True
 
     def _reject(self, new: ConfigResult) -> None:

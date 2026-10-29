@@ -42,6 +42,7 @@ dependencies = [
     "jinja2>=3.1,<4",
     "argon2-cffi>=23.1,<26",
     "pyotp>=2.9,<3",
+    "websockets>=13,<18",  # kiosk agent client only (core spec 1.2), via mm3.core.kiosk.agent
 ]
 
 [project.optional-dependencies]

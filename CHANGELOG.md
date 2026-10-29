@@ -9,6 +9,28 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Milestone 3 part E: the kiosk. `mm3 kiosk session` (run by
+  `mm3-kiosk.service` inside cage) refuses to start unless `cage -v` reports
+  0.1.5 or later, reads the agent key the engine writes to
+  `/run/mm3/kiosk.key` (mode 0640, group `mm3-kiosk`) and connects to
+  `/ws/kiosk-agent` (loopback, `Authorization: Bearer`) (CORE-143, CORE-268).
+  It applies the `display` block with `wlr-randr`, picking the closest
+  supported mode, and reports outputs, modes, the applied mode, viewport and
+  DPR, also after hot-plugs (CORE-144, CORE-145, CORE-277). It starts
+  Chromium once the engine answers, with the CORE-270 flags and a one-time
+  kiosk key in `/#kiosk=`, restarts it with a 1-30 s backoff and gives up
+  after 5 restarts in 10 minutes (CORE-269). The engine sends the display
+  block on connect and on every change, a new kiosk key before each launch
+  and `restart` when no kiosk shell has connected for 60 s; it keeps the
+  kiosk status (mismatch, Chromium state, restarts, failed). An applied mode
+  re-validates the running configuration, resyncs the shells and emits
+  `CORE_DISPLAY_CHANGED` (CORE-146). The shell claims the `kiosk` role with
+  the key and falls back to a view-only browser when the key is stale.
+  `mm3 kiosk session --print-command`, `mm3 kiosk unit`. CI installs
+  Chromium for the browser tests, including a smoke test that renders a
+  module in five languages and follows the grid on resize (CORE-06).
+  Milestone 3 is done.
+- New dependency `websockets` (kiosk agent client only, core spec 1.2).
 - Milestone 3 part D: internationalization. The engine catalog
   (`mm3/core/locales`, EN, IT, FR, ES, DE) holds every `CORE_*` text: the
   validation messages (now read from it), the engine pages, the WebSocket

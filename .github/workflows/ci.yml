@@ -59,6 +59,12 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --frozen --all-extras
+      # Browser tests (marker "browser") need Chromium; one job runs them, the
+      # others skip them. Includes the shell smoke test: a module renders in
+      # five languages and follows the grid when the window resizes.
+      - name: Chromium for the browser tests
+        if: matrix.python-version == '3.13'
+        run: uv run playwright install --with-deps chromium
       # Deprecation warnings fail the suite (CORE-175), see pyproject.toml.
       - run: uv run pytest
 

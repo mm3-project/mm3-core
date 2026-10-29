@@ -293,6 +293,7 @@ def load_config(
     registry: Registry,
     env_file: Path = DEFAULT_ENV_FILE,
     environ: Mapping[str, str] | None = None,
+    applied: tuple[int, int] | None = None,
 ) -> ConfigResult:
     """Load and validate a configuration, collecting every problem.
 
@@ -301,6 +302,8 @@ def load_config(
         registry: Installed modules.
         env_file: Env file (``--env-file``).
         environ: Process environment; ``os.environ`` by default.
+        applied: The mode the kiosk reported as applied; the layout uses it
+            instead of the configured or assumed mode (CORE-145, CORE-215).
 
     Returns:
         The result. ``result.ok`` is False when there is any error; then
@@ -327,7 +330,7 @@ def load_config(
     result.records.extend(records)
     layout = None
     if config is not None:
-        layout = check_layout(config, instances, registry, loaded.sources)
+        layout = check_layout(config, instances, registry, loaded.sources, applied=applied)
         result.records.extend(layout.records)
     if result.ok:
         result.config = config
