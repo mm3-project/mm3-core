@@ -47,6 +47,14 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Changed
 
+- Spec sync: Core spec 0.14 (shell and kiosk details). New: control
+  action contents and `reload` `resync` on hot reload (CORE-275), shell
+  input frames `visibility` and `touch` (CORE-276), kiosk agent protocol
+  (CORE-277). Changed: `welcome` instance entries carry `scripts`, `styles`,
+  `appearance` and `status`, and `welcome.custom_css` (CORE-246);
+  `/appearance/<instance>.css` (CORE-252); `visibility`, `touch` and the
+  `status` action (CORE-271); outputs reported by the kiosk agent
+  (CORE-144). All in milestone 3.
 - Spec sync: Core spec 0.13. New: WebSocket frame contents and `ref`
   (CORE-271), error and reply codes (CORE-272), `/ws` and
   `/admin/preview/ws` endpoints, 10 s hello timeout and `engine_build`
