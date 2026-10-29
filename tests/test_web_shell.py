@@ -68,6 +68,8 @@ customElements.define("mm3-shelltest", ShellTest);
 CONFIG = """
 engine:
   locale: en
+  input:
+    touch: true
 pages:
   default: a
   list:
@@ -88,6 +90,13 @@ modules:
   - module: shelltest
     id: both
     position: bottom_bar
+    appearance:
+      overflow: scroll
+  - module: shelltest
+    id: also
+    position: bottom_bar
+    appearance:
+      overflow: fit
 """
 
 CUSTOM_CSS = "body { --mm3-color-fg: #bbb; }\n"
@@ -226,6 +235,13 @@ async def test_core_252_shell_and_engine_files(mirror: Mirror) -> None:
             assert (await c.get(path)).status_code == 404, path
 
 
+async def test_core_12_elements_cannot_reach_other_origins(mirror: Mirror) -> None:
+    async with httpx.AsyncClient(base_url=mirror.base) as c:
+        csp = (await c.get("/")).headers["content-security-policy"]
+    assert "connect-src 'self'" in csp
+    assert "default-src 'none'" in csp
+
+
 async def test_core_252_module_files_are_versioned_and_immutable(mirror: Mirror) -> None:
     async with httpx.AsyncClient(base_url=mirror.base) as c:
         ok = await c.get("/modules/shelltest/0/element.js")
@@ -318,7 +334,7 @@ async def test_core_246_welcome_entry_fields(mirror: Mirror) -> None:
         assert welcome["custom_css"] == content_version(CUSTOM_CSS)
         config = mirror.holder["result"].config
         assert config is not None
-        assert (welcome["timezone"], welcome["touch"]) == (config.engine.timezone, False)
+        assert (welcome["timezone"], welcome["touch"]) == (config.engine.timezone, True)
         home = welcome["instances"][0]
         assert home["scripts"] == ["/modules/shelltest/0/element.js"]
         assert home["styles"] == ["/modules/shelltest/0/element.css"]
@@ -343,7 +359,7 @@ async def test_core_246_welcome_entry_fields(mirror: Mirror) -> None:
             "index": 0,
             "count": 2,
             "transition": "fade",
-            "visible": ["home", "both"],
+            "visible": ["home", "both", "also"],
         }
 
 
@@ -353,7 +369,7 @@ async def test_core_275_page_hide_status_and_reload(mirror: Mirror) -> None:
         await frames_until(ws, control("page"))
         mirror.pages.next("ha")
         page = await frames_until(ws, control("page"))
-        assert (page["data"]["page"], page["data"]["visible"]) == ("b", ["other", "both"])
+        assert (page["data"]["page"], page["data"]["visible"]) == ("b", ["other", "both", "also"])
         mirror.pages.set_manual("both", True)
         hide = await frames_until(ws, control("hide"))
         assert (hide["instance"], hide["data"]["fade"]) == ("both", 300)
@@ -367,6 +383,55 @@ async def test_core_275_page_hide_status_and_reload(mirror: Mirror) -> None:
         await mirror.hub.reloaded(result, ReloadPlan(relayout=["home"]))
         reload = await frames_until(ws, control("reload"))
         assert reload["data"]["scope"] == "resync"
+
+
+def display_headers(mirror: Mirror) -> dict[str, str]:
+    auth = mirror.hub.auth
+    rec = auth.tokens.verify(auth.tokens.new("hall", "display"), "display")
+    assert rec is not None
+    return {"Cookie": f"{DISPLAY_COOKIE}={auth.sessions.create(rec)}"}
+
+
+def touch(gesture: str) -> str:
+    return json.dumps({"v": 1, "kind": "touch", "data": {"gesture": gesture}})
+
+
+async def test_core_235_touch_frames_change_page(mirror: Mirror) -> None:
+    url = f"ws://127.0.0.1:{mirror.gateway.mirror.port}/ws"
+    async with websockets.connect(url, additional_headers=display_headers(mirror)) as ws:
+        await ws.send(hello())
+        await frames_until(ws, control("page"))
+        await ws.send(touch("swipe_left"))
+        page = await frames_until(ws, control("page"))
+        assert page["data"]["page"] == "b"
+        await ws.send(touch("pinch"))
+        error = await frames_until(ws, lambda f: f["kind"] == "error")
+        assert error["data"]["code"] == "invalid_frame"
+
+
+async def test_core_239_preview_never_changes_page(mirror: Mirror) -> None:
+    auth = mirror.hub.auth
+    rec = auth.tokens.verify(auth.tokens.new("me"), "admin")
+    assert rec is not None
+    headers = {
+        "Cookie": f"{ADMIN_COOKIE}={auth.sessions.create(rec)}",
+        "Origin": mirror.admin,
+    }
+    url = f"ws://127.0.0.1:{mirror.gateway.admin.port}/admin/preview/ws"
+    async with websockets.connect(url, additional_headers=headers) as ws:
+        data = json.loads(hello())
+        data["data"]["role"] = "preview"
+        await ws.send(json.dumps(data))
+        welcome = json.loads(await ws.recv())
+        assert welcome["data"]["role"] == "preview"
+        await ws.send(touch("swipe_left"))
+        await ws.send(
+            json.dumps({"v": 1, "kind": "visibility", "instance": "home", "data": {"hidden": True}})
+        )
+        await asyncio.sleep(0.2)
+        await mirror.pages.idle()
+    assert mirror.pages.page == "a"
+    assert mirror.pages.visible("home")
 
 
 # --- CORE-255..259: the shell in a browser ---------------------------------------------------
@@ -403,9 +468,16 @@ async def gone(page: Any, instance: str) -> str:
     )
 
 
-@pytest.mark.browser
-async def test_core_255_shell_renders_pages_and_state(mirror: Mirror, browser: Any) -> None:
-    # A paired display is interactive (CORE-248, CORE-254).
+HOME = "document.querySelector('[data-instance=\"home\"] mm3-shelltest')"
+
+
+def cell(instance: str) -> str:
+    return f"document.querySelector('[data-instance=\"{instance}\"]')"
+
+
+@pytest.fixture
+async def shell(mirror: Mirror, browser: Any) -> AsyncIterator[Any]:
+    """A paired display (interactive, CORE-248, CORE-254) showing the mirror."""
     auth = mirror.hub.auth
     rec = auth.tokens.verify(auth.tokens.new("hall", "display"), "display")
     assert rec is not None
@@ -419,64 +491,171 @@ async def test_core_255_shell_renders_pages_and_state(mirror: Mirror, browser: A
     page.on("pageerror", lambda e: problems.append(str(e)))
     await page.goto(mirror.base + "/")
     await page.wait_for_function(
-        """() => {
-            const el = document.querySelector('[data-instance="home"] mm3-shelltest');
-            return el && el.shadowRoot.querySelector('.temp')?.textContent === '21';
-        }"""
+        f"() => {HOME}?.shadowRoot.querySelector('.temp')?.textContent === '21'"
     )
-    # CORE-256: header outside the shadow root; CORE-255: styles adopted.
-    header = await page.text_content('[data-instance="home"] .mm3-header')
-    assert header == "Hello"
-    sheets = await page.evaluate(
-        "() => document.querySelector('[data-instance=\"home\"] mm3-shelltest')"
-        ".shadowRoot.adoptedStyleSheets.length"
-    )
-    assert sheets == 3  # variables, module styles, appearance.css
-    color = await page.evaluate(
-        "() => getComputedStyle(document.querySelector('[data-instance=\"home\"] mm3-shelltest')"
-        ".shadowRoot.querySelector('.temp')).color"
+    yield page
+    assert problems == []
+    await context.close()
+
+
+@pytest.mark.browser
+async def test_core_255_element_setup(shell: Any) -> None:
+    sheets = await shell.evaluate(f"() => {HOME}.shadowRoot.adoptedStyleSheets.length")
+    assert sheets == 3  # appearance variables, module styles, appearance.css
+    color = await shell.evaluate(
+        f"() => getComputedStyle({HOME}.shadowRoot.querySelector('.temp')).color"
     )
     assert color == "rgb(255, 0, 0)"
-    size = await page.evaluate(
-        "() => document.querySelector('[data-instance=\"home\"] mm3-shelltest').size"
+
+
+@pytest.mark.browser
+async def test_core_256_header_outside_the_shadow_root(shell: Any) -> None:
+    assert await shell.text_content('[data-instance="home"] .mm3-header') == "Hello"
+    assert await shell.evaluate(f"() => {HOME}.shadowRoot.textContent.includes('Hello')") is False
+    hidden = await shell.evaluate(
+        f"() => getComputedStyle({cell('both')}.querySelector('.mm3-header')).display"
     )
+    assert hidden == "none"
+
+
+@pytest.mark.browser
+async def test_core_95_on_resize_reports_whole_pixels(shell: Any) -> None:
+    await shell.wait_for_function(f"() => {HOME}.size !== undefined")
+    size = await shell.evaluate(f"() => {HOME}.size")
     assert size is not None
-    assert size[0] > 0
-    assert await gone(page, "other") == "true"
-    # CORE-262: custom.css loaded with its version.
-    href = await page.get_attribute('link[href^="/custom.css"]', "href")
+    assert all(isinstance(v, int) and v > 0 for v in size)
+    await shell.set_viewport_size({"width": 1920, "height": 1080})
+    await shell.wait_for_function(f"(w) => {HOME}.size[0] > w", arg=size[0])
+
+
+@pytest.mark.browser
+async def test_core_64_templates_escape_state(mirror: Mirror, shell: Any) -> None:
+    await shell.evaluate(f"() => {HOME}.send('bump', {{n: '<b>bold</b>'}})")
+    await shell.wait_for_function(
+        f"() => {HOME}.shadowRoot.querySelector('.temp').textContent === '<b>bold</b>'"
+    )
+    assert await shell.evaluate(f"() => {HOME}.shadowRoot.querySelector('b')") is None
+
+
+@pytest.mark.browser
+async def test_core_237_page_change_switches_visible_instances(mirror: Mirror, shell: Any) -> None:
+    assert await gone(shell, "other") == "true"
+    href = await shell.get_attribute('link[href^="/custom.css"]', "href")
     assert href == f"/custom.css?v={content_version(CUSTOM_CSS)}"
-    # Element -> backend -> state (MOD send, CORE-249).
-    await page.evaluate(
-        "() => document.querySelector('[data-instance=\"home\"] mm3-shelltest')"
-        ".send('bump', {n: 5})"
-    )
-    await page.wait_for_function(
-        "() => document.querySelector('[data-instance=\"home\"] mm3-shelltest')"
-        ".shadowRoot.querySelector('.temp').textContent === '5'"
-    )
-    # CORE-237: page change hides home and shows other.
     mirror.pages.next("ha")
-    await page.wait_for_function(
-        "() => document.querySelector('[data-instance=\"home\"]').dataset.gone === 'true'"
-        " && document.querySelector('[data-instance=\"other\"]').dataset.hidden === 'false'"
+    await shell.wait_for_function(
+        f"() => {cell('home')}.dataset.gone === 'true'"
+        f" && {cell('other')}.dataset.hidden === 'false'"
     )
-    assert await text_of(page, "other") == "21"
-    # CORE-259: a hidden element keeps its state.
-    assert await text_of(page, "home") == "5"
-    # CORE-117: failure placeholder.
+    assert await text_of(shell, "other") == "21"
+
+
+@pytest.mark.browser
+async def test_core_259_hidden_elements_keep_their_state(mirror: Mirror, shell: Any) -> None:
+    await shell.evaluate(f"() => {HOME}.send('bump', {{n: 5}})")
+    await shell.wait_for_function(
+        f"() => {HOME}.shadowRoot.querySelector('.temp').textContent === '5'"
+    )
+    await shell.evaluate(f"() => {{ window.__home = {HOME}; }}")
+    mirror.pages.next("ha")
+    await shell.wait_for_function(f"() => {cell('home')}.dataset.gone === 'true'")
+    assert await text_of(shell, "home") == "5"
+    assert await shell.evaluate(f"() => {HOME} === window.__home") is True
+
+
+@pytest.mark.browser
+async def test_core_276_element_hides_itself(mirror: Mirror, shell: Any) -> None:
+    await shell.evaluate(f"() => {HOME}.hide({{fade: 0}})")
+    await shell.wait_for_function(f"() => {cell('home')}.dataset.gone === 'true'")
+    assert mirror.pages.reasons("home") == {"self"}
+    await shell.evaluate(f"() => {HOME}.show()")
+    await shell.wait_for_function(f"() => {cell('home')}.dataset.hidden === 'false'")
+
+
+@pytest.mark.browser
+async def test_core_117_failure_placeholder(mirror: Mirror, shell: Any) -> None:
     await mirror.engine.supervisor.get("both")._disable("test")
-    await page.wait_for_function(
-        "() => document.querySelector('[data-instance=\"both\"]').dataset.status === 'unavailable'"
+    await shell.wait_for_function(f"() => {cell('both')}.dataset.status === 'unavailable'")
+    shown = await shell.evaluate(
+        f"() => getComputedStyle({cell('both')}.querySelector('.mm3-failure')).display"
     )
-    # CORE-275: resync rebuilds from a new welcome and keeps unchanged elements.
-    await page.evaluate(
-        "() => { window.__home = "
-        "document.querySelector('[data-instance=\"home\"] mm3-shelltest'); }"
-    )
+    assert shown == "flex"
+
+
+@pytest.mark.browser
+async def test_core_250_resync_keeps_unchanged_elements(mirror: Mirror, shell: Any) -> None:
+    await shell.evaluate(f"() => {{ window.__home = {HOME}; }}")
     mirror.hub.resync()
     await asyncio.sleep(0.5)
-    await page.wait_for_function(
-        "() => document.querySelector('[data-instance=\"home\"] mm3-shelltest') === window.__home"
+    await shell.wait_for_function(f"() => {HOME} === window.__home")
+    assert len(mirror.hub.clients()) == 1
+
+
+@pytest.mark.browser
+async def test_core_261_theme_variables(shell: Any) -> None:
+    style = await shell.evaluate(
+        "() => { const s = getComputedStyle(document.documentElement);"
+        " return [s.getPropertyValue('--mm3-color-bg').trim(),"
+        " s.getPropertyValue('--mm3-font-family').trim()]; }"
     )
-    assert problems == []
+    assert style[0] == "#000"
+    assert style[1].startswith('"Roboto Condensed"')
+
+
+@pytest.mark.browser
+async def test_core_103_pointer_events_follow_touch(shell: Any) -> None:
+    events = await shell.evaluate(
+        "() => getComputedStyle(document.getElementById('mm3-grid')).pointerEvents"
+    )
+    assert events == "auto"
+
+
+@pytest.mark.browser
+async def test_core_260_swipe_changes_page(mirror: Mirror, shell: Any) -> None:
+    await shell.mouse.move(1000, 300)
+    await shell.mouse.down()
+    await shell.mouse.move(600, 320, steps=5)
+    await shell.mouse.up()
+    await shell.wait_for_function(f"() => {cell('other')}.dataset.hidden === 'false'")
+    assert mirror.pages.page == "b"
+
+
+@pytest.mark.browser
+async def test_core_257_stack_splits_the_preset_among_visible_instances(
+    mirror: Mirror, shell: Any
+) -> None:
+    async def heights() -> list[float]:
+        return await shell.evaluate(  # type: ignore[no-any-return]
+            f"() => [{cell('both')}, {cell('also')}].map((c) => c.getBoundingClientRect().height)"
+        )
+
+    async def tops() -> list[float]:
+        return await shell.evaluate(  # type: ignore[no-any-return]
+            f"() => [{cell('both')}, {cell('also')}].map((c) => c.getBoundingClientRect().top)"
+        )
+
+    await shell.wait_for_function(f"() => {cell('also')}.dataset.hidden === 'false'")
+    both, also = await heights()
+    assert abs(both - also) < 1
+    top_both, top_also = await tops()
+    assert abs(top_also - (top_both + both)) < 1
+    mirror.pages.set_manual("both", True)
+    await shell.wait_for_function(f"() => {cell('both')}.dataset.gone === 'true'")
+    _, alone = await heights()
+    assert abs(alone - 2 * also) < 1
+
+
+@pytest.mark.browser
+async def test_core_258_fit_scales_down_and_scroll_scrolls(mirror: Mirror, shell: Any) -> None:
+    also = f"{cell('also')}.querySelector('.mm3-fit')"
+    read = f"() => parseFloat({also}.style.transform.slice(6)) || 1"
+    before = await shell.evaluate(read)
+    assert 0 < before <= 1  # never scaled up
+    await shell.evaluate(
+        f"() => {cell('also')}.querySelector('mm3-shelltest').send('bump', {{n: 'x'.repeat(3000)}})"
+    )
+    await shell.wait_for_function(f"(b) => ({read})() < b / 2", arg=before)
+    overflow = await shell.evaluate(
+        f"() => getComputedStyle({cell('both')}.querySelector('.mm3-area')).overflowY"
+    )
+    assert overflow == "auto"

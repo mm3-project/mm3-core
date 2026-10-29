@@ -1,6 +1,9 @@
-// Implements CORE-64, CORE-255 (Core spec 0.14): the module-facing API of the
-// front-end contract (Module Contract MOD-37, section 5): `html`, `svg`,
-// `nothing` and `MirrorElement`. lit-html is an engine detail behind this file.
+// The module-facing API of the front-end contract (Module Contract section 5):
+// `html`, `svg`, `nothing` and `MirrorElement`. lit-html is an engine detail
+// behind this file (MOD-37).
+// Implements CORE-64 (Core spec 0.14, §10.1 Security)
+// Implements CORE-95, CORE-255, CORE-259 (Core spec 0.14, §6.5 Screen layout)
+// Implements CORE-276 (Core spec 0.14, §5.6 WebSocket protocol)
 import { html, svg, nothing, render as litRender } from "/core/vendor/lit-html/lit-html.js";
 
 export { html, svg, nothing };

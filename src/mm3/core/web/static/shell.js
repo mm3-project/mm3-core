@@ -1,6 +1,11 @@
-// Implements CORE-250, CORE-255..260, CORE-117, CORE-275, CORE-276 (Core spec 0.14):
-// the shell. It connects to the engine, builds the grid from `welcome`, creates one
+// The shell: connects to the engine, builds the grid from `welcome`, creates one
 // element per instance, and follows `state`, `client`, `notify`, `reply` and `control`.
+// Implements CORE-250, CORE-275, CORE-276 (Core spec 0.14, §5.6 WebSocket protocol)
+// Implements CORE-95, CORE-255, CORE-256, CORE-257, CORE-258, CORE-259 (Core spec 0.14, §6.5 Screen layout)
+// Implements CORE-260 (Core spec 0.14, §6.9 Pages and visibility)
+// Implements CORE-262 (Core spec 0.14, §6.10 Theme and custom CSS)
+// Implements CORE-117 (Core spec 0.14, §10.5 Diagnostics and debugging)
+// Implements CORE-103 (Core spec 0.14, §11.1 Engine additions)
 import { bind } from "/core/mm3.js";
 
 const mode = document.documentElement.dataset.mode === "preview" ? "preview" : "mirror";
@@ -180,6 +185,8 @@ async function onWelcome(data) {
   build = data.engine_build;
   welcome = data;
   document.documentElement.lang = data.locale;
+  // Pointer events reach elements only with engine.input.touch (CORE-103).
+  document.documentElement.dataset.touch = data.touch ? "true" : "false";
   applyCustomCss(data.custom_css);
   applyLayout(data.layout);
   const wanted = new Set(data.instances.map((i) => i.id));
@@ -501,7 +508,7 @@ function fit(cell) {
 
 let pointer = null;
 window.addEventListener("pointerdown", (ev) => {
-  if (mode !== "mirror" || !ev.isPrimary) return;
+  if (mode !== "mirror" || !ev.isPrimary || !welcome?.touch) return;
   pointer = { x: ev.clientX, y: ev.clientY, t: performance.now() };
 });
 window.addEventListener("pointerup", (ev) => {

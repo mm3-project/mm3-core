@@ -1,4 +1,6 @@
-/* Implements CORE-255..259 (Core spec 0.14, §6.8 Shell): grid, cells, headers, fades. */
+/* Grid, cells, headers, fit and scroll, fades, failure placeholder. */
+/* Implements CORE-255, CORE-256, CORE-258, CORE-259 (Core spec 0.14, §6.5 Screen layout) */
+/* Implements CORE-117 (Core spec 0.14, §10.5 Diagnostics and debugging) */
 html, body {
   margin: 0;
   height: 100%;
@@ -13,7 +15,9 @@ html, body {
   cursor: none;
 }
 html[data-mode="preview"] { cursor: default; }
+html[data-touch="true"] #mm3-grid { pointer-events: auto; }
 #mm3-grid {
+  pointer-events: none;
   position: absolute;
   inset: 0;
   display: grid;

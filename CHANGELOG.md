@@ -87,6 +87,13 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 - The `Permissions-Policy` header no longer lists `bluetooth`, which
   Chromium does not recognise (CORE-63).
+- `tools/check_spec_refs.py` and `tools/trace_report.py` also read the
+  `// Implements` and `/* Implements` comments of the engine's front-end
+  files (`static/*.js`, `static/*.css`); vendored libraries are skipped
+  (CORE-74, CORE-77, CORE-78).
+- Browser tests (marker `browser`) run the shell in headless Chromium and
+  are skipped where Chromium cannot start; `MM3_CHROMIUM` selects the
+  executable.
 
 - Spec sync: Core spec 0.14 (shell and kiosk details). New: control
   action contents and `reload` `resync` on hot reload (CORE-275), shell
