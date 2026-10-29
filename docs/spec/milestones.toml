@@ -81,7 +81,8 @@ requirements = [
 [[milestone]]
 number = 3
 name = "Web shell, WebSocket, i18n, kiosk, visibility"
-status = "in_progress"
+status = "done"
+done_at = { core = "0.16", contract = "1.0 rev 7" }
 requirements = [
   "CORE-06", "CORE-07", "CORE-11", "CORE-12", "CORE-40..42", "CORE-60..64",
   "CORE-95", "CORE-103", "CORE-117", "CORE-143..146", "CORE-223", "CORE-233..235",
@@ -95,6 +96,8 @@ requirements = [
 #   custom.css is CORE-262 here.
 # CORE-253: the login endpoint and session cookie come here; the admin pages
 #   that use them come in milestone 6.
+# Shipped in PRs #22 (A), #24 (B), #26 (C), #27 (spec 0.15 + D) and E, with
+#   spec syncs #23, #25, #27 and #29 (core 0.13 to 0.16).
 # CORE-145, CORE-269: the engine keeps the kiosk status (mode mismatch,
 #   Chromium state, restarts, failed) here; GET /api/v1/status, the admin and
 #   the debug page show it in milestone 6. CORE-144: the admin dropdowns of

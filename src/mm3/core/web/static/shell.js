@@ -6,13 +6,28 @@
 // Implements CORE-262 (Core spec 0.14, §6.10 Theme and custom CSS)
 // Implements CORE-117 (Core spec 0.14, §10.5 Diagnostics and debugging)
 // Implements CORE-103 (Core spec 0.14, §11.1 Engine additions)
+// Implements CORE-268 (Core spec 0.16, §6.7 Display output)
 // Implements CORE-235 (Core spec 0.15, §6.9 Pages and visibility)
 // Implements CORE-264, CORE-267 (Core spec 0.15, §8.5 Catalogs at run time)
 import { bind } from "/core/mm3.js";
 
 const mode = document.documentElement.dataset.mode === "preview" ? "preview" : "mirror";
 const WS_PATH = mode === "preview" ? "/admin/preview/ws" : "/ws";
-const ROLE = mode === "preview" ? "preview" : "browser";
+// CORE-268: the kiosk agent starts Chromium on /#kiosk=<key>; the key claims the kiosk role.
+function kioskKey() {
+  const m = location.hash.match(/^#kiosk=([A-Za-z0-9_-]+)$/);
+  try {
+    if (m) {
+      sessionStorage.setItem("mm3.kiosk_key", m[1]);
+      history.replaceState(null, "", location.pathname);
+    }
+    return sessionStorage.getItem("mm3.kiosk_key");
+  } catch {
+    return m ? m[1] : null;
+  }
+}
+let kiosk = mode === "mirror" ? kioskKey() : null;
+const role = () => (mode === "preview" ? "preview" : kiosk ? "kiosk" : "browser");
 const FADE_MS = 300;
 const BACKOFF = { first: 500, max: 10000, jitter: 0.2 };
 
@@ -91,7 +106,8 @@ function connect() {
         data: {
           protocol: 1,
           client_id: CLIENT_ID,
-          role: ROLE,
+          role: role(),
+          ...(role() === "kiosk" ? { key: kiosk } : {}),
           viewport: viewport(),
           dpr: window.devicePixelRatio || 1,
         },
@@ -110,6 +126,13 @@ function connect() {
   });
   ws.addEventListener("close", (ev) => {
     if (socket !== ws) return;
+    if (ev.code === 4403 && kiosk) {
+      // A key from an earlier launch: carry on as a view-only browser.
+      kiosk = null;
+      try {
+        sessionStorage.removeItem("mm3.kiosk_key");
+      } catch {}
+    }
     for (const [rid, p] of pendingRequests) {
       clearTimeout(p.timer);
       p.reject(new Error("closed"));

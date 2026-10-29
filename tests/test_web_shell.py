@@ -846,3 +846,87 @@ async def test_core_235_swipe_on_a_touch_element_stays_with_it(mirror: Mirror, s
     await asyncio.sleep(0.5)
     await mirror.pages.idle()
     assert mirror.pages.page == "a"
+
+
+# --- part E: the kiosk shell and the smoke test -------------------------------------------------
+
+
+@pytest.mark.browser
+async def test_core_247_kiosk_shell_claims_the_role(mirror: Mirror, browser: Any) -> None:
+    key = mirror.hub.kiosk_keys.issue()
+    page = await browser.new_page(viewport={"width": 1280, "height": 720})
+    await page.goto(f"{mirror.base}/#kiosk={key}")
+    await page.wait_for_function(f"() => {HOME}?.shadowRoot.querySelector('.temp')")
+    await eventually_true(lambda: [c["role"] for c in mirror.hub.clients()] == ["kiosk"])
+    assert await page.evaluate("() => location.hash") == ""
+    # A key from an earlier launch falls back to a view-only browser.
+    mirror.hub.kiosk_keys.issue()
+    await page.reload()
+    await eventually_true(lambda: [c["role"] for c in mirror.hub.clients()] == ["browser"])
+    await page.close()
+
+
+async def eventually_true(check: Any, wait: float = 5.0) -> None:
+    async with asyncio.timeout(wait):
+        while not check():  # noqa: ASYNC110 - polls hub state
+            await asyncio.sleep(0.02)
+
+
+SMOKE = """
+engine:
+  locale: en
+modules:
+  - module: shelltest
+    id: en_box
+    position: top_left
+  - module: shelltest
+    id: it_box
+    position: top_right
+    locale: it
+  - module: shelltest
+    id: fr_box
+    position: middle_center
+    locale: fr
+  - module: shelltest
+    id: es_box
+    position: bottom_left
+    locale: es
+  - module: shelltest
+    id: de_box
+    position: bottom_right
+    locale: de
+"""
+
+
+@pytest.mark.browser
+async def test_core_06_smoke_five_languages_and_resize(mirror: Mirror, browser: Any) -> None:
+    old = mirror.holder["result"]
+    new = mirror.reload(SMOKE)
+    plan = plan_reload(old, new)
+    for iid in plan.stop:
+        await mirror.engine.supervisor.remove(iid)
+    specs = {s.instance_id: s for s in new.instance_specs()}
+    for iid in plan.start:
+        mirror.engine.supervisor.add(specs[iid])
+    await mirror.engine.supervisor.start_all()
+    mirror.pages.reload(new)
+    page = await browser.new_page(viewport={"width": 1280, "height": 720})
+    await page.goto(mirror.base + "/")
+    expected = {
+        "en_box": "2 files",
+        "it_box": "2 file",
+        "fr_box": "2 fichiers",
+        "es_box": "2 archivos",
+        "de_box": "2 Dateien",
+    }
+    for iid, text in expected.items():
+        await page.wait_for_function(
+            f"() => {cell(iid)}?.querySelector('mm3-shelltest')"
+            f"?.shadowRoot.querySelector('.label')?.textContent === {json.dumps(text)}"
+        )
+    before = await page.evaluate(f"() => {cell('en_box')}.getBoundingClientRect().width")
+    await page.set_viewport_size({"width": 1920, "height": 1080})
+    await page.wait_for_function(
+        f"(w) => {cell('en_box')}.getBoundingClientRect().width > w * 1.4", arg=before
+    )
+    await page.close()

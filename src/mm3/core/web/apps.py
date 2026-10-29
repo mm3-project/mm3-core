@@ -45,6 +45,7 @@ from mm3.core.web.shell import STATIC_DIR, ShellSources, add_shell_files, inside
 from mm3.core.web.ws import DISPLAY_COOKIE_MAX_AGE
 
 if TYPE_CHECKING:
+    from mm3.core.web.kiosk import KioskAgents
     from mm3.core.web.ws import ClientHub
 
 __all__ = [
@@ -102,7 +103,10 @@ def protect(app: ASGIApp, networks: Callable[[], Sequence[Network]], listener: s
 
 
 def mirror_app(
-    auth: WebAuth, hub: ClientHub | None = None, sources: ShellSources | None = None
+    auth: WebAuth,
+    hub: ClientHub | None = None,
+    sources: ShellSources | None = None,
+    agents: KioskAgents | None = None,
 ) -> FastAPI:
     """Build the mirror listener's application (without the protection wrappers).
 
@@ -110,6 +114,7 @@ def mirror_app(
         auth: Token store and sessions.
         hub: Connected shells; ``/ws`` exists only with a hub.
         sources: The shell's files; without them only ``/core`` is served.
+        agents: The kiosk agent; ``/ws/kiosk-agent`` exists only with it (CORE-268).
 
     Returns:
         The application.
@@ -126,6 +131,13 @@ def mirror_app(
         @app.websocket("/ws")
         async def ws(websocket: WebSocket) -> None:
             await shells.serve(websocket, "mirror")
+
+    if agents is not None:
+        kiosk = agents
+
+        @app.websocket("/ws/kiosk-agent")
+        async def kiosk_agent(websocket: WebSocket) -> None:
+            await kiosk.serve(websocket)
 
     @app.get("/pair")
     async def pair_get() -> HTMLResponse:
