@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.13"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13"]
+version = "0.14"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14"]
 
 [[spec]]
 name = "Module Contract"
@@ -1007,9 +1007,9 @@ id = "CORE-144"
 spec = "Core spec"
 section = "6.7"
 title = "Display output"
-hash = "d8bff2a62ba8"
+hash = "4d09ffbb6710"
 introduced_in = "0.1"
-changed_in = "0.1"
+changed_in = "0.14"
 status = "active"
 
 [[requirement]]
@@ -1867,9 +1867,9 @@ id = "CORE-246"
 spec = "Core spec"
 section = "5.6"
 title = "WebSocket protocol"
-hash = "f6a31c9a9b64"
+hash = "54ba2140e9ef"
 introduced_in = "0.11"
-changed_in = "0.11"
+changed_in = "0.14"
 status = "active"
 
 [[requirement]]
@@ -1927,9 +1927,9 @@ id = "CORE-252"
 spec = "Core spec"
 section = "5.6"
 title = "WebSocket protocol"
-hash = "9f98396be5fe"
+hash = "b0c6a6dce1ce"
 introduced_in = "0.11"
-changed_in = "0.11"
+changed_in = "0.14"
 status = "active"
 
 [[requirement]]
@@ -2117,9 +2117,9 @@ id = "CORE-271"
 spec = "Core spec"
 section = "5.6"
 title = "WebSocket protocol"
-hash = "128b2be14be6"
+hash = "bd9d8159b71b"
 introduced_in = "0.13"
-changed_in = "0.13"
+changed_in = "0.14"
 status = "active"
 
 [[requirement]]
@@ -2147,9 +2147,39 @@ id = "CORE-274"
 spec = "Core spec"
 section = "5.6"
 title = "WebSocket protocol"
-hash = "97e43ab49ece"
+hash = "bb7104d220ef"
 introduced_in = "0.13"
-changed_in = "0.13"
+changed_in = "0.14"
+status = "active"
+
+[[requirement]]
+id = "CORE-275"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "564866f935da"
+introduced_in = "0.14"
+changed_in = "0.14"
+status = "active"
+
+[[requirement]]
+id = "CORE-276"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "eca4fb95d243"
+introduced_in = "0.14"
+changed_in = "0.14"
+status = "active"
+
+[[requirement]]
+id = "CORE-277"
+spec = "Core spec"
+section = "6.7"
+title = "Display output"
+hash = "c3a065e16a77"
+introduced_in = "0.14"
+changed_in = "0.14"
 status = "active"
 
 [[requirement]]
