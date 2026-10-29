@@ -9,6 +9,7 @@ and SIGHUP itself.
 Implements:
     CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
     CORE-61: Core spec 0.12, §10.1 Security.
+    CORE-248, CORE-251: Core spec 0.13, §5.6 WebSocket protocol.
     -: Core spec 0.12, §10.9 Dependency management.
 """
 
@@ -27,6 +28,7 @@ from mm3.core.settings import EngineSettings
 from mm3.core.web.apps import admin_app, mirror_app, protect
 from mm3.core.web.auth import WebAuth
 from mm3.core.web.security import Network
+from mm3.core.web.ws import MAX_FRAME_BYTES, PING_INTERVAL_S, PING_TIMEOUT_S, ClientHub
 
 __all__ = ["Listener", "ListenerError", "WebGateway"]
 
@@ -67,6 +69,12 @@ class Listener:
             access_log=False,
             server_header=False,
             proxy_headers=False,
+            # Implements CORE-251 (Core spec 0.13, §5.6 WebSocket protocol): a ping
+            # every 15 s, a client silent for 30 s is dropped; CORE-248: frames
+            # over 512 KiB close the connection with 1009.
+            ws_ping_interval=PING_INTERVAL_S,
+            ws_ping_timeout=PING_TIMEOUT_S,
+            ws_max_size=MAX_FRAME_BYTES,
         )
         self._server = _Server(config)
         self._task: asyncio.Task[None] | None = None
@@ -119,6 +127,8 @@ class WebGateway:
         state_dir: Engine state directory (tokens and sessions).
         server_allow: Returns ``server.allow`` now; it applies live, to
             connections made afterwards (CORE-201). Default: the start value.
+        hub: Connected shells; without one, ``/ws`` is not served.
+        auth: Token store and sessions; opened in ``state_dir`` by default.
 
     Implements:
         CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
@@ -131,19 +141,22 @@ class WebGateway:
         state_dir: Path,
         *,
         server_allow: Callable[[], Sequence[Network]] | None = None,
+        hub: ClientHub | None = None,
+        auth: WebAuth | None = None,
     ) -> None:
-        self.auth = WebAuth.open(state_dir)
+        self.auth = auth or (hub.auth if hub is not None else WebAuth.open(state_dir))
+        self.hub = hub
         start_allow: Sequence[Network] = list(settings.server.allow)
         admin_allow: Sequence[Network] = list(settings.admin.allow)
         self.mirror = Listener(
             "mirror",
-            protect(mirror_app(self.auth), server_allow or (lambda: start_allow), "mirror"),
+            protect(mirror_app(self.auth, hub), server_allow or (lambda: start_allow), "mirror"),
             settings.server.host,
             settings.server.port,
         )
         self.admin = Listener(
             "admin",
-            protect(admin_app(self.auth), lambda: admin_allow, "admin"),
+            protect(admin_app(self.auth, hub), lambda: admin_allow, "admin"),
             settings.admin.host,
             settings.admin.port,
         )

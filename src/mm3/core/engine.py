@@ -17,9 +17,9 @@ from __future__ import annotations
 from collections.abc import Iterable
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any
+from typing import Any, Protocol
 
-from mm3.core.bus import Bus, ClientChannel, NullClientChannel
+from mm3.core.bus import Bus, BusEndpoint, ClientChannel, NullClientChannel
 from mm3.core.clock import Clock, SystemClock
 from mm3.core.logging import get_logger
 from mm3.core.registry import Registry
@@ -28,6 +28,15 @@ from mm3.core.settings import EngineSettings
 from mm3.core.supervisor import InstanceSpec, Supervisor
 
 __all__ = ["Engine"]
+
+
+class ClientHub(ClientChannel, BusEndpoint, Protocol):
+    """The web gateway's shells: a client channel and a bus endpoint."""
+
+    def attach(self, bus: Bus) -> None:
+        """Start receiving notifications from the bus."""
+        ...
+
 
 _log = get_logger(subsystem="engine")
 
@@ -95,6 +104,18 @@ class Engine:
         self.executor.shutdown(wait=False, cancel_futures=True)
         self.running = False
         _log.info("engine_stopped")
+
+    def attach_clients(self, hub: ClientHub) -> None:
+        """Connect the web gateway's shells before :meth:`start`.
+
+        Backends reach their elements through the hub, and it receives bus
+        notifications for the browsers.
+
+        Args:
+            hub: The connected shells (``mm3.core.web.ws.ClientHub``).
+        """
+        self.supervisor.clients = hub
+        hub.attach(self.bus)
 
     def health(self) -> list[dict[str, Any]]:
         """Return the health record of every instance.
