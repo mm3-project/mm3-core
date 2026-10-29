@@ -10,7 +10,7 @@ notifications to browsers, the client channel through which backends reach
 their own elements, and the shell side of the page service.
 
 Implements:
-    CORE-246, CORE-271: Core spec 0.14, §5.6 WebSocket protocol.
+    CORE-246, CORE-271: Core spec 0.15, §5.6 WebSocket protocol.
     CORE-247, CORE-248, CORE-249, CORE-251: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-275, CORE-276: Core spec 0.14, §5.6 WebSocket protocol.
@@ -46,7 +46,7 @@ from mm3.core.logging import get_logger
 from mm3.core.web.auth import WebAuth, origin_matches
 from mm3.core.web.security import is_loopback
 from mm3.core.web.sessions import DISPLAY_COOKIE
-from mm3.core.web.view import ShellView, content_version
+from mm3.core.web.view import ShellInstance, ShellView, content_version
 
 if TYPE_CHECKING:
     from mm3.core.config.diff import ReloadPlan
@@ -211,7 +211,7 @@ class ClientHub:
         hello_timeout: Seconds to wait for ``hello`` (CORE-273).
 
     Implements:
-        CORE-246, CORE-271, CORE-275, CORE-276: Core spec 0.14, §5.6 WebSocket protocol.
+        CORE-246, CORE-271, CORE-275, CORE-276: Core spec 0.15, §5.6 WebSocket protocol.
         CORE-247, CORE-248, CORE-249: Core spec 0.13, §5.6 WebSocket protocol.
         CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     """
@@ -324,8 +324,10 @@ class ClientHub:
 
         Changes of instances, configuration, appearance, position, pages,
         layout or display make every shell rebuild from a new ``welcome``
-        (``reload`` ``resync``); a changed ``custom.css`` alone sends
-        ``styles``. The page service learns the new configuration first.
+        (``reload`` ``resync``). A locale change alone sends ``locale`` to
+        each affected instance (CORE-267), unless its header text changes
+        with it; a changed ``custom.css`` alone sends ``styles``. The page
+        service learns the new configuration first.
 
         Args:
             result: The new configuration.
@@ -333,25 +335,42 @@ class ClientHub:
 
         Implements:
             CORE-275: Core spec 0.14, §5.6 WebSocket protocol.
+            CORE-267: Core spec 0.15, §8.5 Catalogs at run time.
         """
         if self.pages is not None:
             self.pages.reload(result)
-        shell_keys = {"locale", "timezone", "input", "layout"}
+        shell_keys = {"timezone", "input", "layout"}
         rebuild = bool(
             plan.stop
             or plan.replace
             or plan.reconfigure
             or plan.start
-            or plan.locale
             or plan.relayout
             or plan.layout
             or plan.pages
             or plan.display
             or plan.engine_live & shell_keys
         )
+        view = self.view()
+        relocalized: list[ShellInstance] = []
+        if not rebuild and (plan.locale or "locale" in plan.engine_live):
+            for inst in view.instances:
+                spec = next((i.spec for i in result.instances if i.id == inst.id), None)
+                own = spec is not None and spec.locale is not None
+                if inst.id in plan.locale or ("locale" in plan.engine_live and not own):
+                    relocalized.append(inst)
+            # A header text that follows the locale is appearance: rebuild.
+            rebuild = any(inst.appearance.get("header") is not None for inst in relocalized)
         if rebuild:
             self.resync()
-        elif plan.custom_css:
+            return
+        for inst in relocalized:
+            self.control(
+                "locale",
+                {"locale": inst.locale, "config": dict(inst.config), "catalog": inst.catalog},
+                inst.id,
+            )
+        if plan.custom_css:
             css = result.assets.custom_css
             self.styles(content_version(css) if css is not None else None)
 
@@ -498,7 +517,7 @@ class ClientHub:
             endpoint: ``mirror`` for ``/ws``, ``admin`` for ``/admin/preview/ws``.
 
         Implements:
-            CORE-246, CORE-247: Core spec 0.14, §5.6 WebSocket protocol.
+            CORE-246, CORE-247: Core spec 0.15, §5.6 WebSocket protocol.
             CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
         """
         await ws.accept(headers=await self._refresh_display_cookie(ws, endpoint))

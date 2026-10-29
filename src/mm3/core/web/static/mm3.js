@@ -4,6 +4,7 @@
 // Implements CORE-64 (Core spec 0.14, §10.1 Security)
 // Implements CORE-95, CORE-255, CORE-259 (Core spec 0.14, §6.5 Screen layout)
 // Implements CORE-276 (Core spec 0.14, §5.6 WebSocket protocol)
+// Implements CORE-265, CORE-266 (Core spec 0.15, §8.5 Catalogs at run time)
 import { html, svg, nothing, render as litRender } from "/core/vendor/lit-html/lit-html.js";
 
 export { html, svg, nothing };
@@ -58,15 +59,30 @@ export class MirrorElement extends HTMLElement {
 
   // --- provided to modules ---------------------------------------------------------
 
-  t(key, vars) {
-    const text = (this.catalog && this.catalog[key]) || key;
-    if (!vars) return text;
-    return text.replace(/\{(\w+)\}/g, (m, name) => (name in vars ? String(vars[name]) : m));
+  t(key, vars = {}) {
+    let entry = this.catalog ? this.catalog[key] : undefined;
+    if (entry === undefined) {
+      this._once(`key:${key}`, `catalog key ${key} is missing`);
+      return key;
+    }
+    if (typeof entry === "object") {
+      const count = vars.count;
+      const category = typeof count === "number" ? new Intl.PluralRules(this.locale).select(count) : "other";
+      entry = entry[category] ?? entry.other ?? Object.values(entry)[0] ?? key;
+    }
+    return String(entry).replace(/\{(\w+)\}/g, (m, name) => {
+      if (name in vars) return String(vars[name]);
+      this._once(`var:${key}:${name}`, `catalog key ${key} needs {${name}}`);
+      return m;
+    });
   }
 
-  fmtDate(date, style) {
+  fmtDate(date, style = "medium") {
     const d = date instanceof Date ? date : new Date(date);
-    const options = typeof style === "object" && style ? style : { dateStyle: style || "medium" };
+    let options;
+    if (typeof style === "object" && style) options = style;
+    else if (style === "time") options = { timeStyle: "short" };
+    else options = { dateStyle: style };
     return new Intl.DateTimeFormat(this.locale, { timeZone: this.timezone, ...options }).format(d);
   }
 
@@ -139,6 +155,13 @@ export class MirrorElement extends HTMLElement {
   onPageChange() {}
 
   // --- used by the shell -----------------------------------------------------------
+
+  _once(id, message) {
+    if (!this._warned) this._warned = new Set();
+    if (this._warned.has(id)) return;
+    this._warned.add(id);
+    this._log("warn", message, {});
+  }
 
   _log(level, message, fields) {
     this._host?.send("log", { level, message: String(message), fields: fields || {} }, this.instanceId);

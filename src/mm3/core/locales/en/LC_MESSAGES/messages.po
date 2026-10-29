@@ -1,0 +1,191 @@
+# MM3 engine catalog (CORE_* keys). Core spec 8.3.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: mm3-core 0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-10-29 11:23+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: en\n"
+"Language-Team: en <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "CORE_CFG_CELL_TOO_SMALL"
+msgstr "Grid cells are smaller than 1 px ({width} x {height})"
+
+msgid "CORE_CFG_CHOICE"
+msgstr "Expected one of {allowed}"
+
+msgid "CORE_CFG_CRON"
+msgstr "Invalid cron expression: {reason}"
+
+msgid "CORE_CFG_CSS"
+msgstr "CSS breaks a limit: {reason}"
+
+msgid "CORE_CFG_DISPLAY_MODE"
+msgstr "Give width and height together; refresh needs both"
+
+msgid "CORE_CFG_DUPLICATE_KEY"
+msgstr "Key {key} appears more than once"
+
+msgid "CORE_CFG_DURATION"
+msgstr "{value} is not a duration (seconds, ISO 8601 or 1h30m)"
+
+msgid "CORE_CFG_ENV_FILE_MODE"
+msgstr "The env file is readable by other users (mode {mode})"
+
+msgid "CORE_CFG_ENV_FILE_SYNTAX"
+msgstr "This line of the env file is not KEY=VALUE"
+
+msgid "CORE_CFG_ENV_MISSING"
+msgstr "Environment variable {name} is not set and has no default"
+
+msgid "CORE_CFG_FILE_UNREADABLE"
+msgstr "Cannot read {file}"
+
+msgid "CORE_CFG_ID_DUPLICATE"
+msgstr "Id {id} is used more than once"
+
+msgid "CORE_CFG_ID_REQUIRED"
+msgstr "Module {module} is used by more than one instance; give each an id"
+
+msgid "CORE_CFG_INCLUDE_CYCLE"
+msgstr "Including {path} creates a cycle"
+
+msgid "CORE_CFG_INCLUDE_DEPTH"
+msgstr "More than {limit} nested !include levels"
+
+msgid "CORE_CFG_INCLUDE_OUTSIDE"
+msgstr "Included file {path} is outside the configuration directory"
+
+msgid "CORE_CFG_INVALID"
+msgstr "{reason}"
+
+msgid "CORE_CFG_LENGTH"
+msgstr "Length out of range (min {min}, max {max})"
+
+msgid "CORE_CFG_LOCALE"
+msgstr "{value} is not a valid BCP 47 language tag"
+
+msgid "CORE_CFG_LOCALIZED_NO_EN"
+msgstr "This text has no English (en) entry"
+
+msgid "CORE_CFG_MIN_SIZE"
+msgstr "The area {width} x {height} px is smaller than the module's minimum {min_width} x {min_height} px"
+
+msgid "CORE_CFG_MODULE_MISSING"
+msgstr "Module {module} is not installed"
+
+msgid "CORE_CFG_MODULE_UNAVAILABLE"
+msgstr "Module {module} cannot be used: {reason}"
+
+msgid "CORE_CFG_OUT_OF_GRID"
+msgstr "The position does not fit the {columns} x {rows} grid"
+
+msgid "CORE_CFG_OVERLAP"
+msgstr "Overlaps {other}"
+
+msgid "CORE_CFG_PAGE_UNKNOWN"
+msgstr "Page {page} is not in pages.list"
+
+msgid "CORE_CFG_PATTERN"
+msgstr "Value does not match {pattern}"
+
+msgid "CORE_CFG_POSITION_FORBIDDEN"
+msgstr "{key} is not allowed for a backend-only module"
+
+msgid "CORE_CFG_POSITION_REQUIRED"
+msgstr "Module {module} has a front-end and needs a position"
+
+msgid "CORE_CFG_PRESET_EMPTY"
+msgstr "Preset {preset} is empty on this grid"
+
+msgid "CORE_CFG_RANGE"
+msgstr "Value out of range ({bound})"
+
+msgid "CORE_CFG_REQUIRED"
+msgstr "This value is required"
+
+msgid "CORE_CFG_SECRETS_UNENCRYPTED"
+msgstr "backup.parts includes secrets but encrypt_to is not set"
+
+msgid "CORE_CFG_TIMEZONE"
+msgstr "{value} is not an IANA time zone"
+
+msgid "CORE_CFG_TYPE"
+msgstr "Expected {expected}"
+
+msgid "CORE_CFG_UNKNOWN_KEY"
+msgstr "Unknown key {key}"
+
+msgid "CORE_CFG_VERSION"
+msgstr "config_version {value} is newer than this engine supports ({max})"
+
+msgid "CORE_CFG_YAML_SYNTAX"
+msgstr "Not valid YAML: {reason}"
+
+msgid "CORE_CFG_YAML_TAG"
+msgstr "Tag {tag} is not allowed; use !env or !include"
+
+msgid "CORE_SHELL_UNAVAILABLE"
+msgstr "Unavailable"
+
+msgid "CORE_WEB_ADMIN_PENDING"
+msgstr "The administration interface is not available yet."
+
+msgid "CORE_WEB_ADMIN_TITLE"
+msgstr "MM3 admin"
+
+msgid "CORE_WEB_FORBIDDEN"
+msgstr "This request is not allowed."
+
+msgid "CORE_WEB_LOGIN_FAILED"
+msgstr "That token is not valid."
+
+msgid "CORE_WEB_LOGIN_LOCKED"
+msgstr "Too many failed logins from this address. Try again in 15 minutes."
+
+msgid "CORE_WEB_LOGIN_SUBMIT"
+msgstr "Log in"
+
+msgid "CORE_WEB_LOGIN_TITLE"
+msgstr "MM3 admin login"
+
+msgid "CORE_WEB_LOGIN_TOKEN"
+msgstr "Admin token"
+
+msgid "CORE_WEB_LOGOUT"
+msgstr "Log out"
+
+msgid "CORE_WEB_PAIR_FAILED"
+msgstr "That display token is not valid."
+
+msgid "CORE_WEB_PAIR_NOSCRIPT"
+msgstr "Pairing needs JavaScript."
+
+msgid "CORE_WEB_PAIR_TITLE"
+msgstr "Pair this display"
+
+msgid "CORE_WEB_PAIR_WORKING"
+msgstr "Pairing this display…"
+
+msgid "CORE_WS_INVALID_FRAME"
+msgstr "The message has an unknown kind or the wrong shape."
+
+msgid "CORE_WS_INVALID_PAYLOAD"
+msgstr "The payload does not match the registered notification."
+
+msgid "CORE_WS_RESERVED_NAME"
+msgstr "Names starting with CORE_ are reserved for the engine."
+
+msgid "CORE_WS_UNKNOWN_INSTANCE"
+msgstr "This display does not show that instance."
+
+msgid "REQUEST_TIMEOUT"
+msgstr "No reply arrived in time."
+

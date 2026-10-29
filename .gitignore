@@ -12,7 +12,7 @@ htmlcov/
 .mypy_cache/
 .ruff_cache/
 site/
-*.mo
-src/mm3/**/locales/*/messages.json
+# Compiled catalogs (.mo, messages.json) are committed: mm3 i18n check verifies
+# they match their .po (CORE-263).
 .mm3/
 .env

@@ -19,6 +19,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Coroutine, Mapping, Sequence
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Literal, Protocol, TypeVar
 from uuid import UUID
@@ -136,6 +137,18 @@ class ModuleContext(Protocol):
     @property
     def units(self) -> Literal["metric", "imperial"]:
         """Unit system."""
+        ...
+
+    def t(self, key: str, /, count: float | None = None, **vars: Any) -> str:
+        """Return the text of a catalog key for this instance's locale (core spec 8)."""
+        ...
+
+    def format_date(self, value: datetime, style: str = "medium") -> str:
+        """Format a date: ``short``, ``medium``, ``long``, ``full`` or ``time``."""
+        ...
+
+    def format_number(self, value: float, *, unit: str | None = None) -> str:
+        """Format a number with an optional CLDR unit, without converting."""
         ...
 
     @property
