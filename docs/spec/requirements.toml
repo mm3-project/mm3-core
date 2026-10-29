@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.15"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15"]
+version = "0.16"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16"]
 
 [[spec]]
 name = "Module Contract"
@@ -997,9 +997,9 @@ id = "CORE-143"
 spec = "Core spec"
 section = "6.7"
 title = "Display output"
-hash = "2b2e1e2e2808"
+hash = "c8620cde0a97"
 introduced_in = "0.1"
-changed_in = "0.12"
+changed_in = "0.16"
 status = "active"
 
 [[requirement]]
@@ -1027,9 +1027,9 @@ id = "CORE-146"
 spec = "Core spec"
 section = "6.7"
 title = "Display output"
-hash = "cb1368ebf0ef"
+hash = "d465afeecf20"
 introduced_in = "0.1"
-changed_in = "0.1"
+changed_in = "0.16"
 status = "active"
 
 [[requirement]]
@@ -2087,9 +2087,9 @@ id = "CORE-268"
 spec = "Core spec"
 section = "6.7"
 title = "Display output"
-hash = "9efb7f14f0a3"
+hash = "26f612c9fe6d"
 introduced_in = "0.11"
-changed_in = "0.11"
+changed_in = "0.16"
 status = "active"
 
 [[requirement]]
@@ -2177,9 +2177,9 @@ id = "CORE-277"
 spec = "Core spec"
 section = "6.7"
 title = "Display output"
-hash = "c3a065e16a77"
+hash = "e43d318f5a37"
 introduced_in = "0.14"
-changed_in = "0.14"
+changed_in = "0.16"
 status = "active"
 
 [[requirement]]
