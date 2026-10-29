@@ -1,9 +1,10 @@
 """The two ASGI applications: the mirror listener and the admin listener.
 
-The mirror listener serves the shell and its files; in this part of
-milestone 3 that is ``/pair`` and ``/core/…``; the shell (``/``), ``/ws``,
-``/i18n``, ``/modules`` and ``/custom.css`` follow. Anything else is 404, so
-``/api`` and ``/admin`` never answer on the mirror display.
+The mirror listener serves the shell and its files; so far ``/pair``,
+``/core/…`` and ``/ws``; the shell page (``/``), ``/i18n``, ``/modules`` and
+``/custom.css`` follow. Anything else is 404, so ``/api`` and ``/admin``
+never answer on the mirror display. The admin listener also carries the
+preview shell's ``/admin/preview/ws`` (CORE-273).
 
 The admin listener serves ``/admin`` and ``/api/*`` behind an admin token or
 session; ``/admin/login`` and ``/admin/logout`` manage the session.
@@ -15,6 +16,7 @@ Implements:
     CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
     CORE-61, CORE-62, CORE-63: Core spec 0.12, §10.1 Security.
     CORE-253, CORE-254: Core spec 0.12, §10.1 Security.
+    CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
 """
 
 from __future__ import annotations
@@ -22,9 +24,10 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 from urllib.parse import parse_qs
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, WebSocket
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from starlette.staticfiles import StaticFiles
 from starlette.types import ASGIApp
@@ -34,6 +37,10 @@ from mm3.core.web.auth import WebAuth, origin_matches
 from mm3.core.web.pages import admin_home_page, login_page, message_page, pair_page
 from mm3.core.web.security import AllowList, Network, SecurityHeaders
 from mm3.core.web.sessions import ADMIN_COOKIE, ADMIN_SESSION_TTL, DISPLAY_COOKIE
+from mm3.core.web.ws import DISPLAY_COOKIE_MAX_AGE
+
+if TYPE_CHECKING:
+    from mm3.core.web.ws import ClientHub
 
 __all__ = [
     "DISPLAY_COOKIE_MAX_AGE",
@@ -46,9 +53,6 @@ __all__ = [
 STATIC_DIR = Path(__file__).parent / "static"
 """Files served under ``/core/`` (CORE-252)."""
 
-DISPLAY_COOKIE_MAX_AGE = 400 * 24 * 3600
-"""Display session cookies last as long as browsers allow; the session itself
-ends only when its token is revoked (CORE-254)."""
 
 MAX_FORM_BYTES = 4096
 _ALL_METHODS = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
@@ -95,19 +99,28 @@ def protect(app: ASGIApp, networks: Callable[[], Sequence[Network]], listener: s
     return SecurityHeaders(AllowList(app, networks, listener=listener))
 
 
-def mirror_app(auth: WebAuth) -> FastAPI:
+def mirror_app(auth: WebAuth, hub: ClientHub | None = None) -> FastAPI:
     """Build the mirror listener's application (without the protection wrappers).
 
     Args:
         auth: Token store and sessions.
+        hub: Connected shells; ``/ws`` exists only with a hub.
 
     Returns:
         The application.
 
     Implements:
         CORE-254: Core spec 0.12, §10.1 Security.
+        CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     """
     app = _bare()
+
+    if hub is not None:
+        shells = hub
+
+        @app.websocket("/ws")
+        async def ws(websocket: WebSocket) -> None:
+            await shells.serve(websocket, "mirror")
 
     @app.get("/pair")
     async def pair_get() -> HTMLResponse:
@@ -139,11 +152,12 @@ def mirror_app(auth: WebAuth) -> FastAPI:
     return app
 
 
-def admin_app(auth: WebAuth) -> FastAPI:
+def admin_app(auth: WebAuth, hub: ClientHub | None = None) -> FastAPI:
     """Build the admin listener's application (without the protection wrappers).
 
     Args:
         auth: Token store, sessions and login lockout.
+        hub: Connected shells; ``/admin/preview/ws`` exists only with a hub.
 
     Returns:
         The application.
@@ -151,8 +165,16 @@ def admin_app(auth: WebAuth) -> FastAPI:
     Implements:
         CORE-62: Core spec 0.12, §10.1 Security.
         CORE-253: Core spec 0.12, §10.1 Security.
+        CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     """
     app = _bare()
+
+    if hub is not None:
+        shells = hub
+
+        @app.websocket("/admin/preview/ws")
+        async def preview_ws(websocket: WebSocket) -> None:
+            await shells.serve(websocket, "admin")
 
     @app.get("/admin/login")
     async def login_get() -> HTMLResponse:

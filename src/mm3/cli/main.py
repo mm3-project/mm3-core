@@ -18,6 +18,7 @@ Implements:
     CORE-208: Core spec 0.11, §6.3 Hot reload.
     CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
     CORE-62: Core spec 0.12, §10.1 Security.
+    CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
 """
 
 from __future__ import annotations
@@ -139,7 +140,11 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.config.manager import ConfigManager
     from mm3.core.engine import Engine
     from mm3.core.services.storage import resolve_state_dir
+    from mm3.core.web.apps import STATIC_DIR
+    from mm3.core.web.auth import WebAuth
     from mm3.core.web.gateway import WebGateway
+    from mm3.core.web.view import cached_view
+    from mm3.core.web.ws import ClientHub, engine_build
 
     assert result.config is not None  # noqa: S101 - checked by the caller
     state_dir = resolve_state_dir()
@@ -161,7 +166,13 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         current = manager.current.config
         return list(current.engine.server.allow) if current is not None else []
 
-    gateway = WebGateway(result.config.engine, state_dir, server_allow=server_allow)
+    hub = ClientHub(
+        cached_view(lambda: manager.current, registry),
+        WebAuth.open(state_dir),
+        engine_build(STATIC_DIR),
+    )
+    engine.attach_clients(hub)
+    gateway = WebGateway(result.config.engine, state_dir, server_allow=server_allow, hub=hub)
     await engine.start(result.instance_specs())
     await manager.start()
     try:

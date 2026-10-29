@@ -9,6 +9,26 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Milestone 3 part B: the shell WebSocket. `/ws` on the mirror listener
+  (roles `kiosk`, `browser`) and `/admin/preview/ws` on the admin listener
+  (role `preview`, admin session and matching `Origin`) (CORE-273).
+  Handshake `hello` → `welcome` + one `state` per instance, with the public
+  config resolved for each element's locale, the `layout` object, pages and
+  `engine_build`; a bad first frame or no `hello` within 10 s closes 4400
+  (CORE-246, CORE-273, CORE-274). Roles: `kiosk` only from loopback with the
+  current kiosk key, `preview` only on the admin endpoint, any other client
+  `browser`, interactive with a display session; refused roles close 4403
+  (CORE-247). Frames per CORE-271: `state` with `delta`, `client` both ways,
+  `notify` both ways (once per browser with its matching instances),
+  `request`/`reply`, `log`. Inbound limits and `error` frames with
+  `CORE_WS_*` keys and the echoed `ref` (CORE-248, CORE-272); a frame over
+  512 KiB closes 1009. Outbound queue of 1000 frames per client, coalesced
+  `state` frames, 1013 when full (CORE-249). Ping every 15 s, drop after
+  30 s (CORE-251). Requests from elements reply with `{rid, payload}` or an
+  error, `timeout` after the request's timeout (CORE-223, CORE-272). Preview
+  clients get no `client` frames (CORE-99). A valid display session cookie
+  is renewed on every connection (CORE-254). Backends now reach their
+  elements: `mm3 run` connects the engine to the hub.
 - Milestone 3 part A: web gateway with the mirror and admin listeners
   (`mm3 run` starts both, `127.0.0.1:8080` and `:8081` by default, CORE-60).
   Both accept loopback plus `server.allow` / `admin.allow`; other sources
