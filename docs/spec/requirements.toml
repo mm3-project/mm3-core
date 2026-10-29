@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.12"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12"]
+version = "0.13"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13"]
 
 [[spec]]
 name = "Module Contract"
@@ -2110,6 +2110,46 @@ title = "Display output"
 hash = "89611a0a3e3d"
 introduced_in = "0.11"
 changed_in = "0.11"
+status = "active"
+
+[[requirement]]
+id = "CORE-271"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "128b2be14be6"
+introduced_in = "0.13"
+changed_in = "0.13"
+status = "active"
+
+[[requirement]]
+id = "CORE-272"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "e45c0fb54b28"
+introduced_in = "0.13"
+changed_in = "0.13"
+status = "active"
+
+[[requirement]]
+id = "CORE-273"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "cc155987ab9a"
+introduced_in = "0.13"
+changed_in = "0.13"
+status = "active"
+
+[[requirement]]
+id = "CORE-274"
+spec = "Core spec"
+section = "5.6"
+title = "WebSocket protocol"
+hash = "97e43ab49ece"
+introduced_in = "0.13"
+changed_in = "0.13"
 status = "active"
 
 [[requirement]]

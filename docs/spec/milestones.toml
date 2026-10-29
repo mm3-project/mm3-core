@@ -85,7 +85,7 @@ status = "in_progress"
 requirements = [
   "CORE-06", "CORE-07", "CORE-11", "CORE-12", "CORE-40..42", "CORE-60..64",
   "CORE-95", "CORE-103", "CORE-117", "CORE-143..146", "CORE-223", "CORE-233..235",
-  "CORE-237..239", "CORE-241", "CORE-246..270",
+  "CORE-237..239", "CORE-241", "CORE-246..274",
 ]
 # Settled in core spec 0.11 / contract 1.0 rev 7. CORE-117 moved here from
 #   milestone 6: the shell draws the failure placeholder.

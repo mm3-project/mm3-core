@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.12 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.13 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -348,6 +348,25 @@ Every browser holds one `/ws` connection that starts with a handshake, carries f
 - CORE-250: Reconnect. After a lost connection the shell keeps the last render and reconnects after 0.5 s, doubling up to 10 s, with ±20 % jitter. Every reconnect is a full resync through `hello` and `welcome`. When `engine_build` differs from the build the page was loaded with, the shell reloads the page.
 - CORE-251: Liveness. The engine sends a WebSocket ping every 15 s and drops a client that has not answered for 30 s.
 - CORE-252: URLs. The mirror listener serves only `/` (the shell), `/core/…` (engine scripts, styles, fonts and vendored libraries), `/modules/<module>/<version>/…` (static files of installed modules, `Cache-Control: public, max-age=31536000, immutable`), `/i18n/<instance>.json?v=<hash>`, `/custom.css` (CORE-262), `/pair` (CORE-254), `/ws` and `/ws/kiosk-agent` (CORE-268); anything else is 404. The admin listener serves the same shell in preview mode under `/admin/preview` (6.6).
+
+- CORE-271: Frame contents. Every frame is `{v: 1, kind, instance?, data, ref?}`; an inbound frame may carry `ref` (a string of at most 64 characters), which the engine echoes in the `error` or `reply` about that frame. The `data` of each kind is given in the table below; the fields of each `control` action are given with the shell (6.5).
+
+| Kind | Direction | `instance` | `data` |
+| --- | --- | --- | --- |
+| `hello`, `welcome` | shell → core, core → shell | — | As in CORE-246 |
+| `state` | core → shell | the instance | `{state, delta}`; with `delta: true` the shell merges `state` into the current snapshot (shallow), otherwise it replaces it |
+| `client` | both | the instance | `{type, payload}` |
+| `notify` | shell → core | the sending element's instance | `{name, payload, target?}`; the engine sets id, trace, ts and source |
+| `notify` | core → shell | — | `{notification, instances}`: the envelope of 5.1 as JSON and the ids of this client's instances whose `subscribes` match (CORE-249) |
+| `request` | shell → core | the instance | `{rid, name, payload, target?, timeout}` |
+| `reply` | core → shell | the instance | `{rid, payload}`, or `{rid, error: {code, message_key}}` (CORE-272) |
+| `control` | core → shell | the instance, or none | `{action, …}`; `action` is `show`, `hide`, `reload`, `locale`, `layout`, `page` or `styles` |
+| `log` | shell → core | the instance, or none | `{level, message, stack?, user_agent?}` (CORE-114) |
+| `error` | core → shell | the instance, or none | `{code, message_key, ref}` (CORE-272) |
+
+- CORE-272: Error and reply codes. An `error` frame carries `code` `reserved_name` (key `CORE_WS_RESERVED_NAME`, a `CORE_*` name), `unknown_instance` (`CORE_WS_UNKNOWN_INSTANCE`, an instance the client does not show), `invalid_payload` (`CORE_WS_INVALID_PAYLOAD`, a registered name with an invalid payload) or `invalid_frame` (`CORE_WS_INVALID_FRAME`, an unknown kind or a frame of the wrong shape after the handshake), and the inbound frame's `ref` or null. A `reply` to a request from the shell carries `error.code` `transient`, `configuration` or `internal` as in CORE-221, or `timeout` with key `REQUEST_TIMEOUT` when no reply arrives within the request's `timeout`.
+- CORE-273: Endpoints. The mirror listener's `/ws` accepts the roles `kiosk` and `browser`. The preview shell connects to `/admin/preview/ws` on the admin listener, which accepts only the role `preview` and needs an admin session (CORE-253) and an `Origin` matching the listener. A role an endpoint does not accept closes the connection with code 4403. A connection whose `hello` does not arrive within 10 s is closed with code 4400. `engine_build` is `<mm3-core version>+<first 12 hex digits of the SHA-256 of the files under /core>`, so any change to the engine's front-end files makes open shells reload (CORE-250).
+- CORE-274: The `layout` object in `welcome` and in `control` `layout` frames is `{viewport: [w, h], cell: [w, h], pages: {<page id>: [{instance, col, row, width, height, z, preset, stack_index, stack_size, area: [w, h]}]}}`: the logical viewport and cell size in CSS pixels (6.7) and, per page, each visible instance's cells, its preset (or null), its place in a preset stack (CORE-212) and its area in CSS pixels.
 
 ## 6. Configuration
 
@@ -1254,6 +1273,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.13 | 2026-10-28 | WebSocket frame contents and ref (CORE-271); error and reply codes (CORE-272); /ws and /admin/preview/ws endpoints, hello timeout, engine\_build (CORE-273); layout object (CORE-274) |
 | 0.12 | 2026-10-28 | Kiosk version check reads cage -v and compares the leading MAJOR.MINOR.PATCH, not the Debian release; no cage feature after 0.1.5 is used (CORE-143 changed) |
 | 0.11 | 2026-10-28 | Milestone 3 settled: WebSocket handshake, roles, limits, reconnect, liveness and URLs (CORE-246–252); allow lists on both listeners, named tokens in a token store, no token in the config, admin sessions, display pairing, security headers (CORE-61–63 changed, CORE-201 changed, CORE-253, CORE-254); element setup, header and size, stacks, fit, transitions (CORE-255–259); swipe (CORE-260); theme variables and custom.css as a config section (CORE-261, CORE-262; CORE-153, CORE-155, CORE-208, CORE-216, CORE-243 changed); catalogs compiled at build, lookup, plurals, formatting, locale change (CORE-263–267); kiosk as a system unit with an agent, Debian 13+ (CORE-143 changed, CORE-268–270); lit-html and Roboto Condensed approved (1.2) |
 | 0.10 | 2026-10-28 | pages is a configuration history section, shown in changed sections and restorable alone (CORE-216 and CORE-155 changed) |
