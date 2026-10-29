@@ -9,6 +9,37 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Milestone 3 part C: the shell. The mirror serves the shell at `/` and the
+  admin listener the same shell in preview mode at `/admin/preview` (admin
+  session required), with no inline script or style (CORE-63, CORE-252).
+  Files: `/core/…` (shell, theme, `mm3.js`), `/core/vendor/…` (lit-html
+  3.3.2 and Roboto Condensed 5.3.0, vendored with licences and SHA-256 in
+  `vendor.json`), `/modules/<module>/<version>/…` (immutable),
+  `/appearance/<instance>.css?v=` and `/custom.css?v=` (immutable when the
+  version matches) (CORE-252, CORE-262). `/core/mm3.js` exports `html`,
+  `svg`, `nothing` and `MirrorElement` (Contract section 5). The shell
+  places instances on the CSS grid of the `layout` object, splits preset
+  stacks among visible instances, draws headers outside the shadow root,
+  adopts module styles, appearance variables and `appearance.css` as
+  constructable stylesheets, reports sizes once per frame, applies
+  `overflow: fit|scroll`, fades hide/show and page changes, shows the
+  failure placeholder, reconnects with 0.5–10 s back-off and jitter and
+  reloads on a new `engine_build` (CORE-117, CORE-250, CORE-255..259).
+  Theme variables on `:root` (CORE-261). Swipes (25 % of the width, twice
+  the vertical travel, within 1 s) and taps are sent as `touch` (CORE-260,
+  CORE-276).
+- Pages and visibility: a page service keeps the current page, reacts to
+  `PAGE_NEXT`, `PAGE_PREV`, `PAGE_SET`, rotation (per page or global,
+  paused by interaction for `pause_on_interaction`), touch and
+  `CORE_RESUME` (`reset_on_resume`), emits `CORE_PAGE_CHANGED`, and keeps
+  the hide reasons `page`, `manual`, `self` and `module:<id>`; hidden
+  instances are suspended and resumed when visible again (CORE-233..239,
+  CORE-241). Control frames `page`, `show`, `hide`, `status`, `styles`,
+  `reload` (`resync` after a hot reload that changes what shells show)
+  (CORE-275); `visibility` and `touch` frames from interactive clients
+  (CORE-276). `welcome` now carries `timezone`, `touch`, `custom_css` and per
+  instance `scripts`, `styles`, `appearance` and `status`; the `layout`
+  object carries `grid` (CORE-246, CORE-274).
 - Milestone 3 part B: the shell WebSocket. `/ws` on the mirror listener
   (roles `kiosk`, `browser`) and `/admin/preview/ws` on the admin listener
   (role `preview`, admin session and matching `Origin`) (CORE-273).
@@ -45,7 +76,17 @@ separately under **Module API** in each release (Module Contract, section 10).
   `http://<host>:<port>/pair#<token>`; `/pair` sets a display session cookie
   valid until the token is revoked (CORE-254).
 
+#### Module API
+
+- Implemented from Contract 1.0: `ctx.page`, `ctx.pages`, `ctx.layout`
+  (with `layout.control`), and the front-end `MirrorElement` with
+  `/core/mm3.js` (`html`, `svg`, `nothing`). `t()`, `fmtDate()` and
+  `fmtNumber()` use the element's locale; catalogs arrive with the i18n part.
+
 ### Changed
+
+- The `Permissions-Policy` header no longer lists `bluetooth`, which
+  Chromium does not recognise (CORE-63).
 
 - Spec sync: Core spec 0.14 (shell and kiosk details). New: control
   action contents and `reload` `resync` on hot reload (CORE-275), shell

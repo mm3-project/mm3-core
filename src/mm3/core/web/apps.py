@@ -23,13 +23,17 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable, Sequence
-from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import parse_qs
 
 from fastapi import FastAPI, Request, WebSocket
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
-from starlette.staticfiles import StaticFiles
+from fastapi.responses import (
+    FileResponse,
+    HTMLResponse,
+    JSONResponse,
+    RedirectResponse,
+    Response,
+)
 from starlette.types import ASGIApp
 
 from mm3.core.logging import get_logger
@@ -37,6 +41,7 @@ from mm3.core.web.auth import WebAuth, origin_matches
 from mm3.core.web.pages import admin_home_page, login_page, message_page, pair_page
 from mm3.core.web.security import AllowList, Network, SecurityHeaders
 from mm3.core.web.sessions import ADMIN_COOKIE, ADMIN_SESSION_TTL, DISPLAY_COOKIE
+from mm3.core.web.shell import STATIC_DIR, ShellSources, add_shell_files, inside, shell_page
 from mm3.core.web.ws import DISPLAY_COOKIE_MAX_AGE
 
 if TYPE_CHECKING:
@@ -49,9 +54,6 @@ __all__ = [
     "mirror_app",
     "protect",
 ]
-
-STATIC_DIR = Path(__file__).parent / "static"
-"""Files served under ``/core/`` (CORE-252)."""
 
 
 MAX_FORM_BYTES = 4096
@@ -99,12 +101,15 @@ def protect(app: ASGIApp, networks: Callable[[], Sequence[Network]], listener: s
     return SecurityHeaders(AllowList(app, networks, listener=listener))
 
 
-def mirror_app(auth: WebAuth, hub: ClientHub | None = None) -> FastAPI:
+def mirror_app(
+    auth: WebAuth, hub: ClientHub | None = None, sources: ShellSources | None = None
+) -> FastAPI:
     """Build the mirror listener's application (without the protection wrappers).
 
     Args:
         auth: Token store and sessions.
         hub: Connected shells; ``/ws`` exists only with a hub.
+        sources: The shell's files; without them only ``/core`` is served.
 
     Returns:
         The application.
@@ -148,16 +153,32 @@ def mirror_app(auth: WebAuth, hub: ClientHub | None = None) -> FastAPI:
         )
         return response
 
-    app.mount("/core", StaticFiles(directory=STATIC_DIR), name="core")
+    if sources is not None:
+
+        @app.get("/")
+        async def shell() -> HTMLResponse:
+            return _html(shell_page("mirror"))
+
+        add_shell_files(app, sources)
+    else:
+
+        @app.get("/core/{path:path}")
+        async def core(path: str) -> Response:
+            target = inside(STATIC_DIR, path)
+            return Response(status_code=404) if target is None else FileResponse(target)
+
     return app
 
 
-def admin_app(auth: WebAuth, hub: ClientHub | None = None) -> FastAPI:
+def admin_app(
+    auth: WebAuth, hub: ClientHub | None = None, sources: ShellSources | None = None
+) -> FastAPI:
     """Build the admin listener's application (without the protection wrappers).
 
     Args:
         auth: Token store, sessions and login lockout.
         hub: Connected shells; ``/admin/preview/ws`` exists only with a hub.
+        sources: The shell's files, for the preview shell at ``/admin/preview``.
 
     Returns:
         The application.
@@ -218,6 +239,17 @@ def admin_app(auth: WebAuth, hub: ClientHub | None = None) -> FastAPI:
         response = RedirectResponse("/admin/login", status_code=303)
         response.delete_cookie(ADMIN_COOKIE, path="/", httponly=True, samesite="strict")
         return response
+
+    if sources is not None:
+
+        @app.get("/admin/preview")
+        async def preview(request: Request) -> Response:
+            check = await auth.check_admin(request, request.method)
+            if check.outcome != "ok":
+                return RedirectResponse("/admin/login", status_code=303)
+            return _html(shell_page("preview"))
+
+        add_shell_files(app, sources)
 
     @app.get("/admin")
     async def admin_home(request: Request) -> Response:

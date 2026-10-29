@@ -3,14 +3,18 @@
 Every shell holds one connection: ``/ws`` on the mirror listener (roles
 ``kiosk`` and ``browser``) or ``/admin/preview/ws`` on the admin listener
 (role ``preview``). The first frame is ``hello``; the engine answers with
-``welcome`` and one ``state`` frame per instance. After that the
-:class:`ClientHub` carries frames both ways: it is the bus endpoint that
-delivers notifications to browsers and the client channel through which
-backends reach their own elements.
+``welcome``, one ``state`` frame per instance and a ``control`` ``page``
+frame with the visible instances. After that the :class:`ClientHub`
+carries frames both ways: it is the bus endpoint that delivers
+notifications to browsers, the client channel through which backends reach
+their own elements, and the shell side of the page service.
 
 Implements:
-    CORE-246, CORE-247, CORE-248, CORE-249, CORE-251: Core spec 0.13, §5.6 WebSocket protocol.
-    CORE-271, CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
+    CORE-246, CORE-271: Core spec 0.14, §5.6 WebSocket protocol.
+    CORE-247, CORE-248, CORE-249, CORE-251: Core spec 0.13, §5.6 WebSocket protocol.
+    CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
+    CORE-275, CORE-276: Core spec 0.14, §5.6 WebSocket protocol.
+    CORE-117: Core spec 0.14, §10.5 Diagnostics and debugging.
     CORE-21: Core spec 0.9, §5.3 Routing rules.
     CORE-223: Core spec 0.13, §5.4 Request and reply.
     CORE-254: Core spec 0.12, §10.1 Security.
@@ -29,7 +33,7 @@ from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 from uuid import UUID, uuid4
 
 from pydantic import ValidationError
@@ -42,7 +46,13 @@ from mm3.core.logging import get_logger
 from mm3.core.web.auth import WebAuth, origin_matches
 from mm3.core.web.security import is_loopback
 from mm3.core.web.sessions import DISPLAY_COOKIE
-from mm3.core.web.view import ShellView
+from mm3.core.web.view import ShellView, content_version
+
+if TYPE_CHECKING:
+    from mm3.core.config.diff import ReloadPlan
+    from mm3.core.config.validate import ConfigResult
+    from mm3.core.pages import PageService
+    from mm3.core.supervisor import State, Supervisor
 from mm3.messages import ClientMessage, Notification, check_payload
 from mm3.notifications import validate_payload
 
@@ -90,7 +100,9 @@ REQUEST_TIMEOUT_KEY = "REQUEST_TIMEOUT"
 Endpoint = Literal["mirror", "admin"]
 Role = Literal["kiosk", "browser", "preview"]
 _ROLES = ("kiosk", "browser", "preview")
-_INBOUND = frozenset({"hello", "notify", "client", "request", "log"})
+_INBOUND = frozenset({"hello", "notify", "client", "request", "log", "visibility", "touch"})
+_GESTURES = frozenset({"swipe_left", "swipe_right", "tap"})
+_UNAVAILABLE = frozenset({"FAILED", "DISABLED"})
 _ALWAYS_ACCEPTED = frozenset({"hello", "log"})
 
 _log = get_logger(subsystem="ws")
@@ -199,8 +211,9 @@ class ClientHub:
         hello_timeout: Seconds to wait for ``hello`` (CORE-273).
 
     Implements:
-        CORE-246, CORE-247, CORE-248, CORE-249: Core spec 0.13, §5.6 WebSocket protocol.
-        CORE-271, CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
+        CORE-246, CORE-271, CORE-275, CORE-276: Core spec 0.14, §5.6 WebSocket protocol.
+        CORE-247, CORE-248, CORE-249: Core spec 0.13, §5.6 WebSocket protocol.
+        CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     """
 
     def __init__(
@@ -218,8 +231,129 @@ class ClientHub:
         self.kiosk_keys = kiosk_keys or KioskKeys()
         self.hello_timeout = hello_timeout
         self.bus: Bus | None = None
+        self.pages: PageService | None = None
+        self.status: Callable[[str], str] = lambda _iid: "ok"
         self.snapshots: dict[str, dict[str, Any]] = {}
         self._clients: dict[int, _Client] = {}
+
+    def attach_pages(self, pages: PageService, supervisor: Supervisor) -> None:
+        """Connect the page service and instance states (CORE-117, CORE-275).
+
+        Args:
+            pages: The page service; its changes become ``control`` frames.
+            supervisor: Instance states; FAILED and DISABLED show the
+                failure placeholder.
+        """
+        self.pages = pages
+        pages.shells = self
+
+        def status(iid: str) -> str:
+            try:
+                state = supervisor.get(iid).state
+            except KeyError:
+                return "ok"
+            return "unavailable" if str(state) in _UNAVAILABLE else "ok"
+
+        self.status = status
+
+        def changed(iid: str, old: State, new: State) -> None:
+            before = "unavailable" if str(old) in _UNAVAILABLE else "ok"
+            after = "unavailable" if str(new) in _UNAVAILABLE else "ok"
+            if before != after:
+                self.control("status", {"status": after}, iid)
+
+        supervisor.state_listeners.append(changed)
+
+    # --- control frames (CORE-275) ----------------------------------------------------
+
+    def control(self, action: str, data: Mapping[str, Any], instance: str | None = None) -> None:
+        """Send a ``control`` frame to every shell (that shows ``instance``, if given).
+
+        Args:
+            action: The action (CORE-275).
+            data: The action's fields.
+            instance: The instance it concerns, if any.
+
+        Implements:
+            CORE-275: Core spec 0.14, §5.6 WebSocket protocol.
+        """
+        frame = _frame("control", {"action": action, **data}, instance)
+        for c in self._clients.values():
+            if instance is None or instance in c.instances:
+                self._push(c, frame)
+
+    def _page_data(self) -> dict[str, Any]:
+        pages = self.pages
+        view = self.view()
+        if pages is None:
+            ids = [p["id"] for p in view.pages]
+            page = view.page
+            visible = [i.id for i in view.instances]
+            transition = "none"
+        else:
+            ids = pages.ids
+            page = pages.page
+            visible = [i for i in pages.visible_ids() if view.instance(i) is not None]
+            transition = pages.transition
+        return {
+            "page": page,
+            "index": ids.index(page) if page in ids else 0,
+            "count": len(ids),
+            "transition": transition,
+            "visible": visible,
+        }
+
+    def page_changed(self, page: str, index: int, count: int, transition: str) -> None:
+        """Send ``control`` ``page`` with the visible instances (CORE-237, CORE-275)."""
+        self.control("page", self._page_data())
+
+    def visibility_changed(self, instance_id: str, hidden: bool, fade: int) -> None:
+        """Send ``control`` ``hide`` or ``show`` for one instance (CORE-259, CORE-275)."""
+        self.control("hide" if hidden else "show", {"fade": fade}, instance_id)
+
+    def resync(self) -> None:
+        """Ask every shell to rebuild from a new ``welcome`` (CORE-275)."""
+        self.control("reload", {"scope": "resync"})
+
+    def styles(self, custom_css: str | None) -> None:
+        """Tell every shell that ``/custom.css`` changed (CORE-262, CORE-275)."""
+        self.control("styles", {"custom_css": custom_css})
+
+    async def reloaded(self, result: ConfigResult, plan: ReloadPlan) -> None:
+        """Tell the shells about a hot reload (layout listener, CORE-275).
+
+        Changes of instances, configuration, appearance, position, pages,
+        layout or display make every shell rebuild from a new ``welcome``
+        (``reload`` ``resync``); a changed ``custom.css`` alone sends
+        ``styles``. The page service learns the new configuration first.
+
+        Args:
+            result: The new configuration.
+            plan: What changed.
+
+        Implements:
+            CORE-275: Core spec 0.14, §5.6 WebSocket protocol.
+        """
+        if self.pages is not None:
+            self.pages.reload(result)
+        shell_keys = {"locale", "timezone", "input", "layout"}
+        rebuild = bool(
+            plan.stop
+            or plan.replace
+            or plan.reconfigure
+            or plan.start
+            or plan.locale
+            or plan.relayout
+            or plan.layout
+            or plan.pages
+            or plan.display
+            or plan.engine_live & shell_keys
+        )
+        if rebuild:
+            self.resync()
+        elif plan.custom_css:
+            css = result.assets.custom_css
+            self.styles(content_version(css) if css is not None else None)
 
     def attach(self, bus: Bus) -> None:
         """Start receiving notifications from the bus.
@@ -364,7 +498,7 @@ class ClientHub:
             endpoint: ``mirror`` for ``/ws``, ``admin`` for ``/admin/preview/ws``.
 
         Implements:
-            CORE-246, CORE-247: Core spec 0.13, §5.6 WebSocket protocol.
+            CORE-246, CORE-247: Core spec 0.14, §5.6 WebSocket protocol.
             CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
         """
         await ws.accept(headers=await self._refresh_display_cookie(ws, endpoint))
@@ -398,16 +532,20 @@ class ClientHub:
             "role": role,
             "interactive": interactive,
             "layout": dict(view.layout),
-            "page": view.page,
+            "page": self.pages.page if self.pages is not None else view.page,
             "pages": view.pages,
             "locale": view.locale,
-            "instances": [i.welcome_entry() for i in view.instances],
+            "timezone": view.timezone,
+            "touch": view.touch,
+            "custom_css": view.custom_css,
+            "instances": [i.welcome_entry(self.status(i.id)) for i in view.instances],
         }
         self._clients[id(client)] = client
         client.queue.append(_frame("welcome", welcome))
         for inst in view.instances:
             snapshot = dict(self.snapshots.get(inst.id, {}))
             client.queue.append(_frame("state", {"state": snapshot, "delta": False}, inst.id))
+        client.queue.append(_frame("control", {"action": "page", **self._page_data()}))
         client.ready.set()
         _log.info("ws_connected", client=client.client_id, role=role, interactive=interactive)
         sender = asyncio.create_task(self._sender(client), name=f"mm3-ws-out:{client.client_id}")
@@ -558,6 +696,9 @@ class ClientHub:
         if kind == "log":
             self._log_frame(client, instance, data)
             return
+        if kind == "touch":
+            self._touch_frame(client, data, ref)
+            return
         if not isinstance(instance, str) or instance not in client.instances:
             self._error(client, "unknown_instance", ref, None)
             return
@@ -565,8 +706,40 @@ class ClientHub:
             self._client_frame(client, instance, data, ref)
         elif kind == "notify":
             self._notify_frame(client, instance, data, ref)
+        elif kind == "visibility":
+            self._visibility_frame(client, instance, data, ref)
         else:
             self._request_frame(client, instance, data, ref)
+
+    def _visibility_frame(
+        self, client: _Client, instance: str, data: Mapping[str, Any], ref: Any
+    ) -> None:
+        """``this.hide()`` / ``this.show()``: the hide reason ``self`` (CORE-238, CORE-276).
+
+        A preview client's ``visibility`` changes only its own view, so it is
+        not applied.
+        """
+        hidden = data.get("hidden")
+        fade = data.get("fade", 300)
+        if (
+            not isinstance(hidden, bool)
+            or not isinstance(fade, int)
+            or isinstance(fade, bool)
+            or not 0 <= fade <= 60_000
+        ):
+            self._error(client, "invalid_frame", ref, instance)
+            return
+        if client.role != "preview" and self.pages is not None:
+            self.pages.set_self(instance, hidden, fade)
+
+    def _touch_frame(self, client: _Client, data: Mapping[str, Any], ref: Any) -> None:
+        """A touch from an interactive client (CORE-235, CORE-260, CORE-276)."""
+        gesture = data.get("gesture")
+        if gesture not in _GESTURES:
+            self._error(client, "invalid_frame", ref, None)
+            return
+        if client.role != "preview" and self.pages is not None and self.view().touch:
+            self.pages.touch(gesture)
 
     def _source(self, instance: str) -> str:
         inst = self.view().instance(instance)

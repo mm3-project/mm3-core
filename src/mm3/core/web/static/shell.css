@@ -1,0 +1,74 @@
+/* Implements CORE-255..259 (Core spec 0.14, §6.8 Shell): grid, cells, headers, fades. */
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--mm3-color-bg);
+  color: var(--mm3-color-fg);
+  font-family: var(--mm3-font-family);
+  font-size: var(--mm3-font-size);
+  font-weight: 400;
+  line-height: 1.25;
+  -webkit-font-smoothing: antialiased;
+  cursor: none;
+}
+html[data-mode="preview"] { cursor: default; }
+#mm3-grid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.mm3-cell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  box-sizing: border-box;
+  opacity: var(--mm3-opacity, 1);
+  transition: opacity var(--mm3-fade, 300ms) ease;
+}
+.mm3-cell[data-align="center"] { align-items: center; }
+.mm3-cell[data-align="end"] { align-items: flex-end; }
+.mm3-cell[data-valign="center"] { justify-content: center; }
+.mm3-cell[data-valign="end"] { justify-content: flex-end; }
+.mm3-cell[data-hidden="true"] { opacity: 0; pointer-events: none; }
+.mm3-cell[data-gone="true"] { display: none; }
+.mm3-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+.mm3-stack > .mm3-cell { flex: 1 1 0; }
+.mm3-header {
+  flex: none;
+  font-size: var(--mm3-size-xsmall);
+  text-transform: uppercase;
+  color: var(--mm3-color-fg);
+  border-bottom: 1px solid var(--mm3-color-dimmed);
+  padding-bottom: 0.3em;
+  margin-bottom: 0.4em;
+  line-height: 1.5;
+}
+.mm3-area { flex: 1 1 auto; position: relative; min-height: 0; min-width: 0; overflow: hidden; }
+.mm3-area[data-overflow="scroll"] { overflow: auto; scrollbar-width: none; touch-action: pan-y; }
+.mm3-area[data-overflow="scroll"]::-webkit-scrollbar { display: none; }
+.mm3-fit { transform-origin: top left; width: max-content; max-width: 100%; }
+.mm3-failure {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: var(--mm3-color-critical);
+  font-size: var(--mm3-size-xsmall);
+  height: 100%;
+}
+.mm3-cell[data-status="unavailable"] .mm3-failure { display: flex; }
+.mm3-cell[data-status="unavailable"] .mm3-area > * { display: none; }
+.mm3-cell[data-failed="true"] .mm3-failure { display: flex; }
+#mm3-grid[data-page-fade="true"] { transition: opacity 300ms ease; }
+#mm3-grid[data-switching="true"] { opacity: 0; }

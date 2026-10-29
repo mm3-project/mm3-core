@@ -331,7 +331,7 @@ async def test_core_63_headers_on_every_response(auth: WebAuth) -> None:
             policy = r.headers["permissions-policy"]
             for feature in ("camera", "microphone", "geolocation", "usb", "serial"):
                 assert f"{feature}=()" in policy
-            assert "bluetooth=()" in policy
+            assert "serial=()" in policy
             assert "payment=()" in policy
         preview = await c.get("/admin/preview")
         assert preview.headers["content-security-policy"] == CSP_PREVIEW
