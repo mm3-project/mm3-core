@@ -48,6 +48,7 @@ from mm3.core.context import (
     PageControl,
     error_reply_payload,
 )
+from mm3.core.i18n.catalogs import I18n
 from mm3.core.logging import get_logger
 from mm3.core.registry import Registry
 from mm3.core.settings import EngineSettings
@@ -666,6 +667,7 @@ class Supervisor:
         self._background: set[asyncio.Task[Any]] = set()
         self.state_listeners: list[Callable[[str, State, State], None]] = []
         self.pages: PageControl | None = None
+        self.i18n: I18n | None = None
 
     def make_context(
         self,
@@ -699,6 +701,8 @@ class Supervisor:
             spawn=spawn,
             pages=self.pages,
             capabilities=frozenset(cls.capabilities) if cls is not None else frozenset(),
+            i18n=self.i18n,
+            engine_locale=lambda: self.settings.locale,
         )
 
     def background(self, coro: Coroutine[Any, Any, Any], name: str) -> None:

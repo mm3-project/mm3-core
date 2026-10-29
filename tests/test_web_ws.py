@@ -269,11 +269,13 @@ async def test_core_246_welcome_then_one_state_per_instance(mirror: Mirror) -> N
             "module": "weather",
             "element": "mm3-weather",
             "config": {"label": "Meteo"},
+            "locale": "it",
             "catalog": None,
             "scripts": [],
             "styles": [],
             "appearance": home["appearance"],
             "status": "ok",
+            "touch": False,
         }
         assert home["appearance"]["scale"] == 1
         assert [(s["kind"], s["instance"]) for s in states] == [

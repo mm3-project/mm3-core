@@ -1,0 +1,191 @@
+# MM3 engine catalog (CORE_* keys). Core spec 8.3.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: mm3-core 0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-10-29 11:23+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: es\n"
+"Language-Team: es <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "CORE_CFG_CELL_TOO_SMALL"
+msgstr "Las celdas de la cuadrícula miden menos de 1 px ({width} x {height})"
+
+msgid "CORE_CFG_CHOICE"
+msgstr "Se esperaba uno de {allowed}"
+
+msgid "CORE_CFG_CRON"
+msgstr "Expresión cron no válida: {reason}"
+
+msgid "CORE_CFG_CSS"
+msgstr "El CSS supera un límite: {reason}"
+
+msgid "CORE_CFG_DISPLAY_MODE"
+msgstr "Indica ancho y alto juntos; refresh necesita ambos"
+
+msgid "CORE_CFG_DUPLICATE_KEY"
+msgstr "La clave {key} aparece más de una vez"
+
+msgid "CORE_CFG_DURATION"
+msgstr "{value} no es una duración (segundos, ISO 8601 o 1h30m)"
+
+msgid "CORE_CFG_ENV_FILE_MODE"
+msgstr "El archivo env es legible por otros usuarios (modo {mode})"
+
+msgid "CORE_CFG_ENV_FILE_SYNTAX"
+msgstr "Esta línea del archivo env no es CLAVE=VALOR"
+
+msgid "CORE_CFG_ENV_MISSING"
+msgstr "La variable de entorno {name} no está definida y no tiene valor predeterminado"
+
+msgid "CORE_CFG_FILE_UNREADABLE"
+msgstr "No se puede leer {file}"
+
+msgid "CORE_CFG_ID_DUPLICATE"
+msgstr "El id {id} se usa más de una vez"
+
+msgid "CORE_CFG_ID_REQUIRED"
+msgstr "El módulo {module} lo usan varias instancias; asigna un id a cada una"
+
+msgid "CORE_CFG_INCLUDE_CYCLE"
+msgstr "Incluir {path} crea un ciclo"
+
+msgid "CORE_CFG_INCLUDE_DEPTH"
+msgstr "Más de {limit} niveles de !include anidados"
+
+msgid "CORE_CFG_INCLUDE_OUTSIDE"
+msgstr "El archivo incluido {path} está fuera de la carpeta de configuración"
+
+msgid "CORE_CFG_INVALID"
+msgstr "{reason}"
+
+msgid "CORE_CFG_LENGTH"
+msgstr "Longitud fuera de rango (mín. {min}, máx. {max})"
+
+msgid "CORE_CFG_LOCALE"
+msgstr "{value} no es una etiqueta de idioma BCP 47 válida"
+
+msgid "CORE_CFG_LOCALIZED_NO_EN"
+msgstr "Este texto no tiene una entrada en inglés (en)"
+
+msgid "CORE_CFG_MIN_SIZE"
+msgstr "El área de {width} x {height} px es menor que el mínimo del módulo, {min_width} x {min_height} px"
+
+msgid "CORE_CFG_MODULE_MISSING"
+msgstr "El módulo {module} no está instalado"
+
+msgid "CORE_CFG_MODULE_UNAVAILABLE"
+msgstr "El módulo {module} no se puede usar: {reason}"
+
+msgid "CORE_CFG_OUT_OF_GRID"
+msgstr "La posición no cabe en la cuadrícula de {columns} x {rows}"
+
+msgid "CORE_CFG_OVERLAP"
+msgstr "Se superpone con {other}"
+
+msgid "CORE_CFG_PAGE_UNKNOWN"
+msgstr "La página {page} no está en pages.list"
+
+msgid "CORE_CFG_PATTERN"
+msgstr "El valor no coincide con {pattern}"
+
+msgid "CORE_CFG_POSITION_FORBIDDEN"
+msgstr "{key} no está permitido en un módulo solo de backend"
+
+msgid "CORE_CFG_POSITION_REQUIRED"
+msgstr "El módulo {module} tiene interfaz y necesita una posición"
+
+msgid "CORE_CFG_PRESET_EMPTY"
+msgstr "El ajuste predefinido {preset} está vacío en esta cuadrícula"
+
+msgid "CORE_CFG_RANGE"
+msgstr "Valor fuera de rango ({bound})"
+
+msgid "CORE_CFG_REQUIRED"
+msgstr "Este valor es obligatorio"
+
+msgid "CORE_CFG_SECRETS_UNENCRYPTED"
+msgstr "backup.parts incluye secretos pero encrypt_to no está definido"
+
+msgid "CORE_CFG_TIMEZONE"
+msgstr "{value} no es una zona horaria IANA"
+
+msgid "CORE_CFG_TYPE"
+msgstr "Se esperaba {expected}"
+
+msgid "CORE_CFG_UNKNOWN_KEY"
+msgstr "Clave desconocida {key}"
+
+msgid "CORE_CFG_VERSION"
+msgstr "config_version {value} es más reciente de lo que admite este motor ({max})"
+
+msgid "CORE_CFG_YAML_SYNTAX"
+msgstr "YAML no válido: {reason}"
+
+msgid "CORE_CFG_YAML_TAG"
+msgstr "La etiqueta {tag} no está permitida; usa !env o !include"
+
+msgid "CORE_SHELL_UNAVAILABLE"
+msgstr "No disponible"
+
+msgid "CORE_WEB_ADMIN_PENDING"
+msgstr "La interfaz de administración aún no está disponible."
+
+msgid "CORE_WEB_ADMIN_TITLE"
+msgstr "Administración de MM3"
+
+msgid "CORE_WEB_FORBIDDEN"
+msgstr "Esta solicitud no está permitida."
+
+msgid "CORE_WEB_LOGIN_FAILED"
+msgstr "Ese token no es válido."
+
+msgid "CORE_WEB_LOGIN_LOCKED"
+msgstr "Demasiados inicios de sesión fallidos desde esta dirección. Inténtalo de nuevo en 15 minutos."
+
+msgid "CORE_WEB_LOGIN_SUBMIT"
+msgstr "Iniciar sesión"
+
+msgid "CORE_WEB_LOGIN_TITLE"
+msgstr "Acceso a la administración de MM3"
+
+msgid "CORE_WEB_LOGIN_TOKEN"
+msgstr "Token de administración"
+
+msgid "CORE_WEB_LOGOUT"
+msgstr "Cerrar sesión"
+
+msgid "CORE_WEB_PAIR_FAILED"
+msgstr "Ese token de pantalla no es válido."
+
+msgid "CORE_WEB_PAIR_NOSCRIPT"
+msgstr "La vinculación necesita JavaScript."
+
+msgid "CORE_WEB_PAIR_TITLE"
+msgstr "Vincular esta pantalla"
+
+msgid "CORE_WEB_PAIR_WORKING"
+msgstr "Vinculando esta pantalla…"
+
+msgid "CORE_WS_INVALID_FRAME"
+msgstr "El mensaje tiene un tipo desconocido o una forma incorrecta."
+
+msgid "CORE_WS_INVALID_PAYLOAD"
+msgstr "La carga no coincide con la notificación registrada."
+
+msgid "CORE_WS_RESERVED_NAME"
+msgstr "Los nombres que empiezan por CORE_ están reservados al motor."
+
+msgid "CORE_WS_UNKNOWN_INSTANCE"
+msgstr "Esta pantalla no muestra esa instancia."
+
+msgid "REQUEST_TIMEOUT"
+msgstr "No llegó ninguna respuesta a tiempo."
+

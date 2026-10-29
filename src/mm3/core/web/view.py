@@ -8,7 +8,7 @@ CORE-101), the version of its catalog URL, its script and style URLs, its
 appearance and its status.
 
 Implements:
-    CORE-246: Core spec 0.14, §5.6 WebSocket protocol.
+    CORE-246: Core spec 0.15, §5.6 WebSocket protocol.
     CORE-274: Core spec 0.14, §5.6 WebSocket protocol.
 """
 
@@ -24,13 +24,12 @@ from typing import Any
 
 from mm3.core.config.layout import IMPLICIT_PAGE, LayoutResult, header_text
 from mm3.core.config.validate import ConfigResult
+from mm3.core.i18n.catalogs import I18n, locale_chain
 from mm3.core.publicconfig import public_config
 from mm3.core.registry import Registry
 from mm3.module import MirrorModule
 
 __all__ = [
-    "CatalogVersion",
-    "HeaderLookup",
     "ModuleFiles",
     "ShellInstance",
     "ShellView",
@@ -40,12 +39,6 @@ __all__ = [
     "module_files",
     "shell_view",
 ]
-
-CatalogVersion = Callable[[str], str | None]
-"""Returns the catalog version (the ``v`` of ``/i18n/<instance>.json``) of an instance."""
-
-HeaderLookup = Callable[[str, str], str | None]
-"""Returns the ``HEADER`` text of an instance's catalog for a locale, if any (MOD-67)."""
 
 
 def content_version(data: bytes | str) -> str:
@@ -116,8 +109,10 @@ class ShellInstance:
         styles: Style URLs.
         appearance: ``{scale, align, valign, opacity, overflow, header, classes, css}``.
         appearance_css: The instance's ``appearance.css``, served at ``appearance["css"]``.
-        catalog: Version of the instance's catalog, ``None`` until known.
+        catalog: Version of the instance's catalog (``/i18n/<id>.json?v=``).
         subscribes: The module's ``subscribes`` globs, ``None`` for all names.
+        chain: The instance's locale chain (core spec 8.2).
+        touch: The element takes touch gestures itself (CORE-235).
     """
 
     id: str
@@ -132,6 +127,8 @@ class ShellInstance:
     appearance_css: str | None = None
     catalog: str | None = None
     subscribes: tuple[str, ...] | None = None
+    chain: tuple[str, ...] = ("en",)
+    touch: bool = False
 
     def welcome_entry(self, status: str = "ok") -> dict[str, Any]:
         """Return the instance's entry in ``welcome.instances`` (CORE-246).
@@ -147,11 +144,13 @@ class ShellInstance:
             "module": self.module,
             "element": self.element,
             "config": dict(self.config),
+            "locale": self.locale,
             "catalog": self.catalog,
             "scripts": list(self.scripts),
             "styles": list(self.styles),
             "appearance": dict(self.appearance),
             "status": status,
+            "touch": self.touch,
         }
 
 
@@ -231,16 +230,15 @@ def shell_view(
     result: ConfigResult,
     registry: Registry,
     *,
-    catalog: CatalogVersion | None = None,
-    header: HeaderLookup | None = None,
+    i18n: I18n | None = None,
 ) -> ShellView:
     """Build what shells are told about a valid configuration.
 
     Args:
         result: The running configuration.
         registry: Installed modules (element names, files, ``subscribes``).
-        catalog: Catalog versions; ``None`` for all until the i18n service runs.
-        header: ``HEADER`` lookup; the module name is shown without one (MOD-67).
+        i18n: Catalogs (versions and ``HEADER``); without it catalogs are
+            ``None`` and headers show the module name (MOD-67).
 
     Returns:
         The view.
@@ -249,7 +247,7 @@ def shell_view(
         ValueError: The configuration is not valid.
 
     Implements:
-        CORE-246: Core spec 0.14, §5.6 WebSocket protocol.
+        CORE-246: Core spec 0.15, §5.6 WebSocket protocol.
     """
     config = result.config
     if config is None or result.layout is None:
@@ -261,6 +259,7 @@ def shell_view(
     else:
         pages = [{"id": IMPLICIT_PAGE, "title": IMPLICIT_PAGE}]
         default = IMPLICIT_PAGE
+    touch = config.engine.input.touch
     files: dict[str, ModuleFiles] = {}
     instances: list[ShellInstance] = []
     for inst in result.instances:
@@ -275,12 +274,14 @@ def shell_view(
             mf = files[inst.module] = module_files(cls, entry.distribution if entry else None)
         base = f"/modules/{inst.module}/{mf.version}/"
         inst_locale = inst.spec.locale or locale
+        chain = tuple(locale_chain(inst.spec.locale, locale))
         app = inst.spec.appearance
         css = app.css
         css_url = f"/appearance/{inst.id}.css?v={content_version(css)}" if css else None
 
-        def lookup(key: str, iid: str = inst.id, loc: str = inst_locale) -> str | None:
-            return header(iid, loc) if header is not None and key == "HEADER" else None
+        def lookup(key: str, module: str = inst.module, ch: tuple[str, ...] = chain) -> str | None:
+            entry = i18n.lookup(module, ch, key) if i18n is not None else None
+            return entry if isinstance(entry, str) else None
 
         appearance = {
             "scale": app.scale,
@@ -288,7 +289,7 @@ def shell_view(
             "valign": app.valign,
             "opacity": app.opacity,
             "overflow": app.overflow,
-            "header": header_text(app, inst.module, inst_locale, lookup),
+            "header": header_text(app, inst.module, list(chain), lookup),
             "classes": list(app.classes),
             "css": css_url,
         }
@@ -304,8 +305,10 @@ def shell_view(
                 styles=tuple(base + s.lstrip("/") for s in cls.styles),
                 appearance=appearance,
                 appearance_css=css,
-                catalog=catalog(inst.id) if catalog is not None else None,
+                catalog=i18n.merged(inst.module, chain)[0] if i18n is not None else None,
                 subscribes=None if cls.subscribes is None else tuple(sorted(cls.subscribes)),
+                chain=chain,
+                touch=touch and "input.touch" in cls.capabilities,
             )
         )
     lc = config.layout
@@ -333,8 +336,7 @@ def cached_view(
     current: Callable[[], ConfigResult],
     registry: Registry,
     *,
-    catalog: CatalogVersion | None = None,
-    header: HeaderLookup | None = None,
+    i18n: I18n | None = None,
 ) -> Callable[[], ShellView]:
     """Return a view provider that rebuilds the view only when the configuration changes.
 
@@ -342,8 +344,7 @@ def cached_view(
         current: Returns the running configuration (it is replaced, never
             mutated, on reload).
         registry: Installed modules.
-        catalog: Catalog versions.
-        header: ``HEADER`` lookup.
+        i18n: Catalogs.
 
     Returns:
         A callable returning the view of the current configuration.
@@ -353,7 +354,7 @@ def cached_view(
     def view() -> ShellView:
         result = current()
         if cache.get("result") is not result:
-            cache["view"] = shell_view(result, registry, catalog=catalog, header=header)
+            cache["view"] = shell_view(result, registry, i18n=i18n)
             cache["result"] = result
         built: ShellView = cache["view"]
         return built

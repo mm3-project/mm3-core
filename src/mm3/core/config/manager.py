@@ -371,7 +371,6 @@ class ConfigManager:
             sup.emit("CORE_LOCALE_CHANGED", {"locale": locale or settings.locale}, target=iid)
         if "locale" in plan.engine_live:
             sup.emit("CORE_LOCALE_CHANGED", {"locale": settings.locale})
-        # 4. Push layout and display changes to the browsers.
-        if plan.relayout or plan.layout or plan.display or plan.pages or plan.custom_css:
-            for listener in self.layout_listeners:
-                await listener(new, plan)
+        # 4. Tell the browsers; each listener decides what the plan means for it.
+        for listener in self.layout_listeners:
+            await listener(new, plan)
