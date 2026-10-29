@@ -28,6 +28,10 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy
+      # Implements CORE-41, CORE-42 (Core spec 0.15, §8.4 Quality gate)
+      # Implements CORE-263 (Core spec 0.15, §8.5 Catalogs at run time)
+      - name: Catalogs compiled and complete (CORE-41, CORE-42, CORE-263)
+        run: uv run mm3 i18n check
       # Implements CORE-75, CORE-76 (Core spec 0.6, §10.3 Documentation and quality)
       - name: Spec sync up to date (CORE-75, CORE-76)
         run: uv run python tools/spec_sync.py --check

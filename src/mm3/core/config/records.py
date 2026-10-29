@@ -5,13 +5,12 @@ Every problem found while loading or validating a configuration becomes a
 :func:`records_from_pydantic`, which maps Pydantic error types to codes and
 turns error locations into JSON Pointers into the resolved configuration.
 
-The English messages below are the source of the engine catalog entries
-(core spec 8.3); the i18n service of milestone 3 compiles them into the
-engine catalog with the other ``CORE_*`` keys.
+The messages come from the engine catalog (``CORE_CFG_*`` keys, core spec
+8.3): English here, every shipped locale in the admin and the API.
 
 Implements:
     CORE-206: Core spec 0.8, §6.2 Rules.
-    CORE-243: Core spec 0.11, §6.2 Rules.
+    CORE-243: Core spec 0.15, §6.2 Rules.
 """
 
 from __future__ import annotations
@@ -23,6 +22,8 @@ from typing import Any, Literal
 
 from pydantic import ValidationError
 from pydantic_core import ErrorDetails
+
+from mm3.core.i18n.catalogs import CORE_CATALOG, Table
 
 __all__ = [
     "CODES",
@@ -39,51 +40,13 @@ __all__ = [
 
 Severity = Literal["error", "warning"]
 
-# Implements CORE-243 (Core spec 0.11, §6.2 Rules): the code table, with the
-# English message of each code; placeholders name the code's params.
+# Implements CORE-243 (Core spec 0.15, §6.2 Rules): the code table, with the
+# English message of each code from the engine catalog (CORE-263);
+# placeholders name the code's params.
 MESSAGES: dict[str, str] = {
-    "CORE_CFG_YAML_SYNTAX": "Not valid YAML: {reason}",
-    "CORE_CFG_YAML_TAG": "Tag {tag} is not allowed; use !env or !include",
-    "CORE_CFG_DUPLICATE_KEY": "Key {key} appears more than once",
-    "CORE_CFG_FILE_UNREADABLE": "Cannot read {file}",
-    "CORE_CFG_INCLUDE_OUTSIDE": "Included file {path} is outside the configuration directory",
-    "CORE_CFG_INCLUDE_CYCLE": "Including {path} creates a cycle",
-    "CORE_CFG_INCLUDE_DEPTH": "More than {limit} nested !include levels",
-    "CORE_CFG_ENV_MISSING": "Environment variable {name} is not set and has no default",
-    "CORE_CFG_ENV_FILE_SYNTAX": "This line of the env file is not KEY=VALUE",
-    "CORE_CFG_ENV_FILE_MODE": "The env file is readable by other users (mode {mode})",
-    "CORE_CFG_VERSION": "config_version {value} is newer than this engine supports ({max})",
-    "CORE_CFG_UNKNOWN_KEY": "Unknown key {key}",
-    "CORE_CFG_REQUIRED": "This value is required",
-    "CORE_CFG_TYPE": "Expected {expected}",
-    "CORE_CFG_RANGE": "Value out of range ({bound})",
-    "CORE_CFG_LENGTH": "Length out of range (min {min}, max {max})",
-    "CORE_CFG_PATTERN": "Value does not match {pattern}",
-    "CORE_CFG_CHOICE": "Expected one of {allowed}",
-    "CORE_CFG_DURATION": "{value} is not a duration (seconds, ISO 8601 or 1h30m)",
-    "CORE_CFG_TIMEZONE": "{value} is not an IANA time zone",
-    "CORE_CFG_LOCALE": "{value} is not a valid BCP 47 language tag",
-    "CORE_CFG_CRON": "Invalid cron expression: {reason}",
-    "CORE_CFG_LOCALIZED_NO_EN": "This text has no English (en) entry",
-    "CORE_CFG_ID_DUPLICATE": "Id {id} is used more than once",
-    "CORE_CFG_ID_REQUIRED": "Module {module} is used by more than one instance; give each an id",
-    "CORE_CFG_MODULE_MISSING": "Module {module} is not installed",
-    "CORE_CFG_MODULE_UNAVAILABLE": "Module {module} cannot be used: {reason}",
-    "CORE_CFG_POSITION_REQUIRED": "Module {module} has a front-end and needs a position",
-    "CORE_CFG_POSITION_FORBIDDEN": "{key} is not allowed for a backend-only module",
-    "CORE_CFG_OUT_OF_GRID": "The position does not fit the {columns} x {rows} grid",
-    "CORE_CFG_PRESET_EMPTY": "Preset {preset} is empty on this grid",
-    "CORE_CFG_OVERLAP": "Overlaps {other}",
-    "CORE_CFG_CELL_TOO_SMALL": "Grid cells are smaller than 1 px ({width} x {height})",
-    "CORE_CFG_MIN_SIZE": (
-        "The area {width} x {height} px is smaller than the module's minimum "
-        "{min_width} x {min_height} px"
-    ),
-    "CORE_CFG_CSS": "CSS breaks a limit: {reason}",
-    "CORE_CFG_PAGE_UNKNOWN": "Page {page} is not in pages.list",
-    "CORE_CFG_DISPLAY_MODE": "Give width and height together; refresh needs both",
-    "CORE_CFG_SECRETS_UNENCRYPTED": "backup.parts includes secrets but encrypt_to is not set",
-    "CORE_CFG_INVALID": "{reason}",
+    key: text
+    for key, text in Table(CORE_CATALOG).get("en").items()
+    if key.startswith("CORE_CFG_") and isinstance(text, str)
 }
 CODES = frozenset(MESSAGES)
 WARNING_CODES = frozenset(
@@ -278,7 +241,7 @@ def make_record(
         KeyError: ``code`` is not in the table (CORE-243).
 
     Implements:
-        CORE-243: Core spec 0.11, §6.2 Rules.
+        CORE-243: Core spec 0.15, §6.2 Rules.
     """
     template = MESSAGES[code]
     clean = {k: _json_safe(v) for k, v in (params or {}).items()}
@@ -310,7 +273,7 @@ def code_for_pydantic(err: ErrorDetails) -> tuple[str, dict[str, Any]]:
         ``(code, params)``.
 
     Implements:
-        CORE-243: Core spec 0.11, §6.2 Rules.
+        CORE-243: Core spec 0.15, §6.2 Rules.
     """
     t = err["type"]
     ctx: dict[str, Any] = dict(err.get("ctx") or {})

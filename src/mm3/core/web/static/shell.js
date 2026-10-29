@@ -6,6 +6,8 @@
 // Implements CORE-262 (Core spec 0.14, §6.10 Theme and custom CSS)
 // Implements CORE-117 (Core spec 0.14, §10.5 Diagnostics and debugging)
 // Implements CORE-103 (Core spec 0.14, §11.1 Engine additions)
+// Implements CORE-235 (Core spec 0.15, §6.9 Pages and visibility)
+// Implements CORE-264, CORE-267 (Core spec 0.15, §8.5 Catalogs at run time)
 import { bind } from "/core/mm3.js";
 
 const mode = document.documentElement.dataset.mode === "preview" ? "preview" : "mirror";
@@ -216,6 +218,16 @@ function applyLayout(layout) {
   document.documentElement.style.setProperty("--mm3-gap", `${g.gap}px`);
 }
 
+async function fetchCatalog(info) {
+  if (!info.catalog) return null;
+  try {
+    const res = await fetch(`/i18n/${encodeURIComponent(info.id)}.json?v=${encodeURIComponent(info.catalog)}`);
+    return res.ok ? await res.json() : null;
+  } catch {
+    return null;
+  }
+}
+
 async function sheet(url) {
   try {
     const res = await fetch(url);
@@ -256,10 +268,14 @@ async function addCell(info) {
   grid.append(node);
   const cell = { id: info.id, key: keyOf(info), node, header, area, fitBox, failure, el: null, info, state: {} };
   cells.set(info.id, cell);
-  await Promise.all(info.scripts.map((u) => import(u).catch((err) => logError(u, err))));
+  const [catalog] = await Promise.all([
+    fetchCatalog(info),
+    ...info.scripts.map((u) => import(u).catch((err) => logError(u, err))),
+  ]);
+  cell.catalog = catalog;
+  failure.textContent = unavailableText(cell);
   if (!customElements.get(info.element)) {
     node.dataset.status = "unavailable";
-    failure.textContent = "";
     return;
   }
   const el = document.createElement(info.element);
@@ -271,7 +287,7 @@ async function addCell(info) {
     preview: mode === "preview",
     page: welcome.page,
     timezone: welcome.timezone,
-    catalog: null,
+    catalog,
   });
   fitBox.append(el);
   new ResizeObserver(() => scheduleResize(cell)).observe(area);
@@ -306,8 +322,14 @@ function updateCell(cell, info) {
   cell.area.dataset.overflow = a.overflow;
   cell.header.textContent = a.header || "";
   cell.header.style.display = a.header ? "" : "none";
-  cell.failure.textContent = "";
+  cell.failure.textContent = unavailableText(cell);
   cell.fitBox.style.removeProperty("transform");
+}
+
+function unavailableText(cell) {
+  // The placeholder shows only localized text, never ids or errors (CORE-117).
+  const text = cell.catalog && cell.catalog.CORE_SHELL_UNAVAILABLE;
+  return typeof text === "string" ? text : "";
 }
 
 function removeCell(id) {
@@ -396,15 +418,8 @@ function onControl(instance, data) {
       if (cell) cell.node.dataset.status = data.status;
       return undefined;
     }
-    case "locale": {
-      const cell = cells.get(instance);
-      if (cell?.el) {
-        cell.el.locale = data.locale;
-        cell.el.config = data.config;
-        cell.el._guard("onLocaleChange", cell.el.onLocaleChange, data.locale);
-      }
-      return undefined;
-    }
+    case "locale":
+      return changeLocale(instance, data);
     case "styles":
       return applyCustomCss(data.custom_css);
     case "layout":
@@ -420,6 +435,20 @@ function onControl(instance, data) {
     default:
       return undefined;
   }
+}
+
+async function changeLocale(instance, data) {
+  // CORE-267: new catalog, config resolved for the new locale, then onLocaleChange.
+  const cell = cells.get(instance);
+  if (!cell) return;
+  cell.info = { ...cell.info, locale: data.locale, config: data.config, catalog: data.catalog };
+  cell.catalog = await fetchCatalog(cell.info);
+  cell.failure.textContent = unavailableText(cell);
+  if (!cell.el) return;
+  cell.el.locale = data.locale;
+  cell.el.config = data.config;
+  cell.el.catalog = cell.catalog;
+  cell.el._guard("onLocaleChange", cell.el.onLocaleChange, data.locale);
 }
 
 function resync() {
@@ -499,7 +528,7 @@ function fit(cell) {
   const h = box.scrollHeight;
   const aw = cell.area.clientWidth;
   const ah = cell.area.clientHeight;
-  if (!w || !h) return;
+  if (!w || !h || !aw || !ah) return;
   const scale = Math.min(1, aw / w, ah / h);
   if (scale < 1) box.style.transform = `scale(${scale})`;
 }
@@ -509,6 +538,9 @@ function fit(cell) {
 let pointer = null;
 window.addEventListener("pointerdown", (ev) => {
   if (mode !== "mirror" || !ev.isPrimary || !welcome?.touch) return;
+  // A touch on an element that takes gestures itself is the element's (CORE-235).
+  const owner = ev.target instanceof Element ? ev.target.closest(".mm3-cell") : null;
+  if (owner && cells.get(owner.dataset.instance)?.info.touch) return;
   pointer = { x: ev.clientX, y: ev.clientY, t: performance.now() };
 });
 window.addEventListener("pointerup", (ev) => {

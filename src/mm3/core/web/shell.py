@@ -3,7 +3,8 @@
 ``/`` serves the shell; ``/core/…`` the engine's scripts, theme and
 vendored libraries (lit-html, Roboto Condensed); ``/modules/<module>/
 <version>/…`` the ``static/`` directory of an installed module;
-``/appearance/<instance>.css`` an instance's ``appearance.css``; and
+``/appearance/<instance>.css`` an instance's ``appearance.css``;
+``/i18n/<instance>.json`` an instance's merged catalog; and
 ``/custom.css`` the user's stylesheet. The admin listener serves the same
 shell in preview mode at ``/admin/preview`` and the same files, so the
 preview loads exactly what the kiosk loads.
@@ -12,6 +13,7 @@ Implements:
     CORE-06: Core spec 0.14, §3 Engine components.
     CORE-252: Core spec 0.14, §5.6 WebSocket protocol.
     CORE-261, CORE-262: Core spec 0.14, §6.10 Theme and custom CSS.
+    CORE-264: Core spec 0.15, §8.5 Catalogs at run time.
 """
 
 from __future__ import annotations
@@ -25,6 +27,7 @@ from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, Response
 
 from mm3.core.config.validate import ConfigResult
+from mm3.core.i18n.catalogs import I18n
 from mm3.core.web.view import ShellView, content_version
 
 __all__ = [
@@ -55,10 +58,12 @@ class ShellSources:
     Attributes:
         view: What shells are told now (module files, appearance CSS).
         current: The running configuration (custom.css).
+        i18n: Catalogs for ``/i18n/<instance>.json``; without it that URL is 404.
     """
 
     view: Callable[[], ShellView]
     current: Callable[[], ConfigResult]
+    i18n: I18n | None = None
 
 
 def shell_page(mode: ShellMode) -> str:
@@ -146,6 +151,16 @@ def add_shell_files(app: FastAPI, sources: ShellSources) -> None:
         versioned = request.query_params.get("v") == content_version(css)
         headers = {"Cache-Control": IMMUTABLE} if versioned else {}
         return Response(css, media_type="text/css", headers=headers)
+
+    @app.get("/i18n/{name}")
+    async def catalog(name: str, request: Request) -> Response:
+        inst = view().instance(name.removesuffix(".json")) if name.endswith(".json") else None
+        if inst is None or sources.i18n is None:
+            return not_found()
+        version, data = sources.i18n.merged(inst.module, inst.chain)
+        versioned = request.query_params.get("v") == version
+        headers = {"Cache-Control": IMMUTABLE} if versioned else {}
+        return Response(data, media_type="application/json", headers=headers)
 
     @app.get("/custom.css")
     async def custom_css(request: Request) -> Response:

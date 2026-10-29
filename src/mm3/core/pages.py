@@ -9,7 +9,7 @@ change is applied in order by one worker task, emitted on the bus as
 ``CORE_PAGE_CHANGED`` and pushed to the shells.
 
 Implements:
-    CORE-233, CORE-234, CORE-235, CORE-237: Core spec 0.14, §6.9 Pages and visibility.
+    CORE-233, CORE-234, CORE-235, CORE-237: Core spec 0.15, §6.9 Pages and visibility.
     CORE-238, CORE-239, CORE-241: Core spec 0.14, §6.9 Pages and visibility.
     CORE-260: Core spec 0.14, §6.9 Pages and visibility.
 """

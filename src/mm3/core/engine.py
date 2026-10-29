@@ -21,6 +21,7 @@ from typing import Any, Protocol
 
 from mm3.core.bus import Bus, BusEndpoint, ClientChannel, NullClientChannel
 from mm3.core.clock import Clock, SystemClock
+from mm3.core.i18n import I18n, registry_roots
 from mm3.core.logging import get_logger
 from mm3.core.registry import Registry
 from mm3.core.services.storage import resolve_state_dir
@@ -81,6 +82,8 @@ class Engine:
             executor=self.executor,
             state_dir=state_dir or resolve_state_dir(),
         )
+        self.i18n = I18n(registry_roots(registry))
+        self.supervisor.i18n = self.i18n
         self.running = False
 
     async def start(self, instances: Iterable[InstanceSpec]) -> None:

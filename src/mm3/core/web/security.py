@@ -9,6 +9,7 @@ headers of CORE-63.
 Implements:
     CORE-61: Core spec 0.12, §10.1 Security.
     CORE-63: Core spec 0.12, §10.1 Security.
+    CORE-12: Core spec 0.15, §4.4 Contract rules.
 """
 
 from __future__ import annotations

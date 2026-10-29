@@ -35,6 +35,7 @@ from typing import Any, TextIO
 
 from mm3.__about__ import MODULE_API_VERSION, __version__
 from mm3.cli.config_cmd import add_config_parser, run_config
+from mm3.cli.i18n_cmd import add_i18n_parser, run_i18n
 from mm3.cli.token_cmd import add_token_parser, run_token
 from mm3.core.config import DEFAULT_CONFIG, DEFAULT_ENV_FILE, ConfigResult, load_config
 from mm3.core.registry import Registry
@@ -70,6 +71,7 @@ def build_parser() -> argparse.ArgumentParser:
     _config_args(run)
     add_config_parser(sub, _config_args)
     add_token_parser(sub, _config_args)
+    add_i18n_parser(sub)
     return parser
 
 
@@ -167,7 +169,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         current = manager.current.config
         return list(current.engine.server.allow) if current is not None else []
 
-    view = cached_view(lambda: manager.current, registry)
+    view = cached_view(lambda: manager.current, registry, i18n=engine.i18n)
     hub = ClientHub(
         view,
         WebAuth.open(state_dir),
@@ -184,7 +186,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         state_dir,
         server_allow=server_allow,
         hub=hub,
-        sources=ShellSources(view, lambda: manager.current),
+        sources=ShellSources(view, lambda: manager.current, engine.i18n),
     )
     await engine.start(result.instance_specs())
     await manager.start()
@@ -253,6 +255,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_config(args, registry=_discover())
     if args.command == "token":
         return run_token(args)
+    if args.command == "i18n":
+        return run_i18n(args)
     parser.print_help()
     return 0
 

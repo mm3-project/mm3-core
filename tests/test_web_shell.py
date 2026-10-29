@@ -9,6 +9,7 @@ import os
 import sys
 import uuid
 from collections.abc import AsyncIterator
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -17,9 +18,10 @@ import pytest
 import websockets
 
 from mm3.core.config import load_config
-from mm3.core.config.diff import ReloadPlan
+from mm3.core.config.diff import ReloadPlan, plan_reload
 from mm3.core.config.validate import ConfigResult
 from mm3.core.engine import Engine
+from mm3.core.i18n import compile_locales
 from mm3.core.pages import PageService
 from mm3.core.registry import Registry
 from mm3.core.settings import AdminSettings, EngineSettings, ServerSettings, Timeouts
@@ -30,6 +32,7 @@ from mm3.core.web.shell import IMMUTABLE, ShellSources, shell_page
 from mm3.core.web.view import cached_view, content_version
 from mm3.core.web.ws import ClientHub
 from mm3.testing import VirtualClock
+from test_i18n import write_catalog
 
 PACKAGE = """
 from typing import Any
@@ -49,14 +52,41 @@ class ShellTest(MirrorModule):
     async def on_client_message(self, msg: ClientMessage) -> None:
         if msg.type == "bump":
             self.ctx.set_state({"temp": msg.payload.get("n")})
+
+
+class TouchTest(MirrorModule):
+    name = "touchtest"
+    element = "mm3-touchtest"
+    scripts = ["touch.js"]
+    capabilities = {"input.touch"}
 """
+
+TOUCH_ELEMENT = """
+import { MirrorElement, html } from "/core/mm3.js";
+
+class TouchTest extends MirrorElement {
+  render() {
+    return html`<div class="pad">pad</div>`;
+  }
+}
+customElements.define("mm3-touchtest", TouchTest);
+"""
+
+CATALOGS: dict[str, dict[str, str | tuple[str, ...]]] = {
+    "en": {"HEADER": "Weather", "FILES": ("{count} file", "{count} files")},
+    "it": {"HEADER": "Meteo", "FILES": ("{count} file", "{count} file")},
+    "fr": {"HEADER": "Météo", "FILES": ("{count} fichier", "{count} fichiers")},
+    "es": {"HEADER": "Tiempo", "FILES": ("{count} archivo", "{count} archivos")},
+    "de": {"HEADER": "Wetter", "FILES": ("{count} Datei", "{count} Dateien")},
+}
 
 ELEMENT = """
 import { MirrorElement, html } from "/core/mm3.js";
 
 class ShellTest extends MirrorElement {
   render(state) {
-    return html`<div class="temp">${state.temp ?? "-"}</div>`;
+    const label = this.t("FILES", { count: 2 });
+    return html`<div class="temp">${state.temp ?? "-"}</div><div class="label">${label}</div>`;
   }
   onResize(w, h) {
     this.size = [w, h];
@@ -87,6 +117,9 @@ modules:
     id: other
     position: top_right
     pages: [b]
+    locale: it
+    appearance:
+      header: true
   - module: shelltest
     id: both
     position: bottom_bar
@@ -95,27 +128,38 @@ modules:
   - module: shelltest
     id: also
     position: bottom_bar
+    locale: it
     appearance:
       overflow: fit
+  - module: touchtest
+    id: pad
+    position: middle_center
+    pages: [a]
+    appearance:
+      header: true
 """
 
 CUSTOM_CSS = "body { --mm3-color-fg: #bbb; }\n"
 
 
 @pytest.fixture(scope="module")
-def shell_module(tmp_path_factory: pytest.TempPathFactory) -> type[Any]:
+def shell_module(tmp_path_factory: pytest.TempPathFactory) -> Any:
     root = tmp_path_factory.mktemp("pkg")
     pkg = root / "mm3_shelltest"
     (pkg / "static").mkdir(parents=True)
     (pkg / "__init__.py").write_text(PACKAGE)
     (pkg / "static" / "element.js").write_text(ELEMENT)
     (pkg / "static" / "element.css").write_text(":host { color: var(--mm3-color-bright); }\n")
+    (pkg / "static" / "touch.js").write_text(TOUCH_ELEMENT)
+    for lang, entries in CATALOGS.items():
+        write_catalog(pkg / "locales", lang, entries)
+    compile_locales(pkg / "locales")
     sys.path.insert(0, str(root))
     try:
-        cls: type[Any] = importlib.import_module("mm3_shelltest").ShellTest
+        module = importlib.import_module("mm3_shelltest")
     finally:
         sys.path.remove(str(root))
-    return cls
+    return module
 
 
 class Mirror:
@@ -160,13 +204,14 @@ class Mirror:
 
 
 @pytest.fixture
-async def mirror(tmp_path: Path, shell_module: type[Any]) -> AsyncIterator[Mirror]:
+async def mirror(tmp_path: Path, shell_module: Any) -> AsyncIterator[Mirror]:
     etc = tmp_path / "etc"
     etc.mkdir()
     (etc / "config.yaml").write_text(CONFIG)
     (etc / "custom.css").write_text(CUSTOM_CSS)
     registry = Registry()
-    registry.add(shell_module)
+    registry.add(shell_module.ShellTest)
+    registry.add(shell_module.TouchTest)
     result = load_config(etc / "config.yaml", registry=registry, env_file=etc / "none.env")
     assert result.ok, result.records
     holder = {"result": result}
@@ -180,14 +225,14 @@ async def mirror(tmp_path: Path, shell_module: type[Any]) -> AsyncIterator[Mirro
     )
     clock = VirtualClock()
     engine = Engine(settings, registry=registry, clock=clock, state_dir=tmp_path / "state")
-    view = cached_view(lambda: holder["result"], registry)
+    view = cached_view(lambda: holder["result"], registry, i18n=engine.i18n)
     hub = ClientHub(view, WebAuth.open(tmp_path / "state"), "1.0+test", hello_timeout=1)
     engine.attach_clients(hub)
     pages = PageService(result, engine.supervisor, clock)
     engine.supervisor.pages = pages
     engine.bus.add_endpoint(pages)
     hub.attach_pages(pages, engine.supervisor)
-    sources = ShellSources(view, lambda: holder["result"])
+    sources = ShellSources(view, lambda: holder["result"], engine.i18n)
     gateway = WebGateway(settings, tmp_path / "state", hub=hub, sources=sources)
     await engine.start(result.instance_specs())
     await pages.start()
@@ -359,7 +404,7 @@ async def test_core_246_welcome_entry_fields(mirror: Mirror) -> None:
             "index": 0,
             "count": 2,
             "transition": "fade",
-            "visible": ["home", "both", "also"],
+            "visible": ["home", "both", "also", "pad"],
         }
 
 
@@ -659,3 +704,145 @@ async def test_core_258_fit_scales_down_and_scroll_scrolls(mirror: Mirror, shell
         f"() => getComputedStyle({cell('both')}.querySelector('.mm3-area')).overflowY"
     )
     assert overflow == "auto"
+
+
+# --- part D: catalogs in the shell (core spec 8) ---------------------------------------------
+
+
+async def welcome_of(mirror: Mirror) -> dict[str, Any]:
+    async with websockets.connect(f"ws://127.0.0.1:{mirror.gateway.mirror.port}/ws") as ws:
+        await ws.send(hello())
+        data: dict[str, Any] = json.loads(await ws.recv())["data"]
+    return data
+
+
+async def test_core_264_catalog_url_and_version(mirror: Mirror) -> None:
+    welcome = await welcome_of(mirror)
+    entries = {i["id"]: i for i in welcome["instances"]}
+    also = entries["also"]
+    version, raw = mirror.engine.i18n.merged("shelltest", ["it", "en"])
+    assert also["catalog"] == version
+    assert entries["home"]["catalog"] != version  # en chain
+    async with httpx.AsyncClient(base_url=mirror.base) as c:
+        r = await c.get(f"/i18n/also.json?v={version}")
+        assert r.status_code == 200
+        assert r.headers["cache-control"] == IMMUTABLE
+        data = r.json()
+        assert data["FILES"] == {
+            "one": "{count} file",
+            "many": "{count} file",
+            "other": "{count} file",
+        }
+        assert data["CORE_SHELL_UNAVAILABLE"] == "Non disponibile"
+        assert r.content == raw
+        stale = await c.get("/i18n/also.json?v=old")
+        assert "immutable" not in stale.headers.get("cache-control", "")
+        assert (await c.get("/i18n/ghost.json")).status_code == 404
+        assert (await c.get("/i18n/also.txt")).status_code == 404
+
+
+async def test_mod_67_header_from_the_catalog(mirror: Mirror) -> None:
+    welcome = await welcome_of(mirror)
+    entries = {i["id"]: i for i in welcome["instances"]}
+    assert entries["other"]["appearance"]["header"] == "Meteo"
+    assert entries["pad"]["appearance"]["header"] == "Weather"  # same package catalog, en
+    assert entries["home"]["appearance"]["header"] == "Hello"
+
+
+async def test_core_246_touch_flag_per_instance(mirror: Mirror) -> None:
+    welcome = await welcome_of(mirror)
+    flags = {i["id"]: i["touch"] for i in welcome["instances"]}
+    assert flags == {
+        "home": False,
+        "other": False,
+        "both": False,
+        "also": False,
+        "pad": True,
+    }
+
+
+async def test_core_07_backend_translation_and_formatting(mirror: Mirror) -> None:
+    ctx = mirror.engine.supervisor.get("also").context
+    assert ctx is not None
+    assert ctx.t("FILES", count=3) == "3 file"
+    assert ctx.t("HEADER") == "Meteo"
+    assert ctx.t("CORE_SHELL_UNAVAILABLE") == "Non disponibile"
+    assert ctx.format_number(21.5, unit="celsius") == "21,5 °C"
+    home = mirror.engine.supervisor.get("home").context
+    assert home is not None
+    assert home.t("FILES", count=1) == "1 file"
+    assert home.t("FILES", count=2) == "2 files"
+
+
+@pytest.mark.browser
+async def test_core_265_element_text_and_plurals(shell: Any) -> None:
+    async def label(instance: str) -> str:
+        return await shell.evaluate(  # type: ignore[no-any-return]
+            f"() => {cell(instance)}.querySelector('mm3-shelltest')"
+            ".shadowRoot.querySelector('.label').textContent"
+        )
+
+    assert await label("home") == "2 files"
+    assert await label("also") == "2 file"
+    missing = await shell.evaluate(f"() => {HOME}.t('NOPE')")
+    assert missing == "NOPE"
+
+
+@pytest.mark.browser
+async def test_core_266_fmt_date_uses_the_engine_time_zone(mirror: Mirror, shell: Any) -> None:
+    config = mirror.holder["result"].config
+    assert config is not None
+    when = "new Date(Date.UTC(2026, 9, 29, 23, 30))"
+    got = await shell.evaluate(f"() => {HOME}.fmtDate({when}, 'time')")
+    ctx = mirror.engine.supervisor.get("home").context
+    assert ctx is not None
+    expected = ctx.format_date(datetime(2026, 10, 29, 23, 30, tzinfo=UTC), "time")
+    assert got.replace("\u202f", " ") == expected.replace("\u202f", " ")
+    number = await shell.evaluate(
+        f"() => {cell('also')}.querySelector('mm3-shelltest').fmtNumber(21.5, 'celsius')"
+    )
+    assert number.replace("\u202f", " ").replace("\xa0", " ") == "21,5 °C"
+
+
+@pytest.mark.browser
+async def test_core_267_locale_change_refetches_the_catalog(mirror: Mirror, shell: Any) -> None:
+    old = mirror.holder["result"]
+    text = CONFIG.replace(
+        "    id: both\n    position: bottom_bar\n",
+        "    id: both\n    position: bottom_bar\n    locale: de\n",
+    )
+    new = mirror.reload(text)
+    plan = plan_reload(old, new)
+    assert plan.locale == {"both": "de"}
+    await mirror.hub.reloaded(new, plan)
+    await shell.wait_for_function(
+        f"() => {cell('both')}.querySelector('mm3-shelltest')"
+        ".shadowRoot.querySelector('.label').textContent === '2 Dateien'"
+    )
+    assert (
+        await shell.evaluate(f"() => {cell('both')}.querySelector('mm3-shelltest').locale") == "de"
+    )
+
+
+@pytest.mark.browser
+async def test_core_117_placeholder_is_localized(mirror: Mirror, shell: Any) -> None:
+    await mirror.engine.supervisor.get("also")._disable("test")
+    await shell.wait_for_function(f"() => {cell('also')}.dataset.status === 'unavailable'")
+    text = await shell.text_content('[data-instance="also"] .mm3-failure')
+    assert text == "Non disponibile"
+
+
+@pytest.mark.browser
+async def test_core_235_swipe_on_a_touch_element_stays_with_it(mirror: Mirror, shell: Any) -> None:
+    box = await shell.evaluate(
+        f"() => {{ const r = {cell('pad')}.getBoundingClientRect();"
+        " return [r.left, r.top, r.width, r.height]; }"
+    )
+    x, y = box[0] + box[2] - 2, box[1] + box[3] / 2
+    await shell.mouse.move(x, y)
+    await shell.mouse.down()
+    await shell.mouse.move(x - 600, y, steps=5)
+    await shell.mouse.up()
+    await asyncio.sleep(0.5)
+    await mirror.pages.idle()
+    assert mirror.pages.page == "a"

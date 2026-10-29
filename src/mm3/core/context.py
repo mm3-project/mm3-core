@@ -34,6 +34,7 @@ from zoneinfo import ZoneInfo
 from mm3.context import PageInfo
 from mm3.core.bus import Bus, ClientChannel
 from mm3.core.clock import Clock
+from mm3.core.i18n.catalogs import I18n, format_date, format_number, locale_chain, substitute
 from mm3.core.logging import Logger, get_logger
 from mm3.core.services.scheduler import InstanceScheduler
 from mm3.core.services.storage import InstanceStorage
@@ -215,6 +216,8 @@ class EngineContext:
         spawn: Callable[[Coroutine[Any, Any, Any], str], asyncio.Task[Any]],
         pages: PageControl | None = None,
         capabilities: frozenset[str] = frozenset(),
+        i18n: I18n | None = None,
+        engine_locale: Callable[[], str] | None = None,
     ) -> None:
         self._instance_id = instance_id
         self._module_name = module_name
@@ -230,6 +233,8 @@ class EngineContext:
         self._spawn = spawn
         self._pages = pages
         self._capabilities = capabilities
+        self._i18n = i18n
+        self._engine_locale = engine_locale or (lambda: locale)
         self._closed = False
         self._state: dict[str, Any] = {}
         self._log = get_logger(module_name, instance_id)
@@ -394,6 +399,52 @@ class EngineContext:
         """Active locale."""
         self._guard()
         return self._locale
+
+    def t(self, key: str, /, count: float | None = None, **vars: Any) -> str:
+        """Return the text of a catalog key for this instance's locale chain.
+
+        Args:
+            key: The catalog key.
+            count: Picks the plural form; also available as ``{count}``.
+            **vars: Placeholder values.
+
+        Returns:
+            The text; the key itself when no catalog has it.
+
+        Implements:
+            CORE-264, CORE-265: Core spec 0.15, §8.5 Catalogs at run time.
+        """
+        self._guard()
+        chain = locale_chain(self._locale, self._engine_locale())
+        if self._i18n is None:
+            return substitute(key, vars)
+        return self._i18n.translate(self._module_name, chain, key, count, vars)
+
+    def format_date(self, value: datetime, style: str = "medium") -> str:
+        """Format a date in this instance's locale and the engine time zone (CORE-266).
+
+        Args:
+            value: The moment; a naive value is taken as UTC.
+            style: ``short``, ``medium``, ``long``, ``full`` or ``time``.
+
+        Returns:
+            The text.
+        """
+        self._guard()
+        return format_date(value, style, self._locale, self._timezone)
+
+    def format_number(self, value: float, *, unit: str | None = None) -> str:
+        """Format a number in this instance's locale, with an optional unit (CORE-266).
+
+        Args:
+            value: The number; it is not converted.
+            unit: A CLDR unit identifier such as ``celsius``.
+
+        Returns:
+            The text.
+        """
+        self._guard()
+        return format_number(value, self._locale, unit)
 
     @property
     def timezone(self) -> ZoneInfo:

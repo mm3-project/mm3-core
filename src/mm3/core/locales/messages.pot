@@ -1,0 +1,189 @@
+# MM3 engine catalog (CORE_* keys). Core spec 8.3.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: mm3-core 0\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-10-29 11:23+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+msgid "CORE_CFG_CELL_TOO_SMALL"
+msgstr ""
+
+msgid "CORE_CFG_CHOICE"
+msgstr ""
+
+msgid "CORE_CFG_CRON"
+msgstr ""
+
+msgid "CORE_CFG_CSS"
+msgstr ""
+
+msgid "CORE_CFG_DISPLAY_MODE"
+msgstr ""
+
+msgid "CORE_CFG_DUPLICATE_KEY"
+msgstr ""
+
+msgid "CORE_CFG_DURATION"
+msgstr ""
+
+msgid "CORE_CFG_ENV_FILE_MODE"
+msgstr ""
+
+msgid "CORE_CFG_ENV_FILE_SYNTAX"
+msgstr ""
+
+msgid "CORE_CFG_ENV_MISSING"
+msgstr ""
+
+msgid "CORE_CFG_FILE_UNREADABLE"
+msgstr ""
+
+msgid "CORE_CFG_ID_DUPLICATE"
+msgstr ""
+
+msgid "CORE_CFG_ID_REQUIRED"
+msgstr ""
+
+msgid "CORE_CFG_INCLUDE_CYCLE"
+msgstr ""
+
+msgid "CORE_CFG_INCLUDE_DEPTH"
+msgstr ""
+
+msgid "CORE_CFG_INCLUDE_OUTSIDE"
+msgstr ""
+
+msgid "CORE_CFG_INVALID"
+msgstr ""
+
+msgid "CORE_CFG_LENGTH"
+msgstr ""
+
+msgid "CORE_CFG_LOCALE"
+msgstr ""
+
+msgid "CORE_CFG_LOCALIZED_NO_EN"
+msgstr ""
+
+msgid "CORE_CFG_MIN_SIZE"
+msgstr ""
+
+msgid "CORE_CFG_MODULE_MISSING"
+msgstr ""
+
+msgid "CORE_CFG_MODULE_UNAVAILABLE"
+msgstr ""
+
+msgid "CORE_CFG_OUT_OF_GRID"
+msgstr ""
+
+msgid "CORE_CFG_OVERLAP"
+msgstr ""
+
+msgid "CORE_CFG_PAGE_UNKNOWN"
+msgstr ""
+
+msgid "CORE_CFG_PATTERN"
+msgstr ""
+
+msgid "CORE_CFG_POSITION_FORBIDDEN"
+msgstr ""
+
+msgid "CORE_CFG_POSITION_REQUIRED"
+msgstr ""
+
+msgid "CORE_CFG_PRESET_EMPTY"
+msgstr ""
+
+msgid "CORE_CFG_RANGE"
+msgstr ""
+
+msgid "CORE_CFG_REQUIRED"
+msgstr ""
+
+msgid "CORE_CFG_SECRETS_UNENCRYPTED"
+msgstr ""
+
+msgid "CORE_CFG_TIMEZONE"
+msgstr ""
+
+msgid "CORE_CFG_TYPE"
+msgstr ""
+
+msgid "CORE_CFG_UNKNOWN_KEY"
+msgstr ""
+
+msgid "CORE_CFG_VERSION"
+msgstr ""
+
+msgid "CORE_CFG_YAML_SYNTAX"
+msgstr ""
+
+msgid "CORE_CFG_YAML_TAG"
+msgstr ""
+
+msgid "CORE_SHELL_UNAVAILABLE"
+msgstr ""
+
+msgid "CORE_WEB_ADMIN_PENDING"
+msgstr ""
+
+msgid "CORE_WEB_ADMIN_TITLE"
+msgstr ""
+
+msgid "CORE_WEB_FORBIDDEN"
+msgstr ""
+
+msgid "CORE_WEB_LOGIN_FAILED"
+msgstr ""
+
+msgid "CORE_WEB_LOGIN_LOCKED"
+msgstr ""
+
+msgid "CORE_WEB_LOGIN_SUBMIT"
+msgstr ""
+
+msgid "CORE_WEB_LOGIN_TITLE"
+msgstr ""
+
+msgid "CORE_WEB_LOGIN_TOKEN"
+msgstr ""
+
+msgid "CORE_WEB_LOGOUT"
+msgstr ""
+
+msgid "CORE_WEB_PAIR_FAILED"
+msgstr ""
+
+msgid "CORE_WEB_PAIR_NOSCRIPT"
+msgstr ""
+
+msgid "CORE_WEB_PAIR_TITLE"
+msgstr ""
+
+msgid "CORE_WEB_PAIR_WORKING"
+msgstr ""
+
+msgid "CORE_WS_INVALID_FRAME"
+msgstr ""
+
+msgid "CORE_WS_INVALID_PAYLOAD"
+msgstr ""
+
+msgid "CORE_WS_RESERVED_NAME"
+msgstr ""
+
+msgid "CORE_WS_UNKNOWN_INSTANCE"
+msgstr ""
+
+msgid "REQUEST_TIMEOUT"
+msgstr ""
+

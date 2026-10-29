@@ -9,6 +9,26 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Milestone 3 part D: internationalization. The engine catalog
+  (`mm3/core/locales`, EN, IT, FR, ES, DE) holds every `CORE_*` text: the
+  validation messages (now read from it), the engine pages, the WebSocket
+  error keys, `REQUEST_TIMEOUT` and the shell's "unavailable" placeholder
+  (CORE-11, CORE-40, CORE-117, CORE-263). `mm3 i18n compile` writes
+  `messages.mo` and `messages.json` next to every `.po` (plural indices
+  converted to CLDR categories); `mm3 i18n check`, now a CI step, fails on
+  missing or out-of-date compiled files, missing locales, missing keys and
+  different placeholders (CORE-41, CORE-42, CORE-263). The i18n service
+  looks keys up along the instance's locale chain in the module catalog,
+  locale packages (`mm3.locales`) and the core catalog (CORE-07, CORE-264);
+  `/i18n/<instance>.json?v=` serves the merged catalog, whose version
+  `welcome` carries with each instance's `locale` and `touch` flag
+  (CORE-246). `ctx.t()` with plurals and placeholders, `ctx.format_date()`
+  and `ctx.format_number()` (Babel), and in the browser `this.t()`,
+  `fmtDate()` (engine time zone) and `fmtNumber()` (CORE-265, CORE-266).
+  `HEADER` comes from the module catalog (MOD-67). A locale change sends
+  `control locale` and the shell fetches the new catalog and calls
+  `onLocaleChange` (CORE-267). Swipes that start on an element with
+  `input.touch` stay with it (CORE-235).
 - Milestone 3 part C: the shell. The mirror serves the shell at `/` and the
   admin listener the same shell in preview mode at `/admin/preview` (admin
   session required), with no inline script or style (CORE-63, CORE-252).
@@ -85,6 +105,8 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Changed
 
+- Hot reload calls the layout listeners for every applied change, so shells
+  resync when instances are added, removed or reconfigured (CORE-275).
 - The `Permissions-Policy` header no longer lists `bluetooth`, which
   Chromium does not recognise (CORE-63).
 - `tools/check_spec_refs.py` and `tools/trace_report.py` also read the
@@ -95,6 +117,12 @@ separately under **Module API** in each release (Module Contract, section 10).
   are skipped where Chromium cannot start; `MM3_CHROMIUM` selects the
   executable.
 
+- Spec sync: Core spec 0.15 (i18n details). Changed: CORE-264 (merged
+  catalog at `/i18n/<instance>.json` and its version; locale packages per
+  module or `mm3`), CORE-263 (`mm3 i18n check` fails on compiled files that
+  do not match their `.po`; backends read `messages.json`), CORE-266 (date
+  styles, backend formatting), CORE-246 (per-instance `locale` and `touch`), CORE-235
+  (element-owned swipes).
 - Spec sync: Core spec 0.14 (shell and kiosk details). New: control
   action contents and `reload` `resync` on hot reload (CORE-275), shell
   input frames `visibility` and `touch` (CORE-276), kiosk agent protocol

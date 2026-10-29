@@ -1,11 +1,11 @@
 """Engine pages of the listeners: admin login, pairing, and the admin placeholder.
 
 The pages carry no inline script or style (CORE-63): the pairing page loads
-``/core/pair.js``. Their text comes from catalog keys; the English strings
-below are the source of the engine catalog entries, which the i18n service
-compiles with the other ``CORE_*`` keys (core spec 8.3).
+``/core/pair.js``. Their text comes from the ``CORE_WEB_*`` keys of the engine catalog
+(core spec 8.3), in English until the admin follows the engine locale.
 
 Implements:
+    CORE-11: Core spec 0.15, §4.4 Contract rules.
     CORE-63: Core spec 0.12, §10.1 Security.
     CORE-253: Core spec 0.12, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
@@ -15,24 +15,16 @@ from __future__ import annotations
 
 from html import escape
 
+from mm3.core.i18n.catalogs import CORE_CATALOG, Table
+
 __all__ = ["TEXT", "admin_home_page", "login_page", "message_page", "pair_page", "t"]
 
 TEXT: dict[str, str] = {
-    "CORE_WEB_ADMIN_TITLE": "MM3 admin",
-    "CORE_WEB_ADMIN_PENDING": "The administration interface is not available yet.",
-    "CORE_WEB_LOGOUT": "Log out",
-    "CORE_WEB_LOGIN_TITLE": "MM3 admin login",
-    "CORE_WEB_LOGIN_TOKEN": "Admin token",
-    "CORE_WEB_LOGIN_SUBMIT": "Log in",
-    "CORE_WEB_LOGIN_FAILED": "That token is not valid.",
-    "CORE_WEB_LOGIN_LOCKED": "Too many failed logins from this address. Try again in 15 minutes.",
-    "CORE_WEB_PAIR_TITLE": "Pair this display",
-    "CORE_WEB_PAIR_WORKING": "Pairing this display…",
-    "CORE_WEB_PAIR_NOSCRIPT": "Pairing needs JavaScript.",
-    "CORE_WEB_PAIR_FAILED": "That display token is not valid.",
-    "CORE_WEB_FORBIDDEN": "This request is not allowed.",
+    key: text
+    for key, text in Table(CORE_CATALOG).get("en").items()
+    if key.startswith("CORE_WEB_") and isinstance(text, str)
 }
-"""English text of the engine's page keys."""
+"""English text of the engine's page keys, from the engine catalog (CORE-11)."""
 
 
 def t(key: str) -> str:

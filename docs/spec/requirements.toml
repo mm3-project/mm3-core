@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.14"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14"]
+version = "0.15"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15"]
 
 [[spec]]
 name = "Module Contract"
@@ -1757,9 +1757,9 @@ id = "CORE-235"
 spec = "Core spec"
 section = "6.9"
 title = "Pages and visibility"
-hash = "7507f647793c"
+hash = "464f45fdc9bd"
 introduced_in = "0.6"
-changed_in = "0.6"
+changed_in = "0.15"
 status = "active"
 
 [[requirement]]
@@ -1867,9 +1867,9 @@ id = "CORE-246"
 spec = "Core spec"
 section = "5.6"
 title = "WebSocket protocol"
-hash = "54ba2140e9ef"
+hash = "395e2e5f97c4"
 introduced_in = "0.11"
-changed_in = "0.14"
+changed_in = "0.15"
 status = "active"
 
 [[requirement]]
@@ -2037,9 +2037,9 @@ id = "CORE-263"
 spec = "Core spec"
 section = "8.5"
 title = "Catalogs at run time"
-hash = "cec0d5cf188b"
+hash = "aff27f0cb65e"
 introduced_in = "0.11"
-changed_in = "0.11"
+changed_in = "0.15"
 status = "active"
 
 [[requirement]]
@@ -2047,9 +2047,9 @@ id = "CORE-264"
 spec = "Core spec"
 section = "8.5"
 title = "Catalogs at run time"
-hash = "ec8375e0bbfc"
+hash = "eca0584be83c"
 introduced_in = "0.11"
-changed_in = "0.11"
+changed_in = "0.15"
 status = "active"
 
 [[requirement]]
@@ -2067,9 +2067,9 @@ id = "CORE-266"
 spec = "Core spec"
 section = "8.5"
 title = "Catalogs at run time"
-hash = "4baf82e3e5cf"
+hash = "c0a85287b0a2"
 introduced_in = "0.11"
-changed_in = "0.11"
+changed_in = "0.15"
 status = "active"
 
 [[requirement]]
