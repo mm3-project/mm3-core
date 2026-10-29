@@ -99,7 +99,7 @@ separately under **Module API** in each release (Module Contract, section 10).
   catalog at `/i18n/<instance>.json` and its version; locale packages per
   module or `mm3`), CORE-263 (`mm3 i18n check` fails on compiled files that
   do not match their `.po`; backends read `messages.json`), CORE-266 (date
-  styles, backend formatting), CORE-246 (per-instance `touch` flag), CORE-235
+  styles, backend formatting), CORE-246 (per-instance `locale` and `touch`), CORE-235
   (element-owned swipes).
 - Spec sync: Core spec 0.14 (shell and kiosk details). New: control
   action contents and `reload` `resync` on hot reload (CORE-275), shell
