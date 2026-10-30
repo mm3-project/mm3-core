@@ -172,3 +172,24 @@ msgstr "Show sunrise and sunset"
 
 msgid "CFG_SHOW_SUN_HELP"
 msgstr "Sun times in the daily view"
+
+msgid "LOADING"
+msgstr "Loading weather…"
+
+msgid "STALE_AGE"
+msgstr "Last updated {age} ago"
+
+msgid "GRANT_MISSING"
+msgstr "Weather cannot load: add the grant http: [\"{grant}\"] to this module."
+
+msgid "FEELS_LIKE"
+msgstr "Feels like"
+
+msgid "HUMIDITY"
+msgstr "Humidity"
+
+msgid "WIND"
+msgstr "Wind"
+
+msgid "PRECIPITATION"
+msgstr "Precipitation"

@@ -208,12 +208,20 @@ def source_files() -> list[Path]:
     Returns:
         Python files under ``src/mm3``, ``mm3-build/src`` (CORE-280),
         ``modules/*/src`` (CORE-289) and
-        ``tools``, and the engine's front-end files (``static/*.js``,
-        ``static/*.css``; vendored libraries are not ours to cite).
+        ``tools``, and the front-end files of the engine and of the reference modules
+        (``static/*.js``, ``static/*.css``; vendored libraries are not ours to cite).
     """
     src = ROOT / "src" / "mm3"
     build = ROOT / "mm3-build" / "src"
-    front = sorted(src.rglob("static/*.js")) + sorted(src.rglob("static/*.css"))
+    modules_dir = ROOT / "modules"
+    front = sorted(
+        [
+            *src.rglob("static/*.js"),
+            *src.rglob("static/*.css"),
+            *modules_dir.glob("*/src/**/static/*.js"),
+            *modules_dir.glob("*/src/**/static/*.css"),
+        ]
+    )
     python = sorted(src.rglob("*.py")) + sorted(build.rglob("*.py"))
     modules = sorted((ROOT / "modules").glob("*/src/**/*.py"))  # reference modules (CORE-289)
     return python + modules + sorted((ROOT / "tools").glob("*.py")) + front

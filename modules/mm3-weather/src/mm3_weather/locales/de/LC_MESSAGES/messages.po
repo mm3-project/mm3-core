@@ -172,3 +172,24 @@ msgstr "Sonnenauf- und -untergang anzeigen"
 
 msgid "CFG_SHOW_SUN_HELP"
 msgstr "Sonnenzeiten in der Tagesansicht"
+
+msgid "LOADING"
+msgstr "Wetter wird geladen …"
+
+msgid "STALE_AGE"
+msgstr "Aktualisiert vor {age}"
+
+msgid "GRANT_MISSING"
+msgstr "Wetter nicht verfügbar: Füge diesem Modul die Freigabe http: [\"{grant}\"] hinzu."
+
+msgid "FEELS_LIKE"
+msgstr "Gefühlt"
+
+msgid "HUMIDITY"
+msgstr "Luftfeuchtigkeit"
+
+msgid "WIND"
+msgstr "Wind"
+
+msgid "PRECIPITATION"
+msgstr "Niederschlag"

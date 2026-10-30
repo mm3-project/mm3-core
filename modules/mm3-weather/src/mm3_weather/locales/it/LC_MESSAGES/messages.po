@@ -172,3 +172,24 @@ msgstr "Mostra alba e tramonto"
 
 msgid "CFG_SHOW_SUN_HELP"
 msgstr "Orari del Sole nella vista giornaliera"
+
+msgid "LOADING"
+msgstr "Caricamento del meteo…"
+
+msgid "STALE_AGE"
+msgstr "Aggiornato {age} fa"
+
+msgid "GRANT_MISSING"
+msgstr "Meteo non disponibile: aggiungi il permesso http: [\"{grant}\"] a questo modulo."
+
+msgid "FEELS_LIKE"
+msgstr "Percepita"
+
+msgid "HUMIDITY"
+msgstr "Umidità"
+
+msgid "WIND"
+msgstr "Vento"
+
+msgid "PRECIPITATION"
+msgstr "Precipitazioni"

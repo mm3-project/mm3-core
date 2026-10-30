@@ -172,3 +172,24 @@ msgstr "Afficher lever et coucher du soleil"
 
 msgid "CFG_SHOW_SUN_HELP"
 msgstr "Heures du soleil dans la vue quotidienne"
+
+msgid "LOADING"
+msgstr "Chargement de la météo…"
+
+msgid "STALE_AGE"
+msgstr "Mis à jour il y a {age}"
+
+msgid "GRANT_MISSING"
+msgstr "Météo indisponible : ajoutez l’autorisation http: [\"{grant}\"] à ce module."
+
+msgid "FEELS_LIKE"
+msgstr "Ressenti"
+
+msgid "HUMIDITY"
+msgstr "Humidité"
+
+msgid "WIND"
+msgstr "Vent"
+
+msgid "PRECIPITATION"
+msgstr "Précipitations"

@@ -95,6 +95,11 @@ def test_core_74_front_end_comments(tmp_path: Path) -> None:
     assert not any("vendor" in p.parts for p in source_files())
 
 
+def test_core_74_module_front_end_files_are_scanned() -> None:
+    names = {p.name for p in source_files()}
+    assert {"clock.js", "clock.css", "weather.js", "weather.css", "greeting.js"} <= names
+
+
 def test_core_77_older_version_of_unchanged_requirement_is_valid(tmp_path: Path) -> None:
     path = _src(tmp_path, "X.\n\nImplements:\n    CORE-21: Core spec 0.3, §5.3 Routing rules.\n")
     assert check([path], set(), REQS, VERSIONS) == ([], [])

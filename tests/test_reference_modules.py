@@ -11,8 +11,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 MODULES = ROOT / "modules"
 LANGS = {"en", "it", "fr", "es", "de"}
-# Extended as the milestone adds mm3-clock and mm3-weather.
-EXPECTED = {"mm3-greeting", "mm3-clock"}
+EXPECTED = {"mm3-greeting", "mm3-clock", "mm3-weather"}
 PUBLISHED = {"mm3-clock", "mm3-weather"}
 
 
