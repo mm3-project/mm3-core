@@ -32,9 +32,9 @@ from pathlib import Path
 from check_spec_refs import COMMENT, check, citations, source_files
 from spec_lib import ROOT, SPEC_DIR, expand_ids, load_known_versions, load_requirements, version_key
 
-SPEC_KEYS = {"CORE": "core", "WGT": "core", "MOD": "contract"}
+SPEC_KEYS = {"CORE": "core", "WGT": "core", "CLK": "core", "WTH": "core", "MOD": "contract"}
 COMMENT_GLOBS = [".github/workflows/*.yml", "pyproject.toml", "*.toml", "mm3-build/pyproject.toml"]
-TEST_RE = re.compile(r"def (test_(core|wgt|mod)_(\d+)\w*)\(", re.I)
+TEST_RE = re.compile(r"def (test_(core|wgt|clk|wth|mod)_(\d+)\w*)\(", re.I)
 
 
 @dataclass

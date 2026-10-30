@@ -9,6 +9,13 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Spec sync for core spec 0.19 and Module Contract 1.0 rev 12 (milestone 5
+  settled): HTTP transport rules behind `ctx.http` (CORE-282..287),
+  `engine.location` / `ctx.location` (CORE-288; CORE-201, CORE-211 and
+  CORE-246 changed), `WEATHER_CURRENT` in the notification registry, and the
+  reference modules greeting, clock and weather (CORE-289, CLK-01..08,
+  WTH-01..12). `tools/` learn the `CLK` and `WTH` id prefixes; milestone 5
+  now lists its requirements in `milestones.toml`.
 - Milestone 4 part D: the browser harness and `mm3 new-module` (closes
   milestone 4). `mm3.testing.BrowserHarness` loads a module's element into a
   stand-alone shell page in Chromium (Playwright; `MM3_CHROMIUM` selects the
