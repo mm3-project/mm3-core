@@ -75,7 +75,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [mm3-greeting, mm3-clock]
+        module: [mm3-greeting, mm3-clock, mm3-weather]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6

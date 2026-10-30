@@ -51,6 +51,19 @@ separately under **Module API** in each release (Module Contract, section 10).
   CI has a job per module that runs `mm3 module check` and the module's tests.
   `tools/trace_report.py` and `tools/check_spec_refs.py` read `modules/*/src`
   and `modules/*/tests`. Tests name MOD-23 (no outbound HTTP library import).
+- Milestone 5 part E: the `mm3-weather` element (WTH-06, WTH-10 and the browser
+  part of WTH-12), which closes milestone 5. Icons are Material Design Icons
+  (Apache-2.0) vendored as SVG with their licence in `static/icons/`, one per
+  condition and a night variant for `clear` and `partly_cloudy`; `icons.js`
+  holds the same path data and a test keeps them in step. The three views
+  (`current`, `daily`, `hourly`) size their text to the cell and drop rows,
+  hours or optional fields instead of overflowing; stale data is dimmed with
+  its age (WTH-08) and a missing `http` grant shows a message naming the grant
+  (WTH-09). Browser tests cover the three views in five languages and the kit's
+  own checks. `mm3-weather` joins the `modules` CI matrix, the coverage report
+  is regenerated and milestone 5 is marked done at core 0.19 / contract rev 12.
+  `check_spec_refs.py` and `trace_report.py` now also read the `// Implements`
+  comments of the reference modules' front-end files (CORE-74, CORE-77, CORE-78).
 - Milestone 5 part D: the backend of `mm3-weather` (WTH-01..05, 07..09, 11
   and the backend part of 12). One request per refresh covers current, daily
   and hourly data; the built-in Open-Meteo provider maps WMO codes to the

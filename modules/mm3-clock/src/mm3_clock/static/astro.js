@@ -1,3 +1,4 @@
+// Implements CLK-06, CLK-07 (Core spec 0.19, §9.4 Reference modules)
 /*
  * Sun and moon for mm3-clock, in the browser, without a library (CLK-06).
  *

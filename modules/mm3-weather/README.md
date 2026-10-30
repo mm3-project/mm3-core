@@ -16,7 +16,7 @@ shares the current conditions with other modules.
     http: ["https://api.open-meteo.com/"]
 ```
 
-![Screenshot](docs/screenshot.png)
+![Current view](docs/screenshot.png) ![Daily view](docs/screenshot-daily.png)
 
 ## Configuration
 
@@ -32,11 +32,23 @@ shares the current conditions with other modules.
 | `hours` | 1-48, entries of the hourly view | 8 |
 | `hour_step` | 1-6, hours between hourly entries | 1 |
 | `emit` | send `WEATHER_CURRENT` after each refresh | `true` |
-| `show_feels_like`, `show_humidity`, `show_wind`, `show_precipitation`, `show_sun` | display options | `true`, then `false` |
+| `show_feels_like`, `show_humidity`, `show_wind`, `show_precipitation`, `show_sun` | display options (`show_sun` adds sunrise and sunset to the daily view) | `true`, then `false` |
 
 Temperatures are in °C or °F, wind in km/h or mph and precipitation in mm or
 inches, converted once by the provider request. Times are aware ISO 8601
 strings in the mirror's time zone.
+
+## Views
+
+`current` shows the icon, temperature, condition text and the optional fields,
+`daily` one row per day (weekday, icon, maximum and minimum, rain probability)
+and `hourly` a strip of hours. The element sizes its text to the cell and shows
+fewer rows or hours, or leaves out optional fields, when the cell is small.
+Data without a success for more than twice `refresh` is dimmed and shows its age.
+
+Icons are Material Design Icons (Apache-2.0) vendored in `static/icons/` with
+their licence; `static/icons.js` holds the same path data and a test keeps the
+two in step.
 
 ## Grants
 

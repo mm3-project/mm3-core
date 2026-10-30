@@ -1,3 +1,4 @@
+// Implements CORE-289 (Core spec 0.19, §9.4 Reference modules)
 import { MirrorElement, html } from "/core/mm3.js";
 
 const KEYS = { morning: "GOOD_MORNING", afternoon: "GOOD_AFTERNOON", evening: "GOOD_EVENING" };

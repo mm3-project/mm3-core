@@ -172,3 +172,24 @@ msgstr "Mostrar salida y puesta del sol"
 
 msgid "CFG_SHOW_SUN_HELP"
 msgstr "Horas del Sol en la vista diaria"
+
+msgid "LOADING"
+msgstr "Cargando el tiempo…"
+
+msgid "STALE_AGE"
+msgstr "Actualizado hace {age}"
+
+msgid "GRANT_MISSING"
+msgstr "Tiempo no disponible: añade el permiso http: [\"{grant}\"] a este módulo."
+
+msgid "FEELS_LIKE"
+msgstr "Sensación"
+
+msgid "HUMIDITY"
+msgstr "Humedad"
+
+msgid "WIND"
+msgstr "Viento"
+
+msgid "PRECIPITATION"
+msgstr "Precipitación"

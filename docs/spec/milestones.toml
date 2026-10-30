@@ -126,12 +126,15 @@ requirements = [
 [[milestone]]
 number = 5
 name = "Reference modules: greeting, clock, weather"
-status = "not_started"
+status = "done"
+done_at = { core = "0.19", contract = "1.0 rev 12" }
 # CORE-201, CORE-211 and CORE-246 changed in core 0.19 (engine.location,
 #   CORE-288) and stay with milestones 2 and 3 (spec-change issues).
 requirements = [
   "CORE-282..289", "CLK-01..08", "WTH-01..12", "MOD-23",
 ]
+[milestone.waive]
+"WTH-12" = "Test requirement: it is implemented by the module's tests (test_wth_* in modules/mm3-weather/tests)"
 
 [[milestone]]
 number = 6
