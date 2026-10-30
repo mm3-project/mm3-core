@@ -9,6 +9,21 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Milestone 4 part D: the browser harness and `mm3 new-module` (closes
+  milestone 4). `mm3.testing.BrowserHarness` loads a module's element into a
+  stand-alone shell page in Chromium (Playwright; `MM3_CHROMIUM` selects the
+  executable), served without a socket, under the engine's CSP and with the
+  real `mm3.js`; it renders states, resizes the cell, toggles preview and
+  locale, takes screenshots, and records CSP violations, network attempts,
+  errors and overflow. `run_browser_checks` runs MOD-32 (CSP), 34, 36, 51, 54
+  and 84. `mm3 module check` gains the `harness` stage (`--only harness`;
+  default is static, kit, harness; exit codes unchanged, a browser that cannot
+  start is exit 2). `mm3 new-module <name> --kind full|backend|frontend`
+  (CORE-281, MOD-95) writes a src-layout package with the `mm3-build` build
+  requirement, all five locale catalogs, a README with the Notifications and
+  Grants sections, a sample test and, for front-end kinds, an element that
+  passes the check; the front-end-only kind has no hooks. Milestone 4 is done
+  in `docs/spec/milestones.toml` (core 0.18, contract rev 11).
 - Milestone 4 part C: `mm3 module check <path>` (CORE-281, Module Contract 12.1).
   It builds the module's wheel with `uv build`, installs it in a temporary venv
   with the running `mm3-core[testing]`, and runs the static checks and the test
@@ -25,8 +40,7 @@ separately under **Module API** in each release (Module Contract, section 10).
   finding and is listed in the report, with no effect on a MUST. The kit
   builds its configuration from the module's `config_model` and opens the
   grants its capabilities need; `[tool.mm3.check] config = {...}, grants = {...}`
-  in `pyproject.toml` overrides both. The browser harness (MOD-32 CSP, 34, 36,
-  51, 54, 84) follows in part D. `packaging` is now a dependency.
+  in `pyproject.toml` overrides both. `packaging` is now a dependency.
 - Milestone 4 part B: the `mm3.testing` kit (Contract 12.2, core spec 0.18,
   Module Contract 1.0 rev 9). `ModuleHarness` runs one instance on a real
   engine with fakes: `h.http` (mocks, unmocked calls reported) and `h.mqtt`

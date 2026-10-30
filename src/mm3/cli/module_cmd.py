@@ -1,7 +1,8 @@
 """``mm3 module check``: prove a module meets the Module Contract.
 
 Builds the module's wheel with ``uv build``, installs it with the running
-engine in a temporary venv and runs the static checks and the test kit
+engine in a temporary venv and runs the static checks, the test kit and the
+browser harness
 (Module Contract 12.1). The report goes to ``.mm3/check-report.json`` in the
 module's directory. Exit code 0 means compliant, 1 a MUST failed, 2 the tool
 could not run the check.

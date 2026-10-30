@@ -1,8 +1,7 @@
 """Run ``mm3 module check``: build, static stage, kit stage, report.
 
 Implements:
-    CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
-    CORE-279: Core spec 0.18, §10.2 Packaging and deployment.
+    CORE-279, CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
     MOD-95: Module Contract 1.0 rev 10, §12.1 mm3 module check.
 """
 
@@ -43,8 +42,8 @@ def run_check(path: Path, only: Stage | None = None) -> Report:
         only: Run just this stage.
 
     Returns:
-        The report. The browser harness is not part of this version, so a run
-        without ``only`` has the stages ``static`` and ``kit``.
+        The report; a run without ``only`` has the stages ``static``, ``kit`` and
+        ``harness``.
 
     Raises:
         ToolError: The check cannot run (exit code 2): no ``uv``, no
@@ -52,10 +51,8 @@ def run_check(path: Path, only: Stage | None = None) -> Report:
             cannot be installed in the temporary venv, or ``only`` names a
             stage this version does not have.
     """
-    if only == "harness":
-        raise ToolError("the browser harness is not available in this version of mm3 module check")
-    stages: list[Stage] = [only] if only else ["static", "kit"]
-    if "kit" in stages:
+    stages: list[Stage] = [only] if only else ["static", "kit", "harness"]
+    if "kit" in stages or "harness" in stages:
         missing = missing_testing_modules()
         if missing:
             raise ToolError(str(MissingExtraError(missing)))
@@ -74,9 +71,17 @@ def run_check(path: Path, only: Stage | None = None) -> Report:
             report.stages.append("static")
         if facts is not None and facts.api_version:
             report.api_version = facts.api_version
-        if "kit" in stages:
-            report.checks += _kit(mod, tmp, build_failure, report)
-            report.stages.append("kit")
+        venv: Path | None = None
+        for stage in ("kit", "harness"):
+            if stage not in stages:
+                continue
+            ids = [i for i, row in CATALOG.items() if stage in row.categories]
+            if build_failure is not None or mod.wheel is None:
+                report.checks += _all_failed(stage, ids, "not run: the wheel could not be built")
+            else:
+                venv = venv or _venv(mod, tmp)
+                report.checks += _in_venv(stage, ids, mod, tmp, venv, report)
+            report.stages.append(stage)
     report.checks += review_checks()
     report.checks.sort(key=lambda c: (list(CATALOG).index(c.id), c.category != "static"))
     return report
@@ -103,18 +108,31 @@ def _attach(checks: list[Check], mod_id: str, finding: Finding) -> None:
             c.settle()
 
 
-def _kit(mod: ModuleProject, tmp: Path, build_failure: str | None, report: Report) -> list[Check]:
-    ids = [i for i, row in CATALOG.items() if "kit" in row.categories]
-    if build_failure is not None or mod.wheel is None:
-        return _all_failed(ids, "not run: the wheel could not be built")
+def _venv(mod: ModuleProject, tmp: Path) -> Path:
+    if mod.wheel is None:
+        raise ToolError("no wheel to install")
+    return make_venv(tmp / "venv", mod.wheel, mod.metadata.get("Requires-Dist", []))
+
+
+def _in_venv(
+    stage: str, ids: list[str], mod: ModuleProject, tmp: Path, python: Path, report: Report
+) -> list[Check]:
     name = (mod.metadata.get("Name") or [mod.dist])[0]
-    python = make_venv(tmp / "venv", mod.wheel, mod.metadata.get("Requires-Dist", []))
     options = tmp / "options.json"
     options.write_text(json.dumps(mod.check_options), encoding="utf-8")
-    out = tmp / "kit.json"
+    out = tmp / f"{stage}.json"
     try:
         done = subprocess.run(  # noqa: S603 - the venv's own interpreter, fixed arguments
-            [str(python), "-I", "-m", "mm3.core.modcheck.kitrun", name, str(options), str(out)],
+            [
+                str(python),
+                "-I",
+                "-m",
+                "mm3.core.modcheck.kitrun",
+                name,
+                str(options),
+                str(out),
+                stage,
+            ],
             capture_output=True,
             text=True,
             check=False,
@@ -122,23 +140,28 @@ def _kit(mod: ModuleProject, tmp: Path, build_failure: str | None, report: Repor
             cwd=tmp,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
-        raise ToolError(f"the test kit did not run: {exc}") from exc
+        raise ToolError(f"the {stage} stage did not run: {exc}") from exc
     if not out.is_file():
-        raise ToolError(f"the test kit stopped without a result:\n{done.stderr.strip()[-2000:]}")
+        raise ToolError(
+            f"the {stage} stage stopped without a result:\n{done.stderr.strip()[-2000:]}"
+        )
     data: dict[str, Any] = json.loads(out.read_text(encoding="utf-8"))
     if "crash" in data:
-        raise ToolError(f"the test kit crashed:\n{data['crash']}")
+        raise ToolError(f"the {stage} stage crashed:\n{data['crash']}")
     if "error" in data:
         raise ToolError(str(data["error"]))
     if "load_error" in data:
-        return _all_failed(ids, f"not run: the module cannot be loaded\n{data['load_error']}")
+        return _all_failed(
+            stage, ids, f"not run: the module cannot be loaded\n{data['load_error']}"
+        )
     found: dict[str, list[Finding]] = {}
     for item in data["checks"]:
-        found[item["id"]] = [Finding(str(f)) for f in item["findings"]]
+        severity: Literal["fail", "warn"] = "warn" if item["status"] == "warn" else "fail"
+        found[item["id"]] = [Finding(str(f), severity=severity) for f in item["findings"]]
     report.notes += [str(n) for n in data.get("notes", [])]
-    return checks_from_findings("kit", found, ids)
+    return checks_from_findings(stage, found, ids)
 
 
-def _all_failed(ids: list[str], message: str) -> list[Check]:
+def _all_failed(stage: str, ids: list[str], message: str) -> list[Check]:
     found = {i: [Finding(message)] for i in ids}
-    return checks_from_findings("kit", found, ids)
+    return checks_from_findings(stage, found, ids)
