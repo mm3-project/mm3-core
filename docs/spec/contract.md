@@ -1,6 +1,6 @@
 # MM3 Module Contract v1.0
 
-Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 10 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 11 (draft)
 
 ## 1. Scope and conformance
 
@@ -515,6 +515,7 @@ Report      ./mm3-weather/.mm3/check-report.json
 * **Static checks** read the source tree and the built wheel without importing the module: Python by AST (MOD-12, 23, 28, 29, 40, 61, 80, 86) and the JavaScript under `static/` by an in-house tokenizer that understands comments, strings, template literals and regular expressions and accepts any modern syntax (MOD-30–32, 35, 37, 61, 80). MOD-05 also requires a compiled `.mo` and `messages.json` for every `.po` in the wheel (core CORE-280). MOD-61 treats as user-visible a literal with letters and a space in rendered templates, in `set_state`, `patch_state` and `send_to_client` payloads, in notification payloads and in error messages; keys, CSS classes and identifiers are not. Each finding gives file, line and MOD id.
 * **Suppressions**: a comment `# mm3: allow MOD-xx <reason>` (Python) or `// mm3: allow MOD-xx <reason>` (JS) on the line or the line above silences a SHOULD finding and is listed in the report; it has no effect on a MUST.
 * **Harness sizes** (MOD-51): `min_size_px` or 200×60, 400×300, and the full 1080×1920 viewport; a failure is content outside the cell when the instance's `overflow` is `hidden`, or any page-level scroll.
+* **Check options**: `mm3 module check` builds the kit's configuration from `config_model` (required fields filled from the schema) and opens the grants the module's capabilities need; an optional `[tool.mm3.check]` table in `pyproject.toml` with `config = {…}` and `grants = {…}` replaces either, for modules whose configuration cannot be sampled.
 * **Report**: `.mm3/check-report.json` holds `{tool_version, module, version, api_version, result, checks}` with `result` `compliant` or `non_compliant` and one entry per check `{id, level, category, status, findings}`: `level` MUST or SHOULD, `category` static, kit, harness or review, `status` pass, fail, warn, review or suppressed, `findings` a list of `{file, line, message}`. `--junit` writes one test case per check: MUST failures as failures, review items as skipped.
 
 ### 12.2 `mm3.testing` kit
@@ -693,6 +694,7 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
+| 1.0 rev 11 | 2026-10-30 | §12.1 check options: the test kit's configuration and grants come from config\_model and the module's capabilities, and the optional \[tool.mm3.check\] table of pyproject.toml replaces them. No MOD ids added, changed or removed |
 | 1.0 rev 10 | 2026-10-30 | §12.2 contract checks aligned with the test kit: slow callbacks timed with a real clock instead of asyncio debug mode; the no-grants run applies only to modules declaring a capability with a grant scope; fresh instances reuse the test's HTTP mocks and responders. No MOD ids added, changed or removed |
 | 1.0 rev 9 | 2026-10-30 | Aligned with core spec 0.18: ctx.mqtt signatures, MqttMessage and Subscription, messages delivered through the instance inbox (§4, new §4.4; core CORE-100 changed); ha\_entity() left to a later revision; §12.2 h.respond handler shape and fake MQTT delivery through the inbox. No MOD ids added, changed or removed |
 | 1.0 rev 8 | 2026-10-30 | Milestone 4 tooling, aligned with core spec 0.17: ctx.now() on the engine clock (MOD-28 added, §4); emits, consumes and answers declarations (MOD-29 added, §3.1); README lists the declared names (MOD-24, MOD-41 changed); §11 rows for MOD-28 and MOD-29; §12.1 build with uv, static checks, suppressions, harness sizes, report format; §12.2 harness API, inputs, virtual time, fakes, check\_contract coverage, scaffold --kind; §13 greeting uses ctx.now() and mm3-build |
