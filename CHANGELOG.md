@@ -51,6 +51,21 @@ separately under **Module API** in each release (Module Contract, section 10).
   CI has a job per module that runs `mm3 module check` and the module's tests.
   `tools/trace_report.py` and `tools/check_spec_refs.py` read `modules/*/src`
   and `modules/*/tests`. Tests name MOD-23 (no outbound HTTP library import).
+- Milestone 5 part D: the backend of `mm3-weather` (WTH-01..05, 07..09, 11
+  and the backend part of 12). One request per refresh covers current, daily
+  and hourly data; the built-in Open-Meteo provider maps WMO codes to the
+  closed condition set (unmapped codes become `cloudy`, logged at debug) and
+  providers plug in through the entry point group `mm3_weather.providers`.
+  The instance publishes only the data of its `type`, stores the last good
+  data under `last` (dropped after 24 h, shown as stale after a restart),
+  turns network errors, 5xx and 429 into `TransientError`, other 4xx into a
+  `ConfigurationError` naming `location` or `provider`, and shows a grant
+  message instead of crashing without the `http` grant. `WEATHER_CURRENT` is
+  registered in `mm3.notifications` (CORE-224, CORE-225) and sent with UTC
+  times (MOD-42). The test kit's MOD-06 check no longer counts temporary
+  directory cleanup or the test's own harness as writes outside storage, so
+  modules that use `ctx.storage.kv_set` pass `check_contract()`. The element
+  follows in part E.
 - Milestone 5 part C: `mm3-clock` (CLK-01..08), a front-end-only module in
   `modules/mm3-clock`. Digital and analog display (SVG face with ticks,
   numbers or none), 12/24-hour or locale format, date styles, ISO 8601 week

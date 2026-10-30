@@ -30,7 +30,7 @@ import secrets
 import sys
 import time
 import typing
-from collections.abc import AsyncIterator, Iterator, Mapping
+from collections.abc import AsyncIterator, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
@@ -284,6 +284,11 @@ class _Audit:
             if writing:
                 path = target
         elif event in ("os.remove", "os.rmdir", "os.mkdir", "os.rename", "shutil.rmtree"):
+            # a name relative to a directory descriptor (``shutil.rmtree`` cleaning a temporary
+            # directory) cannot be placed; the call that opened the directory was recorded
+            fds = args[2:] if event in ("os.mkdir", "os.rename") else args[1:]
+            if any(isinstance(fd, int) and fd >= 0 for fd in fds):
+                return
             path = args[0] if args else None
         if path is None or isinstance(path, int):
             return
@@ -509,7 +514,7 @@ async def _main_run(run: _Run) -> None:
     """MOD-06, 10, 11, 13 (stop twice), 24, 25, 29, 42, 83 on one instance."""
     module = run.module
     h = run.harness()
-    allowed: Path | None = None
+    allowed: list[Path] | None = None
     audit = _Audit()
     slow = _SlowCallbacks()
     original_init = module.__init__
@@ -544,7 +549,9 @@ async def _main_run(run: _Run) -> None:
         _patched(module, "on_request", on_request),
     ):
         async with run.open(h):
-            allowed = h.storage_dir.parent.resolve()
+            # the instance under test, and the test's own harness: both run on the virtual
+            # clock the kit advances, so the base instance's jobs can write too
+            allowed = [h.storage_dir.parent.resolve(), run.base.storage_dir.parent.resolve()]
             ctx = h.managed.context
             if ctx is not None:
                 original_ask = ctx.request
@@ -596,15 +603,15 @@ async def _main_run(run: _Run) -> None:
         run.result("MOD-13").fail(f"tasks still running after stop(): {left}")
 
 
-def _outside(paths: list[str], allowed: Path | None) -> list[str]:
-    """The written paths that are not under ``allowed``."""
-    if allowed is None:
+def _outside(paths: list[str], allowed: Sequence[Path] | None) -> list[str]:
+    """The written paths that are not under one of the ``allowed`` directories."""
+    if not allowed:
         return sorted(set(paths))
-    root = str(allowed)
+    roots = [str(a) for a in allowed]
     out = set()
     for p in paths:
         real = os.path.realpath(p)
-        if real != root and not real.startswith(root + os.sep):
+        if not any(real == root or real.startswith(root + os.sep) for root in roots):
             out.add(p)
     return sorted(out)
 

@@ -305,9 +305,12 @@ def _spec_registry() -> dict[str, str]:
     rows: dict[str, str] = {}
     for line in section.splitlines():
         cells = [c.strip() for c in line.replace("\\|", "/").strip("|").split("|")]
-        if len(cells) == 4 and cells[0].startswith("`"):
-            for name in re.findall(r"`([A-Z0-9_]+)`", cells[0]):
-                rows[name] = cells[1]
+        if len(cells) == 4:
+            # some rows are exported without backticks and with escaped underscores
+            first = cells[0].replace("\\_", "_").replace("`", "")
+            if re.fullmatch(r"[A-Z][A-Z0-9_]*(, [A-Z][A-Z0-9_]*)*", first):
+                for name in first.split(", "):
+                    rows[name] = cells[1]
     return rows
 
 
@@ -379,3 +382,50 @@ async def test_core_225_engine_emit_validated(make_engine: EngineFactory) -> Non
 def test_core_226_optional_and_unknown_fields_keep_a_name() -> None:
     validate_payload("PRESENCE_DETECTED", {"sensor": "pir", "confidence": 0.9})
     validate_payload("SHOW_ALERT", {"message": "Hi", "level": "critical", "icon": "mdi-bell"})
+
+
+def weather_current(**changes: Any) -> dict[str, Any]:
+    payload: dict[str, Any] = {
+        "location": {"lat": 41.9, "lon": 12.5, "name": "Rome"},
+        "condition": "rain",
+        "is_day": True,
+        "temperature": 12.5,
+        "units": "metric",
+        "observed_at": "2026-10-30T13:00:00+00:00",
+    }
+    payload.update(changes)
+    return payload
+
+
+def test_core_224_weather_current_is_registered_with_its_payload() -> None:
+    assert REGISTRY["WEATHER_CURRENT"].kind == "event"
+    assert not REGISTRY["WEATHER_CURRENT"].engine_only
+    validate_payload("WEATHER_CURRENT", weather_current())
+    validate_payload(
+        "WEATHER_CURRENT", weather_current(feels_like=10, humidity=80, wind_speed=12.5)
+    )
+    validate_payload("WEATHER_CURRENT", weather_current(location={"lat": 1, "lon": 2}))
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"condition": "blizzard"},
+        {"units": "kelvin"},
+        {"observed_at": "2026-10-30T14:00:00"},  # not aware
+        {"humidity": 120},
+        {"location": {"lat": 91, "lon": 0}},
+        {"is_day": "maybe"},
+    ],
+)
+def test_core_225_weather_current_rejects_an_invalid_payload(bad: dict[str, Any]) -> None:
+    with pytest.raises(ValueError):  # noqa: PT011 - the engine's ValueError (CORE-225)
+        validate_payload("WEATHER_CURRENT", weather_current(**bad))
+
+
+def test_core_225_weather_current_schema_is_published() -> None:
+    schema = json_schema("WEATHER_CURRENT")
+    assert {"location", "condition", "is_day", "temperature", "units", "observed_at"} <= set(
+        schema["required"]
+    )
+    assert "thunderstorm" in schema["properties"]["condition"]["enum"]

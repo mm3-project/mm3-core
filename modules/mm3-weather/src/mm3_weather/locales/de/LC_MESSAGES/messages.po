@@ -1,0 +1,174 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HEADER"
+msgstr "Wetter"
+
+msgid "WEATHER_CLEAR"
+msgstr "Klar"
+
+msgid "WEATHER_CLEAR_NIGHT"
+msgstr "Klare Nacht"
+
+msgid "WEATHER_PARTLY_CLOUDY"
+msgstr "Teilweise bewölkt"
+
+msgid "WEATHER_PARTLY_CLOUDY_NIGHT"
+msgstr "Teilweise bewölkte Nacht"
+
+msgid "WEATHER_CLOUDY"
+msgstr "Bewölkt"
+
+msgid "WEATHER_FOG"
+msgstr "Nebel"
+
+msgid "WEATHER_DRIZZLE"
+msgstr "Nieselregen"
+
+msgid "WEATHER_RAIN"
+msgstr "Regen"
+
+msgid "WEATHER_HEAVY_RAIN"
+msgstr "Starkregen"
+
+msgid "WEATHER_FREEZING_RAIN"
+msgstr "Gefrierender Regen"
+
+msgid "WEATHER_SNOW"
+msgstr "Schnee"
+
+msgid "WEATHER_SLEET"
+msgstr "Schneeregen"
+
+msgid "WEATHER_THUNDERSTORM"
+msgstr "Gewitter"
+
+msgid "WEATHER_HAIL"
+msgstr "Hagel"
+
+msgid "WEATHER_UNAVAILABLE"
+msgstr "Wetter nicht verfügbar"
+
+msgid "CFG_LOCATION_REQUIRED"
+msgstr "Lege einen Standort für dieses Wetter oder den Spiegel fest"
+
+msgid "CFG_PROVIDER_UNKNOWN"
+msgstr "Unbekannter Wetterdienst"
+
+msgid "CFG_PROVIDER_OPTIONS_INVALID"
+msgstr "Die Optionen des Wetterdienstes sind ungültig"
+
+msgid "CFG_LOCATION_REFUSED"
+msgstr "Der Wetterdienst hat diesen Standort abgelehnt"
+
+msgid "CFG_PROVIDER_REFUSED"
+msgstr "Der Wetterdienst hat die Anfrage abgelehnt; prüfe die Optionen"
+
+msgid "CFG_TYPE"
+msgstr "Ansicht"
+
+msgid "CFG_TYPE_HELP"
+msgstr "current, daily oder hourly"
+
+msgid "CFG_PROVIDER"
+msgstr "Wetterdienst"
+
+msgid "CFG_PROVIDER_HELP"
+msgstr "Name des Wetterdienstes; open_meteo braucht keinen Schlüssel"
+
+msgid "CFG_PROVIDER_OPTIONS"
+msgstr "Optionen des Wetterdienstes"
+
+msgid "CFG_PROVIDER_OPTIONS_HELP"
+msgstr "Einstellungen des gewählten Wetterdienstes"
+
+msgid "CFG_LOCATION"
+msgstr "Standort"
+
+msgid "CFG_LOCATION_HELP"
+msgstr "Standard: der Standort des Spiegels"
+
+msgid "CFG_LAT"
+msgstr "Breitengrad"
+
+msgid "CFG_LAT_HELP"
+msgstr "Grad, -90 bis 90"
+
+msgid "CFG_LON"
+msgstr "Längengrad"
+
+msgid "CFG_LON_HELP"
+msgstr "Grad, -180 bis 180"
+
+msgid "CFG_NAME"
+msgstr "Name"
+
+msgid "CFG_NAME_HELP"
+msgstr "Optionaler Ortsname in der Ansicht"
+
+msgid "CFG_UNITS"
+msgstr "Einheiten"
+
+msgid "CFG_UNITS_HELP"
+msgstr "metric oder imperial; Standard sind die Einheiten des Spiegels"
+
+msgid "CFG_REFRESH"
+msgstr "Aktualisierungsintervall"
+
+msgid "CFG_REFRESH_HELP"
+msgstr "Mindestens 5 Minuten"
+
+msgid "CFG_DAYS"
+msgstr "Tage"
+
+msgid "CFG_DAYS_HELP"
+msgstr "Tage in der Tagesansicht, 1 bis 16"
+
+msgid "CFG_HOURS"
+msgstr "Stunden"
+
+msgid "CFG_HOURS_HELP"
+msgstr "Einträge in der Stundenansicht, 1 bis 48"
+
+msgid "CFG_HOUR_STEP"
+msgstr "Stundenschritt"
+
+msgid "CFG_HOUR_STEP_HELP"
+msgstr "Stunden zwischen Einträgen, 1 bis 6"
+
+msgid "CFG_EMIT"
+msgstr "Wetter teilen"
+
+msgid "CFG_EMIT_HELP"
+msgstr "Sendet WEATHER_CURRENT nach jeder Aktualisierung an andere Module"
+
+msgid "CFG_SHOW_FEELS_LIKE"
+msgstr "Gefühlte Temperatur anzeigen"
+
+msgid "CFG_SHOW_FEELS_LIKE_HELP"
+msgstr "Gefühlte Temperatur neben der Temperatur"
+
+msgid "CFG_SHOW_HUMIDITY"
+msgstr "Luftfeuchtigkeit anzeigen"
+
+msgid "CFG_SHOW_HUMIDITY_HELP"
+msgstr "Relative Luftfeuchtigkeit"
+
+msgid "CFG_SHOW_WIND"
+msgstr "Wind anzeigen"
+
+msgid "CFG_SHOW_WIND_HELP"
+msgstr "Windgeschwindigkeit und -richtung"
+
+msgid "CFG_SHOW_PRECIPITATION"
+msgstr "Niederschlag anzeigen"
+
+msgid "CFG_SHOW_PRECIPITATION_HELP"
+msgstr "Niederschlagsmenge und -wahrscheinlichkeit"
+
+msgid "CFG_SHOW_SUN"
+msgstr "Sonnenauf- und -untergang anzeigen"
+
+msgid "CFG_SHOW_SUN_HELP"
+msgstr "Sonnenzeiten in der Tagesansicht"
