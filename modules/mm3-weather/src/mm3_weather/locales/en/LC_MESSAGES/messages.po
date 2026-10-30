@@ -1,0 +1,174 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HEADER"
+msgstr "Weather"
+
+msgid "WEATHER_CLEAR"
+msgstr "Clear"
+
+msgid "WEATHER_CLEAR_NIGHT"
+msgstr "Clear night"
+
+msgid "WEATHER_PARTLY_CLOUDY"
+msgstr "Partly cloudy"
+
+msgid "WEATHER_PARTLY_CLOUDY_NIGHT"
+msgstr "Partly cloudy night"
+
+msgid "WEATHER_CLOUDY"
+msgstr "Cloudy"
+
+msgid "WEATHER_FOG"
+msgstr "Fog"
+
+msgid "WEATHER_DRIZZLE"
+msgstr "Drizzle"
+
+msgid "WEATHER_RAIN"
+msgstr "Rain"
+
+msgid "WEATHER_HEAVY_RAIN"
+msgstr "Heavy rain"
+
+msgid "WEATHER_FREEZING_RAIN"
+msgstr "Freezing rain"
+
+msgid "WEATHER_SNOW"
+msgstr "Snow"
+
+msgid "WEATHER_SLEET"
+msgstr "Sleet"
+
+msgid "WEATHER_THUNDERSTORM"
+msgstr "Thunderstorm"
+
+msgid "WEATHER_HAIL"
+msgstr "Hail"
+
+msgid "WEATHER_UNAVAILABLE"
+msgstr "Weather unavailable"
+
+msgid "CFG_LOCATION_REQUIRED"
+msgstr "Set a location for this weather or for the mirror"
+
+msgid "CFG_PROVIDER_UNKNOWN"
+msgstr "Unknown weather provider"
+
+msgid "CFG_PROVIDER_OPTIONS_INVALID"
+msgstr "The provider options are not valid"
+
+msgid "CFG_LOCATION_REFUSED"
+msgstr "The provider refused this location"
+
+msgid "CFG_PROVIDER_REFUSED"
+msgstr "The provider refused the request; check its options"
+
+msgid "CFG_TYPE"
+msgstr "View"
+
+msgid "CFG_TYPE_HELP"
+msgstr "current, daily or hourly"
+
+msgid "CFG_PROVIDER"
+msgstr "Provider"
+
+msgid "CFG_PROVIDER_HELP"
+msgstr "Name of the weather provider; open_meteo needs no key"
+
+msgid "CFG_PROVIDER_OPTIONS"
+msgstr "Provider options"
+
+msgid "CFG_PROVIDER_OPTIONS_HELP"
+msgstr "Settings of the chosen provider"
+
+msgid "CFG_LOCATION"
+msgstr "Location"
+
+msgid "CFG_LOCATION_HELP"
+msgstr "Defaults to the mirror's location"
+
+msgid "CFG_LAT"
+msgstr "Latitude"
+
+msgid "CFG_LAT_HELP"
+msgstr "Degrees, -90 to 90"
+
+msgid "CFG_LON"
+msgstr "Longitude"
+
+msgid "CFG_LON_HELP"
+msgstr "Degrees, -180 to 180"
+
+msgid "CFG_NAME"
+msgstr "Name"
+
+msgid "CFG_NAME_HELP"
+msgstr "Optional place name shown in the view"
+
+msgid "CFG_UNITS"
+msgstr "Units"
+
+msgid "CFG_UNITS_HELP"
+msgstr "metric or imperial; defaults to the mirror's units"
+
+msgid "CFG_REFRESH"
+msgstr "Refresh interval"
+
+msgid "CFG_REFRESH_HELP"
+msgstr "At least 5 minutes"
+
+msgid "CFG_DAYS"
+msgstr "Days"
+
+msgid "CFG_DAYS_HELP"
+msgstr "Days in the daily view, 1 to 16"
+
+msgid "CFG_HOURS"
+msgstr "Hours"
+
+msgid "CFG_HOURS_HELP"
+msgstr "Entries in the hourly view, 1 to 48"
+
+msgid "CFG_HOUR_STEP"
+msgstr "Hour step"
+
+msgid "CFG_HOUR_STEP_HELP"
+msgstr "Hours between entries, 1 to 6"
+
+msgid "CFG_EMIT"
+msgstr "Share the weather"
+
+msgid "CFG_EMIT_HELP"
+msgstr "Send WEATHER_CURRENT to other modules after each refresh"
+
+msgid "CFG_SHOW_FEELS_LIKE"
+msgstr "Show feels like"
+
+msgid "CFG_SHOW_FEELS_LIKE_HELP"
+msgstr "Apparent temperature next to the temperature"
+
+msgid "CFG_SHOW_HUMIDITY"
+msgstr "Show humidity"
+
+msgid "CFG_SHOW_HUMIDITY_HELP"
+msgstr "Relative humidity"
+
+msgid "CFG_SHOW_WIND"
+msgstr "Show wind"
+
+msgid "CFG_SHOW_WIND_HELP"
+msgstr "Wind speed and direction"
+
+msgid "CFG_SHOW_PRECIPITATION"
+msgstr "Show precipitation"
+
+msgid "CFG_SHOW_PRECIPITATION_HELP"
+msgstr "Precipitation amount and probability"
+
+msgid "CFG_SHOW_SUN"
+msgstr "Show sunrise and sunset"
+
+msgid "CFG_SHOW_SUN_HELP"
+msgstr "Sun times in the daily view"

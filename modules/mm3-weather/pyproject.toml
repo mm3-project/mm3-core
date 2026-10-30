@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling", "mm3-build>=1.0,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mm3-weather"
+version = "1.0.0"
+description = "Current weather, daily and hourly forecasts for MM3"
+requires-python = ">=3.11"
+dependencies = ["mm3-core>=1.0,<2"]
+readme = "README.md"
+
+[project.entry-points."mm3.modules"]
+weather = "mm3_weather:WeatherModule"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mm3_weather"]
+
+[tool.hatch.build.hooks.mm3-i18n]
+
+[tool.mm3]
+category = "weather"
+screenshot = "docs/screenshot.png"
+
+# The module needs a place; the kit has no engine location.
+[tool.mm3.check]
+config = { location = { lat = 41.9, lon = 12.5 } }

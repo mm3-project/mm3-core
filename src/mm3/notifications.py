@@ -8,7 +8,7 @@ gain optional fields without a new name (CORE-226) and handlers tolerate
 them (MOD-43).
 
 Implements:
-    CORE-224, CORE-225, CORE-226: Core spec 0.7, §5.5 Shared notification registry.
+    CORE-224, CORE-225, CORE-226: Core spec 0.19, §5.5 Shared notification registry.
     -: Core spec 0.9, §5.5 Shared notification registry.
     CORE-245: Core spec 0.9, §6.3 Hot reload.
     MOD-40: Module Contract 1.0 rev 6, §6.1 Messaging.
@@ -22,7 +22,7 @@ from dataclasses import dataclass
 from types import MappingProxyType
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, ValidationError
 
 from mm3.messages import NAME_PATTERN
 
@@ -41,6 +41,8 @@ __all__ = [
     "PresenceEvent",
     "RegisteredName",
     "ShowAlert",
+    "WeatherCurrent",
+    "WeatherPlace",
     "declaration_problems",
     "json_schema",
     "validate_payload",
@@ -159,6 +161,59 @@ def _rows(*rows: RegisteredName) -> Mapping[str, RegisteredName]:
     return MappingProxyType({r.name: r for r in rows})
 
 
+class WeatherPlace(_Payload):
+    """The place of a ``WEATHER_CURRENT`` payload.
+
+    Attributes:
+        lat: Latitude in degrees.
+        lon: Longitude in degrees.
+        name: Optional name.
+    """
+
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+    name: LocalizedTextValue | None = None
+
+
+class WeatherCurrent(_Payload):
+    """Payload of ``WEATHER_CURRENT`` (core spec 5.5, WTH-11).
+
+    Attributes:
+        location: Where the weather was observed.
+        condition: One of the closed condition set (WTH-05).
+        is_day: Day or night.
+        temperature: In °C or °F according to ``units``.
+        feels_like: Optional apparent temperature.
+        humidity: Optional relative humidity, 0-100.
+        wind_speed: Optional, in km/h or mph according to ``units``.
+        units: ``metric`` or ``imperial``.
+        observed_at: Aware ISO 8601 time of the observation.
+    """
+
+    location: WeatherPlace
+    condition: Literal[
+        "clear",
+        "partly_cloudy",
+        "cloudy",
+        "fog",
+        "drizzle",
+        "rain",
+        "heavy_rain",
+        "freezing_rain",
+        "snow",
+        "sleet",
+        "thunderstorm",
+        "hail",
+    ]
+    is_day: bool
+    temperature: float
+    feels_like: float | None = None
+    humidity: float | None = Field(default=None, ge=0, le=100)
+    wind_speed: float | None = Field(default=None, ge=0)
+    units: Literal["metric", "imperial"]
+    observed_at: AwareDatetime
+
+
 class ConfigChanged(_Payload):
     """Payload of ``CORE_CONFIG_CHANGED`` (core spec 6.3).
 
@@ -222,6 +277,7 @@ REGISTRY: Mapping[str, RegisteredName] = _rows(
     RegisteredName("CORE_CONFIG_CHANGED", "event", ConfigChanged, engine_only=True),
     RegisteredName("CORE_CONFIG_ERROR", "event", ConfigError, engine_only=True),
     RegisteredName("CORE_LOCALE_CHANGED", "event", LocaleChanged, engine_only=True),
+    RegisteredName("WEATHER_CURRENT", "event", WeatherCurrent),
 )
 """Registered names, as in the core spec §5.5 table (CORE-224)."""
 

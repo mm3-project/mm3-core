@@ -1,0 +1,174 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HEADER"
+msgstr "Météo"
+
+msgid "WEATHER_CLEAR"
+msgstr "Dégagé"
+
+msgid "WEATHER_CLEAR_NIGHT"
+msgstr "Nuit dégagée"
+
+msgid "WEATHER_PARTLY_CLOUDY"
+msgstr "Partiellement nuageux"
+
+msgid "WEATHER_PARTLY_CLOUDY_NIGHT"
+msgstr "Nuit partiellement nuageuse"
+
+msgid "WEATHER_CLOUDY"
+msgstr "Nuageux"
+
+msgid "WEATHER_FOG"
+msgstr "Brouillard"
+
+msgid "WEATHER_DRIZZLE"
+msgstr "Bruine"
+
+msgid "WEATHER_RAIN"
+msgstr "Pluie"
+
+msgid "WEATHER_HEAVY_RAIN"
+msgstr "Forte pluie"
+
+msgid "WEATHER_FREEZING_RAIN"
+msgstr "Pluie verglaçante"
+
+msgid "WEATHER_SNOW"
+msgstr "Neige"
+
+msgid "WEATHER_SLEET"
+msgstr "Neige fondue"
+
+msgid "WEATHER_THUNDERSTORM"
+msgstr "Orage"
+
+msgid "WEATHER_HAIL"
+msgstr "Grêle"
+
+msgid "WEATHER_UNAVAILABLE"
+msgstr "Météo indisponible"
+
+msgid "CFG_LOCATION_REQUIRED"
+msgstr "Définissez une position pour cette météo ou pour le miroir"
+
+msgid "CFG_PROVIDER_UNKNOWN"
+msgstr "Fournisseur météo inconnu"
+
+msgid "CFG_PROVIDER_OPTIONS_INVALID"
+msgstr "Les options du fournisseur ne sont pas valides"
+
+msgid "CFG_LOCATION_REFUSED"
+msgstr "Le fournisseur a refusé cette position"
+
+msgid "CFG_PROVIDER_REFUSED"
+msgstr "Le fournisseur a refusé la requête ; vérifiez ses options"
+
+msgid "CFG_TYPE"
+msgstr "Vue"
+
+msgid "CFG_TYPE_HELP"
+msgstr "current, daily ou hourly"
+
+msgid "CFG_PROVIDER"
+msgstr "Fournisseur"
+
+msgid "CFG_PROVIDER_HELP"
+msgstr "Nom du fournisseur météo ; open_meteo ne demande aucune clé"
+
+msgid "CFG_PROVIDER_OPTIONS"
+msgstr "Options du fournisseur"
+
+msgid "CFG_PROVIDER_OPTIONS_HELP"
+msgstr "Réglages du fournisseur choisi"
+
+msgid "CFG_LOCATION"
+msgstr "Position"
+
+msgid "CFG_LOCATION_HELP"
+msgstr "Par défaut : la position du miroir"
+
+msgid "CFG_LAT"
+msgstr "Latitude"
+
+msgid "CFG_LAT_HELP"
+msgstr "Degrés, de -90 à 90"
+
+msgid "CFG_LON"
+msgstr "Longitude"
+
+msgid "CFG_LON_HELP"
+msgstr "Degrés, de -180 à 180"
+
+msgid "CFG_NAME"
+msgstr "Nom"
+
+msgid "CFG_NAME_HELP"
+msgstr "Nom facultatif du lieu affiché dans la vue"
+
+msgid "CFG_UNITS"
+msgstr "Unités"
+
+msgid "CFG_UNITS_HELP"
+msgstr "metric ou imperial ; par défaut celles du miroir"
+
+msgid "CFG_REFRESH"
+msgstr "Intervalle d'actualisation"
+
+msgid "CFG_REFRESH_HELP"
+msgstr "Au moins 5 minutes"
+
+msgid "CFG_DAYS"
+msgstr "Jours"
+
+msgid "CFG_DAYS_HELP"
+msgstr "Jours dans la vue quotidienne, de 1 à 16"
+
+msgid "CFG_HOURS"
+msgstr "Heures"
+
+msgid "CFG_HOURS_HELP"
+msgstr "Entrées dans la vue horaire, de 1 à 48"
+
+msgid "CFG_HOUR_STEP"
+msgstr "Pas horaire"
+
+msgid "CFG_HOUR_STEP_HELP"
+msgstr "Heures entre deux entrées, de 1 à 6"
+
+msgid "CFG_EMIT"
+msgstr "Partager la météo"
+
+msgid "CFG_EMIT_HELP"
+msgstr "Envoie WEATHER_CURRENT aux autres modules après chaque actualisation"
+
+msgid "CFG_SHOW_FEELS_LIKE"
+msgstr "Afficher le ressenti"
+
+msgid "CFG_SHOW_FEELS_LIKE_HELP"
+msgstr "Température ressentie à côté de la température"
+
+msgid "CFG_SHOW_HUMIDITY"
+msgstr "Afficher l'humidité"
+
+msgid "CFG_SHOW_HUMIDITY_HELP"
+msgstr "Humidité relative"
+
+msgid "CFG_SHOW_WIND"
+msgstr "Afficher le vent"
+
+msgid "CFG_SHOW_WIND_HELP"
+msgstr "Vitesse et direction du vent"
+
+msgid "CFG_SHOW_PRECIPITATION"
+msgstr "Afficher les précipitations"
+
+msgid "CFG_SHOW_PRECIPITATION_HELP"
+msgstr "Quantité et probabilité des précipitations"
+
+msgid "CFG_SHOW_SUN"
+msgstr "Afficher lever et coucher du soleil"
+
+msgid "CFG_SHOW_SUN_HELP"
+msgstr "Heures du soleil dans la vue quotidienne"

@@ -251,6 +251,25 @@ async def test_mod_06_good_module_passes_every_kit_check() -> None:
         await h.check_contract()
 
 
+class KvWriter(MirrorModule):
+    """Writes through ``ctx.storage`` from a job, as a module that keeps its last data does."""
+
+    name = "kvwriter"
+
+    async def start(self) -> None:
+        self.ctx.scheduler.every(60, self._tick, start_now=True)
+
+    async def _tick(self) -> None:
+        await self.ctx.storage.kv_set("n", 1)
+
+
+async def test_mod_06_kv_writes_and_temporary_directory_cleanup_are_not_outside_writes() -> None:
+    # the kit's fresh instances and the test's own harness share one virtual clock, so the
+    # base instance's job writes while the probes run; rmtree cleanup uses relative names
+    async with ModuleHarness(KvWriter) as h:
+        await h.check_contract()
+
+
 async def test_mod_26_asker_handles_missing_and_failing_responders() -> None:
     async with ModuleHarness(km.Asker) as h:
         await h.check_contract()
