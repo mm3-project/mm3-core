@@ -1,6 +1,6 @@
 # MM3 Module Contract v1.0
 
-Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 8 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 9 (draft)
 
 ## 1. Scope and conformance
 
@@ -154,7 +154,7 @@ class ModuleContext(Protocol):
     def format_number(self, value: float, *, unit: str | None = None) -> str: ...
 
     # --- capability-gated (section 8) ---
-    mqtt: Mqtt                        # publish(), subscribe(), ha_entity()
+    mqtt: Mqtt                        # publish(), subscribe() (section 4.4); ha_entity() in a later revision
     system: System                    # request_suspend(reason), request_resume(reason)
     router: fastapi.APIRouter         # mounted at /api/v1/modules/{instance_id}/
     layout: Layout                    # hide(instance_id), show(instance_id); layout.control
@@ -206,6 +206,34 @@ class HttpResponse(Protocol):
 - Errors: `mm3.errors.HttpError` (base), with `HttpTimeoutError`, `HttpConnectionError` and `HttpStatusError` (carries `status`). Modules SHOULD convert them to `TransientError` or `ConfigurationError` (3.4).
 - Limits: response bodies above 10 MiB are refused; redirects are followed only to URLs that are also granted (section 8).
 - MOD-23: Modules MUST use `ctx.http` for outbound HTTP and MUST NOT import the underlying library or rely on its types.
+
+### 4.4 Mqtt
+
+`ctx.mqtt` publishes and subscribes on the engine's MQTT broker connection (core 9.3, CORE-100). Every call needs the capability and a granted topic (section 8); otherwise it raises `PermissionError`.
+
+```python
+class Mqtt(Protocol):
+    async def publish(self, topic: str, payload: Mapping[str, Any] | str | bytes, *,
+                      qos: Literal[0, 1, 2] = 0, retain: bool = False) -> None: ...
+    async def subscribe(self, filter: str, handler: Callable[[MqttMessage], Awaitable[None]], *,
+                        qos: Literal[0, 1, 2] = 0) -> Subscription: ...
+    # ha_entity(): capability ha.discovery, defined in a later revision with the MQTT bridge
+
+class MqttMessage(Protocol):
+    topic: str
+    payload: bytes
+    qos: int
+    retain: bool
+    def text(self) -> str: ...      # payload decoded as UTF-8
+    def json(self) -> Any: ...
+
+class Subscription(Protocol):
+    filter: str
+    def cancel(self) -> None: ...   # idempotent; done automatically when the instance stops (MOD-22)
+```
+
+- A mapping payload is published as JSON, a string as UTF-8, bytes as they are.
+- Messages for a subscription are queued in the instance inbox and handled like notifications: one at a time, in arrival order, under the handler budget (3.2, core CORE-28). An exception in the handler has the same effect as one in `on_notification`.
 
 ## 5. Front-end contract
 
@@ -506,9 +534,9 @@ async def test_core_publishes_forecast():
 
 - **ModuleHarness**`(module, *, config=None, grants=None, instance_id=None, locale="en", timezone="UTC", units="metric", now=None, page=None, pages=None)`: an async context manager that builds a real `ModuleContext` wired to fakes (in-memory bus, `h.http`, `h.mqtt`, temporary storage, virtual clock), creates the instance and awaits `start()` on entry and `stop()` on exit. `config` is validated with the module's `config_model`; `now` sets the virtual wall clock (ISO 8601 string or aware datetime; default 2026-01-01T12:00 in `timezone`).
 - **Recorders**: `h.notifications`, `h.client_messages`, `h.logs`, `h.state_history` for assertions.
-- **Inputs**: `h.notify(name, payload, sender=None)`, `h.client_message(type, payload)`, `h.request(name, payload)` (returns the reply or raises as `ctx.request` would), `h.respond(name, handler)` (answers the module's own `ctx.request` for another module; unanswered requests time out), `h.set_locale()`, `h.set_grants()`, `h.set_page()`, `h.suspend()` / `h.resume()`, `h.reconfigure(config)` and `h.restart()`.
+- **Inputs**: `h.notify(name, payload, sender=None)`, `h.client_message(type, payload)`, `h.request(name, payload)` (returns the reply or raises as `ctx.request` would), `h.respond(name, handler)` (answers the module's own `ctx.request` for another module; the handler takes the request payload and returns the reply dict, plain or async, and an exception it raises becomes the error reply of core CORE-221, so the module sees RemoteError; unanswered requests time out), `h.set_locale()`, `h.set_grants()`, `h.set_page()`, `h.suspend()` / `h.resume()`, `h.reconfigure(config)` and `h.restart()`.
 - **Virtual time**: `await h.advance(seconds=…, minutes=…, hours=…)` or `await h.advance(to=…)` moves the harness clock (core CORE-278) and runs, in order, every job, sleep and budget that falls due; `h.now` reads it.
-- **Fakes**: `h.http.mock(method, url, *, status=200, json=None, text=None, headers=None, raises=None)` answers calls whose URL starts with `url` (latest mock wins); an unmocked call raises `HttpConnectionError` and is listed in the contract report. Grants apply as on a mirror, so a URL outside them raises `PermissionError`. `h.mqtt` (`fake_mqtt`) records publishes and delivers `h.mqtt.inject(topic, payload)` to matching subscriptions.
+- **Fakes**: `h.http.mock(method, url, *, status=200, json=None, text=None, headers=None, raises=None)` answers calls whose URL starts with `url` (latest mock wins); an unmocked call raises `HttpConnectionError` and is listed in the contract report. Grants apply as on a mirror, so a URL outside them raises `PermissionError`. `h.mqtt` (`fake_mqtt`) records publishes and delivers `h.mqtt.inject(topic, payload)` to matching subscriptions through the instance inbox, as on a mirror (section 4.4).
 - **Contract checks**: `await h.check_contract()` runs every section 11 row checked by the test kit (MOD-06, 10–16, 24–27, 29, 42, 43, 70, 72, 83) on fresh instances built from the harness arguments, and raises `ContractError` listing the failed ids. Every `SecretStr` field is filled with a random canary that must not appear in snapshots, payloads, client messages or logs (MOD-16, 42, 83). `sys.addaudithook` reports file writes outside the storage directory (MOD-06) and any file, socket or subprocess use during `__init__` (MOD-10); asyncio debug mode reports callbacks over 100 ms (MOD-11). MOD-72 passes when, with no grants, the instance never reaches FAILED or DISABLED and logs at least one `warning`; MOD-27 runs 20 suspend/resume cycles; MOD-43 sends each consumed notification with an extra field and with each optional field removed.
 - **Browser harness** (`mm3.testing.browser`, Playwright): loads the element in a stand-alone shell page, feeds states, resizes the cell, toggles preview and locale, records render time, CSP violations and overflow; supports screenshot comparisons per locale.
 - **Scaffold**: `mm3 new-module <name> --kind full|backend|frontend` (core CORE-281) generates a src-layout package with `mm3-build` as build requirement (core CORE-280), the class with its declarations, all five locale catalogs, a README with "Notifications" and "Grants" sections and a sample test; it passes `mm3 module check` from the first run. `--kind frontend` writes the class with no hooks that section 1 calls the generated stub.
@@ -665,6 +693,7 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
+| 1.0 rev 9 | 2026-10-30 | Aligned with core spec 0.18: ctx.mqtt signatures, MqttMessage and Subscription, messages delivered through the instance inbox (§4, new §4.4; core CORE-100 changed); ha\_entity() left to a later revision; §12.2 h.respond handler shape and fake MQTT delivery through the inbox. No MOD ids added, changed or removed |
 | 1.0 rev 8 | 2026-10-30 | Milestone 4 tooling, aligned with core spec 0.17: ctx.now() on the engine clock (MOD-28 added, §4); emits, consumes and answers declarations (MOD-29 added, §3.1); README lists the declared names (MOD-24, MOD-41 changed); §11 rows for MOD-28 and MOD-29; §12.1 build with uv, static checks, suppressions, harness sizes, report format; §12.2 harness API, inputs, virtual time, fakes, check\_contract coverage, scaffold --kind; §13 greeting uses ctx.now() and mm3-build |
 | 1.0 rev 7 | 2026-10-28 | Aligned with core spec 0.11: theme variables of core 6.10 (MOD-33 changed); templating and imports only through /core/mm3.js, lit-html behind it (MOD-37 added, §5.2, §11); this.hide/show with fade (§5.2) |
 | 1.0 rev 6 | 2026-10-28 | Aligned with core spec 0.6: ctx.request, on\_request, this.request, RequestTimeoutError, RemoteError (MOD-24–26, §3.2, §4, §5.2); registered notification payloads (MOD-40 changed); ctx.page, ctx.pages, this.page, onPageChange; frequent hide/show (MOD-27); capability layout.control (§8) |
