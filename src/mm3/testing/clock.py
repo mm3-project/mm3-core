@@ -5,9 +5,14 @@ order; ``jump()`` moves only the wall clock, as an NTP correction would;
 ``suspend_host()`` models a host suspend: both clocks move, and nothing on
 the event loop runs until the end.
 
+``timeout()`` gives budgets measured on the same virtual time, so the
+scheduler, hook and job budgets, request timeouts and ``ctx.now()`` move
+together.
+
 Implements:
-    -: Module Contract 1.0 rev 4, §12.2 mm3.testing kit.
+    -: Module Contract 1.0 rev 8, §12.2 mm3.testing kit.
     CORE-183: Core spec 0.4, §3.3 Scheduler.
+    CORE-278: Core spec 0.17, §3.3 Scheduler.
 """
 
 from __future__ import annotations
@@ -17,6 +22,8 @@ import heapq
 import itertools
 from datetime import UTC, datetime, timedelta
 from typing import Any
+
+from mm3.core.clock import Budget, ClockTimeout
 
 __all__ = ["VirtualClock"]
 
@@ -69,6 +76,10 @@ class VirtualClock:
             if not timer.done():
                 timer.cancel()
         return event.is_set()
+
+    def timeout(self, seconds: float) -> Budget:
+        """A budget of ``seconds`` virtual seconds (CORE-278)."""
+        return ClockTimeout(self, seconds)
 
     async def settle(self) -> None:
         """Give woken tasks a chance to run."""

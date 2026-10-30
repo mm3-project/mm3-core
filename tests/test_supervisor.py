@@ -12,7 +12,7 @@ from uuid import UUID
 
 import pytest
 
-from conftest import EngineFactory, Recorder
+from conftest import EngineFactory, Recorder, advancing
 from mm3 import ClientMessage, ConfigurationError, MirrorModule, ModuleConfig, Notification
 from mm3.core.engine import Engine
 from mm3.core.logging import recent_records
@@ -322,18 +322,20 @@ async def test_core_193_handler_timeouts_three_in_a_row_fail(
         await ctx.send_notification("SLOW")
     await ctx.send_notification("FAST")
     await ctx.send_notification("SLOW")
-    await asyncio.sleep(1.0)
+    await clock.advance(1.0)  # handler budget 0.2 s on the engine clock (CORE-278)
     assert state(engine, "s") is State.RUNNING  # the fast one reset the count
     assert engine.supervisor.get("s").health()["handler_timeouts"] == 3
     await ctx.send_notification("SLOW")
     await ctx.send_notification("SLOW")
-    await asyncio.sleep(0.6)
+    await clock.advance(0.6)
     await clock.settle()
     assert state(engine, "s") is State.FAILED
     assert engine.supervisor.get("s").reason == "task_failed"
 
 
-async def test_core_192_start_timeout_fails(make_engine: EngineFactory) -> None:
+async def test_core_192_start_timeout_fails(
+    make_engine: EngineFactory, clock: VirtualClock
+) -> None:
     class Hang(MirrorModule):
         name = "hang"
 
@@ -341,7 +343,8 @@ async def test_core_192_start_timeout_fails(make_engine: EngineFactory) -> None:
             await asyncio.sleep(10)
 
     engine = make_engine(Hang)
-    await engine.start([InstanceSpec("h", "hang")])
+    await advancing(clock, engine.start([InstanceSpec("h", "hang")]), 0.5)
+    await clock.settle()
     assert state(engine, "h") is State.FAILED
     assert engine.supervisor.get("h").reason == "start_timeout"
 
@@ -367,7 +370,7 @@ async def test_core_185_job_errors_and_timeouts(
     engine = make_engine(Jobs)
     await engine.start([InstanceSpec("j", "jobs")])
     await clock.advance(10)
-    await asyncio.sleep(0.4)  # job budget 0.3 s
+    await clock.advance(0.4)  # job budget 0.3 s on the engine clock (CORE-278)
     await clock.settle()
     assert state(engine, "j") is State.RUNNING  # CORE-193: job timeout is a warning
     assert engine.supervisor.get("j").health()["job_timeouts"] == 1

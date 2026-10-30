@@ -1,17 +1,20 @@
 """``ModuleContext``: a module's only door into the engine.
 
-Provided so far: identity, messaging, state, tasks, ``run_blocking``, the
-scheduler, storage, the logger, the current page and pages, and
+Provided so far: identity, ``now()``, messaging, state, tasks,
+``run_blocking``, the scheduler, storage, the logger, ``t``,
+``format_date``, ``format_number``, the current page and pages, and
 ``layout`` (capability ``layout.control``). The remaining members of
-Module Contract section 4 (``http``, ``health``, ``t``, ``format_date``,
-``format_number``, ``mqtt``, ``system``, ``router``) are added with their
-milestones (implementation plan 3, 5, 6 and 7).
+Module Contract section 4 (``http``, ``health``, ``mqtt``, ``system``,
+``router``) are added with their milestones (implementation plan 5, 6
+and 7).
 
 Implements:
     -: Module Contract 1.0 rev 6, §4 ModuleContext reference.
     MOD-20, MOD-21, MOD-22: Module Contract 1.0 rev 6, §4.2 Guarantees.
     CORE-220: Core spec 0.7, §5.4 Request and reply.
     CORE-237, CORE-241: Core spec 0.14, §6.9 Pages and visibility.
+    CORE-278: Core spec 0.17, §3.3 Scheduler.
+    MOD-28: Module Contract 1.0 rev 8, §3.3 Rules.
 """
 
 from __future__ import annotations
@@ -132,6 +135,15 @@ class ModuleContext(Protocol):
     @property
     def timezone(self) -> ZoneInfo:
         """Engine time zone."""
+        ...
+
+    def now(self) -> datetime:
+        """Current wall-clock time, aware, in ``timezone``; the only clock a module reads.
+
+        Implements:
+            CORE-278: Core spec 0.17, §3.3 Scheduler.
+            MOD-28: Module Contract 1.0 rev 8, §3.3 Rules.
+        """
         ...
 
     @property

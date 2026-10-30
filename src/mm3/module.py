@@ -8,14 +8,19 @@ Implements:
     CORE-10: Core spec 0.7, §4.4 Contract rules.
     CORE-221: Core spec 0.7, §5.4 Request and reply.
     MOD-10, MOD-11: Module Contract 1.0 rev 6, §3.3 Rules.
-    -: Module Contract 1.0 rev 6, §3.1 Class attributes.
+    -: Module Contract 1.0 rev 8, §3.1 Class attributes.
     -: Module Contract 1.0 rev 6, §3.2 Hooks.
+    MOD-29: Module Contract 1.0 rev 8, §6.1 Messaging.
 """
 
 from __future__ import annotations
 
 import abc
+from collections.abc import Mapping
+from types import MappingProxyType
 from typing import Any, ClassVar
+
+from pydantic import BaseModel
 
 from mm3.config import ModuleConfig
 from mm3.context import ModuleContext
@@ -30,6 +35,12 @@ class MirrorModule(abc.ABC):
     Subclasses set the class attributes and override the hooks they need.
     ``__init__`` only stores ``ctx`` and ``config`` (MOD-10).
 
+    ``emits``, ``consumes`` and ``answers`` declare every notification the
+    module sends (backend and front-end), handles and answers, each with its
+    Pydantic payload models (MOD-29). The engine validates only registered
+    names (CORE-225); the test kit validates every payload against these
+    models, and ``subscribes`` stays the delivery filter.
+
     Args:
         ctx: The instance's context.
         config: The validated instance configuration.
@@ -37,6 +48,7 @@ class MirrorModule(abc.ABC):
     Implements:
         -: Module Contract 1.0 rev 6, §3.2 Hooks.
         CORE-10: Core spec 0.7, §4.4 Contract rules.
+        MOD-29: Module Contract 1.0 rev 8, §6.1 Messaging.
     """
 
     name: ClassVar[str]
@@ -47,6 +59,9 @@ class MirrorModule(abc.ABC):
     styles: ClassVar[list[str]] = []
     locales_dir: ClassVar[str | None] = "locales"
     subscribes: ClassVar[set[str] | None] = None
+    emits: ClassVar[Mapping[str, type[BaseModel]]] = MappingProxyType({})
+    consumes: ClassVar[Mapping[str, type[BaseModel]]] = MappingProxyType({})
+    answers: ClassVar[Mapping[str, tuple[type[BaseModel], type[BaseModel]]]] = MappingProxyType({})
     capabilities: ClassVar[set[str]] = set()
     min_size_px: ClassVar[tuple[int, int] | None] = None
     admin_element: ClassVar[str | None] = None

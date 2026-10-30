@@ -1,0 +1,46 @@
+# Implements CORE-280 (Core spec 0.17, §10.2 Packaging and deployment):
+# a separate distribution in the mm3-core repository, versioned with the
+# Module API, depending only on hatchling and Babel.
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mm3-build"
+description = "Hatchling build hook that compiles MM3 message catalogs into wheels."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.11"
+authors = [{ name = "MM3 Project contributors" }]
+keywords = ["mm3", "hatch", "hatchling", "gettext", "i18n"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Framework :: Hatch",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Localization",
+    "Typing :: Typed",
+]
+dynamic = ["version"]
+dependencies = [
+    "hatchling>=1.25,<2",
+    "babel>=2.15,<3",
+]
+
+[project.entry-points.hatch]
+mm3-i18n = "mm3_build.hooks"
+
+[project.urls]
+Homepage = "https://github.com/mm3-project/mm3-core"
+Issues = "https://github.com/mm3-project/mm3-core/issues"
+
+[tool.hatch.version]
+path = "src/mm3_build/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mm3_build"]

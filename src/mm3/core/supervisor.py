@@ -18,6 +18,7 @@ Implements:
     CORE-202: Core spec 0.8, §6.2 Rules.
     CORE-211: Core spec 0.9, §6.3 Hot reload.
     CORE-239: Core spec 0.14, §6.9 Pages and visibility.
+    CORE-278: Core spec 0.17, §3.3 Scheduler.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from collections import deque
 from collections.abc import Callable, Coroutine, Mapping
 from concurrent.futures import Executor
 from dataclasses import dataclass, field, replace
-from datetime import UTC, datetime
+from datetime import datetime
 from enum import StrEnum
 from pathlib import Path
 from typing import Any
@@ -306,7 +307,7 @@ class ManagedInstance:
         self, inc: _Incarnation, coro: Coroutine[Any, Any, Any], budget: float, hook: str
     ) -> tuple[str, BaseException] | None:
         """Run a lifecycle hook under its budget; return a failure, if any."""
-        cm = asyncio.timeout(budget)
+        cm = self._sup.clock.timeout(budget)
         try:
             with trace_scope(uuid4()):
                 async with cm:
@@ -344,7 +345,7 @@ class ManagedInstance:
             item = await self.inbox.get()
             self.last_in = self._sup.clock.wall()
             started = loop.time()
-            cm = asyncio.timeout(budget)
+            cm = self._sup.clock.timeout(budget)
             with trace_scope(item.trace):
                 try:
                     async with cm:
@@ -730,7 +731,7 @@ class Supervisor:
             Notification(
                 id=nid,
                 trace=current_trace() or nid,
-                ts=datetime.now(UTC),
+                ts=self.clock.wall(),
                 name=name,
                 source="core",
                 target=target,

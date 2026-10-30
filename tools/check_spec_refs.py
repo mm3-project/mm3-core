@@ -3,7 +3,7 @@
 Implements:
     CORE-74, CORE-77: Core spec 0.6, §10.3 Documentation and quality.
 
-Checked for every ``.py`` file under ``src/mm3`` and ``tools/``:
+Checked for every ``.py`` file under ``src/mm3``, ``mm3-build/src`` and ``tools/``:
 
 1. Files under ``src/mm3`` have an ``Implements:`` section in their module
    docstring.
@@ -199,13 +199,15 @@ def source_files() -> list[Path]:
     """List the files whose citations are checked.
 
     Returns:
-        Python files under ``src/mm3`` and ``tools``, and the engine's
-        front-end files (``static/*.js``, ``static/*.css``; vendored
-        libraries are not ours to cite).
+        Python files under ``src/mm3``, ``mm3-build/src`` (CORE-280) and
+        ``tools``, and the engine's front-end files (``static/*.js``,
+        ``static/*.css``; vendored libraries are not ours to cite).
     """
     src = ROOT / "src" / "mm3"
+    build = ROOT / "mm3-build" / "src"
     front = sorted(src.rglob("static/*.js")) + sorted(src.rglob("static/*.css"))
-    return sorted(src.rglob("*.py")) + sorted((ROOT / "tools").glob("*.py")) + front
+    python = sorted(src.rglob("*.py")) + sorted(build.rglob("*.py"))
+    return python + sorted((ROOT / "tools").glob("*.py")) + front
 
 
 def main(argv: list[str] | None = None) -> int:

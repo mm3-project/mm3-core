@@ -8,7 +8,7 @@ from uuid import uuid4
 
 import pytest
 
-from conftest import EngineFactory, Recorder
+from conftest import EngineFactory, Recorder, advancing
 from mm3 import ConfigurationError, MirrorModule, ModuleConfig, Notification
 from mm3.core.engine import Engine
 from mm3.core.supervisor import InstanceSpec, State
@@ -136,11 +136,13 @@ async def test_core_220_broadcast_request_follows_subscribes(
     assert obj(engine, "picky_1").requests == []
 
 
-async def test_core_220_timeout_and_argument_checks(make_engine: EngineFactory) -> None:
+async def test_core_220_timeout_and_argument_checks(
+    make_engine: EngineFactory, clock: VirtualClock
+) -> None:
     engine = await two(make_engine)
     ctx = obj(engine, "asker_1").ctx
     with pytest.raises(RequestTimeoutError) as info:
-        await ctx.request("NOBODY_ANSWERS", timeout=0.1)
+        await advancing(clock, ctx.request("NOBODY_ANSWERS", timeout=0.1), 0.1)
     assert info.value.name == "NOBODY_ANSWERS"
     for bad in (0.05, 61):
         with pytest.raises(ValueError, match="timeout"):
@@ -238,11 +240,12 @@ async def test_core_221_configuration_error_reply_disables(
 
 
 async def test_core_221_on_request_over_budget_sends_no_reply(
-    make_engine: EngineFactory, recorder: Recorder
+    make_engine: EngineFactory, recorder: Recorder, clock: VirtualClock
 ) -> None:
     engine = await two(make_engine)  # handler budget 0.2 s
+    asking = obj(engine, "asker_1").ctx.request("SLOW", target="clock_1", timeout=0.5)
     with pytest.raises(RequestTimeoutError):
-        await obj(engine, "asker_1").ctx.request("SLOW", target="clock_1", timeout=0.5)
+        await advancing(clock, asking, 0.5)
     inst = engine.supervisor.get("clock_1")
     assert inst.counters.handler_timeouts == 1
     assert inst.state is State.RUNNING

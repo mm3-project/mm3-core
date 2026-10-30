@@ -1,9 +1,11 @@
 # Implements CORE-172 (Core spec 0.6, §10.9 Dependency management)
 # Publishes to PyPI with Trusted Publishing (core spec 10.6, MOD-96) and
 # attaches the tested constraints file to the GitHub release (CORE-172).
-# One-time setup on PyPI: add a trusted publisher for project "mm3-core",
-# owner "mm3-project", repository "mm3-core", workflow "release.yml",
-# environment "pypi".
+# Implements CORE-280 (Core spec 0.17, §10.2 Packaging and deployment):
+# mm3-build is released with mm3-core from this repository.
+# One-time setup on PyPI: add a trusted publisher for the projects "mm3-core"
+# and "mm3-build", owner "mm3-project", repository "mm3-core", workflow
+# "release.yml", environment "pypi".
 name: Release
 
 on:
@@ -20,9 +22,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
       - run: uv lock --check
-      - run: uv build
+      - run: uv build --all-packages
       - name: Constraints file from the lock, with hashes
-        run: uv export --frozen --no-dev --all-extras --no-emit-project --format requirements-txt -o dist-constraints.txt
+        run: uv export --frozen --no-dev --all-extras --no-emit-workspace --format requirements-txt -o dist-constraints.txt
       - uses: actions/upload-artifact@v4
         with:
           name: dist

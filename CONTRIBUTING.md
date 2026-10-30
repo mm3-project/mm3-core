@@ -129,3 +129,8 @@ uv sync --all-extras
 uv run pre-commit install
 uv run pytest
 ```
+
+The repository is a uv workspace: `mm3-build/` is its own distribution (the
+`mm3-i18n` catalog build hook, CORE-280) and is installed from the workspace.
+`uv build --all-packages` builds both; `mm3-core`'s wheel gets its compiled
+catalogs from the hook.
