@@ -4,7 +4,7 @@ Every key is optional; defaults follow the table of CORE-201. The bus,
 supervisor and scheduler read their settings from this model.
 
 Implements:
-    CORE-201: Core spec 0.11, §6.2 Rules.
+    CORE-201: Core spec 0.19, §6.2 Rules.
     CORE-61: Core spec 0.11, §10.1 Security.
     CORE-62: Core spec 0.11, §10.1 Security.
     CORE-205: Core spec 0.8, §6.2 Rules.
@@ -25,7 +25,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pydantic import ConfigDict, Field, IPvAnyNetwork, field_validator
 from pydantic_core import PydanticCustomError
 
-from mm3.config import LocaleTag, ModuleConfig
+from mm3.config import LocaleTag, LocalizedText, ModuleConfig
 
 __all__ = [
     "AdminSettings",
@@ -110,7 +110,7 @@ class ServerSettings(_Block):
             applies live, for connections made afterwards.
 
     Implements:
-        CORE-201: Core spec 0.11, §6.2 Rules.
+        CORE-201: Core spec 0.19, §6.2 Rules.
         CORE-61: Core spec 0.11, §10.1 Security.
     """
 
@@ -131,7 +131,7 @@ class AdminSettings(_Block):
         allow: Sources other than loopback that may connect (CORE-61).
 
     Implements:
-        CORE-201: Core spec 0.11, §6.2 Rules.
+        CORE-201: Core spec 0.19, §6.2 Rules.
         CORE-62: Core spec 0.11, §10.1 Security.
     """
 
@@ -161,6 +161,23 @@ class InputSettings(_Block):
     touch: bool = False
 
 
+class LocationSettings(_Block):
+    """``engine.location``: the mirror's place for modules that need one (CORE-288).
+
+    Attributes:
+        lat: Latitude, -90 to 90.
+        lon: Longitude, -180 to 180.
+        name: Display name.
+
+    Implements:
+        CORE-288: Core spec 0.19, §6.2 Rules.
+    """
+
+    lat: float = Field(ge=-90, le=90)
+    lon: float = Field(ge=-180, le=180)
+    name: LocalizedText | None = None
+
+
 class EngineSettings(_Block):
     """The ``engine`` block (CORE-201).
 
@@ -168,6 +185,7 @@ class EngineSettings(_Block):
         locale: Active locale.
         timezone: IANA zone; default the system's, else UTC.
         units: Unit system.
+        location: The mirror's place, ``None`` when not set (CORE-288).
         server: Mirror display listener.
         admin: Admin listener.
         mqtt: MQTT bridge, ``None`` when off.
@@ -180,12 +198,14 @@ class EngineSettings(_Block):
         input: Kiosk input settings.
 
     Implements:
-        CORE-201: Core spec 0.11, §6.2 Rules.
+        CORE-201: Core spec 0.19, §6.2 Rules.
+        CORE-288: Core spec 0.19, §6.2 Rules.
     """
 
     locale: LocaleTag = "en"
     timezone: str = Field(default_factory=system_timezone)
     units: Literal["metric", "imperial"] = "metric"
+    location: LocationSettings | None = None
     server: ServerSettings = ServerSettings()
     admin: AdminSettings = AdminSettings()
     mqtt: MqttSettings | None = None

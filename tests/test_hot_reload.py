@@ -12,6 +12,7 @@ from pydantic import Field
 
 from conftest import EngineFactory, Recorder
 from mm3.config import ModuleConfig
+from mm3.context import Location
 from mm3.core.config import load_config
 from mm3.core.config.diff import changed_sections, plan_reload
 from mm3.core.config.manager import ConfigManager
@@ -465,3 +466,63 @@ async def test_core_201_server_allow_is_live_host_needs_restart(mirror: Harness)
     plan2 = plan_reload(old, new2)
     assert plan2.engine_live == {"server.allow"}
     assert plan2.engine_restart == {"server"}
+
+
+# --- CORE-288, CORE-211: engine.location ---------------------------------------------
+
+PLACE = "  location: {lat: 41.9, lon: 12.5, name: {en: Rome, it: Roma}}\n"
+
+
+async def test_core_288_location_in_ctx_and_backend_instances_restart(mirror: Harness) -> None:
+    m = await mirror(BASE)
+    sup = m.engine.supervisor
+    ctx = sup.get("a").context
+    assert ctx is not None
+    assert ctx.location is None  # not set: None, not an empty object
+    assert await m.reload("engine:\n" + PLACE + BASE)
+    assert sorted(EVENTS) == [("start", "a"), ("start", "b"), ("stop", "a"), ("stop", "b")]
+    EVENTS.clear()
+    ctx = sup.get("a").context
+    assert ctx is not None
+    assert ctx.location == Location(41.9, 12.5, "Rome")
+    # the name follows the instance's locale chain
+    assert await m.reload("engine:\n  locale: it\n" + PLACE + BASE)
+    ctx = sup.get("a").context
+    assert ctx is not None
+    assert ctx.location == Location(41.9, 12.5, "Roma")
+    EVENTS.clear()
+    # any change of the location restarts; removing it clears the value
+    assert await m.reload("engine:\n  locale: it\n" + PLACE.replace("41.9", "42") + BASE)
+    assert ("start", "a") in EVENTS
+    EVENTS.clear()
+    assert await m.reload("engine:\n  locale: it\n" + BASE)
+    assert ("start", "a") in EVENTS
+    ctx = sup.get("a").context
+    assert ctx is not None
+    assert ctx.location is None
+
+
+def test_core_288_location_without_a_name() -> None:
+    from mm3.core.settings import EngineSettings
+
+    settings = EngineSettings.model_validate({"location": {"lat": 0, "lon": 0}})
+    assert settings.location is not None
+    assert settings.location.name is None
+
+
+async def test_core_288_harness_location() -> None:
+    from mm3.testing import ModuleHarness
+
+    seen: list[Location | None] = []
+
+    class Where(MirrorModule):
+        name = "where"
+
+        async def start(self) -> None:
+            seen.append(self.ctx.location)
+
+    async with ModuleHarness(
+        Where, location={"lat": 1.5, "lon": 2.5, "name": {"en": "Home", "it": "Casa"}}
+    ):
+        pass
+    assert seen == [Location(1.5, 2.5, "Home")]

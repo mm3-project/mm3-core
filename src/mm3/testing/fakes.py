@@ -124,6 +124,8 @@ class FakeHttp:
         data: bytes | None,
         timeout: float,  # noqa: ASYNC109 - the transport signature
         grants: Sequence[str],
+        ca_files: Mapping[str, str] | None = None,
+        user_agent: str = "",
     ) -> Response:
         """Answer a checked request from the mocks.
 

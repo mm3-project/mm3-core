@@ -35,7 +35,7 @@ from mm3.http import HttpClient
 from mm3.mqtt import Mqtt
 from mm3.scheduler import Scheduler
 
-__all__ = ["Layout", "Logger", "ModuleContext", "PageInfo", "Storage"]
+__all__ = ["Layout", "Location", "Logger", "ModuleContext", "PageInfo", "Storage"]
 
 T = TypeVar("T")
 
@@ -86,6 +86,25 @@ class Storage(Protocol):
     async def kv_delete(self, key: str) -> None:
         """Remove ``key``; nothing happens if it is absent."""
         ...
+
+
+@dataclass(frozen=True)
+class Location:
+    """The mirror's place, ``engine.location`` (core spec 6.2).
+
+    Attributes:
+        lat: Latitude, -90 to 90.
+        lon: Longitude, -180 to 180.
+        name: Display name resolved along the instance's locale chain, or
+            ``None`` when none is configured.
+
+    Implements:
+        CORE-288: Core spec 0.19, §6.2 Rules.
+    """
+
+    lat: float
+    lon: float
+    name: str | None = None
 
 
 @dataclass(frozen=True)
@@ -162,6 +181,11 @@ class ModuleContext(Protocol):
     @property
     def units(self) -> Literal["metric", "imperial"]:
         """Unit system."""
+        ...
+
+    @property
+    def location(self) -> Location | None:
+        """``engine.location``, or ``None`` when it is not set (CORE-288)."""
         ...
 
     def t(self, key: str, /, count: float | None = None, **vars: Any) -> str:

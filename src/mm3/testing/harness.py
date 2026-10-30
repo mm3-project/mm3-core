@@ -120,6 +120,8 @@ class ModuleHarness:
         locale: Instance locale.
         timezone: IANA time zone of the engine.
         units: ``metric`` or ``imperial``.
+        location: ``engine.location`` as ``{"lat": .., "lon": .., "name": ..}``
+            (``name`` optional text or per-language mapping); ``None`` when unset.
         now: Virtual wall clock at the start (ISO 8601 or aware datetime);
             default 2026-01-01T12:00 in ``timezone``.
         page: Current page id; default the first of ``pages``.
@@ -150,6 +152,7 @@ class ModuleHarness:
         locale: str = "en",
         timezone: str = "UTC",
         units: Literal["metric", "imperial"] = "metric",
+        location: Mapping[str, Any] | None = None,
         now: str | datetime | None = None,
         page: str | None = None,
         pages: Sequence[str | PageInfo] | None = None,
@@ -161,6 +164,7 @@ class ModuleHarness:
         self.locale = locale
         self.timezone = timezone
         self.units = units
+        self.location = location
         self._start = _start_time(now, timezone)
         page_list = list(pages) if pages else ["main"]
         self._pages = _Pages(page_list, page or self._first(page_list))
@@ -204,7 +208,14 @@ class ModuleHarness:
         if entry is None or entry.cls is None:
             reason = entry.error if entry is not None else "not registered"
             raise ValueError(f"module {self.module.name!r} cannot run: {reason}")
-        settings = EngineSettings(locale=self.locale, timezone=self.timezone, units=self.units)
+        settings = EngineSettings.model_validate(
+            {
+                "locale": self.locale,
+                "timezone": self.timezone,
+                "units": self.units,
+                "location": self.location,
+            }
+        )
         engine = Engine(
             settings,
             registry=registry,

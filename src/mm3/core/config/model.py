@@ -7,7 +7,7 @@ geometry rules of screen layout, display and pages (core spec 6.5, 6.7,
 6.9) are added with the layout work of milestone 2.
 
 Implements:
-    CORE-201: Core spec 0.11, §6.2 Rules.
+    CORE-201: Core spec 0.19, §6.2 Rules.
     CORE-202: Core spec 0.8, §6.2 Rules.
     CORE-244: Core spec 0.8, §10.8 Backup and restore.
     CORE-91: Core spec 0.8, §6.5 Screen layout.
@@ -164,11 +164,27 @@ class MqttGrants(_Model):
     publish: list[str] = Field(default_factory=list)
 
 
+class HttpGrant(_Model):
+    """An ``http`` grant entry with its own CA file (CORE-284).
+
+    Attributes:
+        prefix: URL prefix the grant covers.
+        ca: PEM file, relative to the directory of the main configuration
+            file, that replaces the CA store for requests matching ``prefix``.
+
+    Implements:
+        CORE-284: Core spec 0.19, §3.4 HTTP transport.
+    """
+
+    prefix: str = Field(min_length=1)
+    ca: str = Field(min_length=1)
+
+
 class Grants(_Model):
     """Scopes granted to an instance (Contract section 8)."""
 
     mqtt: MqttGrants = MqttGrants()
-    http: list[str] = Field(default_factory=list)
+    http: list[str | HttpGrant] = Field(default_factory=list)
 
 
 class InstanceConfig(_Model):
@@ -333,7 +349,7 @@ class MirrorConfig(_Model):
     """The whole configuration file (CORE-201, CORE-230).
 
     Implements:
-        CORE-201: Core spec 0.11, §6.2 Rules.
+        CORE-201: Core spec 0.19, §6.2 Rules.
     """
 
     config_version: Annotated[int, Field(ge=1)] = 1
