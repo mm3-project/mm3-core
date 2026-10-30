@@ -429,6 +429,7 @@ def test_core_281_static_only_prints_json_and_exits_1_on_a_must(
 
 
 @needs_uv
+@needs_chromium  # the default run includes the harness stage, which needs a browser
 @pytest.mark.usefixtures("uv_env")
 def test_core_281_kit_finds_what_the_static_stage_cannot(
     proj: Path, capsys: pytest.CaptureFixture[str]
