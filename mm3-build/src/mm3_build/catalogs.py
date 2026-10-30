@@ -28,6 +28,7 @@ import json
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 
 from babel import Locale, UnknownLocaleError
@@ -55,6 +56,7 @@ Entry = str | dict[str, str]
 """A ``messages.json`` value: text, or plural forms keyed by CLDR category."""
 
 _PLACEHOLDER = re.compile(r"\{(\w+)\}")
+_EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 _SAMPLES = [*range(0, 1001), 1_000_000, 2_000_000]
 
 
@@ -132,10 +134,17 @@ def _categories(lang: str, catalog: Catalog) -> dict[str, int]:
 
 def _read(po: Path) -> Catalog:
     try:
-        with po.open("rb") as f:
-            return read_po(f, locale=po.parent.parent.name.replace("-", "_"), abort_invalid=True)
+        data = po.read_bytes()
+        catalog = read_po(
+            io.BytesIO(data), locale=po.parent.parent.name.replace("-", "_"), abort_invalid=True
+        )
     except (OSError, ValueError, PoFileError) as exc:
         raise CatalogError(po, str(exc)) from None
+    # Babel stamps the time of the call into the .mo when the header has no
+    # date, so two compilations a minute apart would differ.
+    if b"POT-Creation-Date:" not in data:
+        catalog.creation_date = _EPOCH
+    return catalog
 
 
 def compiled(po: Path) -> tuple[bytes, bytes, dict[str, Entry]]:

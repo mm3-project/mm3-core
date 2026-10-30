@@ -479,3 +479,32 @@ def test_mod_53_64_65_81_82_rows_for_a_person_are_on_the_review_list() -> None:
 
     listed = {c.id for c in review_checks()}
     assert {"MOD-53", "MOD-64", "MOD-65", "MOD-81", "MOD-82"} <= listed
+
+
+def test_core_281_compiled_catalog_does_not_depend_on_the_clock(tmp_path: Path) -> None:
+    """A .po without dates compiles to the same bytes a minute later (flaky MOD-62)."""
+    import datetime as dt
+    import types
+    from unittest import mock
+
+    import babel.messages.catalog as babel_catalog
+
+    from mm3_build.catalogs import compiled
+
+    po = tmp_path / "en" / "LC_MESSAGES" / "messages.po"
+    po.parent.mkdir(parents=True)
+    po.write_text(
+        'msgid ""\nmsgstr ""\n"Content-Type: text/plain; charset=UTF-8\\n"\n"Language: en\\n"\n\n'
+        'msgid "A"\nmsgstr "a"\n',
+        encoding="utf-8",
+    )
+    first = compiled(po)[0]
+
+    class Later(dt.datetime):
+        @classmethod
+        def now(cls, tz: dt.tzinfo | None = None) -> Later:  # type: ignore[override]
+            return super().now(tz) + dt.timedelta(minutes=1)  # type: ignore[return-value]
+
+    shifted = types.SimpleNamespace(**{**vars(dt), "datetime": Later})
+    with mock.patch.object(babel_catalog, "datetime", shifted):
+        assert compiled(po)[0] == first
