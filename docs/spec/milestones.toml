@@ -127,7 +127,11 @@ requirements = [
 number = 5
 name = "Reference modules: greeting, clock, weather"
 status = "not_started"
-requirements = ["MOD-23"]
+# CORE-201, CORE-211 and CORE-246 changed in core 0.19 (engine.location,
+#   CORE-288) and stay with milestones 2 and 3 (spec-change issues).
+requirements = [
+  "CORE-282..289", "CLK-01..08", "WTH-01..12", "MOD-23",
+]
 
 [[milestone]]
 number = 6

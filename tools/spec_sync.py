@@ -52,7 +52,7 @@ def _q(value: str) -> str:
 
 def _sort_key(rid: str) -> tuple[int, int]:
     prefix, num = rid.split("-")
-    return ({"CORE": 0, "WGT": 1, "MOD": 2}[prefix], int(num))
+    return ({"CORE": 0, "WGT": 1, "CLK": 2, "WTH": 3, "MOD": 4}[prefix], int(num))
 
 
 def build(spec_dir: Path) -> tuple[str, str, list[str]]:

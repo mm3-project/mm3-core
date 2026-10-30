@@ -31,7 +31,7 @@ from pathlib import Path
 
 from spec_lib import ROOT, expand_ids, load_known_versions, load_requirements, version_key
 
-ID = r"(?:CORE|WGT|MOD)-\d+(?:\.\.\d+)?"
+ID = r"(?:CORE|WGT|CLK|WTH|MOD)-\d+(?:\.\.\d+)?"
 ENTRY = re.compile(
     rf"^(?P<ids>(?:{ID})(?:,\s*{ID})*|-):\s+"
     r"(?P<spec>.+?)\s+(?P<version>\d+\.\d+(?:\s+rev\s+\d+)?),\s+"
@@ -41,7 +41,13 @@ COMMENT = re.compile(
     rf"(?:#|//|/\*)\s*Implements\s+(?P<ids>(?:{ID})(?:,\s*{ID})*)\s+\("
     r"(?P<spec>[^)]+?)\s+(?P<version>\d+\.\d+(?:\s+rev\s+\d+)?),\s+§[^)]*\)"
 )
-SPEC_OF = {"CORE": "Core spec", "WGT": "Core spec", "MOD": "Module Contract"}
+SPEC_OF = {
+    "CORE": "Core spec",
+    "WGT": "Core spec",
+    "CLK": "Core spec",
+    "WTH": "Core spec",
+    "MOD": "Module Contract",
+}
 DEFS = (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)
 
 

@@ -3,14 +3,14 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.18"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18"]
+version = "0.19"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19"]
 
 [[spec]]
 name = "Module Contract"
 file = "contract.md"
-version = "1.0 rev 11"
-versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7", "1.0 rev 8", "1.0 rev 9", "1.0 rev 10", "1.0 rev 11"]
+version = "1.0 rev 12"
+versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7", "1.0 rev 8", "1.0 rev 9", "1.0 rev 10", "1.0 rev 11", "1.0 rev 12"]
 
 [[requirement]]
 id = "CORE-01"
@@ -1449,7 +1449,7 @@ section = "6.2"
 title = "Rules"
 hash = "47aac27c33a3"
 introduced_in = "0.5"
-changed_in = "0.11"
+changed_in = "0.19"
 status = "active"
 
 [[requirement]]
@@ -1547,9 +1547,9 @@ id = "CORE-211"
 spec = "Core spec"
 section = "6.3"
 title = "Hot reload"
-hash = "038aa72060f4"
+hash = "f329a678f248"
 introduced_in = "0.5"
-changed_in = "0.5"
+changed_in = "0.19"
 status = "active"
 
 [[requirement]]
@@ -1867,9 +1867,9 @@ id = "CORE-246"
 spec = "Core spec"
 section = "5.6"
 title = "WebSocket protocol"
-hash = "395e2e5f97c4"
+hash = "18f9982fa615"
 introduced_in = "0.11"
-changed_in = "0.15"
+changed_in = "0.19"
 status = "active"
 
 [[requirement]]
@@ -2223,6 +2223,86 @@ changed_in = "0.17"
 status = "active"
 
 [[requirement]]
+id = "CORE-282"
+spec = "Core spec"
+section = "3.4"
+title = "HTTP transport"
+hash = "345d6ea1b803"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CORE-283"
+spec = "Core spec"
+section = "3.4"
+title = "HTTP transport"
+hash = "cdc22e8d221a"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CORE-284"
+spec = "Core spec"
+section = "3.4"
+title = "HTTP transport"
+hash = "eafbe9a35f91"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CORE-285"
+spec = "Core spec"
+section = "3.4"
+title = "HTTP transport"
+hash = "ca35a8580148"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CORE-286"
+spec = "Core spec"
+section = "3.4"
+title = "HTTP transport"
+hash = "b1833ba61596"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CORE-287"
+spec = "Core spec"
+section = "3.4"
+title = "HTTP transport"
+hash = "6d95c02b1161"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CORE-288"
+spec = "Core spec"
+section = "6.2"
+title = "Rules"
+hash = "89f9d490ea4b"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CORE-289"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "81f14749bfe3"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
 id = "WGT-01"
 spec = "Core spec"
 section = "11.2"
@@ -2380,6 +2460,206 @@ title = "Builder and templates"
 hash = "07c6f2f6d11b"
 introduced_in = "0.1"
 changed_in = "0.1"
+status = "active"
+
+[[requirement]]
+id = "CLK-01"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "64b65ac04df1"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CLK-02"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "111fee3a8891"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CLK-03"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "bc26d0b074e3"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CLK-04"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "cd84c4fbfdc3"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CLK-05"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "deadd4a33703"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CLK-06"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "c0e0f80859c2"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CLK-07"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "d815f9c1fb5b"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "CLK-08"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "7560033550a2"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-01"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "c187fa9e14fc"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-02"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "cda3683400ba"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-03"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "f6a012067e70"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-04"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "8ff574aee4be"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-05"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "7b749415c172"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-06"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "cce3e85cf246"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-07"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "fd8a7fdbdb04"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-08"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "1214782571db"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-09"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "3f150b233307"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-10"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "6266ec29760a"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-11"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "dcaf6a7ba791"
+introduced_in = "0.19"
+changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "WTH-12"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "9621e977cc38"
+introduced_in = "0.19"
+changed_in = "0.19"
 status = "active"
 
 [[requirement]]

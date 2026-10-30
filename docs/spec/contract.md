@@ -1,6 +1,6 @@
 # MM3 Module Contract v1.0
 
-Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 11 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 12 (draft)
 
 ## 1. Scope and conformance
 
@@ -123,6 +123,7 @@ class ModuleContext(Protocol):
     locale: str                       # resolved active locale, e.g. "it"
     timezone: ZoneInfo
     units: Literal["metric", "imperial"]
+    location: Location | None         # engine.location as lat, lon, name (core CORE-288); None if not set
     position: GridRect | None         # None for backend-only
     page: str                         # current page id (core 6.9)
     pages: Sequence[PageInfo]         # ids and resolved titles, always current
@@ -204,7 +205,7 @@ class HttpResponse(Protocol):
 ```
 
 - Errors: `mm3.errors.HttpError` (base), with `HttpTimeoutError`, `HttpConnectionError` and `HttpStatusError` (carries `status`). Modules SHOULD convert them to `TransientError` or `ConfigurationError` (3.4).
-- Limits: response bodies above 10 MiB are refused; redirects are followed only to URLs that are also granted (section 8).
+- Limits and transport rules (core CORE-282–287): response bodies above 10 MiB are refused; the default timeout is 10 s and at most 60 s; at most 5 redirects, followed only to URLs that are also granted (section 8) and never from https to http; TLS certificates are always verified; the default User-Agent is mm3/\<core version> \<module>/\<module version> and a User-Agent header passed by the module replaces it; addresses on loopback, link-local, unspecified or multicast ranges raise PermissionError unless the grant names that host literally.
 - MOD-23: Modules MUST use `ctx.http` for outbound HTTP and MUST NOT import the underlying library or rely on its types.
 
 ### 4.4 Mqtt
@@ -279,6 +280,7 @@ customElements.define("mm3-weather", WeatherElement);
 | this.setInterval, this.setTimeout | Timers cleared automatically when the element disconnects (MOD-35) |
 | this.request(name, payload, {target, timeout}) | Request on the bus, resolves with the reply (core 5.4) |
 | this.page | Current page id (core 6.9) |
+| this.location | Place of the mirror, {lat, lon, name} with name resolved to the element's locale, or null when engine.location is not set (core CORE-288) |
 
 ### 5.3 Rules
 
@@ -365,7 +367,7 @@ Privileged context members work only if the module declares the capability in `c
 | `mqtt.publish` | `ctx.mqtt.publish` | `mqtt.publish: [topic globs]` | Topics the instance may write |
 | `mqtt.subscribe` | `ctx.mqtt.subscribe` | `mqtt.subscribe: [topic globs]` | Topics the instance may read |
 | `ha.discovery` | `ctx.mqtt.ha_entity` | none (own device only) | Entities created |
-| `http.outbound` | `ctx.http` to external hosts | `http: [URL prefixes]` | Hosts contacted |
+| `http.outbound` | `ctx.http` to external hosts | `http: [URL prefixes or {prefix, ca}]` | Hosts contacted |
 | `system.power` | `ctx.system.request_suspend/resume` | none | Module can turn the display off |
 | `api.routes` | `ctx.router` | none (always under own prefix, token-protected) | Routes added |
 | `admin.extension` | `admin_element`, `admin_scripts` | none | Admin pages added |
@@ -377,7 +379,9 @@ Privileged context members work only if the module declares the capability in `c
   id: living_room
   grants:
     mqtt: { subscribe: ["zigbee2mqtt/living_*"], publish: ["zigbee2mqtt/living_light/set"] }
-    http: ["http://inverter.lan/api/"]
+    http:
+      - "http://inverter.lan/api/"
+      - { prefix: "https://nas.lan/api/", ca: nas-ca.pem }   # ca: PEM next to the main config file (core CORE-284)
 ```
 
 - MOD-70: A module MUST declare every capability it uses; using an undeclared one raises `PermissionError` (section 4.1).
@@ -694,6 +698,7 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
+| 1.0 rev 12 | 2026-10-30 | Aligned with core spec 0.19: ctx.location and this.location (§4, §5.2; core CORE-288); transport rules for ctx.http: TLS verification, User-Agent, address rule, redirects, 60 s timeout cap (§4.3; core CORE-282–287); grant entries {prefix, ca} (§8; core CORE-284). No MOD ids added, changed or removed |
 | 1.0 rev 11 | 2026-10-30 | §12.1 check options: the test kit's configuration and grants come from config\_model and the module's capabilities, and the optional \[tool.mm3.check\] table of pyproject.toml replaces them. No MOD ids added, changed or removed |
 | 1.0 rev 10 | 2026-10-30 | §12.2 contract checks aligned with the test kit: slow callbacks timed with a real clock instead of asyncio debug mode; the no-grants run applies only to modules declaring a capability with a grant scope; fresh instances reuse the test's HTTP mocks and responders. No MOD ids added, changed or removed |
 | 1.0 rev 9 | 2026-10-30 | Aligned with core spec 0.18: ctx.mqtt signatures, MqttMessage and Subscription, messages delivered through the instance inbox (§4, new §4.4; core CORE-100 changed); ha\_entity() left to a later revision; §12.2 h.respond handler shape and fake MQTT delivery through the inbox. No MOD ids added, changed or removed |
