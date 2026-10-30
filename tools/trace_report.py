@@ -14,9 +14,9 @@ A requirement is *implemented* when code cites it (``Implements:`` sections in
 Python, workflow, TOML and YAML files) and *tested* when a test name cites it
 (``test_core_21_...``, in ``tests/`` and ``modules/*/tests``). Waivers in
 ``docs/spec/milestones.toml`` count as covered. For every closed milestone the
-report lists requirements changed after ``done_at``, requirements not covered and stale citations; with
-``--issues`` it writes one issue per closed milestone (``open`` true when
-there is something to do).
+report lists requirements changed after ``done_at``, requirements not covered
+and stale citations; with ``--issues`` it writes one issue per closed
+milestone (``open`` true when there is something to do).
 """
 
 from __future__ import annotations
