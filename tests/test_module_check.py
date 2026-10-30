@@ -21,7 +21,7 @@ from mm3.core.modcheck.project import ToolError, load_project
 from mm3.core.modcheck.report import Check, Finding, Report, details, summary, to_junit
 from mm3.core.modcheck.runner import run_check
 from mm3.core.modcheck.static import bounded_to_one_major, run_static
-from module_projects import edit, write_greeting
+from module_projects import chromium_available, edit, write_greeting
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_ONLY = {"MOD-96", "MOD-97", "MOD-98", "MOD-99"}
@@ -333,11 +333,6 @@ def test_core_281_project_without_pyproject_is_a_tool_error(tmp_path: Path) -> N
         load_project(tmp_path)
 
 
-def test_core_281_harness_stage_is_not_in_this_version(proj: Path) -> None:
-    with pytest.raises(ToolError, match="browser harness"):
-        run_check(proj, "harness")
-
-
 def test_core_281_missing_uv_is_a_tool_error(proj: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(build_mod.shutil, "which", lambda _name: None)
     with pytest.raises(ToolError, match="uv is not on PATH"):
@@ -357,6 +352,9 @@ def test_core_279_missing_testing_extra_stops_the_check_with_exit_2(
 # --- end to end with uv -----------------------------------------------------------------
 
 needs_uv = pytest.mark.skipif(shutil.which("uv") is None, reason="uv is not installed")
+needs_chromium = pytest.mark.skipif(
+    not chromium_available(), reason="Chromium cannot start (set MM3_CHROMIUM)"
+)
 
 
 @pytest.fixture(scope="session")
@@ -391,6 +389,7 @@ def uv_env(find_links: Path, monkeypatch: pytest.MonkeyPatch) -> None:
 
 @needs_uv
 @pytest.mark.usefixtures("uv_env")
+@needs_chromium
 def test_core_281_compliant_module_passes_all_stages(
     proj: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
@@ -399,13 +398,14 @@ def test_core_281_compliant_module_passes_all_stages(
     out = capsys.readouterr().out
     assert "Static      36 passed, 0 failed, 0 warnings" in out
     assert "Test kit    17 passed, 0 failed" in out
+    assert "Harness     6 passed, 0 failed" in out
     assert "Result      COMPLIANT (API 1.0)" in out
     report = json.loads((proj / ".mm3" / "check-report.json").read_text())
     assert report["result"] == "compliant"
-    assert report["stages"] == ["static", "kit"]
+    assert report["stages"] == ["static", "kit", "harness"]
     assert report["module"] == "mm3-greeting"
     assert report["version"] == "1.0.0"
-    assert {c["category"] for c in report["checks"]} == {"static", "kit", "review"}
+    assert {c["category"] for c in report["checks"]} == {"static", "kit", "harness", "review"}
     assert ET.parse(junit).getroot().find("testsuite") is not None  # noqa: S314
 
 
@@ -429,6 +429,7 @@ def test_core_281_static_only_prints_json_and_exits_1_on_a_must(
 
 
 @needs_uv
+@needs_chromium  # the default run includes the harness stage, which needs a browser
 @pytest.mark.usefixtures("uv_env")
 def test_core_281_kit_finds_what_the_static_stage_cannot(
     proj: Path, capsys: pytest.CaptureFixture[str]
@@ -471,3 +472,10 @@ def test_core_281_a_failing_build_fails_mod_05_not_the_tool(
     po.write_text('msgid "HELLO"\nnot a po line\n', encoding="utf-8")
     assert main(["module", "check", str(proj), "--only", "static"]) == 1
     assert "FAIL MOD-05 [static] the wheel cannot be built" in capsys.readouterr().out
+
+
+def test_mod_53_64_65_81_82_rows_for_a_person_are_on_the_review_list() -> None:
+    from mm3.core.modcheck.report import review_checks
+
+    listed = {c.id for c in review_checks()}
+    assert {"MOD-53", "MOD-64", "MOD-65", "MOD-81", "MOD-82"} <= listed

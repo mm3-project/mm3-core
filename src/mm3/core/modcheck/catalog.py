@@ -2,11 +2,15 @@
 
 Engine-side rows (MOD-18, 20-22, 73, 90-92, 94) and the catalog rows
 (MOD-96 to 99, checked by the module index) are not listed. A row with
-several categories gets one report entry per category.
+several categories gets one report entry per category. MOD-53, 64, 65, 81 and
+82 have only a review entry: the list tells a person what to confirm.
 
 Implements:
     CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
-    -: Module Contract 1.0 rev 10, §11 Compliance checklist.
+    MOD-53: Module Contract 1.0 rev 11, §6.3 Layout and preview.
+    MOD-64, MOD-65: Module Contract 1.0 rev 11, §7 Internationalization.
+    MOD-81, MOD-82: Module Contract 1.0 rev 11, §9 Logging, health and errors.
+    -: Module Contract 1.0 rev 11, §11 Compliance checklist.
 """
 
 from __future__ import annotations

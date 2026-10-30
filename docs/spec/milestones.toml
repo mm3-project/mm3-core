@@ -106,12 +106,17 @@ requirements = [
 [[milestone]]
 number = 4
 name = "Test kit and module check"
-status = "not_started"
+status = "done"
+done_at = { core = "0.18", contract = "1.0 rev 11" }
 # Requirements settled in core spec 0.17 / contract 1.0 rev 8: engine clock and
 #   ctx.now() (CORE-278, MOD-28), testing extra (CORE-279), mm3-build hook
 #   (CORE-280), module check and new-module commands (CORE-281), notification
 #   and request declarations (MOD-29; MOD-24 and MOD-41 changed).
 # MOD-05: the compiled-catalog part relies on the mm3-build hook (CORE-280).
+# Shipped in PRs #32 (A), #34 (B), #36 (C) and D, with spec syncs #35 and #37
+#   (core 0.17 and 0.18, contract rev 8 to 11).
+# MOD-66 and MOD-73 have no row in contract section 11 (packaging and API
+#   policy, nothing a check can read); coverage lists them as open on purpose.
 requirements = [
   "CORE-278..281",
   "MOD-01..08", "MOD-10..17", "MOD-24..29", "MOD-30..37", "MOD-40..44", "MOD-51..54",

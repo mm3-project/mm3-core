@@ -97,7 +97,7 @@ class GreetingElement extends MirrorElement {
 customElements.define("mm3-greeting", GreetingElement);
 """
 
-CSS = ".greeting { font-size: 2em; }\n"
+CSS = ".greeting { font-size: 1.25em; margin: 0; overflow-wrap: anywhere; }\n"
 
 README = """\
 # mm3-greeting
@@ -186,3 +186,19 @@ def edit(path: Path, old: str, new: str) -> None:
 def dedent(text: str) -> str:
     """Return ``text`` dedented, for inline snippets in tests."""
     return textwrap.dedent(text)
+
+
+def chromium_available() -> bool:
+    """Whether Playwright can find a Chromium to start (``MM3_CHROMIUM`` or its own)."""
+    import os
+
+    exe = os.environ.get("MM3_CHROMIUM")
+    if exe:
+        return Path(exe).is_file()
+    try:
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            return Path(p.chromium.executable_path).is_file()
+    except Exception:  # any failure means no browser
+        return False

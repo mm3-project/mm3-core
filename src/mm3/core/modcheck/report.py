@@ -253,7 +253,7 @@ def summary(report: Report) -> str:
     for cat, label in labels:
         if cat not in report.stages:
             if cat == "harness" and {"static", "kit"} <= set(report.stages):
-                lines.append(f"{label:<11} not run (browser harness: milestone 4 part D)")
+                lines.append(f"{label:<11} not run")
             continue
         items = report.in_category(cat)
         passed = sum(c.status in ("pass", "suppressed") for c in items)
