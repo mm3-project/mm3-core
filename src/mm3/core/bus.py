@@ -9,6 +9,7 @@ Implements:
     CORE-05: Core spec 0.7, §3 Engine components.
     CORE-21..29: Core spec 0.9, §5.3 Routing rules.
     CORE-220, CORE-222: Core spec 0.7, §5.4 Request and reply.
+    CORE-100: Core spec 0.18, §11.1 Engine additions.
 """
 
 from __future__ import annotations
@@ -17,15 +18,47 @@ import asyncio
 import fnmatch
 from collections import deque
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from typing import Any, Protocol
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from mm3.core.logging import get_logger
 from mm3.messages import ClientMessage, Notification
+from mm3.mqtt import MqttHandler, MqttMessage
 
-__all__ = ["Bus", "BusEndpoint", "ClientChannel", "Inbox", "InboxItem", "NullClientChannel"]
+__all__ = [
+    "Bus",
+    "BusEndpoint",
+    "ClientChannel",
+    "Inbox",
+    "InboxItem",
+    "MqttDelivery",
+    "NullClientChannel",
+]
 
-InboxItem = Notification | ClientMessage
+
+@dataclass(frozen=True)
+class MqttDelivery:
+    """An MQTT message for one of the instance's subscriptions.
+
+    Queued in the instance inbox and handled like a notification: one at a
+    time, in arrival order, under the handler budget (CORE-100, CORE-28).
+
+    Attributes:
+        handler: The subscription's handler.
+        message: The message.
+        active: Whether the subscription is still active; a cancelled
+            subscription's queued messages are skipped.
+        trace: Trace id of the handling.
+    """
+
+    handler: MqttHandler
+    message: MqttMessage
+    active: Callable[[], bool]
+    trace: UUID = field(default_factory=uuid4)
+
+
+InboxItem = Notification | ClientMessage | MqttDelivery
 
 _log = get_logger(subsystem="bus")
 

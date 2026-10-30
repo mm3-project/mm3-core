@@ -1,12 +1,12 @@
 """``ModuleContext``: a module's only door into the engine.
 
 Provided so far: identity, ``now()``, messaging, state, tasks,
-``run_blocking``, the scheduler, storage, the logger, ``t``,
-``format_date``, ``format_number``, the current page and pages, and
-``layout`` (capability ``layout.control``). The remaining members of
-Module Contract section 4 (``http``, ``health``, ``mqtt``, ``system``,
-``router``) are added with their milestones (implementation plan 5, 6
-and 7).
+``run_blocking``, the scheduler, storage, the logger, ``health``, ``t``,
+``format_date``, ``format_number``, the current page and pages, ``http``
+and ``mqtt`` (checked against capabilities and grants; their transports
+arrive in milestones 5 and 7, the test kit fakes them) and ``layout``
+(capability ``layout.control``). ``system`` and ``router`` are added with
+their milestones (implementation plan 6 and 7).
 
 Implements:
     -: Module Contract 1.0 rev 6, §4 ModuleContext reference.
@@ -15,6 +15,9 @@ Implements:
     CORE-237, CORE-241: Core spec 0.14, §6.9 Pages and visibility.
     CORE-278: Core spec 0.17, §3.3 Scheduler.
     MOD-28: Module Contract 1.0 rev 8, §3.3 Rules.
+    -: Module Contract 1.0 rev 9, §4.3 HttpClient.
+    -: Module Contract 1.0 rev 9, §4.4 Mqtt.
+    MOD-85: Module Contract 1.0 rev 9, §9 Logging, health and errors.
 """
 
 from __future__ import annotations
@@ -28,6 +31,8 @@ from typing import Any, Literal, Protocol, TypeVar
 from uuid import UUID
 from zoneinfo import ZoneInfo
 
+from mm3.http import HttpClient
+from mm3.mqtt import Mqtt
 from mm3.scheduler import Scheduler
 
 __all__ = ["Layout", "Logger", "ModuleContext", "PageInfo", "Storage"]
@@ -108,6 +113,14 @@ class Layout(Protocol):
         ...
 
 
+class Health(Protocol):
+    """Extra fields of the instance health record (MOD-85)."""
+
+    def set(self, key: str, value: Any) -> None:
+        """Set a lower snake-case field to a JSON value; ``None`` removes it."""
+        ...
+
+
 class ModuleContext(Protocol):
     """Injected into ``MirrorModule.__init__``; valid until ``stop()`` returns.
 
@@ -181,6 +194,21 @@ class ModuleContext(Protocol):
     @property
     def log(self) -> Logger:
         """This instance's logger."""
+        ...
+
+    @property
+    def health(self) -> Health:
+        """Extra health fields (MOD-85)."""
+        ...
+
+    @property
+    def http(self) -> HttpClient:
+        """The MM3 HTTP client; needs ``http.outbound`` and ``grants.http`` (Contract 4.3)."""
+        ...
+
+    @property
+    def mqtt(self) -> Mqtt:
+        """MQTT on granted topics; needs ``mqtt.publish`` / ``mqtt.subscribe`` (Contract 4.4)."""
         ...
 
     async def send_notification(

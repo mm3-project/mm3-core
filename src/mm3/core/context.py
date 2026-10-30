@@ -17,12 +17,16 @@ Implements:
     CORE-211: Core spec 0.9, §6.3 Hot reload.
     CORE-278: Core spec 0.17, §3.3 Scheduler.
     MOD-28: Module Contract 1.0 rev 8, §3.3 Rules.
+    CORE-100: Core spec 0.18, §11.1 Engine additions.
+    MOD-85: Module Contract 1.0 rev 9, §9 Logging, health and errors.
 """
 
 from __future__ import annotations
 
 import asyncio
 import functools
+import json
+import re
 from collections.abc import Callable, Coroutine, Mapping, Sequence
 from concurrent.futures import Executor
 from dataclasses import dataclass, field
@@ -34,10 +38,13 @@ from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
 
 from mm3.context import PageInfo
-from mm3.core.bus import Bus, ClientChannel
+from mm3.core.bus import Bus, ClientChannel, MqttDelivery
 from mm3.core.clock import Clock
 from mm3.core.i18n.catalogs import I18n, format_date, format_number, locale_chain, substitute
 from mm3.core.logging import Logger, get_logger
+from mm3.core.services.grants import GrantSet
+from mm3.core.services.http import HttpTransport, InstanceHttp, UnavailableTransport
+from mm3.core.services.mqtt import InstanceMqtt, MqttBroker, NoBroker
 from mm3.core.services.scheduler import InstanceScheduler
 from mm3.core.services.storage import InstanceStorage
 from mm3.core.settings import Timeouts
@@ -118,6 +125,48 @@ class PageControl(Protocol):
         ...
 
 
+_HEALTH_KEY = re.compile(r"^[a-z][a-z0-9_]*$")
+
+
+class InstanceHealth:
+    """``ctx.health``: extra fields of the instance health record (MOD-85).
+
+    Args:
+        counters: The instance's counters, which hold the fields.
+        guard: Raises ``ContextClosedError`` once the context is closed.
+
+    Implements:
+        MOD-85: Module Contract 1.0 rev 9, §9 Logging, health and errors.
+        CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
+    """
+
+    def __init__(self, counters: InstanceCounters, guard: Callable[[], None]) -> None:
+        self._counters = counters
+        self._guard = guard
+
+    def set(self, key: str, value: Any) -> None:
+        """Set a health field, e.g. ``last_refresh`` or ``items``.
+
+        Args:
+            key: Lower snake-case field name.
+            value: JSON-serialisable value; ``None`` removes the field.
+
+        Raises:
+            ValueError: Bad key or value not JSON-serialisable.
+        """
+        self._guard()
+        if not _HEALTH_KEY.match(key):
+            raise ValueError(f"health field {key!r} is not lower snake case")
+        if value is None:
+            self._counters.health_fields.pop(key, None)
+            return
+        try:
+            json.dumps(value)
+        except (TypeError, ValueError):
+            raise ValueError(f"health field {key} is not JSON-serialisable") from None
+        self._counters.health_fields[key] = value
+
+
 class LayoutControl:
     """``ctx.layout``: hide and show other instances (CORE-241).
 
@@ -163,6 +212,7 @@ class InstanceCounters:
         last_out: Time the instance last sent a notification, reply or
             client message.
         deprecated_used: Deprecated members already reported (MOD-91).
+        health_fields: Extra health fields set with ``ctx.health.set`` (MOD-85).
     """
 
     handler_calls: int = 0
@@ -172,6 +222,7 @@ class InstanceCounters:
     durations: list[float] = field(default_factory=list)
     last_out: datetime | None = None
     deprecated_used: set[str] = field(default_factory=set)
+    health_fields: dict[str, Any] = field(default_factory=dict)
 
 
 class EngineContext:
@@ -194,10 +245,18 @@ class EngineContext:
         pages: Current page, pages and visibility control; ``None`` until
             the page service runs (one implicit page ``main``).
         capabilities: The module's declared capabilities.
+        i18n: Catalogs for ``t``.
+        engine_locale: Returns the current ``engine.locale``.
+        grants: Scopes granted to the instance (Contract section 8).
+        http_transport: Sends ``ctx.http`` requests (the test kit's fake in tests).
+        mqtt_broker: Broker connection behind ``ctx.mqtt``.
+        enqueue: Puts an MQTT delivery into the instance inbox.
+        on_denied: Called with a capability used but not declared (MOD-70).
 
     Implements:
-        -: Module Contract 1.0 rev 6, §4 ModuleContext reference.
+        -: Module Contract 1.0 rev 9, §4 ModuleContext reference.
         CORE-237, CORE-241: Core spec 0.14, §6.9 Pages and visibility.
+        CORE-100: Core spec 0.18, §11.1 Engine additions.
     """
 
     def __init__(
@@ -220,6 +279,11 @@ class EngineContext:
         capabilities: frozenset[str] = frozenset(),
         i18n: I18n | None = None,
         engine_locale: Callable[[], str] | None = None,
+        grants: GrantSet | None = None,
+        http_transport: HttpTransport | None = None,
+        mqtt_broker: MqttBroker | None = None,
+        enqueue: Callable[[MqttDelivery], None] | None = None,
+        on_denied: Callable[[str], None] | None = None,
     ) -> None:
         self._instance_id = instance_id
         self._module_name = module_name
@@ -244,6 +308,28 @@ class EngineContext:
         self._scheduler = InstanceScheduler(
             clock, timezone, self._run_job, self._spawn_job, self._log
         )
+        granted = grants or GrantSet()
+        self._grants = granted
+        self._http = InstanceHttp(
+            instance_id,
+            http_transport or UnavailableTransport(),
+            capabilities,
+            granted.http,
+            self._guard,
+            on_denied,
+        )
+        self._mqtt = InstanceMqtt(
+            instance_id,
+            mqtt_broker or NoBroker(),
+            capabilities,
+            granted.mqtt_publish,
+            granted.mqtt_subscribe,
+            enqueue or (lambda _item: None),
+            self._guard,
+            on_denied,
+        )
+        self._health = InstanceHealth(counters, self._guard)
+        self._on_denied = on_denied
 
     # --- engine side ----------------------------------------------------------
 
@@ -256,6 +342,7 @@ class EngineContext:
         """Close the context and cancel its jobs (MOD-22)."""
         self._closed = True
         self._scheduler.cancel_all()
+        self._mqtt.close()
 
     def update(
         self,
@@ -459,6 +546,29 @@ class EngineContext:
         return self._clock.wall().astimezone(self._timezone)
 
     @property
+    def http(self) -> InstanceHttp:
+        """The MM3 HTTP client (Contract 4.3); needs ``http.outbound`` and grants."""
+        self._guard()
+        return self._http
+
+    @property
+    def mqtt(self) -> InstanceMqtt:
+        """Publish and subscribe on granted topics (CORE-100, Contract 4.4)."""
+        self._guard()
+        return self._mqtt
+
+    @property
+    def health(self) -> InstanceHealth:
+        """Extra fields of the instance health record (MOD-85)."""
+        self._guard()
+        return self._health
+
+    @property
+    def grants(self) -> GrantSet:
+        """The scopes granted to this instance (engine side)."""
+        return self._grants
+
+    @property
     def timezone(self) -> ZoneInfo:
         """Engine time zone."""
         self._guard()
@@ -498,6 +608,8 @@ class EngineContext:
         """
         self._guard()
         if "layout.control" not in self._capabilities:
+            if self._on_denied is not None:
+                self._on_denied("layout.control")
             raise PermissionError("capability layout.control is not declared")
         if self._pages is None:
             raise RuntimeError("the page service is not running")

@@ -39,6 +39,7 @@ from mm3.core.config.records import (
     records_from_pydantic,
 )
 from mm3.core.registry import Registry
+from mm3.core.services.grants import GrantSet
 from mm3.core.supervisor import InstanceSpec
 
 __all__ = ["DEFAULT_CONFIG", "ConfigResult", "ResolvedInstance", "load_config", "validate"]
@@ -132,6 +133,7 @@ class ConfigResult:
                 module=i.module,
                 config=i.spec.config,
                 locale=i.spec.locale,
+                grants=GrantSet.from_config(i.spec.grants),
             )
             for i in self.instances
             if i.enabled
