@@ -1,0 +1,159 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HEADER"
+msgstr "Horloge"
+
+msgid "CFG_DISPLAY"
+msgstr "Affichage"
+
+msgid "CFG_DISPLAY_HELP"
+msgstr "Numérique, analogique ou les deux"
+
+msgid "CFG_SHOW_SECONDS"
+msgstr "Afficher les secondes"
+
+msgid "CFG_SHOW_SECONDS_HELP"
+msgstr "Affiche les secondes et la trotteuse"
+
+msgid "CFG_TIME_FORMAT"
+msgstr "Format de l'heure"
+
+msgid "CFG_TIME_FORMAT_HELP"
+msgstr "locale suit la langue ; 12 ou 24 heures"
+
+msgid "CFG_SHOW_DATE"
+msgstr "Afficher la date"
+
+msgid "CFG_SHOW_DATE_HELP"
+msgstr "Affiche la date sous l'heure"
+
+msgid "CFG_DATE_STYLE"
+msgstr "Style de la date"
+
+msgid "CFG_DATE_STYLE_HELP"
+msgstr "short, medium, long ou full"
+
+msgid "CFG_SHOW_WEEK"
+msgstr "Afficher le numéro de semaine"
+
+msgid "CFG_SHOW_WEEK_HELP"
+msgstr "Numéro de semaine ISO 8601"
+
+msgid "CFG_TIMEZONE"
+msgstr "Fuseau horaire"
+
+msgid "CFG_TIMEZONE_HELP"
+msgstr "Nom IANA remplaçant le fuseau du miroir pour cette horloge"
+
+msgid "CFG_ZONES"
+msgstr "Autres fuseaux horaires"
+
+msgid "CFG_ZONES_HELP"
+msgstr "Jusqu'à 4 fuseaux supplémentaires sous l'horloge"
+
+msgid "CFG_ZONE_TIMEZONE"
+msgstr "Fuseau horaire"
+
+msgid "CFG_ZONE_TIMEZONE_HELP"
+msgstr "Nom IANA, par exemple America/New_York"
+
+msgid "CFG_ZONE_LABEL"
+msgstr "Libellé"
+
+msgid "CFG_ZONE_LABEL_HELP"
+msgstr "Par défaut : la ville du nom du fuseau"
+
+msgid "CFG_FACE"
+msgstr "Cadran"
+
+msgid "CFG_FACE_HELP"
+msgstr "chiffres, repères ou aucun"
+
+msgid "CFG_SUN"
+msgstr "Soleil"
+
+msgid "CFG_SUN_HELP"
+msgstr "Affiche lever, coucher et durée du jour"
+
+msgid "CFG_MOON"
+msgstr "Lune"
+
+msgid "CFG_MOON_HELP"
+msgstr "Affiche phase, illumination, lever et coucher de la Lune"
+
+msgid "CFG_LOCATION"
+msgstr "Position"
+
+msgid "CFG_LOCATION_HELP"
+msgstr "Lieu pour le Soleil et la Lune ; par défaut la position du miroir"
+
+msgid "CFG_LAT"
+msgstr "Latitude"
+
+msgid "CFG_LAT_HELP"
+msgstr "Degrés, de -90 à 90"
+
+msgid "CFG_LON"
+msgstr "Longitude"
+
+msgid "CFG_LON_HELP"
+msgstr "Degrés, de -180 à 180"
+
+msgid "MOON_0"
+msgstr "Nouvelle lune"
+
+msgid "MOON_1"
+msgstr "Premier croissant"
+
+msgid "MOON_2"
+msgstr "Premier quartier"
+
+msgid "MOON_3"
+msgstr "Lune gibbeuse croissante"
+
+msgid "MOON_4"
+msgstr "Pleine lune"
+
+msgid "MOON_5"
+msgstr "Lune gibbeuse décroissante"
+
+msgid "MOON_6"
+msgstr "Dernier quartier"
+
+msgid "MOON_7"
+msgstr "Dernier croissant"
+
+msgid "SUNRISE"
+msgstr "Lever du soleil"
+
+msgid "SUNSET"
+msgstr "Coucher du soleil"
+
+msgid "DAY_LENGTH"
+msgstr "Durée du jour"
+
+msgid "DURATION"
+msgstr "{hours} h {minutes} min"
+
+msgid "MOONRISE"
+msgstr "Lever de la Lune"
+
+msgid "MOONSET"
+msgstr "Coucher de la Lune"
+
+msgid "POLAR_DAY"
+msgstr "Jour polaire : le Soleil ne se couche pas"
+
+msgid "POLAR_NIGHT"
+msgstr "Nuit polaire : le Soleil ne se lève pas"
+
+msgid "NO_LOCATION"
+msgstr "Définissez une position pour voir les heures du Soleil et de la Lune"
+
+msgid "DAY_OFFSET"
+msgstr "{days} j"
+
+msgid "WEEK"
+msgstr "Semaine {week}"

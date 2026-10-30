@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling", "mm3-build>=1.0,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mm3-clock"
+version = "1.0.0"
+description = "Digital and analog clock with world times, sun and moon for MM3"
+requires-python = ">=3.11"
+dependencies = ["mm3-core>=1.0,<2"]
+readme = "README.md"
+
+[project.entry-points."mm3.modules"]
+clock = "mm3_clock:ClockModule"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mm3_clock"]
+
+[tool.hatch.build.hooks.mm3-i18n]
+
+[tool.mm3]
+category = "clock"
+screenshot = "docs/screenshot.png"
+
+# Time zone names are checked against the tz database, so the sampler cannot invent one.
+[tool.mm3.check]
+config = {}

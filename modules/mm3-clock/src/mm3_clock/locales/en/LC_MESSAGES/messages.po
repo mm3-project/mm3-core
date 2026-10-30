@@ -1,0 +1,159 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HEADER"
+msgstr "Clock"
+
+msgid "CFG_DISPLAY"
+msgstr "Display"
+
+msgid "CFG_DISPLAY_HELP"
+msgstr "Digital, analog or both"
+
+msgid "CFG_SHOW_SECONDS"
+msgstr "Show seconds"
+
+msgid "CFG_SHOW_SECONDS_HELP"
+msgstr "Show seconds and the second hand"
+
+msgid "CFG_TIME_FORMAT"
+msgstr "Time format"
+
+msgid "CFG_TIME_FORMAT_HELP"
+msgstr "locale follows the language; 12 or 24 hours"
+
+msgid "CFG_SHOW_DATE"
+msgstr "Show date"
+
+msgid "CFG_SHOW_DATE_HELP"
+msgstr "Show the date under the time"
+
+msgid "CFG_DATE_STYLE"
+msgstr "Date style"
+
+msgid "CFG_DATE_STYLE_HELP"
+msgstr "short, medium, long or full"
+
+msgid "CFG_SHOW_WEEK"
+msgstr "Show week number"
+
+msgid "CFG_SHOW_WEEK_HELP"
+msgstr "ISO 8601 week number"
+
+msgid "CFG_TIMEZONE"
+msgstr "Time zone"
+
+msgid "CFG_TIMEZONE_HELP"
+msgstr "IANA name replacing the mirror's time zone for this clock"
+
+msgid "CFG_ZONES"
+msgstr "Other time zones"
+
+msgid "CFG_ZONES_HELP"
+msgstr "Up to 4 extra time zones under the clock"
+
+msgid "CFG_ZONE_TIMEZONE"
+msgstr "Time zone"
+
+msgid "CFG_ZONE_TIMEZONE_HELP"
+msgstr "IANA name, for example America/New_York"
+
+msgid "CFG_ZONE_LABEL"
+msgstr "Label"
+
+msgid "CFG_ZONE_LABEL_HELP"
+msgstr "Defaults to the city in the time zone name"
+
+msgid "CFG_FACE"
+msgstr "Clock face"
+
+msgid "CFG_FACE_HELP"
+msgstr "numbers, ticks or none"
+
+msgid "CFG_SUN"
+msgstr "Sun"
+
+msgid "CFG_SUN_HELP"
+msgstr "Show sunrise, sunset and day length"
+
+msgid "CFG_MOON"
+msgstr "Moon"
+
+msgid "CFG_MOON_HELP"
+msgstr "Show the phase, illumination, moonrise and moonset"
+
+msgid "CFG_LOCATION"
+msgstr "Location"
+
+msgid "CFG_LOCATION_HELP"
+msgstr "Place for sun and moon; defaults to the mirror's location"
+
+msgid "CFG_LAT"
+msgstr "Latitude"
+
+msgid "CFG_LAT_HELP"
+msgstr "Degrees, -90 to 90"
+
+msgid "CFG_LON"
+msgstr "Longitude"
+
+msgid "CFG_LON_HELP"
+msgstr "Degrees, -180 to 180"
+
+msgid "MOON_0"
+msgstr "New moon"
+
+msgid "MOON_1"
+msgstr "Waxing crescent"
+
+msgid "MOON_2"
+msgstr "First quarter"
+
+msgid "MOON_3"
+msgstr "Waxing gibbous"
+
+msgid "MOON_4"
+msgstr "Full moon"
+
+msgid "MOON_5"
+msgstr "Waning gibbous"
+
+msgid "MOON_6"
+msgstr "Last quarter"
+
+msgid "MOON_7"
+msgstr "Waning crescent"
+
+msgid "SUNRISE"
+msgstr "Sunrise"
+
+msgid "SUNSET"
+msgstr "Sunset"
+
+msgid "DAY_LENGTH"
+msgstr "Day length"
+
+msgid "DURATION"
+msgstr "{hours} h {minutes} min"
+
+msgid "MOONRISE"
+msgstr "Moonrise"
+
+msgid "MOONSET"
+msgstr "Moonset"
+
+msgid "POLAR_DAY"
+msgstr "Polar day: the sun does not set"
+
+msgid "POLAR_NIGHT"
+msgstr "Polar night: the sun does not rise"
+
+msgid "NO_LOCATION"
+msgstr "Set a location to see sun and moon times"
+
+msgid "DAY_OFFSET"
+msgstr "{days} d"
+
+msgid "WEEK"
+msgstr "Week {week}"
