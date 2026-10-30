@@ -17,6 +17,7 @@ Implements:
     -: Module Contract 1.0 rev 11, §12.2 mm3.testing kit.
     CORE-63: Core spec 0.18, §10.1 Security.
     CORE-279: Core spec 0.18, §10.2 Packaging and deployment.
+    CORE-288: Core spec 0.19, §6.2 Rules.
 """
 
 from __future__ import annotations
@@ -146,6 +147,9 @@ class BrowserHarness:
             ``this.config`` (public form: no secrets).
         locale: Initial locale.
         timezone: IANA time zone the element formats dates in.
+        location: ``engine.location`` as ``{"lat": .., "lon": .., "name": ..}``
+            (``name`` text or per-language mapping); the element reads it as
+            ``this.location``. ``None`` when unset.
         preview: Mount as in the admin live preview (``this.preview``).
         chromium: Path of a Chromium executable; default ``MM3_CHROMIUM`` or
             Playwright's own.
@@ -161,6 +165,7 @@ class BrowserHarness:
         config: Mapping[str, Any] | None = None,
         locale: str = "en",
         timezone: str = "UTC",
+        location: Mapping[str, Any] | None = None,
         preview: bool = False,
         chromium: str | None = None,
     ) -> None:
@@ -170,6 +175,7 @@ class BrowserHarness:
         self.config = dict(config or {})
         self.locale = locale
         self.timezone = timezone
+        self.location = dict(location) if location is not None else None
         self.preview = preview
         self.chromium = chromium or os.environ.get("MM3_CHROMIUM") or None
         self.stray_requests: list[str] = []
@@ -266,6 +272,7 @@ class BrowserHarness:
             "config": self.config,
             "locale": self.locale,
             "timezone": self.timezone,
+            "location": self.location,
             "preview": self.preview,
             "catalog": catalog_for(m, self.locale),
         }

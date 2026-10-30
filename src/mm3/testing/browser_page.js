@@ -118,6 +118,8 @@ window.mm3test = {
       preview: info.preview,
       page: "",
       timezone: info.timezone,
+      location: info.location,
+      engineLocale: info.locale,
       catalog: info.catalog,
     });
     fitBox.append(el);

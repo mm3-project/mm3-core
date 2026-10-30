@@ -10,7 +10,8 @@ notifications to browsers, the client channel through which backends reach
 their own elements, and the shell side of the page service.
 
 Implements:
-    CORE-246, CORE-271: Core spec 0.15, §5.6 WebSocket protocol.
+    CORE-246, CORE-271: Core spec 0.19, §5.6 WebSocket protocol.
+    CORE-288: Core spec 0.19, §6.2 Rules.
     CORE-247, CORE-248, CORE-249, CORE-251: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-275, CORE-276: Core spec 0.14, §5.6 WebSocket protocol.
@@ -211,7 +212,7 @@ class ClientHub:
         hello_timeout: Seconds to wait for ``hello`` (CORE-273).
 
     Implements:
-        CORE-246, CORE-271, CORE-275, CORE-276: Core spec 0.15, §5.6 WebSocket protocol.
+        CORE-246, CORE-271, CORE-275, CORE-276: Core spec 0.19, §5.6 WebSocket protocol.
         CORE-247, CORE-248, CORE-249: Core spec 0.13, §5.6 WebSocket protocol.
         CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     """
@@ -339,7 +340,7 @@ class ClientHub:
         """
         if self.pages is not None:
             self.pages.reload(result)
-        shell_keys = {"timezone", "input", "layout"}
+        shell_keys = {"timezone", "location", "input", "layout"}
         rebuild = bool(
             plan.stop
             or plan.replace
@@ -517,7 +518,7 @@ class ClientHub:
             endpoint: ``mirror`` for ``/ws``, ``admin`` for ``/admin/preview/ws``.
 
         Implements:
-            CORE-246, CORE-247: Core spec 0.15, §5.6 WebSocket protocol.
+            CORE-246, CORE-247: Core spec 0.19, §5.6 WebSocket protocol.
             CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
         """
         await ws.accept(headers=await self._refresh_display_cookie(ws, endpoint))
@@ -555,6 +556,7 @@ class ClientHub:
             "pages": view.pages,
             "locale": view.locale,
             "timezone": view.timezone,
+            "location": view.location,
             "touch": view.touch,
             "custom_css": view.custom_css,
             "instances": [i.welcome_entry(self.status(i.id)) for i in view.instances],

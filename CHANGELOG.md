@@ -40,6 +40,17 @@ separately under **Module API** in each release (Module Contract, section 10).
   `ModuleHarness(location=...)` sets it in tests. `httpcore` is now a direct
   dependency. The shell side (`welcome.location`, `this.location`) follows
   with part B.
+- Milestone 5 part B: the shell side of `engine.location` and the reference
+  module layout. `welcome.location` carries `{lat, lon, name}` (the name as
+  written) and a change of `engine.location` resyncs the shells (CORE-246,
+  CORE-275, CORE-288); `this.location` gives an element the same shape with
+  the name resolved along its locale chain, and
+  `BrowserHarness(location=...)` sets it in tests. `modules/` holds the
+  reference modules (CORE-289): `mm3-greeting`, the code of Module Contract
+  section 13 with catalogs in five languages, its own tests and a screenshot;
+  CI has a job per module that runs `mm3 module check` and the module's tests.
+  `tools/trace_report.py` and `tools/check_spec_refs.py` read `modules/*/src`
+  and `modules/*/tests`. Tests name MOD-23 (no outbound HTTP library import).
 - Milestone 4 part D: the browser harness and `mm3 new-module` (closes
   milestone 4). `mm3.testing.BrowserHarness` loads a module's element into a
   stand-alone shell page in Chromium (Playwright; `MM3_CHROMIUM` selects the

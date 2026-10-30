@@ -8,7 +8,7 @@ next engine restart; and whether custom.css changed.
 Implements:
     CORE-02: Core spec 0.9, §3 Engine components.
     -: Core spec 0.9, §6.3 Hot reload.
-    CORE-201: Core spec 0.11, §6.2 Rules.
+    CORE-201: Core spec 0.19, §6.2 Rules.
     CORE-216: Core spec 0.11, §6.8 Configuration history, undo and redo.
 """
 
@@ -196,7 +196,7 @@ def plan_reload(old: ConfigResult, new: ConfigResult) -> ReloadPlan:
 
     Implements:
         -: Core spec 0.9, §6.3 Hot reload.
-        CORE-201: Core spec 0.11, §6.2 Rules.
+        CORE-201: Core spec 0.19, §6.2 Rules.
     """
     if old.config is None or new.config is None:
         raise ValueError("both configurations must be valid")

@@ -1,0 +1,31 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "GOOD_MORNING"
+msgstr "Bonjour"
+
+msgid "GOOD_MORNING_NAME"
+msgstr "Bonjour, {name}"
+
+msgid "GOOD_AFTERNOON"
+msgstr "Bon après-midi"
+
+msgid "GOOD_AFTERNOON_NAME"
+msgstr "Bon après-midi, {name}"
+
+msgid "GOOD_EVENING"
+msgstr "Bonsoir"
+
+msgid "GOOD_EVENING_NAME"
+msgstr "Bonsoir, {name}"
+
+msgid "CFG_NAME"
+msgstr "Nom"
+
+msgid "CFG_NAME_HELP"
+msgstr "Nom facultatif affiché après le message d'accueil"
+
+msgid "HEADER"
+msgstr "Salutation"
+

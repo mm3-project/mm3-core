@@ -8,7 +8,8 @@ CORE-101), the version of its catalog URL, its script and style URLs, its
 appearance and its status.
 
 Implements:
-    CORE-246: Core spec 0.15, §5.6 WebSocket protocol.
+    CORE-246: Core spec 0.19, §5.6 WebSocket protocol.
+    CORE-288: Core spec 0.19, §6.2 Rules.
     CORE-274: Core spec 0.14, §5.6 WebSocket protocol.
 """
 
@@ -164,6 +165,9 @@ class ShellView:
         pages: ``[{id, title}]`` in page order, titles resolved for ``locale``.
         locale: The engine locale.
         timezone: The engine time zone (CORE-266).
+        location: ``engine.location`` as ``{lat, lon, name}`` with ``name`` as
+            written (text or per-language mapping, resolved in the browser per
+            element), or ``None`` (CORE-288).
         touch: ``engine.input.touch`` (CORE-103).
         custom_css: Version of ``/custom.css``, or ``None`` without one (CORE-262).
         instances: Instances with a front-end element, in configuration order.
@@ -175,6 +179,7 @@ class ShellView:
     pages: list[dict[str, str]]
     locale: str
     timezone: str = "UTC"
+    location: Mapping[str, Any] | None = None
     touch: bool = False
     custom_css: str | None = None
     instances: list[ShellInstance] = field(default_factory=list)
@@ -247,7 +252,7 @@ def shell_view(
         ValueError: The configuration is not valid.
 
     Implements:
-        CORE-246: Core spec 0.15, §5.6 WebSocket protocol.
+        CORE-246: Core spec 0.19, §5.6 WebSocket protocol.
     """
     config = result.config
     if config is None or result.layout is None:
@@ -325,11 +330,23 @@ def shell_view(
         pages,
         locale,
         timezone=config.engine.timezone,
+        location=_location_entry(config.engine.location),
         touch=config.engine.input.touch,
         custom_css=content_version(custom) if custom is not None else None,
         instances=instances,
         files=files,
     )
+
+
+def _location_entry(place: Any) -> dict[str, Any] | None:
+    """The ``location`` entry of ``welcome`` (CORE-246, CORE-288)."""
+    if place is None:
+        return None
+    return {
+        "lat": place.lat,
+        "lon": place.lon,
+        "name": place.name.value if place.name is not None else None,
+    }
 
 
 def cached_view(

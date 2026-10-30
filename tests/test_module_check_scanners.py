@@ -256,3 +256,34 @@ def test_core_281_config_model_must_subclass_module_config() -> None:
     facts = find_class(trees, "M")
     assert facts is not None
     assert [m for m, _ in config_findings(trees, facts, None)] == ["MOD-45"]
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "import httpx",
+        "from httpx import AsyncClient",
+        "import requests",
+        "from requests.adapters import HTTPAdapter",
+        "import aiohttp",
+        "import urllib.request",
+        "from urllib import request",
+        "import http.client",
+        "import urllib3",
+    ],
+)
+def test_mod_23_importing_an_http_library_is_flagged(src: str) -> None:
+    assert py_ids(src) == ["MOD-23"]
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "async def f(ctx):\n    return await ctx.http.get('https://x/')",
+        "from urllib.parse import urljoin",
+        "import json\nimport ssl",
+        "from . import httpx_helpers",
+    ],
+)
+def test_mod_23_ctx_http_and_non_client_imports_pass(src: str) -> None:
+    assert py_ids(src) == []

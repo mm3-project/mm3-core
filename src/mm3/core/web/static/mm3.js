@@ -12,6 +12,28 @@ export { html, svg, nothing };
 const BIND = Symbol("mm3.bind");
 export const bind = BIND;
 
+/**
+ * `this.location` (CORE-288): `{lat, lon, name}` or null. The name is resolved along
+ * the locale chain of core spec 8.2: the element's locale, the engine locale, each
+ * followed by its base language, then `en`; otherwise the first entry.
+ */
+function placeOf(place, locale, engineLocale) {
+  if (!place) return null;
+  let name = place.name ?? null;
+  if (name !== null && typeof name === "object") {
+    const byTag = new Map(Object.entries(name).map(([k, v]) => [k.toLowerCase(), v]));
+    const chain = [];
+    for (const tag of [locale, engineLocale, "en"]) {
+      if (!tag) continue;
+      const lower = String(tag).toLowerCase();
+      for (const t of [lower, lower.split("-")[0]]) if (!chain.includes(t)) chain.push(t);
+    }
+    const hit = chain.find((t) => byTag.has(t));
+    name = hit !== undefined ? byTag.get(hit) : (Object.values(name)[0] ?? null);
+  }
+  return { lat: place.lat, lon: place.lon, name };
+}
+
 /** Base class of every module element. The shell binds it to its instance. */
 export class MirrorElement extends HTMLElement {
   constructor() {
@@ -46,6 +68,7 @@ export class MirrorElement extends HTMLElement {
     this.preview = info.preview;
     this.page = info.page;
     this.timezone = info.timezone;
+    this.location = placeOf(info.location, info.locale, info.engineLocale);
     this.catalog = info.catalog || null;
   }
 

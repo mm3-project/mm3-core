@@ -310,6 +310,8 @@ async function addCell(info) {
     preview: mode === "preview",
     page: welcome.page,
     timezone: welcome.timezone,
+    location: welcome.location,
+    engineLocale: welcome.locale,
     catalog,
   });
   fitBox.append(el);
