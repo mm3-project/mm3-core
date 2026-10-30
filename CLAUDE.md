@@ -1,7 +1,7 @@
 # Notes for Claude
 
 - Specs are authoritative: `docs/spec/README.md` links the Core Engine
-  Specification (CORE-xx, WGT-xx) and the Module Contract (MOD-xx).
+  Specification (CORE-xx, WGT-xx, CLK-xx, WTH-xx) and the Module Contract (MOD-xx).
 - The full project rules live in the claude.ai Project "Magic Mirror 3" as
   `claude/mm3-rules.md`; follow them.
 - This repository is the core engine (`mm3-core`). Modules other than the
