@@ -3,14 +3,14 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.17"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17"]
+version = "0.18"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18"]
 
 [[spec]]
 name = "Module Contract"
 file = "contract.md"
-version = "1.0 rev 8"
-versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7", "1.0 rev 8"]
+version = "1.0 rev 9"
+versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7", "1.0 rev 8", "1.0 rev 9"]
 
 [[requirement]]
 id = "CORE-01"
@@ -707,9 +707,9 @@ id = "CORE-100"
 spec = "Core spec"
 section = "11.1"
 title = "Engine additions"
-hash = "1981c63198fe"
+hash = "d5c81e59424e"
 introduced_in = "0.1"
-changed_in = "0.1"
+changed_in = "0.18"
 status = "active"
 
 [[requirement]]

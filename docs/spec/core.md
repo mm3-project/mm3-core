@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.17 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.18 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -1158,7 +1158,7 @@ Users build their own mirror widgets in the admin UI from graphical elements bou
 
 These are generic, so any module may use them.
 
-- CORE-100: `ctx.mqtt.subscribe(filter, handler)` returns a `Subscription`, cancelled when the instance stops. Subscribe and publish are allowed only on topics matching the instance's `grants.mqtt.subscribe` / `grants.mqtt.publish` glob lists; default is deny.
+- CORE-100: `await ctx.mqtt.subscribe(filter, handler, *, qos=0)` returns a `Subscription`, cancelled when the instance stops; `await ctx.mqtt.publish(topic, payload, *, qos=0, retain=False)` publishes a mapping as JSON, a string as UTF-8 and bytes as they are. Messages for a subscription are queued in the instance inbox and handled like notifications: one at a time, in arrival order, under the handler budget (CORE-28, CORE-193). Subscribe and publish are allowed only on topics matching the instance's `grants.mqtt.subscribe` / `grants.mqtt.publish` glob lists; default is deny. Signatures, `MqttMessage` and `Subscription`: Module Contract §4.4.
 - CORE-101: Config type `LocalizedText` (`mm3.config`) accepts a string, the same in every language, or a non-empty map from BCP 47 tags to strings (`{en: …, it: …}`); an invalid tag is an error. It resolves through the locale chain (8.2); if no tag of the chain is present, the first entry in file order is used. Backend code calls `value.resolve(ctx.locale)`. In the public config sent to browsers the engine replaces each `LocalizedText` with its resolved string for that element's locale, and sends the config again when the locale changes. The form view shows one field per shipped locale; a missing `en` is a validation warning.
 - CORE-102: A module MAY declare `admin_element` and `admin_scripts`; these load only inside the admin UI on the admin listener and get an authenticated API helper. The builder (11.7) is such an extension.
 - CORE-103: With `engine.input.touch: true` the shell enables pointer events on module elements; user input reaches the backend only through `this.send()`. Preview clients never send input (CORE-99).
@@ -1286,6 +1286,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.18 | 2026-10-30 | ctx.mqtt for the test kit: async publish and subscribe signatures, payload encoding, messages delivered through the instance inbox under the handler budget (CORE-100 changed); details in Module Contract 1.0 rev 9 §4.4 |
 | 0.17 | 2026-10-30 | Milestone 4 tooling settled: one engine clock for the scheduler, budgets and ctx.now(), virtual in mm3.testing (CORE-278 added); mm3-core\[testing\] extra (CORE-279 added); mm3-build with the mm3-i18n build hook (CORE-280 added); mm3 module check and mm3 new-module --kind (CORE-281 added); now() in the 4.2 context table; mm3-build added to 1.2 and 10.2; CLI list updated |
 | 0.16 | 2026-10-29 | Kiosk details settled: agent key in an Authorization Bearer header, 4403 otherwise (CORE-268 changed); outputs.current and mode choice by the agent (CORE-277 changed); applied mode re-validates the running configuration, resync and CORE\_DISPLAY\_CHANGED (CORE-146 changed); wlr-randr --json and the shipped unit file with mm3 kiosk unit (CORE-143 changed); websockets approved for the kiosk agent (1.2) |
 | 0.15 | 2026-10-29 | i18n details settled: merged catalog at /i18n/\<instance>.json, its version, locale packages per module or mm3 (CORE-264 changed); mm3 i18n check fails on compiled files that do not match their .po, backends read messages.json (CORE-263 changed); date styles and backend formatting (CORE-266 changed); per-instance locale and touch flag in welcome (CORE-246 changed) for element-owned swipes (CORE-235 changed) |
