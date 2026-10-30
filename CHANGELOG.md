@@ -9,6 +9,24 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Milestone 4 part C: `mm3 module check <path>` (CORE-281, Module Contract 12.1).
+  It builds the module's wheel with `uv build`, installs it in a temporary venv
+  with the running `mm3-core[testing]`, and runs the static checks and the test
+  kit; `--only static|kit` limits the run, `--format json` and `--junit <file>`
+  write machine-readable results, and `.mm3/check-report.json` is always
+  written. Exit code 0 means compliant, 1 a MUST failed (a wheel that does not
+  build fails MOD-05), 2 the tool could not run (no `uv`, missing testing extra,
+  engine not installable). Static checks read the source and the built wheel
+  without importing the module: Python by AST and the JavaScript under
+  `static/` by an in-house tokenizer for MOD-01–05, 07, 08, 11, 12, 17, 23, 24,
+  28–33, 35, 37, 40, 41, 44–47, 52, 60–63, 67, 70, 71, 80 and 86; the 17 kit rows
+  run in the venv; the review list names the rows a person confirms.
+  `# mm3: allow MOD-xx <reason>` (`//` in JavaScript) silences a SHOULD
+  finding and is listed in the report, with no effect on a MUST. The kit
+  builds its configuration from the module's `config_model` and opens the
+  grants its capabilities need; `[tool.mm3.check] config = {...}, grants = {...}`
+  in `pyproject.toml` overrides both. The browser harness (MOD-32 CSP, 34, 36,
+  51, 54, 84) follows in part D. `packaging` is now a dependency.
 - Milestone 4 part B: the `mm3.testing` kit (Contract 12.2, core spec 0.18,
   Module Contract 1.0 rev 9). `ModuleHarness` runs one instance on a real
   engine with fakes: `h.http` (mocks, unmocked calls reported) and `h.mqtt`
