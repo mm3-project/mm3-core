@@ -8,8 +8,9 @@ The modules that ship with mm3-core and prove the Module Contract end to end
 | Directory | Module | Published |
 | --- | --- | --- |
 | `mm3-greeting` | The example of Module Contract section 13 | no |
+| `mm3-clock` | Digital and analog clock, time zones, sun and moon (CLK-01..08) | yes |
 
-`mm3-clock` and `mm3-weather` follow in the same directory (milestone 5).
+`mm3-weather` follows in the same directory (milestone 5).
 Module tests run against the source tree:
 
 ```sh

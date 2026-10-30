@@ -51,6 +51,22 @@ separately under **Module API** in each release (Module Contract, section 10).
   CI has a job per module that runs `mm3 module check` and the module's tests.
   `tools/trace_report.py` and `tools/check_spec_refs.py` read `modules/*/src`
   and `modules/*/tests`. Tests name MOD-23 (no outbound HTTP library import).
+- Milestone 5 part C: `mm3-clock` (CLK-01..08), a front-end-only module in
+  `modules/mm3-clock`. Digital and analog display (SVG face with ticks,
+  numbers or none), 12/24-hour or locale format, date styles, ISO 8601 week
+  number, a time zone per clock and up to four extra zones with a "+1 d"
+  marker, always in the mirror's time zone through `fmtDate` (CLK-01..04).
+  Updates are scheduled at the next second or minute boundary with
+  `this.setTimeout`, so nothing runs between minute boundaries when seconds
+  are off (CLK-05). Sunrise, sunset, day length, moon phase, illumination,
+  moonrise and moonset are computed in the browser by `astro.js` (NOAA solar
+  equations, Meeus low-precision lunar series, no library), with localized
+  polar day and night text and a hint when no location is set (CLK-06). The
+  tests run `astro.js` in Node against a 28-row table (7 places, 4 dates,
+  one above 60 degrees, one in the southern hemisphere) generated with PyEphem:
+  sun within 2 minutes, moon within 10, illumination within 1 point (CLK-07).
+  Catalogs in five languages with the eight moon phase names (CLK-08). CI
+  checks it in the `modules` job.
 - Milestone 4 part D: the browser harness and `mm3 new-module` (closes
   milestone 4). `mm3.testing.BrowserHarness` loads a module's element into a
   stand-alone shell page in Chromium (Playwright; `MM3_CHROMIUM` selects the

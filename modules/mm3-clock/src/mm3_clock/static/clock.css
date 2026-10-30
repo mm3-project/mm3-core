@@ -1,0 +1,30 @@
+/* Implements CLK-04 (Core spec 0.19, §9.4 Reference modules) */
+:host { display: block; }
+.clock { display: flex; flex-direction: column; align-items: center; gap: 0.4em; min-width: 0; max-width: 100%; box-sizing: border-box; }
+.main { display: flex; align-items: center; justify-content: center; gap: 0.6em; min-width: 0; max-width: 100%; }
+.main.column { flex-direction: column; }
+.main.row { flex-direction: row; }
+.digital { text-align: center; min-width: 0; }
+.time { font-size: min(var(--mm3-size-large), calc(var(--w) * 0.15)); line-height: 1.05; color: var(--mm3-color-bright); font-variant-numeric: tabular-nums; }
+.date { font-size: min(var(--mm3-size-small), calc(var(--w) * 0.08)); color: var(--mm3-color-fg); overflow-wrap: anywhere; }
+.week { font-size: var(--mm3-size-xsmall); color: var(--mm3-color-dimmed); }
+.zones { list-style: none; margin: 0.4em 0 0; padding: 0; font-size: var(--mm3-size-xsmall); display: grid; gap: 0.15em; }
+.zones li { display: flex; gap: 0.6em; justify-content: space-between; align-items: baseline; }
+.zones .time { font-size: var(--mm3-size-small); color: var(--mm3-color-fg); }
+.offset { color: var(--mm3-color-dimmed); }
+.label { color: var(--mm3-color-dimmed); }
+.face { width: var(--face); height: var(--face); flex: 0 1 auto; min-width: 0; }
+.face svg { display: block; width: 100%; height: 100%; }
+.rim { fill: none; stroke: var(--mm3-color-muted); stroke-width: 1; }
+.tick { stroke: var(--mm3-color-dimmed); stroke-width: 0.8; }
+.tick.major { stroke: var(--mm3-color-fg); stroke-width: 1.6; }
+.number { fill: var(--mm3-color-fg); font-size: 9px; text-anchor: middle; dominant-baseline: central; font-family: var(--mm3-font-family); }
+.hand { stroke-linecap: round; }
+.hand.hour { stroke: var(--mm3-color-bright); stroke-width: 3; }
+.hand.minute { stroke: var(--mm3-color-bright); stroke-width: 2; }
+.hand.second { stroke: var(--mm3-color-accent); stroke-width: 0.9; }
+.pin { fill: var(--mm3-color-accent); }
+.sky { list-style: none; margin: 0; padding: 0; font-size: var(--mm3-size-xsmall); color: var(--mm3-color-fg); display: grid; gap: 0.1em; width: 100%; max-width: 20em; }
+.sky li { display: flex; justify-content: space-between; gap: 0.8em; }
+.sky .polar { justify-content: center; }
+.hint { margin: 0; font-size: var(--mm3-size-xsmall); color: var(--mm3-color-dimmed); text-align: center; }

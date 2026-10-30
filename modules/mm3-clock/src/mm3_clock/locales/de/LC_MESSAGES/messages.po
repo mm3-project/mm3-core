@@ -1,0 +1,159 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HEADER"
+msgstr "Uhr"
+
+msgid "CFG_DISPLAY"
+msgstr "Anzeige"
+
+msgid "CFG_DISPLAY_HELP"
+msgstr "Digital, analog oder beides"
+
+msgid "CFG_SHOW_SECONDS"
+msgstr "Sekunden anzeigen"
+
+msgid "CFG_SHOW_SECONDS_HELP"
+msgstr "Zeigt Sekunden und den Sekundenzeiger"
+
+msgid "CFG_TIME_FORMAT"
+msgstr "Zeitformat"
+
+msgid "CFG_TIME_FORMAT_HELP"
+msgstr "locale folgt der Sprache; 12 oder 24 Stunden"
+
+msgid "CFG_SHOW_DATE"
+msgstr "Datum anzeigen"
+
+msgid "CFG_SHOW_DATE_HELP"
+msgstr "Zeigt das Datum unter der Uhrzeit"
+
+msgid "CFG_DATE_STYLE"
+msgstr "Datumsformat"
+
+msgid "CFG_DATE_STYLE_HELP"
+msgstr "short, medium, long oder full"
+
+msgid "CFG_SHOW_WEEK"
+msgstr "Kalenderwoche anzeigen"
+
+msgid "CFG_SHOW_WEEK_HELP"
+msgstr "ISO-8601-Kalenderwoche"
+
+msgid "CFG_TIMEZONE"
+msgstr "Zeitzone"
+
+msgid "CFG_TIMEZONE_HELP"
+msgstr "IANA-Name, ersetzt die Zeitzone des Spiegels für diese Uhr"
+
+msgid "CFG_ZONES"
+msgstr "Weitere Zeitzonen"
+
+msgid "CFG_ZONES_HELP"
+msgstr "Bis zu 4 zusätzliche Zeitzonen unter der Uhr"
+
+msgid "CFG_ZONE_TIMEZONE"
+msgstr "Zeitzone"
+
+msgid "CFG_ZONE_TIMEZONE_HELP"
+msgstr "IANA-Name, zum Beispiel America/New_York"
+
+msgid "CFG_ZONE_LABEL"
+msgstr "Bezeichnung"
+
+msgid "CFG_ZONE_LABEL_HELP"
+msgstr "Standard: die Stadt aus dem Zonennamen"
+
+msgid "CFG_FACE"
+msgstr "Zifferblatt"
+
+msgid "CFG_FACE_HELP"
+msgstr "Zahlen, Striche oder keine"
+
+msgid "CFG_SUN"
+msgstr "Sonne"
+
+msgid "CFG_SUN_HELP"
+msgstr "Zeigt Sonnenauf- und -untergang und Tageslänge"
+
+msgid "CFG_MOON"
+msgstr "Mond"
+
+msgid "CFG_MOON_HELP"
+msgstr "Zeigt Phase, Beleuchtung, Mondauf- und -untergang"
+
+msgid "CFG_LOCATION"
+msgstr "Standort"
+
+msgid "CFG_LOCATION_HELP"
+msgstr "Ort für Sonne und Mond; Standard ist der Standort des Spiegels"
+
+msgid "CFG_LAT"
+msgstr "Breitengrad"
+
+msgid "CFG_LAT_HELP"
+msgstr "Grad, -90 bis 90"
+
+msgid "CFG_LON"
+msgstr "Längengrad"
+
+msgid "CFG_LON_HELP"
+msgstr "Grad, -180 bis 180"
+
+msgid "MOON_0"
+msgstr "Neumond"
+
+msgid "MOON_1"
+msgstr "Zunehmende Sichel"
+
+msgid "MOON_2"
+msgstr "Erstes Viertel"
+
+msgid "MOON_3"
+msgstr "Zunehmender Mond"
+
+msgid "MOON_4"
+msgstr "Vollmond"
+
+msgid "MOON_5"
+msgstr "Abnehmender Mond"
+
+msgid "MOON_6"
+msgstr "Letztes Viertel"
+
+msgid "MOON_7"
+msgstr "Abnehmende Sichel"
+
+msgid "SUNRISE"
+msgstr "Sonnenaufgang"
+
+msgid "SUNSET"
+msgstr "Sonnenuntergang"
+
+msgid "DAY_LENGTH"
+msgstr "Tageslänge"
+
+msgid "DURATION"
+msgstr "{hours} Std. {minutes} Min."
+
+msgid "MOONRISE"
+msgstr "Mondaufgang"
+
+msgid "MOONSET"
+msgstr "Monduntergang"
+
+msgid "POLAR_DAY"
+msgstr "Polartag: die Sonne geht nicht unter"
+
+msgid "POLAR_NIGHT"
+msgstr "Polarnacht: die Sonne geht nicht auf"
+
+msgid "NO_LOCATION"
+msgstr "Lege einen Standort fest, um Sonnen- und Mondzeiten zu sehen"
+
+msgid "DAY_OFFSET"
+msgstr "{days} T"
+
+msgid "WEEK"
+msgstr "KW {week}"
