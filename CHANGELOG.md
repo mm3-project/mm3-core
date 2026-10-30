@@ -268,6 +268,11 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Changed
 
+- Fixed the intermittent `mm3 module check` MOD-62 failure ("does not match its
+  .po"): a `.po` without a `POT-Creation-Date` header made Babel stamp the
+  current minute into the compiled `.mo`, so a build and its check a minute
+  apart differed. `mm3_build.catalogs` now compiles such files with a fixed
+  date (CORE-263, CORE-265).
 - Hot reload calls the layout listeners for every applied change, so shells
   resync when instances are added, removed or reconfigured (CORE-275).
 - The `Permissions-Policy` header no longer lists `bluetooth`, which
