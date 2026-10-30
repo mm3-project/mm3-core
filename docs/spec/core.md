@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.16 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.17 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -59,7 +59,8 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | Kiosk agent WebSocket client | websockets (≥ 13, < 18) | Already installed as Uvicorn's WebSocket implementation; used only by the kiosk agent, behind one adapter (httpx has no WebSocket client) |
 | Logging | stdlib logging + structlog | JSON logs to journald |
 | Packaging | pyproject.toml, hatchling build backend | PEP 621 standard |
-| Testing & docs | pytest + pytest-asyncio, Playwright for UI; MkDocs Material + mkdocstrings | Docstrings render to reference docs |
+| Catalog build hook | mm3-build: hatchling build hook mm3-i18n on Babel, in the mm3-core repository (CORE-280) | Module wheels compile their catalogs without installing the engine; one compiler for core and modules (decided 30 Oct) |
+| Testing & docs | pytest + pytest-asyncio, Playwright for UI, offered to module developers through the extra `mm3-core[testing]` (CORE-279); MkDocs Material + mkdocstrings | Docstrings render to reference docs |
 | Quality | ruff, mypy --strict | Lint and typing gate in CI |
 | Admin UI | CodeMirror 6, gridstack.js, in-house schema form renderer | YAML editing with schema lint; grid drag/resize; no build step |
 | Widgets | Jinja2 (sandboxed), uPlot, Material Design Icons | Safe expressions; small fast charts; same icon set as Home Assistant |
@@ -149,7 +150,7 @@ JobFn = Callable[[], Awaitable[None]]
 - CORE-185: Each run is a task in the instance's task group, with the job timeout `engine.timeouts.job` (default 60 s) and its own trace id. `TransientError` is logged as a warning and the job continues; any other exception moves the instance to FAILED (section 7). A run that exceeds the timeout is cancelled and logged, and the instance stays RUNNING (CORE-193).
 - CORE-186: With `pause_on_suspend=True` a job is paused while the instance is suspended and runs once on resume if a run was missed. All jobs are cancelled when the instance stops (MOD-22).
 - `jitter` adds a random delay up to that many seconds to every interval run, including the first, to spread network requests across instances.
-- `mm3.testing` replaces the clocks with a virtual clock (`h.advance()`), so tests run without waiting.
+- CORE-278: One engine clock. The scheduler, the hook and job budgets (3.2) and `ctx.now()` read the same clock: wall-clock time from the system clock, intervals from CLOCK\_BOOTTIME (CORE-183). `ctx.now()` returns an aware `datetime` in `ctx.timezone`. `mm3.testing` replaces this clock with a virtual clock driven by `h.advance()` and runs the module on an event loop with the same virtual time, so the scheduler, `asyncio.sleep`, budgets and `ctx.now()` move together and tests run without waiting (Module Contract MOD-28, §12.2).
 
 **Dates, configuration and reload**
 
@@ -223,7 +224,7 @@ class MirrorModule(abc.ABC):
 | `send_notification(name, payload, target=None)` | Broadcast on the bus |
 | `send_to_client(type, payload, client=None)` | Push to own front-end (all clients, or one) |
 | `set_state(dict)` | Update snapshot and push it as `state` |
-| `scheduler`, `http`, `storage`, `log`, `t()` | Shared services (3.1) |
+| `scheduler`, `now()`, `http`, `storage`, `log`, `t()` | Shared services (3.1) |
 | `run_blocking(fn, *a)` | Run blocking code in the thread pool |
 | system.request\_suspend(reason), system.request\_resume(reason) | Ask the engine to suspend or resume all modules; needs capability system.power (9.2) |
 | mqtt.publish(), mqtt.subscribe(), mqtt.ha\_entity() | Publish or subscribe on granted topics (CORE-100); register a Home Assistant discovery entity |
@@ -350,7 +351,7 @@ Every browser holds one `/ws` connection that starts with a handshake, carries f
 - CORE-251: Liveness. The engine sends a WebSocket ping every 15 s and drops a client that has not answered for 30 s.
 - CORE-252: URLs. The mirror listener serves only `/` (the shell), `/core/…` (engine scripts, styles, fonts and vendored libraries), `/modules/<module>/<version>/…` (static files of installed modules, `Cache-Control: public, max-age=31536000, immutable`), `/i18n/<instance>.json?v=<hash>`, `/appearance/<instance>.css?v=<hash>` (the instance's `appearance.css`), `/custom.css` (CORE-262), `/pair` (CORE-254), `/ws` and `/ws/kiosk-agent` (CORE-268); anything else is 404. The admin listener serves the same shell in preview mode under `/admin/preview` (6.6).
 
-- CORE-271: Frame contents. Every frame is `{v: 1, kind, instance?, data, ref?}`; an inbound frame may carry `ref` (a string of at most 64 characters), which the engine echoes in the `error` or `reply` about that frame. The `data` of each kind is given in the table below; the fields of each `control` action are given in CORE-275.
+* CORE-271: Frame contents. Every frame is `{v: 1, kind, instance?, data, ref?}`; an inbound frame may carry `ref` (a string of at most 64 characters), which the engine echoes in the `error` or `reply` about that frame. The `data` of each kind is given in the table below; the fields of each `control` action are given in CORE-275.
 
 | Kind | Direction | `instance` | `data` |
 | --- | --- | --- | --- |
@@ -371,8 +372,8 @@ Every browser holds one `/ws` connection that starts with a handshake, carries f
 - CORE-273: Endpoints. The mirror listener's `/ws` accepts the roles `kiosk` and `browser`. The preview shell connects to `/admin/preview/ws` on the admin listener, which accepts only the role `preview` and needs an admin session (CORE-253) and an `Origin` matching the listener. A role an endpoint does not accept closes the connection with code 4403. A connection whose `hello` does not arrive within 10 s is closed with code 4400. `engine_build` is `<mm3-core version>+<first 12 hex digits of the SHA-256 of the files under /core>`, so any change to the engine's front-end files makes open shells reload (CORE-250).
 - CORE-274: The `layout` object in `welcome` and in `control` `layout` frames is `{viewport: [w, h], cell: [w, h], grid: {columns, rows, gap, padding}, pages: {<page id>: [{instance, col, row, width, height, z, preset, stack_index, stack_size, area: [w, h]}]}}`: the logical viewport and cell size in CSS pixels (6.7), the grid size with layout.gap and layout.padding in CSS pixels (6.5) and, per page, each visible instance's cells, its preset (or null), its place in a preset stack (CORE-212) and its area in CSS pixels.
 
-- CORE-275: Control actions. The `data` of a `control` frame per `action`: `page` (no instance) `{page, index, count, transition, visible}`, where `transition` is `fade` or `none` and `visible` lists the ids of the instances visible after the change, so the shell switches page and visibility in one step (CORE-237, CORE-238); `show` and `hide` (one instance) `{fade}` in milliseconds (CORE-259); `status` (one instance) `{status}`, `ok` or `unavailable`, which shows or removes the failure placeholder (CORE-117); `locale` (one instance) `{locale, config, catalog}` (CORE-267); `styles` (no instance) `{custom_css}`, the new version of `/custom.css` or null, which the shell reloads; `layout` (no instance) `{layout}`, the object of CORE-274, used by the preview for the admin's draft (6.6); `reload` (no instance) `{scope}`: with `resync` the shell sends `hello` again and rebuilds from the new `welcome`, keeping elements whose instance, module and version are unchanged; with `page` it reloads the page. A hot reload that adds, removes or replaces instances, or changes their public config, appearance, position or pages, sends `reload` `resync` to every shell.
-- CORE-276: Shell input frames. An element's `this.hide()` and `this.show()` send `visibility` `{hidden, fade?}` for its instance, which sets or clears the hide reason `self` (CORE-238). The shell sends `touch` `{gesture}` with `gesture` `swipe_left`, `swipe_right` (CORE-260) or `tap` (any other touch, which only pauses rotation, CORE-234). Both are accepted only from interactive clients (CORE-248); a preview client's `visibility` changes only its own view.
+* CORE-275: Control actions. The `data` of a `control` frame per `action`: `page` (no instance) `{page, index, count, transition, visible}`, where `transition` is `fade` or `none` and `visible` lists the ids of the instances visible after the change, so the shell switches page and visibility in one step (CORE-237, CORE-238); `show` and `hide` (one instance) `{fade}` in milliseconds (CORE-259); `status` (one instance) `{status}`, `ok` or `unavailable`, which shows or removes the failure placeholder (CORE-117); `locale` (one instance) `{locale, config, catalog}` (CORE-267); `styles` (no instance) `{custom_css}`, the new version of `/custom.css` or null, which the shell reloads; `layout` (no instance) `{layout}`, the object of CORE-274, used by the preview for the admin's draft (6.6); `reload` (no instance) `{scope}`: with `resync` the shell sends `hello` again and rebuilds from the new `welcome`, keeping elements whose instance, module and version are unchanged; with `page` it reloads the page. A hot reload that adds, removes or replaces instances, or changes their public config, appearance, position or pages, sends `reload` `resync` to every shell.
+* CORE-276: Shell input frames. An element's `this.hide()` and `this.show()` send `visibility` `{hidden, fade?}` for its instance, which sets or clears the hide reason `self` (CORE-238). The shell sends `touch` `{gesture}` with `gesture` `swipe_left`, `swipe_right` (CORE-260) or `tap` (any other touch, which only pauses rotation, CORE-234). Both are accepted only from interactive clients (CORE-248); a preview client's `visibility` changes only its own view.
 
 ## 6. Configuration
 
@@ -915,7 +916,8 @@ The server binds to `127.0.0.1` by default, and nothing beyond the shell itself 
 
 | Artifact | Content |
 | --- | --- |
-| `mm3-core` (PyPI) | Engine, shell, admin UI, `mm3` CLI |
+| `mm3-core` (PyPI) | Engine, shell, admin UI, `mm3` CLI; extra `[testing]`: the `mm3.testing` kit, the browser harness and the dependencies of `mm3 module check` (CORE-279) |
+| mm3-build (PyPI) | Hatchling build hook mm3-i18n that compiles catalogs into each wheel; depends only on hatchling and Babel (CORE-280) |
 | `mm3-modules-default` | clock, calendar, weather, newsfeed, compliments, alert, presence, widget (each also separate) |
 | `mm3-install.sh` | Creates `mm3` user, venv in `/opt/mm3`, config in `/etc/mm3`, systemd units |
 | `mm3.service` | Engine (`Type=notify`, watchdog via sd\_notify) |
@@ -923,7 +925,11 @@ The server binds to `127.0.0.1` by default, and nothing beyond the shell itself 
 | mm3-installer.service | Privileged installer for admin-initiated installs, Unix socket only (10.7) |
 | mm3-backup.timer | Scheduled backup and remote copy, run as the installer user (10.8) |
 
-CLI: `mm3 run`, `mm3 check-config`, `mm3 modules list`, `mm3 new-module <name>` (scaffold with all five locales), `mm3 i18n compile`, `mm3 token new|list|revoke`, `mm3 kiosk session`.
+CLI: `mm3 run`, `mm3 check-config`, `mm3 modules list`, `mm3 new-module <name> [--kind full|backend|frontend]` (scaffold with all five locales), `mm3 module check <path>`, `mm3 i18n compile|check`, `mm3 token new|list|revoke`, `mm3 kiosk session`.
+
+- CORE-279: The test kit ships in `mm3-core` behind the extra `mm3-core[testing]`, which adds pytest, pytest-asyncio and Playwright; mirrors install `mm3-core` without it. `mm3 module check` and `import mm3.testing` without the extra stop with a message naming the install command (exit code 2 for the check, CORE-281). The kit itself is specified in Module Contract §12.
+- CORE-280: `mm3-build` is a separate distribution in the mm3-core repository, released with it and versioned with the Module API (`>=1.0,<2`). Its hatchling build hook `mm3-i18n` compiles every `.po` under the package's `locales/` directory into `.mo` and `messages.json` inside the wheel (CORE-263) and fails the build on a catalog error. It depends only on hatchling and Babel. It is the only catalog compiler: `mm3-core` builds its own catalogs with it, and `mm3 i18n compile` and `mm3 i18n check` use its code. Modules declare `requires = ["hatchling", "mm3-build>=1.0,<2"]` and enable `[tool.hatch.build.hooks.mm3-i18n]`.
+- CORE-281: `mm3 module check <path>` builds the module's wheel from its source directory with `uv build`, installs it in a temporary venv together with the running `mm3-core` and its testing extra, then runs the static checks, the test-kit suite and the browser harness of Module Contract §11–12. `--only static|kit|harness` limits the run; `--format json` and `--junit <file>` write machine-readable results; the exit code is 0 when compliant, 1 when a MUST failed and 2 on a tool error. `mm3 new-module <name> --kind full|backend|frontend` (default `full`) writes a package that passes the check on its first run (MOD-95).
 
 ### 10.3 Documentation and quality
 
@@ -1280,6 +1286,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.17 | 2026-10-30 | Milestone 4 tooling settled: one engine clock for the scheduler, budgets and ctx.now(), virtual in mm3.testing (CORE-278 added); mm3-core\[testing\] extra (CORE-279 added); mm3-build with the mm3-i18n build hook (CORE-280 added); mm3 module check and mm3 new-module --kind (CORE-281 added); now() in the 4.2 context table; mm3-build added to 1.2 and 10.2; CLI list updated |
 | 0.16 | 2026-10-29 | Kiosk details settled: agent key in an Authorization Bearer header, 4403 otherwise (CORE-268 changed); outputs.current and mode choice by the agent (CORE-277 changed); applied mode re-validates the running configuration, resync and CORE\_DISPLAY\_CHANGED (CORE-146 changed); wlr-randr --json and the shipped unit file with mm3 kiosk unit (CORE-143 changed); websockets approved for the kiosk agent (1.2) |
 | 0.15 | 2026-10-29 | i18n details settled: merged catalog at /i18n/\<instance>.json, its version, locale packages per module or mm3 (CORE-264 changed); mm3 i18n check fails on compiled files that do not match their .po, backends read messages.json (CORE-263 changed); date styles and backend formatting (CORE-266 changed); per-instance locale and touch flag in welcome (CORE-246 changed) for element-owned swipes (CORE-235 changed) |
 | 0.14 | 2026-10-29 | Shell and kiosk details settled: welcome instance entries carry scripts, styles, appearance and status, and custom\_css (CORE-246 changed); /appearance/\<instance>.css URL (CORE-252 changed); visibility and touch frames, status control action (CORE-271 changed); control action contents and resync on reload (CORE-275); shell input frames (CORE-276); kiosk agent protocol (CORE-277); outputs reported by the agent (CORE-144 changed); welcome carries timezone and touch (CORE-246 changed); grid size, gap and padding in the layout object (CORE-274 changed) |

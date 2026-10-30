@@ -3,10 +3,10 @@
 
 [core]
 name = "Core spec"
-version = "0.16"
+version = "0.17"
 url = "https://claude.ai/artifact/FMsTUUoBP9wHzFtruUa6FV"
 
 [contract]
 name = "Module Contract"
-version = "1.0 rev 7"
+version = "1.0 rev 8"
 url = "https://claude.ai/artifact/AwhPKtk3ezmyix1NRmKZrR"

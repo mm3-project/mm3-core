@@ -1,6 +1,6 @@
 # MM3 Module Contract v1.0
 
-Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 7 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 8 (draft)
 
 ## 1. Scope and conformance
 
@@ -63,6 +63,9 @@ The engine drives a module only through the class attributes and hooks below; an
 | `scripts`, `styles` | `list[str]` | `[]` | Paths under `static/`, loaded by shell |
 | `locales_dir` | `str \| None` | `"locales"` | Catalog root |
 | `subscribes` | `set[str] \| None` | `None` | Notification name globs to receive; `None` = all |
+| `emits` | `Mapping[str, type[BaseModel]]` | `{}` | Notifications sent (backend and front-end), name → payload model (MOD-29) |
+| `consumes` | `Mapping[str, type[BaseModel]]` | `{}` | Notifications handled, name → payload model (MOD-29) |
+| `answers` | `Mapping[str, tuple[type[BaseModel], type[BaseModel]]]` | `{}` | Requests answered, name → (request model, reply model) (MOD-29) |
 | `capabilities` | `set[str]` | `set()` | Privileges requested (section 8) |
 | `min_size_px` | `tuple[int, int] \| None` | `None` | Smallest usable area (CORE-96) |
 | `admin_element`, `admin_scripts` | `str \| None`, `list[str]` | `None`, `[]` | Admin UI extension (CORE-102) |
@@ -94,6 +97,7 @@ Budgets are engine defaults (`engine.timeouts.*`, core 3.2). When `start`, `susp
 - MOD-16: `snapshot()` MUST return JSON-serialisable data ≤ 256 KiB (CORE-26) and contain no secrets.
 - MOD-18: The engine calls `on_notification` and `on_client_message` of one instance one at a time, in arrival order (core CORE-28). Modules MAY rely on this and SHOULD hand long work to `ctx.create_task`.
 - MOD-19: A restart creates a new instance object and a new context (core CORE-191). State that must survive a restart SHOULD be kept in `ctx.storage`.
+- MOD-28: Backend code MUST read wall-clock time only through `ctx.now()`, an aware `datetime` in `ctx.timezone` (core CORE-278), never `datetime.now()`, `datetime.utcnow()`, `date.today()` or `time.time()`. Delays and intervals use `ctx.scheduler` or `asyncio.sleep`, which follow the same clock, so the test kit's virtual clock controls the whole module. Front-ends use `Date` as usual; the browser harness controls it.
 
 ### 3.4 Error semantics
 
@@ -135,6 +139,7 @@ class ModuleContext(Protocol):
     def patch_state(self, delta: dict) -> None: ...    # shallow merge, push delta
 
     # --- tasks and time ---
+    def now(self) -> datetime: ...                    # aware, in ctx.timezone (MOD-28, core CORE-278)
     def create_task(self, coro: Coroutine, *, name: str) -> asyncio.Task: ...
     async def run_blocking(self, fn: Callable[..., T], *args: Any) -> T: ...
     scheduler: Scheduler              # every(), cron(), at() -> Job; semantics in core spec 3.3
@@ -265,14 +270,15 @@ These obligations make a module interoperate with other modules, the config edit
 ### 6.1 Messaging
 
 - MOD-40: Notification names MUST be `UPPER_SNAKE` and SHOULD be prefixed with the module name for module-specific events (`WEATHER_UPDATED`). Names meant for many producers (`PRESENCE_DETECTED`, `SHOW_ALERT`) are registered in the core spec §5.5 and MUST use the registered payload (CORE-224).
-- MOD-41: Every notification a module emits or consumes MUST be listed with its payload schema in the README under "Notifications"; `mm3 module check` compares this list with the code.
+- MOD-41: Every notification a module emits or consumes MUST be declared in `emits` or `consumes` (MOD-29) and listed by name in the README under "Notifications"; `mm3 module check` compares the README, the declarations and the notification names used in the code.
 - MOD-42: Payloads MUST be JSON objects ≤ 256 KiB, contain no secrets, and use ISO 8601 UTC strings for times and SI units unless the field name says otherwise (`temp_c`, `wind_kmh`).
 - MOD-43: Handlers MUST tolerate unknown payload fields and missing optional fields.
 - MOD-44: Client message `type` values are private to the module and SHOULD be lower snake case.
-- MOD-24: A module that answers requests MUST list the request names, request payloads and reply payloads in its README under "Notifications" (as MOD-41), and MUST return None from on\_request for requests it does not handle.
+- MOD-24: A module that answers requests MUST declare them in `answers` (MOD-29), list their names in its README under "Notifications" (as MOD-41), and MUST return None from on\_request for requests it does not handle.
 - MOD-25: on\_request MUST NOT send requests itself and SHOULD answer well within the handler budget; slow data SHOULD be served from state the module keeps up to date (core CORE-222).
 - MOD-26: Callers of ctx.request and this.request MUST handle RequestTimeoutError and RemoteError and keep working (degraded) without the reply.
 - MOD-27: Modules MUST tolerate being hidden and shown often (page rotation, core CORE-239): suspend() and resume() SHOULD be cheap, and costly refreshes SHOULD use pause\_on\_suspend or skip work while hidden.
+- MOD-29: A module MUST declare every notification it sends in `emits` (including names sent by its front-end with `this.notify`), every notification it handles in `consumes` and every request it answers in `answers`, each mapping the name to Pydantic models (request and reply for `answers`, §3.1). Names registered in core spec §5.5 MUST use the registry's model. The test kit validates every payload the instance sends, receives, asks for or replies with against these models; the engine itself checks only registered names (core CORE-225). `subscribes` remains the delivery filter.
 
 ### 6.2 Configuration
 
@@ -405,6 +411,8 @@ A module is compliant when every MUST below passes; `mm3 module check` runs all 
 | MOD-16 | `snapshot()` JSON, ≤ 256 KiB, no secrets | MUST | test kit |
 | MOD-17 | Error `message_key`s exist in catalogs | MUST | static |
 | MOD-19 | State that must survive a restart kept in ctx.storage | SHOULD | review |
+| MOD-28 | Wall-clock time only through ctx.now() | MUST | static (AST scan) |
+| MOD-29 | Notifications and requests declared with payload models | MUST | static (declarations vs code) + test kit (payloads vs models) |
 | MOD-30 | Tag `mm3-<name>`, no globals | MUST | static (JS scan) |
 | MOD-31 | No `innerHTML` with data | MUST | static (JS scan) |
 | MOD-32 | No `fetch` / XHR / WebSocket / EventSource | MUST | static + harness (CSP violations) |
@@ -471,10 +479,15 @@ Result      COMPLIANT (API 1.0)
 Report      ./mm3-weather/.mm3/check-report.json
 ```
 
-- Builds the wheel in a temporary venv, installs it with the current `mm3-core`, then runs static checks, the test kit suite and the browser harness.
+- Builds the wheel with `uv build`, installs it in a temporary venv together with the running `mm3-core` and its `[testing]` extra (core CORE-279, CORE-281), then runs static checks, the test kit suite and the browser harness.
 - Exit code 0 = compliant, 1 = a MUST failed, 2 = tool error; `--format json` and `--junit` for CI.
 - `--only static` gives a fast check for editors and pre-commit hooks.
 - MOD-95: A module published as compatible with MM3 MUST pass `mm3 module check` for the API version it declares; the admin catalog shows the check result if a report is shipped in the wheel.
+
+* **Static checks** read the source tree and the built wheel without importing the module: Python by AST (MOD-12, 23, 28, 29, 40, 61, 80, 86) and the JavaScript under `static/` by an in-house tokenizer that understands comments, strings, template literals and regular expressions and accepts any modern syntax (MOD-30–32, 35, 37, 61, 80). MOD-05 also requires a compiled `.mo` and `messages.json` for every `.po` in the wheel (core CORE-280). MOD-61 treats as user-visible a literal with letters and a space in rendered templates, in `set_state`, `patch_state` and `send_to_client` payloads, in notification payloads and in error messages; keys, CSS classes and identifiers are not. Each finding gives file, line and MOD id.
+* **Suppressions**: a comment `# mm3: allow MOD-xx <reason>` (Python) or `// mm3: allow MOD-xx <reason>` (JS) on the line or the line above silences a SHOULD finding and is listed in the report; it has no effect on a MUST.
+* **Harness sizes** (MOD-51): `min_size_px` or 200×60, 400×300, and the full 1080×1920 viewport; a failure is content outside the cell when the instance's `overflow` is `hidden`, or any page-level scroll.
+* **Report**: `.mm3/check-report.json` holds `{tool_version, module, version, api_version, result, checks}` with `result` `compliant` or `non_compliant` and one entry per check `{id, level, category, status, findings}`: `level` MUST or SHOULD, `category` static, kit, harness or review, `status` pass, fail, warn, review or suppressed, `findings` a list of `{file, line, message}`. `--junit` writes one test case per check: MUST failures as failures, review items as skipped.
 
 ### 12.2 `mm3.testing` kit
 
@@ -491,11 +504,14 @@ async def test_core_publishes_forecast():
         await h.check_contract()                    # runs all test-kit MOD checks
 ```
 
-- **ModuleHarness**: a real `ModuleContext` wired to fakes: in-memory bus, mocked `http`, `fake_mqtt`, temporary storage, virtual clock (`advance()`), locale switch, grant control.
+- **ModuleHarness**`(module, *, config=None, grants=None, instance_id=None, locale="en", timezone="UTC", units="metric", now=None, page=None, pages=None)`: an async context manager that builds a real `ModuleContext` wired to fakes (in-memory bus, `h.http`, `h.mqtt`, temporary storage, virtual clock), creates the instance and awaits `start()` on entry and `stop()` on exit. `config` is validated with the module's `config_model`; `now` sets the virtual wall clock (ISO 8601 string or aware datetime; default 2026-01-01T12:00 in `timezone`).
 - **Recorders**: `h.notifications`, `h.client_messages`, `h.logs`, `h.state_history` for assertions.
-- **Contract checks**: `h.check_contract()` runs MOD-10–16, 42–43, 70, 72 and 83 against the instance.
+- **Inputs**: `h.notify(name, payload, sender=None)`, `h.client_message(type, payload)`, `h.request(name, payload)` (returns the reply or raises as `ctx.request` would), `h.respond(name, handler)` (answers the module's own `ctx.request` for another module; unanswered requests time out), `h.set_locale()`, `h.set_grants()`, `h.set_page()`, `h.suspend()` / `h.resume()`, `h.reconfigure(config)` and `h.restart()`.
+- **Virtual time**: `await h.advance(seconds=…, minutes=…, hours=…)` or `await h.advance(to=…)` moves the harness clock (core CORE-278) and runs, in order, every job, sleep and budget that falls due; `h.now` reads it.
+- **Fakes**: `h.http.mock(method, url, *, status=200, json=None, text=None, headers=None, raises=None)` answers calls whose URL starts with `url` (latest mock wins); an unmocked call raises `HttpConnectionError` and is listed in the contract report. Grants apply as on a mirror, so a URL outside them raises `PermissionError`. `h.mqtt` (`fake_mqtt`) records publishes and delivers `h.mqtt.inject(topic, payload)` to matching subscriptions.
+- **Contract checks**: `await h.check_contract()` runs every section 11 row checked by the test kit (MOD-06, 10–16, 24–27, 29, 42, 43, 70, 72, 83) on fresh instances built from the harness arguments, and raises `ContractError` listing the failed ids. Every `SecretStr` field is filled with a random canary that must not appear in snapshots, payloads, client messages or logs (MOD-16, 42, 83). `sys.addaudithook` reports file writes outside the storage directory (MOD-06) and any file, socket or subprocess use during `__init__` (MOD-10); asyncio debug mode reports callbacks over 100 ms (MOD-11). MOD-72 passes when, with no grants, the instance never reaches FAILED or DISABLED and logs at least one `warning`; MOD-27 runs 20 suspend/resume cycles; MOD-43 sends each consumed notification with an extra field and with each optional field removed.
 - **Browser harness** (`mm3.testing.browser`, Playwright): loads the element in a stand-alone shell page, feeds states, resizes the cell, toggles preview and locale, records render time, CSP violations and overflow; supports screenshot comparisons per locale.
-- **Scaffold**: `mm3 new-module <name>` generates a package that passes `mm3 module check` from the first run, including all five locale catalogs and a sample test.
+- **Scaffold**: `mm3 new-module <name> --kind full|backend|frontend` (core CORE-281) generates a src-layout package with `mm3-build` as build requirement (core CORE-280), the class with its declarations, all five locale catalogs, a README with "Notifications" and "Grants" sections and a sample test; it passes `mm3 module check` from the first run. `--kind frontend` writes the class with no hooks that section 1 calls the generated stub.
 
 ### 12.3 Publishing to the module catalog
 
@@ -530,6 +546,10 @@ screenshots: [docs/screenshot.png]
 **pyproject.toml**
 
 ```toml
+[build-system]
+requires = ["hatchling", "mm3-build>=1.0,<2"]   # core CORE-280
+build-backend = "hatchling.build"
+
 [project]
 name = "mm3-greeting"
 version = "1.0.0"
@@ -539,6 +559,8 @@ readme = "README.md"
 
 [project.entry-points."mm3.modules"]
 greeting = "mm3_greeting:GreetingModule"
+
+[tool.hatch.build.hooks.mm3-i18n]          # compiles locales/ into the wheel
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mm3_greeting"]
@@ -550,7 +572,6 @@ packages = ["src/mm3_greeting"]
 """Greeting module: shows a time-of-day greeting."""
 from __future__ import annotations
 
-from datetime import datetime
 from typing import ClassVar
 
 from pydantic import Field
@@ -580,7 +601,7 @@ class GreetingModule(MirrorModule):
         self.ctx.scheduler.every(60, self._publish)
 
     async def _publish(self) -> None:
-        hour = datetime.now(self.ctx.timezone).hour
+        hour = self.ctx.now().hour                      # MOD-28
         part = "morning" if hour < 12 else "afternoon" if hour < 18 else "evening"
         self.ctx.set_state({"part": part})
         self.ctx.log.debug("part_of_day", part=part)
@@ -644,6 +665,7 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
+| 1.0 rev 8 | 2026-10-30 | Milestone 4 tooling, aligned with core spec 0.17: ctx.now() on the engine clock (MOD-28 added, §4); emits, consumes and answers declarations (MOD-29 added, §3.1); README lists the declared names (MOD-24, MOD-41 changed); §11 rows for MOD-28 and MOD-29; §12.1 build with uv, static checks, suppressions, harness sizes, report format; §12.2 harness API, inputs, virtual time, fakes, check\_contract coverage, scaffold --kind; §13 greeting uses ctx.now() and mm3-build |
 | 1.0 rev 7 | 2026-10-28 | Aligned with core spec 0.11: theme variables of core 6.10 (MOD-33 changed); templating and imports only through /core/mm3.js, lit-html behind it (MOD-37 added, §5.2, §11); this.hide/show with fade (§5.2) |
 | 1.0 rev 6 | 2026-10-28 | Aligned with core spec 0.6: ctx.request, on\_request, this.request, RequestTimeoutError, RemoteError (MOD-24–26, §3.2, §4, §5.2); registered notification payloads (MOD-40 changed); ctx.page, ctx.pages, this.page, onPageChange; frequent hide/show (MOD-27); capability layout.control (§8) |
 | 1.0 rev 5 | 2026-10-28 | Aligned with core spec 0.5: HEADER catalog key (MOD-67, §7); LocalizedText resolved by the engine for front-ends and with resolve() in the backend, timedelta formats, current ctx.locale, timezone and units after reload (§6.2, §5.2) |
