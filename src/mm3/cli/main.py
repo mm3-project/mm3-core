@@ -2,13 +2,13 @@
 
 Implemented so far: ``--version``, ``mm3 check-config``, ``mm3 run``,
 ``mm3 config`` (history, diff, undo, redo, restore), ``mm3 token``
-(new, list, revoke), ``mm3 i18n`` (compile, check) and ``mm3 kiosk``
-(session, unit).
+(new, list, revoke), ``mm3 i18n`` (compile, check), ``mm3 kiosk``
+(session, unit) and ``mm3 module check``.
 ``mm3 run`` loads and validates the configuration, refuses to start with
 exit code 2 when it has errors, runs the module instances and the web
 gateway (mirror and admin listeners) until SIGTERM or SIGINT, and reloads
 the configuration when its files change or on SIGHUP.
-The other subcommands (``modules``, ``module check``, ``migrate``,
+The other subcommands (``modules``, ``new-module``, ``migrate``,
 ``diag``, ``installer``) are added with their milestones.
 
 Implements:
@@ -20,6 +20,7 @@ Implements:
     CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
     CORE-62: Core spec 0.12, §10.1 Security.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
+    CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
 """
 
 from __future__ import annotations
@@ -38,6 +39,7 @@ from mm3.__about__ import MODULE_API_VERSION, __version__
 from mm3.cli.config_cmd import add_config_parser, run_config
 from mm3.cli.i18n_cmd import add_i18n_parser, run_i18n
 from mm3.cli.kiosk_cmd import add_kiosk_parser, run_kiosk
+from mm3.cli.module_cmd import add_module_parser, run_module
 from mm3.cli.token_cmd import add_token_parser, run_token
 from mm3.core.config import DEFAULT_CONFIG, DEFAULT_ENV_FILE, ConfigResult, load_config
 from mm3.core.registry import Registry
@@ -82,6 +84,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_token_parser(sub, _config_args)
     add_i18n_parser(sub)
     add_kiosk_parser(sub)
+    add_module_parser(sub)
     return parser
 
 
@@ -308,6 +311,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_i18n(args)
     if args.command == "kiosk":
         return run_kiosk(args)
+    if args.command == "module":
+        return run_module(args)
     parser.print_help()
     return 0
 
