@@ -68,6 +68,30 @@ jobs:
       # Deprecation warnings fail the suite (CORE-175), see pyproject.toml.
       - run: uv run pytest
 
+  # Implements CORE-289 (Core spec 0.19, §9.4 Reference modules)
+  modules:
+    name: Reference module ${{ matrix.module }} (CORE-289)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: [mm3-greeting]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - run: uv sync --frozen --all-extras
+      - run: uv run playwright install --with-deps chromium
+      # mm3-build is not on an index yet: the module's build resolves it from this wheel.
+      - run: uv build --package mm3-build --wheel --out-dir "$RUNNER_TEMP/links"
+      - name: mm3 module check (CORE-174, CORE-281)
+        env:
+          UV_FIND_LINKS: ${{ runner.temp }}/links
+        run: uv run mm3 module check "modules/${{ matrix.module }}" --junit "$RUNNER_TEMP/check.xml"
+      - name: Module tests (mm3-core[testing])
+        run: uv run pytest "modules/${{ matrix.module }}/tests" --no-cov -o addopts=""
+
   # Implements CORE-174 (Core spec 0.6, §10.9 Dependency management)
   audit:
     name: pip-audit (CORE-174)

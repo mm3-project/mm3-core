@@ -189,3 +189,27 @@ def test_mod_95_new_module_passes_the_check(
     out = capsys.readouterr().out
     assert "COMPLIANT" in out
     assert "Harness     6 passed, 0 failed" in out
+
+
+async def test_core_288_this_location_is_resolved_for_the_element(
+    greeting: tuple[Path, Any],
+) -> None:
+    proj, cls = greeting
+    edit(
+        js(proj),
+        'return html`<p class="greeting">${this.t(key, { name })}</p>`;',
+        'return html`<p class="greeting">${JSON.stringify(this.location)}</p>`;',
+    )
+    place = {"lat": 41.9, "lon": 12.5, "name": {"en": "Rome", "it": "Roma", "pt-BR": "Roma BR"}}
+
+    async def shown(locale: str, location: dict[str, Any] | None) -> str:
+        async with BrowserHarness(cls, config={}, locale=locale, location=location) as h:
+            return (await h.state(STATE)).html
+
+    assert "null" in await shown("en", None)
+    assert '"name":"Rome"' in await shown("en", place)
+    assert '"name":"Roma"' in await shown("it", place)
+    assert '"name":"Rome"' in await shown("de", place)  # falls back to en
+    assert '"name":"Roma BR"' in await shown("pt-br", place)  # tags compare case-insensitively
+    assert '"name":"Home"' in await shown("fr", {"lat": 0, "lon": 0, "name": "Home"})
+    assert '"name":null' in await shown("en", {"lat": 0, "lon": 0})

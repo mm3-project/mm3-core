@@ -430,6 +430,16 @@ async def test_core_275_page_hide_status_and_reload(mirror: Mirror) -> None:
         assert reload["data"]["scope"] == "resync"
 
 
+async def test_core_275_location_change_resyncs_the_shells(mirror: Mirror) -> None:
+    async with websockets.connect(f"ws://127.0.0.1:{mirror.gateway.mirror.port}/ws") as ws:
+        await ws.send(hello())
+        await frames_until(ws, control("page"))
+        result = mirror.reload(CONFIG)
+        await mirror.hub.reloaded(result, ReloadPlan(engine_live={"location"}))
+        reload = await frames_until(ws, control("reload"))
+        assert reload["data"]["scope"] == "resync"
+
+
 def display_headers(mirror: Mirror) -> dict[str, str]:
     auth = mirror.hub.auth
     rec = auth.tokens.verify(auth.tokens.new("hall", "display"), "display")

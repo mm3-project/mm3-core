@@ -232,6 +232,27 @@ def display_cookie(m: Mirror) -> str:
 # --- CORE-246: handshake --------------------------------------------------------------
 
 
+def test_core_246_welcome_location_entry(tmp_path: Path) -> None:
+    registry = Registry()
+    registry.add(Clock)
+    etc = tmp_path / "etc"
+    etc.mkdir()
+
+    def view(engine: str) -> Any:
+        (etc / "config.yaml").write_text(
+            engine + "modules:\n  - module: clock\n    position: top_left\n"
+        )
+        result = load_config(etc / "config.yaml", registry=registry, env_file=etc / "none.env")
+        assert result.ok, result.records
+        return cached_view(lambda: result, registry)()
+
+    assert view("").location is None
+    named = view("engine:\n  location: {lat: 41.9, lon: 12.5, name: {en: Rome, it: Roma}}\n")
+    assert named.location == {"lat": 41.9, "lon": 12.5, "name": {"en": "Rome", "it": "Roma"}}
+    plain = view("engine:\n  location: {lat: 1, lon: 2}\n")
+    assert plain.location == {"lat": 1, "lon": 2, "name": None}
+
+
 async def test_core_246_welcome_then_one_state_per_instance(mirror: Mirror) -> None:
     ws, welcome, states = await connect(mirror.ws_url)
     async with ws:
@@ -247,10 +268,12 @@ async def test_core_246_welcome_then_one_state_per_instance(mirror: Mirror) -> N
             "pages",
             "locale",
             "timezone",
+            "location",
             "touch",
             "custom_css",
             "instances",
         }
+        assert data["location"] is None
         assert (data["engine_build"], data["role"], data["interactive"]) == (
             "1.0+test",
             "browser",

@@ -117,6 +117,7 @@ convention = "google"
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D", "S101"]
+"modules/*/tests/**" = ["D", "S101"]
 "tools/**" = ["T201"]
 "src/mm3/core/modcheck/*scan.py" = ["SIM102"]  # rule tables read better flat
 

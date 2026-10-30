@@ -10,13 +10,13 @@ Usage::
     python tools/trace_report.py --issues issues.json
 
 A requirement is *implemented* when code cites it (``Implements:`` sections in
-``src/`` and ``tools/``, ``# Implements`` comments in Python, workflow, TOML
-and YAML files) and *tested* when a test name cites it
-(``test_core_21_...``). Waivers in ``docs/spec/milestones.toml`` count as
-covered. For every closed milestone the report lists requirements changed
-after ``done_at``, requirements not covered and stale citations; with
-``--issues`` it writes one issue per closed milestone (``open`` true when
-there is something to do).
+``src/``, ``modules/*/src`` and ``tools/``, ``# Implements`` comments in
+Python, workflow, TOML and YAML files) and *tested* when a test name cites it
+(``test_core_21_...``, in ``tests/`` and ``modules/*/tests``). Waivers in
+``docs/spec/milestones.toml`` count as covered. For every closed milestone the
+report lists requirements changed after ``done_at``, requirements not covered
+and stale citations; with ``--issues`` it writes one issue per closed
+milestone (``open`` true when there is something to do).
 """
 
 from __future__ import annotations
@@ -106,7 +106,8 @@ def tested_ids() -> dict[str, set[str]]:
         Requirement id -> test names.
     """
     found: dict[str, set[str]] = {}
-    for path in (ROOT / "tests").rglob("test_*.py"):
+    tests = [*(ROOT / "tests").rglob("test_*.py"), *(ROOT / "modules").glob("*/tests/test_*.py")]
+    for path in tests:
         for m in TEST_RE.finditer(path.read_text()):
             rid = f"{m.group(2).upper()}-{int(m.group(3)):02d}"
             found.setdefault(rid, set()).add(m.group(1))

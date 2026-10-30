@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling", "mm3-build>=1.0,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mm3-greeting"
+version = "1.0.0"
+requires-python = ">=3.11"
+dependencies = ["mm3-core>=1.0,<2"]
+readme = "README.md"
+
+[project.entry-points."mm3.modules"]
+greeting = "mm3_greeting:GreetingModule"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mm3_greeting"]
+
+[tool.hatch.build.hooks.mm3-i18n]
+
+[tool.mm3]
+category = "clock"
+screenshot = "docs/screenshot.png"

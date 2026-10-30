@@ -3,9 +3,10 @@
 Implements:
     CORE-74, CORE-77: Core spec 0.6, §10.3 Documentation and quality.
 
-Checked for every ``.py`` file under ``src/mm3``, ``mm3-build/src`` and ``tools/``:
+Checked for every ``.py`` file under ``src/mm3``, ``mm3-build/src``,
+``modules/*/src`` (the reference modules, CORE-289) and ``tools/``:
 
-1. Files under ``src/mm3`` have an ``Implements:`` section in their module
+1. Files under ``src/`` have an ``Implements:`` section in their module
    docstring.
 2. Each entry has the form ``<ids or ->: <spec name> <version>, §<section> <title>.``
    and comments use ``# Implements <ids> (<spec name> <version>, §<section> <title>)``.
@@ -205,7 +206,8 @@ def source_files() -> list[Path]:
     """List the files whose citations are checked.
 
     Returns:
-        Python files under ``src/mm3``, ``mm3-build/src`` (CORE-280) and
+        Python files under ``src/mm3``, ``mm3-build/src`` (CORE-280),
+        ``modules/*/src`` (CORE-289) and
         ``tools``, and the engine's front-end files (``static/*.js``,
         ``static/*.css``; vendored libraries are not ours to cite).
     """
@@ -213,7 +215,8 @@ def source_files() -> list[Path]:
     build = ROOT / "mm3-build" / "src"
     front = sorted(src.rglob("static/*.js")) + sorted(src.rglob("static/*.css"))
     python = sorted(src.rglob("*.py")) + sorted(build.rglob("*.py"))
-    return python + sorted((ROOT / "tools").glob("*.py")) + front
+    modules = sorted((ROOT / "modules").glob("*/src/**/*.py"))  # reference modules (CORE-289)
+    return python + modules + sorted((ROOT / "tools").glob("*.py")) + front
 
 
 def main(argv: list[str] | None = None) -> int:
