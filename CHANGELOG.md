@@ -139,6 +139,20 @@ separately under **Module API** in each release (Module Contract, section 10).
   are skipped where Chromium cannot start; `MM3_CHROMIUM` selects the
   executable.
 
+- Spec sync: Core spec 0.17 and Module Contract 1.0 rev 8 (milestone 4
+  requirements). New: one engine clock for the scheduler, budgets and
+  `ctx.now()`, virtual in `mm3.testing` (CORE-278); the `mm3-core[testing]`
+  extra (CORE-279); the separate `mm3-build` distribution with the
+  `mm3-i18n` hatchling hook (CORE-280); `mm3 module check` and
+  `mm3 new-module --kind` (CORE-281); wall-clock time only through
+  `ctx.now()` (MOD-28); `emits`, `consumes` and `answers` declarations with
+  Pydantic payload models (MOD-29). Changed: MOD-24 and MOD-41 (README lists
+  the declared names). Module Contract §12 now specifies the harness API,
+  static checks, suppressions, harness sizes and the report format.
+  Milestone 4 requirements extended in `milestones.toml`.
+
+  **Module API:** `ctx.now()` and the class attributes `emits`, `consumes`
+  and `answers` are added to API 1.0 before its first release.
 - Spec sync: Core spec 0.16 (kiosk details). Changed: CORE-268 (agent key as
   `Authorization: Bearer`, 4403 otherwise), CORE-277 (`outputs[].current`,
   the agent picks the mode), CORE-146 (the applied mode re-validates the

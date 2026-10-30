@@ -107,8 +107,14 @@ requirements = [
 number = 4
 name = "Test kit and module check"
 status = "not_started"
+# Requirements settled in core spec 0.17 / contract 1.0 rev 8: engine clock and
+#   ctx.now() (CORE-278, MOD-28), testing extra (CORE-279), mm3-build hook
+#   (CORE-280), module check and new-module commands (CORE-281), notification
+#   and request declarations (MOD-29; MOD-24 and MOD-41 changed).
+# MOD-05: the compiled-catalog part relies on the mm3-build hook (CORE-280).
 requirements = [
-  "MOD-01..08", "MOD-10..17", "MOD-24..27", "MOD-30..37", "MOD-40..44", "MOD-51..54",
+  "CORE-278..281",
+  "MOD-01..08", "MOD-10..17", "MOD-24..29", "MOD-30..37", "MOD-40..44", "MOD-51..54",
   "MOD-60..66", "MOD-70..73", "MOD-80..86", "MOD-95",
 ]
 

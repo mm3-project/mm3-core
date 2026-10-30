@@ -3,14 +3,14 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.16"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16"]
+version = "0.17"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17"]
 
 [[spec]]
 name = "Module Contract"
 file = "contract.md"
-version = "1.0 rev 7"
-versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7"]
+version = "1.0 rev 8"
+versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7", "1.0 rev 8"]
 
 [[requirement]]
 id = "CORE-01"
@@ -2183,6 +2183,46 @@ changed_in = "0.16"
 status = "active"
 
 [[requirement]]
+id = "CORE-278"
+spec = "Core spec"
+section = "3.3"
+title = "Scheduler"
+hash = "49e5a846d42d"
+introduced_in = "0.17"
+changed_in = "0.17"
+status = "active"
+
+[[requirement]]
+id = "CORE-279"
+spec = "Core spec"
+section = "10.2"
+title = "Packaging and deployment"
+hash = "ec8d2faade69"
+introduced_in = "0.17"
+changed_in = "0.17"
+status = "active"
+
+[[requirement]]
+id = "CORE-280"
+spec = "Core spec"
+section = "10.2"
+title = "Packaging and deployment"
+hash = "4ad32298a404"
+introduced_in = "0.17"
+changed_in = "0.17"
+status = "active"
+
+[[requirement]]
+id = "CORE-281"
+spec = "Core spec"
+section = "10.2"
+title = "Packaging and deployment"
+hash = "ae962b0a942f"
+introduced_in = "0.17"
+changed_in = "0.17"
+status = "active"
+
+[[requirement]]
 id = "WGT-01"
 spec = "Core spec"
 section = "11.2"
@@ -2567,9 +2607,9 @@ id = "MOD-24"
 spec = "Module Contract"
 section = "6.1"
 title = "Messaging"
-hash = "b7661fc221c9"
+hash = "1c9917e9643c"
 introduced_in = "1.0 rev 6"
-changed_in = "1.0 rev 6"
+changed_in = "1.0 rev 8"
 status = "active"
 
 [[requirement]]
@@ -2600,6 +2640,26 @@ title = "Messaging"
 hash = "229daa85e414"
 introduced_in = "1.0 rev 6"
 changed_in = "1.0 rev 6"
+status = "active"
+
+[[requirement]]
+id = "MOD-28"
+spec = "Module Contract"
+section = "3.3"
+title = "Rules"
+hash = "f045b94e21d0"
+introduced_in = "1.0 rev 8"
+changed_in = "1.0 rev 8"
+status = "active"
+
+[[requirement]]
+id = "MOD-29"
+spec = "Module Contract"
+section = "6.1"
+title = "Messaging"
+hash = "10b5491f6f7e"
+introduced_in = "1.0 rev 8"
+changed_in = "1.0 rev 8"
 status = "active"
 
 [[requirement]]
@@ -2697,9 +2757,9 @@ id = "MOD-41"
 spec = "Module Contract"
 section = "6.1"
 title = "Messaging"
-hash = "32f94afdcd44"
+hash = "4696fd5fb2e1"
 introduced_in = "1.0 rev 1"
-changed_in = "1.0 rev 1"
+changed_in = "1.0 rev 8"
 status = "active"
 
 [[requirement]]
