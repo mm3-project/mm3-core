@@ -19,6 +19,8 @@ Implements:
     CORE-211: Core spec 0.9, §6.3 Hot reload.
     CORE-239: Core spec 0.14, §6.9 Pages and visibility.
     CORE-278: Core spec 0.17, §3.3 Scheduler.
+    CORE-100: Core spec 0.18, §11.1 Engine additions.
+    MOD-85: Module Contract 1.0 rev 9, §9 Logging, health and errors.
 """
 
 from __future__ import annotations
@@ -40,7 +42,7 @@ from zoneinfo import ZoneInfo
 from pydantic import ValidationError
 
 from mm3.config import ModuleConfig
-from mm3.core.bus import Bus, ClientChannel, Inbox
+from mm3.core.bus import Bus, ClientChannel, Inbox, MqttDelivery
 from mm3.core.clock import Clock
 from mm3.core.context import (
     REQUEST_FAILED,
@@ -52,6 +54,9 @@ from mm3.core.context import (
 from mm3.core.i18n.catalogs import I18n
 from mm3.core.logging import get_logger
 from mm3.core.registry import Registry
+from mm3.core.services.grants import GrantSet
+from mm3.core.services.http import HttpTransport, UnavailableTransport
+from mm3.core.services.mqtt import MqttBroker, NoBroker
 from mm3.core.settings import EngineSettings
 from mm3.core.trace import current_trace, trace_scope
 from mm3.errors import ConfigurationError, TransientError
@@ -106,12 +111,14 @@ class InstanceSpec:
         module: Module name.
         config: Raw ``config`` block, validated by the module's ``config_model``.
         locale: Instance ``locale`` overriding ``engine.locale`` (CORE-202).
+        grants: Scopes granted to the instance (Contract section 8).
     """
 
     instance_id: str
     module: str
     config: Mapping[str, Any] = field(default_factory=dict)
     locale: str | None = None
+    grants: GrantSet = field(default_factory=GrantSet)
 
 
 @dataclass
@@ -351,6 +358,10 @@ class ManagedInstance:
                     async with cm:
                         if isinstance(item, ClientMessage):
                             await inc.obj.on_client_message(item)
+                        elif isinstance(item, MqttDelivery):
+                            # CORE-100: MQTT messages are handled like notifications.
+                            if item.active():
+                                await item.handler(item.message)
                         elif item.is_request:
                             await self._answer(inc, item)
                         else:
@@ -625,6 +636,7 @@ class ManagedInstance:
             "dropped": self.inbox.dropped,
             "last_in": self.last_in.isoformat() if self.last_in else None,
             "last_out": out.isoformat() if (out := self.counters.last_out) else None,
+            "fields": dict(self.counters.health_fields),
         }
 
 
@@ -668,6 +680,9 @@ class Supervisor:
         self._background: set[asyncio.Task[Any]] = set()
         self.state_listeners: list[Callable[[str, State, State], None]] = []
         self.pages: PageControl | None = None
+        self.http_transport: HttpTransport = UnavailableTransport()
+        self.mqtt_broker: MqttBroker = NoBroker()
+        self.on_denied: Callable[[str, str], None] | None = None
         self.i18n: I18n | None = None
 
     def make_context(
@@ -704,6 +719,15 @@ class Supervisor:
             capabilities=frozenset(cls.capabilities) if cls is not None else frozenset(),
             i18n=self.i18n,
             engine_locale=lambda: self.settings.locale,
+            grants=inst.spec.grants,
+            http_transport=self.http_transport,
+            mqtt_broker=self.mqtt_broker,
+            enqueue=inst.inbox.put,
+            on_denied=(
+                functools.partial(self.on_denied, inst.instance_id)
+                if self.on_denied is not None
+                else None
+            ),
         )
 
     def background(self, coro: Coroutine[Any, Any, Any], name: str) -> None:

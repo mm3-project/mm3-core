@@ -10,6 +10,7 @@ Implements:
     -: Module Contract 1.0 rev 6, §4.1 Exceptions raised by the context.
     CORE-220, CORE-221: Core spec 0.7, §5.4 Request and reply.
     CORE-192: Core spec 0.7, §7 Lifecycle and error handling.
+    -: Module Contract 1.0 rev 9, §4.3 HttpClient.
 """
 
 from __future__ import annotations
@@ -17,6 +18,10 @@ from __future__ import annotations
 __all__ = [
     "ConfigurationError",
     "ContextClosedError",
+    "HttpConnectionError",
+    "HttpError",
+    "HttpStatusError",
+    "HttpTimeoutError",
     "MM3Error",
     "RemoteError",
     "RequestTimeoutError",
@@ -119,3 +124,40 @@ class RemoteError(MM3Error):
         self.code = code
         self.message_key = message_key
         self.source = source
+
+
+class HttpError(MM3Error):
+    """Base of ``ctx.http`` failures (Contract 4.3).
+
+    Modules SHOULD convert it to :class:`TransientError` or
+    :class:`ConfigurationError` (Contract 3.4).
+
+    Args:
+        message: What went wrong.
+        url: The URL concerned.
+    """
+
+    def __init__(self, message: str, url: str = "") -> None:
+        super().__init__(message)
+        self.url = url
+
+
+class HttpTimeoutError(HttpError):
+    """No complete response within the request timeout."""
+
+
+class HttpConnectionError(HttpError):
+    """The host could not be reached, or the connection broke."""
+
+
+class HttpStatusError(HttpError):
+    """``raise_for_status()`` on a 4xx or 5xx response.
+
+    Args:
+        status: HTTP status code.
+        url: The URL concerned.
+    """
+
+    def __init__(self, status: int, url: str = "") -> None:
+        super().__init__(f"HTTP {status} from {url}", url)
+        self.status = status

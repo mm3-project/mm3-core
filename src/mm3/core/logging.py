@@ -16,7 +16,7 @@ from __future__ import annotations
 import logging
 import sys
 from collections import deque
-from collections.abc import MutableMapping
+from collections.abc import Callable, MutableMapping
 from datetime import UTC, datetime
 from typing import Any, TextIO
 
@@ -29,6 +29,8 @@ __all__ = [
     "Logger",
     "configure_logging",
     "get_logger",
+    "is_configured",
+    "observe",
     "recent_records",
     "set_log_level",
 ]
@@ -55,9 +57,40 @@ def _add_common(_: Any, method: str, event: MutableMapping[str, Any]) -> Mutable
     return event
 
 
+_observers: list[Callable[[dict[str, Any]], None]] = []
+
+
 def _to_ring(_: Any, __: str, event: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
-    _ring.append(dict(event))
+    record = dict(event)
+    _ring.append(record)
+    for observer in list(_observers):
+        observer(dict(record))
     return event
+
+
+def observe(callback: Callable[[dict[str, Any]], None]) -> Callable[[], None]:
+    """Call ``callback`` with a copy of every record from now on.
+
+    Used by the test kit to capture an instance's records.
+
+    Args:
+        callback: Receives each record.
+
+    Returns:
+        A function that stops the observation.
+    """
+    _observers.append(callback)
+
+    def stop() -> None:
+        if callback in _observers:
+            _observers.remove(callback)
+
+    return stop
+
+
+def is_configured() -> bool:
+    """Return whether :func:`configure_logging` set up the MM3 processors."""
+    return _to_ring in structlog.get_config().get("processors", [])
 
 
 def configure_logging(

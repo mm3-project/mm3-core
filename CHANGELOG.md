@@ -9,6 +9,26 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Milestone 4 part B: the `mm3.testing` kit (Contract 12.2, core spec 0.18,
+  Module Contract 1.0 rev 9). `ModuleHarness` runs one instance on a real
+  engine with fakes: `h.http` (mocks, unmocked calls reported) and `h.mqtt`
+  (records publishes, `inject()` delivers through the instance inbox), with
+  grants checked as on a mirror. It also records notifications, client
+  messages, state history and logs, and provides the inputs `notify`,
+  `client_message`, `request`, `respond`, `set_locale`, `set_grants`,
+  `set_page`, `suspend`/`resume`, `reconfigure` and `restart`. Time is
+  virtual on the test's own event loop: `asyncio.sleep`, timeouts, the
+  scheduler, budgets and `ctx.now()` move only with `h.advance()`, while
+  thread-pool work runs for real (CORE-278). `await h.check_contract()` runs
+  every test-kit row of Contract section 11 (MOD-06, 10, 11, 13–16, 24–27, 29,
+  42, 43, 70, 72, 83) on fresh instances whose secrets are canaries, and
+  raises `ContractError` with the failed ids.
+- Engine side of the kit: `ctx.http` (`mm3.http`, HTTP errors in
+  `mm3.errors`) and `ctx.mqtt` (`mm3.mqtt`) check the declared capabilities and
+  the instance grants, which now reach the engine from the `grants` block. MQTT
+  messages are handled through the instance inbox under the handler budget
+  (CORE-100). The real transports arrive in milestones 5 and 7. `ctx.health.set()`
+  adds fields to the health record (MOD-85).
 - Milestone 4 part A: engine prerequisites of the test kit. One engine clock:
   the scheduler, the hook, handler and job budgets, request timeouts and the
   new `ctx.now()` (aware, in `ctx.timezone`) all read it, so a virtual clock
