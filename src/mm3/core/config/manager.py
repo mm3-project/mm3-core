@@ -10,7 +10,8 @@ then applied in the order of CORE-210.
 Implements:
     CORE-02: Core spec 0.9, §3 Engine components.
     CORE-208: Core spec 0.11, §6.3 Hot reload.
-    CORE-209, CORE-210, CORE-211, CORE-245: Core spec 0.9, §6.3 Hot reload.
+    CORE-209, CORE-210, CORE-245: Core spec 0.9, §6.3 Hot reload.
+    CORE-211: Core spec 0.19, §6.3 Hot reload.
     MOD-50: Module Contract 1.0 rev 6, §6.2 Configuration.
 """
 
@@ -378,7 +379,8 @@ class ConfigManager:
         keeps running when it returns True and is restarted otherwise (MOD-50).
 
         Implements:
-            CORE-210, CORE-211, CORE-245: Core spec 0.9, §6.3 Hot reload.
+            CORE-210, CORE-245: Core spec 0.9, §6.3 Hot reload.
+            CORE-211: Core spec 0.19, §6.3 Hot reload.
             MOD-50: Module Contract 1.0 rev 6, §6.2 Configuration.
         """
         assert new.config is not None  # noqa: S101 - checked by reload()
@@ -413,7 +415,7 @@ class ConfigManager:
             touched.add(iid)
         await sup.start_all()
         # Live engine values that need more than the new settings.
-        if "units" in plan.engine_live:
+        if plan.engine_live & {"units", "location"}:
             for inst in sup.instances():
                 entry = self.registry.get(inst.spec.module)
                 cls = entry.cls if entry is not None else None

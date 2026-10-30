@@ -16,7 +16,8 @@ Implements:
     CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
     MOD-18, MOD-19: Module Contract 1.0 rev 6, §3.3 Rules.
     CORE-202: Core spec 0.8, §6.2 Rules.
-    CORE-211: Core spec 0.9, §6.3 Hot reload.
+    CORE-211: Core spec 0.19, §6.3 Hot reload.
+    CORE-288: Core spec 0.19, §6.2 Rules.
     CORE-239: Core spec 0.14, §6.9 Pages and visibility.
     CORE-278: Core spec 0.17, §3.3 Scheduler.
     CORE-100: Core spec 0.18, §11.1 Engine additions.
@@ -27,6 +28,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
+import importlib.metadata
 import traceback
 from collections import deque
 from collections.abc import Callable, Coroutine, Mapping
@@ -157,7 +159,7 @@ def has_backend(cls: type[MirrorModule]) -> bool:
         True when any hook of ``MirrorModule`` is overridden.
 
     Implements:
-        CORE-211: Core spec 0.9, §6.3 Hot reload.
+        CORE-211: Core spec 0.19, §6.3 Hot reload.
     """
     return any(getattr(cls, h) is not getattr(MirrorModule, h) for h in _BACKEND_HOOKS)
 
@@ -553,7 +555,7 @@ class ManagedInstance:
             locale: New override, ``None`` to follow ``engine.locale``.
 
         Implements:
-            CORE-211: Core spec 0.9, §6.3 Hot reload.
+            CORE-211: Core spec 0.19, §6.3 Hot reload.
         """
         self.spec = replace(self.spec, locale=locale)
         if self._inc is not None:
@@ -712,6 +714,7 @@ class Supervisor:
             timezone=self.timezone,
             locale=inst.spec.locale or self.settings.locale,
             units=self.settings.units,
+            location=self.settings.location,
             state_dir=self.state_dir,
             counters=inst.counters,
             spawn=spawn,
@@ -721,6 +724,7 @@ class Supervisor:
             engine_locale=lambda: self.settings.locale,
             grants=inst.spec.grants,
             http_transport=self.http_transport,
+            module_version=self._module_version(inst.spec.module),
             mqtt_broker=self.mqtt_broker,
             enqueue=inst.inbox.put,
             on_denied=(
@@ -840,6 +844,16 @@ class Supervisor:
         """
         await self._instances[instance_id].restart()
 
+    def _module_version(self, module: str) -> str:
+        """Version of the distribution that provides a module (CORE-283)."""
+        entry = self.registry.get(module)
+        if entry is None or entry.distribution is None:
+            return "0"
+        try:
+            return importlib.metadata.version(entry.distribution)
+        except importlib.metadata.PackageNotFoundError:
+            return "0"
+
     async def start_all(self) -> None:
         """Start every LOADED instance concurrently (core spec 7.1 step 4)."""
         await asyncio.gather(
@@ -884,14 +898,15 @@ class Supervisor:
 
         Time budgets apply to calls started afterwards, ``bus.queue_size`` to
         inboxes created afterwards; ``engine.locale`` and ``engine.timezone``
-        reach every running context (CORE-211). ``engine.units`` is applied
-        by restarting instances (see :func:`has_backend`).
+        reach every running context (CORE-211). ``engine.units`` and
+        ``engine.location`` are applied by restarting instances (see
+        :func:`has_backend`) and update the contexts here (CORE-288).
 
         Args:
             settings: The new ``engine`` block.
 
         Implements:
-            CORE-211: Core spec 0.9, §6.3 Hot reload.
+            CORE-211: Core spec 0.19, §6.3 Hot reload.
         """
         old = self.settings
         self.settings = settings
@@ -903,6 +918,7 @@ class Supervisor:
                     locale=inst.spec.locale or settings.locale,
                     units=settings.units,
                     timeouts=settings.timeouts,
+                    location=settings.location,
                 )
 
     def deliver_client_message(self, instance_id: str, msg: ClientMessage) -> bool:

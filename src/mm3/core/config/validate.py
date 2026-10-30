@@ -133,7 +133,7 @@ class ConfigResult:
                 module=i.module,
                 config=i.spec.config,
                 locale=i.spec.locale,
-                grants=GrantSet.from_config(i.spec.grants),
+                grants=GrantSet.from_config(i.spec.grants, self.path.parent),
             )
             for i in self.instances
             if i.enabled
@@ -289,6 +289,46 @@ def validate(
     return config, instances, records
 
 
+def check_grant_ca_files(
+    instances: list[ResolvedInstance], config_dir: Path, sources: SourceMap
+) -> list[ValidationRecord]:
+    """Check that the ``ca`` file of every ``http`` grant entry can be read.
+
+    Args:
+        instances: Validated instances.
+        config_dir: Directory of the main configuration file.
+        sources: Source positions for the records.
+
+    Returns:
+        One ``CORE_CFG_FILE_UNREADABLE`` error per missing or unreadable file,
+        located at the grant.
+
+    Implements:
+        CORE-284: Core spec 0.19, §3.4 HTTP transport.
+    """
+    records: list[ValidationRecord] = []
+    for inst in instances:
+        if not inst.enabled:
+            continue
+        for j, entry in enumerate(inst.spec.grants.http):
+            if isinstance(entry, str):
+                continue
+            path = config_dir / entry.ca
+            try:
+                path.read_bytes()
+            except OSError:
+                records.append(
+                    make_record(
+                        "CORE_CFG_FILE_UNREADABLE",
+                        pointer(("modules", inst.index, "grants", "http", j)),
+                        {"file": str(path)},
+                        file=str(path),
+                        sources=sources,
+                    )
+                )
+    return records
+
+
 def load_config(
     path: Path = DEFAULT_CONFIG,
     *,
@@ -330,6 +370,7 @@ def load_config(
         return result
     config, instances, records = validate(loaded, registry)
     result.records.extend(records)
+    result.records.extend(check_grant_ca_files(instances, path.parent, loaded.sources))
     layout = None
     if config is not None:
         layout = check_layout(config, instances, registry, loaded.sources, applied=applied)

@@ -16,6 +16,30 @@ separately under **Module API** in each release (Module Contract, section 10).
   reference modules greeting, clock and weather (CORE-289, CLK-01..08,
   WTH-01..12). `tools/` learn the `CLK` and `WTH` id prefixes; milestone 5
   now lists its requirements in `milestones.toml`.
+- Milestone 5 part A: the engine's HTTP transport and `engine.location`.
+  `ctx.http` now sends through one pooled `httpx.AsyncClient` created at
+  engine start and closed at shutdown (CORE-282): HTTP/1.1 only, no cookies,
+  cache or retries, proxy from `HTTP(S)_PROXY`/`NO_PROXY`, at most 4 requests
+  per instance in flight, bodies above 10 MiB refused while read, 10 s default
+  and 60 s maximum timeout. Requests carry
+  `User-Agent: mm3/<core> <module>/<version>` unless the module sets one, and
+  `Host`, `Content-Length`, `Connection` and `Transfer-Encoding` are dropped
+  (CORE-283). TLS 1.2+ with verification always on; a grant entry
+  `{prefix, ca}` replaces the CA store for its prefix, and a missing file is a
+  `CORE_CFG_FILE_UNREADABLE` error at the grant (CORE-284). Loopback,
+  link-local, unspecified and multicast addresses are refused with
+  `PermissionError`, checked on the address actually connected to and lifted
+  only by a grant naming `localhost` or the address literally (CORE-285).
+  At most 5 redirects, only to granted URLs, never `https` to `http`, with
+  credentials dropped across origins (CORE-286). Errors map to `mm3.errors`
+  without library text; `http_request` is logged without query, headers or
+  body, and `ctx.health` shows `http_requests`, `http_failures` and
+  `http_last_success` (CORE-287). `engine.location` (`lat`, `lon`, optional
+  localized `name`), `ctx.location` and `mm3.context.Location` (CORE-288);
+  a change restarts instances with a backend (CORE-211), and
+  `ModuleHarness(location=...)` sets it in tests. `httpcore` is now a direct
+  dependency. The shell side (`welcome.location`, `this.location`) follows
+  with part B.
 - Milestone 4 part D: the browser harness and `mm3 new-module` (closes
   milestone 4). `mm3.testing.BrowserHarness` loads a module's element into a
   stand-alone shell page in Chromium (Playwright; `MM3_CHROMIUM` selects the

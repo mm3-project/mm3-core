@@ -24,6 +24,7 @@ from mm3.core.clock import Clock, SystemClock
 from mm3.core.i18n import I18n, registry_roots
 from mm3.core.logging import get_logger
 from mm3.core.registry import Registry
+from mm3.core.services.http import HttpxTransport
 from mm3.core.services.storage import resolve_state_dir
 from mm3.core.settings import EngineSettings
 from mm3.core.supervisor import InstanceSpec, Supervisor
@@ -82,6 +83,8 @@ class Engine:
             executor=self.executor,
             state_dir=state_dir or resolve_state_dir(),
         )
+        self.http = HttpxTransport()
+        self.supervisor.http_transport = self.http
         self.i18n = I18n(registry_roots(registry))
         self.supervisor.i18n = self.i18n
         self.running = False
@@ -92,6 +95,7 @@ class Engine:
         Args:
             instances: Instances to run, in configuration order.
         """
+        await self.http.start()
         for spec in instances:
             self.supervisor.add(spec)
         await self.supervisor.start_all()
@@ -104,6 +108,7 @@ class Engine:
         if self.running:
             self.supervisor.emit("CORE_SHUTDOWN", {})
         await self.supervisor.stop_all()
+        await self.http.aclose()
         self.executor.shutdown(wait=False, cancel_futures=True)
         self.running = False
         _log.info("engine_stopped")

@@ -40,6 +40,7 @@ dependencies = [
     "aiomqtt>=2.3,<3",
     "babel>=2.15,<3",
     "httpx>=0.27,<1",
+    "httpcore>=1,<2",  # pools behind the one httpx client (CORE-282, CORE-285)
     "structlog>=24.1,<27",
     "jinja2>=3.1,<4",
     "argon2-cffi>=23.1,<26",

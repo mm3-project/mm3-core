@@ -511,6 +511,8 @@ def test_core_243_codes_match_spec_table() -> None:
     [
         ({"engine": {"threads": "x"}}, "CORE_CFG_TYPE", {"expected": "an integer"}),
         ({"engine": {"threads": 0}}, "CORE_CFG_RANGE", {"ge": 1}),
+        ({"engine": {"location": {"lat": 91, "lon": 0}}}, "CORE_CFG_RANGE", {"le": 90}),
+        ({"engine": {"location": {"lat": 0, "lon": -181}}}, "CORE_CFG_RANGE", {"ge": -180}),
         ({"engine": {"locale": "not a tag"}}, "CORE_CFG_LOCALE", {"value": "not a tag"}),
         ({"engine": {"timezone": "Mars/Base"}}, "CORE_CFG_TIMEZONE", {"value": "Mars/Base"}),
         ({"engine": {"units": "k"}}, "CORE_CFG_CHOICE", {"allowed": "'metric' or 'imperial'"}),
