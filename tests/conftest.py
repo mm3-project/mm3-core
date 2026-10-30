@@ -3,10 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator, Callable, Iterator
+from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 import pytest
 
@@ -94,3 +94,17 @@ async def make_engine(
 async def settle(rounds: int = 50) -> None:
     for _ in range(rounds):
         await asyncio.sleep(0)
+
+
+T = TypeVar("T")
+
+
+async def advancing(clock: VirtualClock, aw: Awaitable[T], seconds: float) -> T:
+    """Await ``aw`` while the virtual clock moves ``seconds``.
+
+    Budgets and request timeouts run on the engine clock (CORE-278), so a
+    call that waits for one needs the clock to move while it is pending.
+    """
+    task = asyncio.ensure_future(aw)
+    await clock.advance(seconds)
+    return await task

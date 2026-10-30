@@ -75,7 +75,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv export --frozen --all-extras --no-emit-project --format requirements-txt -o requirements.lock.txt
+      # Workspace members (mm3-core, mm3-build) are built here, not downloaded.
+      - run: uv export --frozen --all-extras --no-emit-workspace --format requirements-txt -o requirements.lock.txt
       # Every ignored advisory is listed in .pip-audit-ignore with its reason.
       - run: |
           args=$(awk '!/^#/ && NF {print "--ignore-vuln " $1}' .pip-audit-ignore)
@@ -87,7 +88,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
-      - run: uv build
+      # Implements CORE-280 (Core spec 0.17, §10.2 Packaging and deployment):
+      # mm3-build is built with the engine; the core wheel compiles its
+      # catalogs with the mm3-i18n hook.
+      - run: uv build --all-packages
       - uses: actions/upload-artifact@v4
         with:
           name: dist

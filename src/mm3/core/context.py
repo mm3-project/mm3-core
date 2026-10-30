@@ -15,6 +15,8 @@ Implements:
     CORE-111, CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
     CORE-185, CORE-193, CORE-197: Core spec 0.7, §7 Lifecycle and error handling.
     CORE-211: Core spec 0.9, §6.3 Hot reload.
+    CORE-278: Core spec 0.17, §3.3 Scheduler.
+    MOD-28: Module Contract 1.0 rev 8, §3.3 Rules.
 """
 
 from __future__ import annotations
@@ -24,7 +26,7 @@ import functools
 from collections.abc import Callable, Coroutine, Mapping, Sequence
 from concurrent.futures import Executor
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import datetime
 from pathlib import Path
 from types import MappingProxyType
 from typing import Any, Literal, Protocol, TypeVar
@@ -348,7 +350,7 @@ class EngineContext:
             Notification(
                 id=uuid4(),
                 trace=request.trace,
-                ts=datetime.now(UTC),
+                ts=self._clock.wall(),
                 name=request.name,
                 source=self._source,
                 target=requester,
@@ -367,7 +369,7 @@ class EngineContext:
         # job timeout; TransientError is a warning, other exceptions fail the instance.
         trace = uuid4()
         with trace_scope(trace):
-            cm = asyncio.timeout(self._timeouts.job)
+            cm = self._clock.timeout(self._timeouts.job)
             try:
                 async with cm:
                     await fn()
@@ -446,6 +448,16 @@ class EngineContext:
         self._guard()
         return format_number(value, self._locale, unit)
 
+    def now(self) -> datetime:
+        """Current wall-clock time on the engine clock, aware, in ``timezone``.
+
+        Implements:
+            CORE-278: Core spec 0.17, §3.3 Scheduler.
+            MOD-28: Module Contract 1.0 rev 8, §3.3 Rules.
+        """
+        self._guard()
+        return self._clock.wall().astimezone(self._timezone)
+
     @property
     def timezone(self) -> ZoneInfo:
         """Engine time zone."""
@@ -517,7 +529,7 @@ class EngineContext:
         n = Notification(
             id=nid,
             trace=current_trace() or nid,
-            ts=datetime.now(UTC),
+            ts=self._clock.wall(),
             name=name,
             source=self._source,
             target=target,
@@ -568,7 +580,7 @@ class EngineContext:
         n = Notification(
             id=nid,
             trace=current_trace() or nid,
-            ts=datetime.now(UTC),
+            ts=self._clock.wall(),
             name=name,
             source=self._source,
             target=target,
@@ -580,7 +592,7 @@ class EngineContext:
             self._bus.publish(n, sender_instance=self._instance_id)
             self._sent()
             try:
-                async with asyncio.timeout(timeout):
+                async with self._clock.timeout(timeout):
                     reply = await future
             except TimeoutError:
                 raise RequestTimeoutError(name, timeout) from None

@@ -12,6 +12,7 @@ Implements:
     -: Core spec 0.9, §5.5 Shared notification registry.
     CORE-245: Core spec 0.9, §6.3 Hot reload.
     MOD-40: Module Contract 1.0 rev 6, §6.1 Messaging.
+    MOD-24, MOD-29: Module Contract 1.0 rev 8, §6.1 Messaging.
 """
 
 from __future__ import annotations
@@ -22,6 +23,8 @@ from types import MappingProxyType
 from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
+
+from mm3.messages import NAME_PATTERN
 
 __all__ = [
     "REGISTRY",
@@ -38,6 +41,7 @@ __all__ = [
     "PresenceEvent",
     "RegisteredName",
     "ShowAlert",
+    "declaration_problems",
     "json_schema",
     "validate_payload",
 ]
@@ -262,3 +266,61 @@ def validate_payload(name: str, payload: Mapping[str, Any]) -> None:
         raise ValueError(
             f"payload of {name} does not match its registered schema: {problems}"
         ) from None
+
+
+def _is_model(value: object) -> bool:
+    return isinstance(value, type) and issubclass(value, BaseModel)
+
+
+def declaration_problems(cls: object) -> list[str]:
+    """Check a module class's ``emits``, ``consumes`` and ``answers``.
+
+    A declaration must be a mapping from an ``UPPER_SNAKE`` name to a
+    Pydantic model (``answers``: a pair of request and reply models); a
+    registered name must use the registry's model (§5.5); a module neither
+    emits nor answers an engine-only name. Used by the test kit and by
+    ``mm3 module check``; the engine itself validates only registered
+    payloads (CORE-225).
+
+    Args:
+        cls: The module class.
+
+    Returns:
+        One message per problem, empty when the declarations are sound.
+
+    Implements:
+        MOD-24, MOD-29: Module Contract 1.0 rev 8, §6.1 Messaging.
+    """
+    problems: list[str] = []
+    for attr in ("emits", "consumes", "answers"):
+        table = getattr(cls, attr, {})
+        if not isinstance(table, Mapping):
+            problems.append(f"{attr} is not a mapping of names to payload models")
+            continue
+        for name, value in table.items():
+            where = f"{attr}[{name!r}]"
+            if not isinstance(name, str) or not NAME_PATTERN.match(name):
+                problems.append(f"{where}: name is not UPPER_SNAKE")
+                continue
+            row = REGISTRY.get(name)
+            if attr != "consumes" and (name.startswith("CORE_") or (row and row.engine_only)):
+                problems.append(f"{where}: {name} is reserved for the engine")
+            if attr == "answers":
+                pair_ok = (
+                    isinstance(value, tuple)
+                    and len(value) == 2
+                    and all(_is_model(v) for v in value)
+                )
+                if not pair_ok:
+                    problems.append(f"{where}: expected (request model, reply model)")
+                    continue
+                model: object = value[0]
+            else:
+                if not _is_model(value):
+                    problems.append(f"{where}: expected a Pydantic model")
+                    continue
+                model = value
+            if row is not None and model is not row.model:
+                wanted = f"{row.model.__module__}.{row.model.__name__}"
+                problems.append(f"{where}: {name} is registered; use {wanted}")
+    return problems

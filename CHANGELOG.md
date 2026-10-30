@@ -9,6 +9,22 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Milestone 4 part A: engine prerequisites of the test kit. One engine clock:
+  the scheduler, the hook, handler and job budgets, request timeouts and the
+  new `ctx.now()` (aware, in `ctx.timezone`) all read it, so a virtual clock
+  moves them together (CORE-278, MOD-28). `MirrorModule.emits`, `consumes`
+  and `answers` declare notifications and requests with their Pydantic
+  models, checked by `mm3.notifications.declaration_problems()` (names,
+  model types, registered names use the registry model, no engine-only
+  names emitted or answered; MOD-29, MOD-24). New distribution `mm3-build`
+  in this repository (a uv workspace member, versioned with the Module API):
+  its hatchling build hook `mm3-i18n` compiles every catalog into the wheel
+  and fails the build on a catalog error; `mm3-core` builds with it and
+  `mm3 i18n compile`/`check` use its compiler (CORE-280). New extra
+  `mm3-core[testing]` (pytest, pytest-asyncio, Playwright); `import
+  mm3.testing` without it raises `MissingExtraError` naming the install
+  command (CORE-279).
+
 - Milestone 3 part E: the kiosk. `mm3 kiosk session` (run by
   `mm3-kiosk.service` inside cage) refuses to start unless `cage -v` reports
   0.1.5 or later, reads the agent key the engine writes to
