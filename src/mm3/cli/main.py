@@ -21,6 +21,8 @@ Implements:
     CORE-62: Core spec 0.12, §10.1 Security.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
+    CORE-290, CORE-291: Core spec 0.20, §7.1 Engine startup and shutdown.
+    CORE-292: Core spec 0.20, §10.2 Packaging and deployment.
 """
 
 from __future__ import annotations
@@ -41,6 +43,7 @@ from mm3.cli.i18n_cmd import add_i18n_parser, run_i18n
 from mm3.cli.kiosk_cmd import add_kiosk_parser, run_kiosk
 from mm3.cli.module_cmd import add_module_parser, run_module
 from mm3.cli.new_module_cmd import add_new_module_parser, run_new_module
+from mm3.cli.service_cmd import add_service_parser, run_service
 from mm3.cli.token_cmd import add_token_parser, run_token
 from mm3.core.config import DEFAULT_CONFIG, DEFAULT_ENV_FILE, ConfigResult, load_config
 from mm3.core.registry import Registry
@@ -85,6 +88,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_token_parser(sub, _config_args)
     add_i18n_parser(sub)
     add_kiosk_parser(sub)
+    add_service_parser(sub)
     add_module_parser(sub)
     add_new_module_parser(sub)
     return parser
@@ -199,6 +203,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     assert result.config is not None  # noqa: S101 - checked by the caller
     state_dir = resolve_state_dir()
     engine = Engine(result.config.engine, registry=registry, state_dir=state_dir)
+    engine.start_watchdog()  # CORE-291: lives as long as the process
     history = ConfigHistory(result.path, env_file=env_file, registry=registry, state_dir=state_dir)
     manager = ConfigManager(
         engine, result, registry=registry, env_file=env_file, recorder=HistoryRecorder(history)
@@ -243,8 +248,10 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     watchdog = asyncio.create_task(agents.watchdog(), name="mm3-kiosk-watchdog") if agents else None
     try:
         await gateway.start()
+        engine.notify_ready()  # CORE-290: READY=1 once the listeners are up
         await stop.wait()
     finally:
+        engine.notify_stopping()  # CORE-290: STOPPING=1 when shutdown begins
         if watchdog is not None:
             watchdog.cancel()
             with contextlib.suppress(asyncio.CancelledError):
@@ -313,6 +320,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_i18n(args)
     if args.command == "kiosk":
         return run_kiosk(args)
+    if args.command == "service":
+        return run_service(args)
     if args.command == "module":
         return run_module(args)
     if args.command == "new-module":

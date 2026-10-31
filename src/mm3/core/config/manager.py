@@ -250,6 +250,9 @@ class ConfigManager:
     async def reload(self, origin: Origin = "file") -> bool:
         """Load, validate and, when valid, apply the configuration on disk.
 
+        systemd is told when the reload begins and when it ends, whether the new
+        configuration was applied or rejected (CORE-290).
+
         Args:
             origin: What caused the reload.
 
@@ -258,7 +261,15 @@ class ConfigManager:
 
         Implements:
             CORE-209, CORE-210: Core spec 0.9, §6.3 Hot reload.
+            CORE-290: Core spec 0.20, §7.1 Engine startup and shutdown.
         """
+        self.engine.notify_reloading()
+        try:
+            return await self._reload(origin)
+        finally:
+            self.engine.notify_reloaded()
+
+    async def _reload(self, origin: Origin) -> bool:
         new = await asyncio.to_thread(
             load_config,
             self.current.path,

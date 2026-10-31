@@ -1,0 +1,32 @@
+# MM3 engine: runs `mm3 run` as the unprivileged user mm3.
+# Implements CORE-292 (Core spec 0.20, §10.2 Packaging and deployment)
+# Implements CORE-65 (Core spec 0.20, §10.1 Security): hardening directives
+[Unit]
+Description=MM3 engine
+Documentation=https://github.com/mm3-project/mm3-core
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=notify
+NotifyAccess=main
+WatchdogSec=30s
+User=mm3
+Group=mm3
+ExecStart=/opt/mm3/venv/bin/mm3 run
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=2s
+TimeoutStartSec=60s
+TimeoutStopSec=20s
+StateDirectory=mm3
+StateDirectoryMode=0750
+RuntimeDirectory=mm3
+RuntimeDirectoryMode=0755
+ReadWritePaths=/etc/mm3
+ProtectSystem=strict
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

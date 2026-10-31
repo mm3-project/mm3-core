@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import socket
 from collections.abc import AsyncIterator, Awaitable, Callable, Iterator
 from datetime import UTC, datetime
 from pathlib import Path
@@ -108,3 +109,32 @@ async def advancing(clock: VirtualClock, aw: Awaitable[T], seconds: float) -> T:
     task = asyncio.ensure_future(aw)
     await clock.advance(seconds)
     return await task
+
+
+class Listener:
+    """A datagram socket standing in for systemd's notify socket."""
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        self.sock.bind(str(path))
+        self.sock.setblocking(False)
+
+    def messages(self) -> list[list[str]]:
+        out: list[list[str]] = []
+        while True:
+            try:
+                data = self.sock.recv(4096)
+            except BlockingIOError:
+                return out
+            out.append(data.decode().split("\n"))
+
+    def close(self) -> None:
+        self.sock.close()
+
+
+@pytest.fixture
+def listener(tmp_path: Path) -> Iterator[Listener]:
+    lis = Listener(tmp_path / "notify.sock")
+    yield lis
+    lis.close()
