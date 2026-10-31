@@ -73,7 +73,11 @@ if [[ $served != yes ]]; then
   cat /tmp/mm3-run.log >&2
   fail "the engine did not serve the mirror on 127.0.0.1:8080"
 fi
-[[ $status == 0 ]] || { cat /tmp/mm3-run.log >&2; fail "the engine did not stop cleanly (status $status)"; }
+# runuser reports a child ended by SIGTERM as 143; the engine's own log says whether it stopped cleanly.
+if [[ $status != 0 && $status != 143 ]] || ! grep -q '"event": "engine_stopped"' /tmp/mm3-run.log; then
+  cat /tmp/mm3-run.log >&2
+  fail "the engine did not stop cleanly (status $status)"
+fi
 echo "ci-check: ok: the engine serves the mirror and stops on SIGTERM"
 
 # Second run: a new venv, the configuration and the env file untouched.

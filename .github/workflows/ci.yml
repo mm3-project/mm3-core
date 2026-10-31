@@ -145,10 +145,20 @@ jobs:
           name: dist
           path: dist
       - name: Install on a clean Debian ${{ matrix.debian }}
-        run: >
-          docker run --rm -e DEBIAN_VERSION=${{ matrix.debian }}
-          -v "$PWD:/src:ro" debian:${{ matrix.debian }}
-          bash -c 'apt-get update -qq && apt-get install -y -qq --no-install-recommends ca-certificates python3 python3-venv && bash /src/install/ci-check.sh'
+        run: |
+          set +e
+          docker run --rm -e DEBIAN_VERSION=${{ matrix.debian }} \
+            -v "$PWD:/src:ro" debian:${{ matrix.debian }} \
+            bash -c 'apt-get update -qq && apt-get install -y -qq --no-install-recommends ca-certificates python3 python3-venv && bash /src/install/ci-check.sh' \
+            >install.log 2>&1
+          status=$?
+          cat install.log
+          if [ "$status" -ne 0 ]; then
+            # The tail of the log as an annotation, readable without the job logs.
+            body=$(tail -n 40 install.log | tr -d '\r' | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"}{print}')
+            echo "::error title=install failed (status $status)::$body"
+          fi
+          exit "$status"
       - name: An unsupported system is refused with exit code 1
         run: >
           docker run --rm -v "$PWD:/src:ro" ubuntu:24.04
