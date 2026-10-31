@@ -8,7 +8,7 @@ backoff from 1 s to 30 s, and gives up after 5 restarts in 10 minutes.
 
 Implements:
     CORE-143, CORE-144, CORE-145: Core spec 0.16, §6.7 Display output.
-    CORE-268, CORE-269, CORE-270: Core spec 0.16, §6.7 Display output.
+    CORE-268, CORE-269, CORE-270: Core spec 0.20, §6.7 Display output.
     CORE-277: Core spec 0.16, §5.6 WebSocket protocol.
 """
 

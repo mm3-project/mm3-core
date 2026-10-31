@@ -33,6 +33,7 @@ from mm3.core.kiosk import (
 )
 from mm3.core.kiosk.agent import KioskSession
 from mm3.core.kiosk.randr import pick_output
+from mm3.core.logging import recent_records
 from mm3.core.registry import Registry
 from mm3.core.settings import AdminSettings, EngineSettings, ServerSettings
 from mm3.core.web.auth import WebAuth
@@ -233,6 +234,65 @@ def test_core_268_agent_key_file(tmp_path: Path) -> None:
     assert not key.valid("Bearer nope")
     assert not key.valid(key.value)
     assert not key.valid(None)
+
+
+def _group_warnings() -> list[dict[str, Any]]:
+    return [r for r in recent_records() if r.get("event") == "kiosk_key_group"]
+
+
+def test_core_268_missing_group_warns_and_keeps_the_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def no_group(name: str) -> Any:
+        raise KeyError(name)
+
+    monkeypatch.setattr("mm3.core.web.kiosk.grp.getgrnam", no_group)
+    before = len(_group_warnings())
+    key = AgentKey(tmp_path / "run")
+    path = key.write()
+    assert path.read_text().strip() == key.value
+    assert stat.S_IMODE(path.stat().st_mode) == 0o640
+    warnings = _group_warnings()
+    assert len(warnings) == before + 1
+    assert warnings[-1]["group"] == "mm3-kiosk"
+    assert warnings[-1]["level"] == "warning"
+
+
+def test_core_268_failed_group_change_warns_and_keeps_the_key(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Group:
+        gr_gid = 4242
+
+    def refuse(*_args: Any) -> None:
+        raise PermissionError("not a member")
+
+    monkeypatch.setattr("mm3.core.web.kiosk.grp.getgrnam", lambda name: Group())
+    monkeypatch.setattr("mm3.core.web.kiosk.os.chown", refuse)
+    before = len(_group_warnings())
+    key = AgentKey(tmp_path / "run")
+    path = key.write()
+    assert path.exists()
+    warnings = _group_warnings()
+    assert len(warnings) == before + 1
+    assert warnings[-1]["group"] == "mm3-kiosk"
+    assert warnings[-1]["reason"] == "chown_failed"
+
+
+def test_core_268_group_change_ok_logs_nothing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class Group:
+        gr_gid = 4242
+
+    calls: list[tuple[Any, ...]] = []
+    monkeypatch.setattr("mm3.core.web.kiosk.grp.getgrnam", lambda name: Group())
+    monkeypatch.setattr("mm3.core.web.kiosk.os.chown", lambda *a: calls.append(a))
+    before = len(_group_warnings())
+    AgentKey(tmp_path / "run").write()
+    assert len(_group_warnings()) == before
+    assert calls
+    assert calls[0][1:] == (-1, 4242)
 
 
 # --- the agent against a running gateway --------------------------------------------------------
