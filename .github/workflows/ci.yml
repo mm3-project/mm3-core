@@ -128,3 +128,38 @@ jobs:
         with:
           name: dist
           path: dist/
+
+  # Implements CORE-293 (Core spec 0.20, §10.2 Packaging and deployment): the
+  # installer runs on clean Debian 12 and 13 images with the wheels built above.
+  install:
+    runs-on: ubuntu-latest
+    needs: [build]
+    strategy:
+      fail-fast: false
+      matrix:
+        debian: ["12", "13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: Install on a clean Debian ${{ matrix.debian }}
+        run: |
+          set +e
+          docker run --rm -e DEBIAN_VERSION=${{ matrix.debian }} \
+            -v "$PWD:/src:ro" debian:${{ matrix.debian }} \
+            bash -c 'apt-get update -qq && apt-get install -y -qq --no-install-recommends ca-certificates python3 python3-venv && bash /src/install/ci-check.sh' \
+            >install.log 2>&1
+          status=$?
+          cat install.log
+          if [ "$status" -ne 0 ]; then
+            # The tail of the log as an annotation, readable without the job logs.
+            body=$(tail -n 40 install.log | tr -d '\r' | sed 's/%/%25/g' | awk 'BEGIN{ORS="%0A"}{print}')
+            echo "::error title=install failed (status $status)::$body"
+          fi
+          exit "$status"
+      - name: An unsupported system is refused with exit code 1
+        run: >
+          docker run --rm -v "$PWD:/src:ro" ubuntu:24.04
+          bash -c 'bash /src/install/mm3-install.sh; test $? -eq 1'
