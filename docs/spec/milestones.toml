@@ -140,11 +140,15 @@ requirements = [
 number = 6
 name = "Admin: REST API, config editor, preview, debug page"
 status = "not_started"
+# CORE-290..292 (sd_notify, loop watchdog, mm3.service) come from the first
+#   manual install; the unit already carries the CORE-65 hardening directives,
+#   which stays in milestone 9 and is closed there by the install test.
 # Also serves the CORE-113 health record (assigned to milestone 1) at
 #   GET /api/v1/modules/{id}/health, with the rest of the REST API.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
+  "CORE-290..292",
 ]
 
 [[milestone]]
@@ -169,4 +173,6 @@ requirements = [
 number = 9
 name = "Release 1.0"
 status = "not_started"
-requirements = ["CORE-65"]
+# CORE-293 installs mm3.service (milestone 6) and mm3-kiosk.service (milestone 3);
+#   until mm3-core 1.0.0 it installs modules with --no-deps (MOD-03 unchanged).
+requirements = ["CORE-65", "CORE-293", "CORE-294"]
