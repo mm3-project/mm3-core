@@ -143,6 +143,9 @@ status = "not_started"
 # CORE-290..292 (sd_notify, loop watchdog, mm3.service) come from the first
 #   manual install; the unit already carries the CORE-65 hardening directives,
 #   which stays in milestone 9 and is closed there by the install test.
+#   Implemented ahead of this milestone in the packaging chat (mm3.core.systemd,
+#   `mm3 service unit`, tests/test_systemd*.py); the milestone stays
+#   not_started until its admin requirements are done.
 # Also serves the CORE-113 health record (assigned to milestone 1) at
 #   GET /api/v1/modules/{id}/health, with the rest of the REST API.
 requirements = [

@@ -9,6 +9,20 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Packaging after the first manual install, part 1 (core spec 0.20):
+  - Service notification (CORE-290): the engine tells systemd its state with
+    `sd_notify` datagrams to `$NOTIFY_SOCKET`, on the standard library only and
+    a no-op without it: `READY=1` with a `STATUS=` summary once the listeners
+    are up, `RELOADING=1` with `MONOTONIC_USEC=` and then `READY=1` around every
+    reload (applied or rejected), `STOPPING=1` when shutdown begins. A start
+    that aborts never sends `READY=1`.
+  - Loop watchdog (CORE-291): with `$WATCHDOG_USEC` set, a task on the engine
+    loop sends `WATCHDOG=1` every half interval on the engine clock; a module
+    that blocks the loop stops the ping.
+  - `mm3.service` (CORE-292) ships in the package (`mm3/core/systemd/`) and
+    `mm3 service unit` prints it: `Type=notify`, `WatchdogSec=30s`, the CORE-65
+    hardening, state and runtime directories.
+
 - Spec sync to core spec 0.20: sd_notify and loop watchdog (CORE-290, CORE-291), `mm3.service` unit (CORE-292), `mm3-install.sh` (CORE-293) and `mm3-modules-default` (CORE-294); CORE-268 now requires `mm3` to be a member of group `mm3-kiosk`. Milestones 6 and 9 updated.
 
 - Spec sync for core spec 0.19 and Module Contract 1.0 rev 12 (milestone 5

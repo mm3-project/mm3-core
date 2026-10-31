@@ -10,7 +10,7 @@ from typing import Any
 import pytest
 from pydantic import Field
 
-from conftest import EngineFactory, Recorder
+from conftest import EngineFactory, Listener, Recorder
 from mm3.config import ModuleConfig
 from mm3.context import Location
 from mm3.core.config import load_config
@@ -18,6 +18,7 @@ from mm3.core.config.diff import changed_sections, plan_reload
 from mm3.core.config.manager import ConfigManager
 from mm3.core.engine import Engine
 from mm3.core.supervisor import State, has_backend
+from mm3.core.systemd import ServiceNotifier
 from mm3.errors import ConfigurationError
 from mm3.module import MirrorModule
 
@@ -235,6 +236,24 @@ async def test_core_209_invalid_config_never_replaces_running(
     assert set(event.payload["errors"][0]) == {"file", "line", "path", "code"}
     assert await m.reload(BASE.replace("{n: 1}", "{n: 2}", 1)) is True
     assert m.manager.status() == {"version": 2, "disk_valid": True}
+
+
+async def test_core_290_reload_tells_systemd_applied_or_rejected(
+    mirror: Harness, listener: Listener
+) -> None:
+    m = await mirror(BASE)
+    m.engine.notifier = ServiceNotifier(str(listener.path))
+    m.engine.notify_ready()
+    listener.messages()
+    assert await m.reload(BASE.replace("{n: 1}", "{n: 2}", 1)) is True
+    [reloading, ready] = listener.messages()
+    assert reloading[0] == "RELOADING=1"
+    assert ready[0] == "READY=1"
+    assert ready[1] == f"STATUS={m.engine.status_line()}"
+    assert await m.reload(BASE + "  - module: missing\n") is False  # rejected
+    assert [x[0] for x in listener.messages()] == ["RELOADING=1", "READY=1"]
+    assert await m.reload(BASE.replace("{n: 1}", "{n: 2}", 1)) is False  # nothing to apply
+    assert [x[0] for x in listener.messages()] == ["RELOADING=1", "READY=1"]
 
 
 async def test_core_209_error_event_lists_at_most_20(mirror: Harness, recorder: Recorder) -> None:
