@@ -7,6 +7,14 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed
+
+- CORE-268 (core spec 0.20): when the group `mm3-kiosk` is missing or the
+  change of group on `kiosk.key` fails, the engine now logs the warning
+  `kiosk_key_group` naming the group instead of staying silent, and keeps
+  running. Citations in the kiosk files reviewed against 0.20 (spec-change
+  issue of milestone 3).
+
 ### Added
 
 - Spec sync to core spec 0.20: sd_notify and loop watchdog (CORE-290, CORE-291), `mm3.service` unit (CORE-292), `mm3-install.sh` (CORE-293) and `mm3-modules-default` (CORE-294); CORE-268 now requires `mm3` to be a member of group `mm3-kiosk`. Milestones 6 and 9 updated.

@@ -6,7 +6,7 @@
 // Implements CORE-262 (Core spec 0.14, §6.10 Theme and custom CSS)
 // Implements CORE-117 (Core spec 0.14, §10.5 Diagnostics and debugging)
 // Implements CORE-103 (Core spec 0.14, §11.1 Engine additions)
-// Implements CORE-268 (Core spec 0.16, §6.7 Display output)
+// Implements CORE-268 (Core spec 0.20, §6.7 Display output)
 // Implements CORE-235 (Core spec 0.15, §6.9 Pages and visibility)
 // Implements CORE-264, CORE-267 (Core spec 0.15, §8.5 Catalogs at run time)
 import { bind } from "/core/mm3.js";

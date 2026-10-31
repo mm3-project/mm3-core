@@ -9,7 +9,7 @@ change, a one-time kiosk key before each Chromium launch, and ``restart``
 when the kiosk shell has been missing for 60 s.
 
 Implements:
-    CORE-144, CORE-145, CORE-268, CORE-269: Core spec 0.16, §6.7 Display output.
+    CORE-144, CORE-145, CORE-268, CORE-269: Core spec 0.20, §6.7 Display output.
     CORE-277: Core spec 0.16, §5.6 WebSocket protocol.
 """
 
@@ -74,7 +74,16 @@ class AgentKey:
         self.value = secrets.token_urlsafe(32)
 
     def write(self) -> Path:
-        """Write the key with mode 0640 and group ``mm3-kiosk`` when that group exists.
+        """Write the key with mode 0640 and group ``mm3-kiosk``.
+
+        The engine user is a member of that group (CORE-268). When the group is
+        missing or the change fails, the engine logs the warning
+        ``kiosk_key_group`` naming the group and keeps running: the key then
+        stays readable by the engine's own group only and the kiosk agent
+        cannot connect.
+
+        Implements:
+            CORE-268: Core spec 0.20, §6.7 Display output.
 
         Returns:
             The file.
@@ -85,8 +94,14 @@ class AgentKey:
         with os.fdopen(fd, "w") as f:
             f.write(self.value + "\n")
         os.chmod(tmp, 0o640)
-        with contextlib.suppress(KeyError, PermissionError, OSError):
+        try:
             os.chown(tmp, -1, grp.getgrnam(KIOSK_GROUP).gr_gid)
+        except KeyError:
+            _log.warning("kiosk_key_group", group=KIOSK_GROUP, reason="group_missing")
+        except OSError as exc:
+            _log.warning(
+                "kiosk_key_group", group=KIOSK_GROUP, reason="chown_failed", error=str(exc)
+            )
         tmp.replace(self.path)
         return self.path
 
