@@ -9,6 +9,8 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Spec sync to core spec 0.20: sd_notify and loop watchdog (CORE-290, CORE-291), `mm3.service` unit (CORE-292), `mm3-install.sh` (CORE-293) and `mm3-modules-default` (CORE-294); CORE-268 now requires `mm3` to be a member of group `mm3-kiosk`. Milestones 6 and 9 updated.
+
 - Spec sync for core spec 0.19 and Module Contract 1.0 rev 12 (milestone 5
   settled): HTTP transport rules behind `ctx.http` (CORE-282..287),
   `engine.location` / `ctx.location` (CORE-288; CORE-201, CORE-211 and
