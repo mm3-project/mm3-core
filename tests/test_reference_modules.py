@@ -13,10 +13,13 @@ MODULES = ROOT / "modules"
 LANGS = {"en", "it", "fr", "es", "de"}
 EXPECTED = {"mm3-greeting", "mm3-clock", "mm3-weather"}
 PUBLISHED = {"mm3-clock", "mm3-weather"}
+META = "mm3-modules-default"  # a distribution without code (CORE-294), not a module
 
 
 def projects() -> list[Path]:
-    return sorted(p for p in MODULES.iterdir() if (p / "pyproject.toml").is_file())
+    return sorted(
+        p for p in MODULES.iterdir() if (p / "pyproject.toml").is_file() and p.name != META
+    )
 
 
 def test_core_289_the_expected_modules_exist() -> None:
@@ -49,5 +52,6 @@ def test_core_289_modules_use_only_the_module_api(proj: Path) -> None:
 
 def test_core_289_greeting_is_not_published() -> None:
     assert "mm3-greeting" not in PUBLISHED
-    default = ROOT / "modules" / "mm3-modules-default"
-    assert not default.exists()  # the bundle lists clock and weather, never greeting
+    default = tomllib.loads((MODULES / META / "pyproject.toml").read_text())["project"]
+    # The bundle lists clock and weather, never greeting (CORE-294).
+    assert not any("mm3-greeting" in dep for dep in default["dependencies"])

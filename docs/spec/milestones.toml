@@ -178,4 +178,7 @@ name = "Release 1.0"
 status = "not_started"
 # CORE-293 installs mm3.service (milestone 6) and mm3-kiosk.service (milestone 3);
 #   until mm3-core 1.0.0 it installs modules with --no-deps (MOD-03 unchanged).
+# CORE-294 and the script of CORE-293 were implemented ahead of this milestone in
+#   the packaging chat (modules/mm3-modules-default, install/mm3-install.sh);
+#   the Release 1.0 CI job that runs the script on clean images closes CORE-293 here.
 requirements = ["CORE-65", "CORE-293", "CORE-294"]

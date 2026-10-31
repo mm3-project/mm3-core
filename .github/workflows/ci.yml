@@ -116,6 +116,14 @@ jobs:
       # mm3-build is built with the engine; the core wheel compiles its
       # catalogs with the mm3-i18n hook.
       - run: uv build --all-packages
+      # Implements CORE-294 (Core spec 0.20, §10.2 Packaging and deployment):
+      # the published default modules and mm3-modules-default are built with the
+      # engine; their build resolves mm3-build from dist/.
+      - name: Default modules and mm3-modules-default (CORE-294)
+        run: |
+          for m in mm3-clock mm3-weather mm3-modules-default; do
+            uv build "modules/$m" --out-dir dist --find-links dist
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: dist
