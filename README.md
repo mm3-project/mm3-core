@@ -30,6 +30,23 @@ The specifications are authoritative; see [`docs/spec/`](docs/spec/README.md).
 - **Core Engine Specification** — engine behaviour (`CORE-xx`, `WGT-xx`)
 - **Module Contract v1.0** — what every module must do (`MOD-xx`)
 
+## Installation
+
+On a clean Debian 12 or 13 (x86-64), as root:
+
+```sh
+bash install/mm3-install.sh                      # from PyPI
+bash install/mm3-install.sh --find-links dist/   # from local wheels
+```
+
+The script is idempotent. It creates the users `mm3` and `mm3-kiosk`, a venv in
+`/opt/mm3/venvs/<timestamp>` (the symlink `/opt/mm3/venv` points to it and the
+previous venv is kept for rollback), `/etc/mm3/config.yaml` and `mm3.env` (only
+when absent), the `mm3.service` unit and, on Debian 13 with cage 0.1.5 or later,
+`mm3-kiosk.service` (`--no-kiosk` skips it). It validates the configuration with
+the new venv before switching and never creates a token. Exit codes: 0 success,
+1 unsupported system, 2 any other failure (CORE-293).
+
 ## Development
 
 Requires [uv](https://docs.astral.sh/uv/).
