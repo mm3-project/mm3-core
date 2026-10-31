@@ -160,7 +160,7 @@ def _kiosk_agents(hub: ClientHub, manager: ConfigManager, engine: Engine) -> Kio
     """Write the agent key and build ``/ws/kiosk-agent``; ``None`` when the key cannot be written.
 
     Implements:
-        CORE-268: Core spec 0.16, §6.7 Display output.
+        CORE-268: Core spec 0.20, §6.7 Display output.
     """
     from mm3.core.logging import get_logger
     from mm3.core.web.kiosk import AgentKey, KioskAgents, runtime_dir
