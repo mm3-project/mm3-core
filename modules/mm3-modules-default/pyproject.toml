@@ -1,0 +1,24 @@
+# Implements CORE-294 (Core spec 0.20, §10.2 Packaging and deployment): a
+# distribution without code. Its dependencies are the default modules that are
+# published when a release is cut, each bounded to its current major (CORE-171).
+# It declares no dependency on mm3-core: each module carries the range it needs
+# (MOD-03), and each module stays installable alone.
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mm3-modules-default"
+version = "1.0.0"
+description = "The default MM3 modules (clock and weather), installed in one step"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.11"
+dependencies = [
+    "mm3-clock>=1.0,<2",
+    "mm3-weather>=1.0,<2",
+]
+
+# No code: the wheel carries only the metadata that lists the modules.
+[tool.hatch.build.targets.wheel]
+bypass-selection = true

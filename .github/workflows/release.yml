@@ -3,9 +3,13 @@
 # attaches the tested constraints file to the GitHub release (CORE-172).
 # Implements CORE-280 (Core spec 0.17, §10.2 Packaging and deployment):
 # mm3-build is released with mm3-core from this repository.
-# One-time setup on PyPI: add a trusted publisher for the projects "mm3-core"
-# and "mm3-build", owner "mm3-project", repository "mm3-core", workflow
-# "release.yml", environment "pypi".
+# Implements CORE-294 (Core spec 0.20, §10.2 Packaging and deployment): the
+# published default modules (mm3-clock, mm3-weather) and mm3-modules-default are
+# released from this repository with the engine. A module whose version did not
+# change is already on PyPI and is skipped.
+# One-time setup on PyPI: add a trusted publisher for the projects "mm3-core",
+# "mm3-build", "mm3-clock", "mm3-weather" and "mm3-modules-default", owner
+# "mm3-project", repository "mm3-core", workflow "release.yml", environment "pypi".
 name: Release
 
 on:
@@ -23,6 +27,11 @@ jobs:
       - uses: astral-sh/setup-uv@v6
       - run: uv lock --check
       - run: uv build --all-packages
+      - name: Default modules and mm3-modules-default (CORE-294)
+        run: |
+          for m in mm3-clock mm3-weather mm3-modules-default; do
+            uv build "modules/$m" --out-dir dist --find-links dist
+          done
       - name: Constraints file from the lock, with hashes
         run: uv export --frozen --no-dev --all-extras --no-emit-workspace --format requirements-txt -o dist-constraints.txt
       - uses: actions/upload-artifact@v4
@@ -48,6 +57,7 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           attestations: true
+          skip-existing: true  # module versions that did not change (CORE-294)
 
   constraints:
     needs: publish

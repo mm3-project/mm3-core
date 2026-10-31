@@ -31,6 +31,14 @@ separately under **Module API** in each release (Module Contract, section 10).
     `mm3 service unit` prints it: `Type=notify`, `WatchdogSec=30s`, the CORE-65
     hardening, state and runtime directories.
 
+- Packaging after the first manual install, part 2 (core spec 0.20):
+  `mm3-modules-default` (CORE-294), a distribution without code in
+  `modules/mm3-modules-default/` that depends on the published default modules
+  `mm3-clock` and `mm3-weather`, each bounded to its current major, and on no
+  version of `mm3-core`. CI and the release workflow now build `mm3-clock`,
+  `mm3-weather` and `mm3-modules-default` with the engine, and the release
+  publishes them with attestations (unchanged module versions are skipped).
+
 - Spec sync to core spec 0.20: sd_notify and loop watchdog (CORE-290, CORE-291), `mm3.service` unit (CORE-292), `mm3-install.sh` (CORE-293) and `mm3-modules-default` (CORE-294); CORE-268 now requires `mm3` to be a member of group `mm3-kiosk`. Milestones 6 and 9 updated.
 
 - Spec sync for core spec 0.19 and Module Contract 1.0 rev 12 (milestone 5
