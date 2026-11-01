@@ -6,7 +6,7 @@ The pages carry no inline script or style (CORE-63): the pairing page loads
 
 Implements:
     CORE-11: Core spec 0.15, §4.4 Contract rules.
-    CORE-63: Core spec 0.12, §10.1 Security.
+    CORE-63: Core spec 0.21, §10.1 Security.
     CORE-253: Core spec 0.12, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
 """

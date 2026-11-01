@@ -1,5 +1,5 @@
 # MM3 kiosk: cage + Chromium on tty1 as the user mm3-kiosk.
-# Implements CORE-143 (Core spec 0.16, §6.7 Display output)
+# Implements CORE-143 (Core spec 0.21, §6.7 Display output)
 [Unit]
 Description=MM3 kiosk (cage and Chromium)
 Documentation=https://github.com/mm3-project/mm3-core

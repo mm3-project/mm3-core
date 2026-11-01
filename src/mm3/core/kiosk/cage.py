@@ -1,7 +1,7 @@
 """The cage version check of ``mm3 kiosk session`` (CORE-143).
 
 Implements:
-    CORE-143: Core spec 0.16, §6.7 Display output.
+    CORE-143: Core spec 0.21, §6.7 Display output.
 """
 
 from __future__ import annotations

@@ -88,7 +88,7 @@ requirements = [
 number = 3
 name = "Web shell, WebSocket, i18n, kiosk, visibility"
 status = "done"
-done_at = { core = "0.16", contract = "1.0 rev 7" }
+done_at = { core = "0.21", contract = "1.0 rev 12" }
 requirements = [
   "CORE-06", "CORE-07", "CORE-11", "CORE-12", "CORE-40..42", "CORE-60..64",
   "CORE-95", "CORE-103", "CORE-117", "CORE-143..146", "CORE-223", "CORE-233..235",
@@ -114,6 +114,16 @@ requirements = [
 #   milestone 6, the MQTT volume control in milestone 7. CORE-297: the
 #   installer packages are CORE-293 (milestone 10). CORE-201, CORE-216 and
 #   CORE-155 (audio block and history section) stay with milestone 2.
+# Spec-change issue #42 closed at core 0.21: the agent side of audio
+#   (mm3.core.kiosk.audio, pactl, the sinks and audio frames, the card profile
+#   switch and the mismatch kept in KioskStatus), the audio block sent by the
+#   engine at connect and on hot reload, media-src 'self' in the CSP, the VA-API
+#   Chromium feature, and the citation review of the unit file and the CLI.
+#   CORE-246 and CORE-268 (changed in 0.19 and 0.20) were already implemented
+#   and are covered by test_core_246_* and test_core_268_*; reviewed, no change.
+#   CORE-296: the mismatch and the failure area are only recorded here
+#   (KioskStatus.audio_mismatch, audio_failure); the admin and the debug page
+#   show them in milestone 6.
 
 [[milestone]]
 number = 4

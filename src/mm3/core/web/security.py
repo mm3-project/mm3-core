@@ -8,7 +8,7 @@ headers of CORE-63.
 
 Implements:
     CORE-61: Core spec 0.12, §10.1 Security.
-    CORE-63: Core spec 0.12, §10.1 Security.
+    CORE-63: Core spec 0.21, §10.1 Security.
     CORE-12: Core spec 0.15, §4.4 Contract rules.
 """
 
@@ -38,7 +38,7 @@ Network = ipaddress.IPv4Network | ipaddress.IPv6Network
 
 _CSP_BASE = (
     "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
-    "font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; "
+    "media-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'self'; "
 )
 CSP = _CSP_BASE + "frame-ancestors 'none'"
 """Content-Security-Policy of every response (CORE-63)."""
@@ -46,7 +46,9 @@ CSP = _CSP_BASE + "frame-ancestors 'none'"
 CSP_PREVIEW = _CSP_BASE + "frame-ancestors 'self'"
 """Content-Security-Policy of ``/admin/preview``, which the admin frames (CORE-63)."""
 
-PERMISSIONS_POLICY = "camera=(), microphone=(), geolocation=(), usb=(), serial=(), payment=()"
+PERMISSIONS_POLICY = (
+    "camera=(), microphone=(), geolocation=(), usb=(), serial=(), bluetooth=(), payment=()"
+)
 """Features denied to every page (CORE-63)."""
 
 LOG_EVERY_S = 60.0
@@ -181,7 +183,7 @@ class SecurityHeaders:
         app: The application.
 
     Implements:
-        CORE-63: Core spec 0.12, §10.1 Security.
+        CORE-63: Core spec 0.21, §10.1 Security.
     """
 
     def __init__(self, app: ASGIApp) -> None:
