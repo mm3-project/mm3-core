@@ -58,6 +58,8 @@ done_at = { core = "0.11", contract = "1.0 rev 7" }
 #   server.allow, no admin.token) were redone in issue #19.
 # CORE-201: server.allow is applied live by the web gateway in milestone 3.
 # CORE-244: only the backup block schema here; backups run in milestone 7.
+# Core 0.21 changes CORE-201, CORE-216 and CORE-155: the audio block (6.7) is a
+#   top-level key and a history section (spec-change issue).
 # CORE-243: English messages live in mm3.core.config.records; the i18n
 #   service (milestone 3) compiles them into the engine catalog.
 # CORE-101: resending configs on a locale change comes with hot reload and
@@ -86,7 +88,7 @@ done_at = { core = "0.16", contract = "1.0 rev 7" }
 requirements = [
   "CORE-06", "CORE-07", "CORE-11", "CORE-12", "CORE-40..42", "CORE-60..64",
   "CORE-95", "CORE-103", "CORE-117", "CORE-143..146", "CORE-223", "CORE-233..235",
-  "CORE-237..239", "CORE-241", "CORE-246..277",
+  "CORE-237..239", "CORE-241", "CORE-246..277", "CORE-295..297",
 ]
 # Settled in core spec 0.11 / contract 1.0 rev 7. CORE-117 moved here from
 #   milestone 6: the shell draws the failure placeholder.
@@ -102,6 +104,12 @@ requirements = [
 #   Chromium state, restarts, failed) here; GET /api/v1/status, the admin and
 #   the debug page show it in milestone 6. CORE-144: the admin dropdowns of
 #   reported outputs and modes come with the editor (milestone 6).
+# Core 0.21 (kiosk audio base) adds CORE-295..297 here and changes CORE-63,
+#   CORE-143, CORE-270 and CORE-277 (spec-change issue). CORE-296: the admin
+#   output dropdown and the run-time volume and mute controls come in
+#   milestone 6, the MQTT volume control in milestone 7. CORE-297: the
+#   installer packages are CORE-293 (milestone 10). CORE-201, CORE-216 and
+#   CORE-155 (audio block and history section) stay with milestone 2.
 
 [[milestone]]
 number = 4
@@ -142,7 +150,7 @@ name = "Admin: REST API, config editor, preview, debug page"
 status = "not_started"
 # CORE-290..292 (sd_notify, loop watchdog, mm3.service) come from the first
 #   manual install; the unit already carries the CORE-65 hardening directives,
-#   which stays in milestone 9 and is closed there by the install test.
+#   which stays in milestone 10 and is closed there by the install test.
 #   Implemented ahead of this milestone in the packaging chat (mm3.core.systemd,
 #   `mm3 service unit`, tests/test_systemd*.py); the milestone stays
 #   not_started until its admin requirements are done.
@@ -165,6 +173,17 @@ requirements = [
 
 [[milestone]]
 number = 8
+name = "Media: media service, sources, takeover, mm3-media"
+status = "not_started"
+# Inserted in core 0.21 (1 Nov 2026) before Extensions and Release, which moved
+#   to 9 and 10. Its requirements are settled in its own defining chat (media
+#   service with ffmpeg, sources, capabilities, full-screen takeover, the
+#   reference module mm3-media). The kiosk audio base it builds on (CORE-295..297)
+#   belongs to milestone 3.
+requirements = []
+
+[[milestone]]
+number = 9
 name = "Extensions: widget builder, MM2 migration, default modules"
 status = "not_started"
 requirements = [
@@ -173,7 +192,7 @@ requirements = [
 ]
 
 [[milestone]]
-number = 9
+number = 10
 name = "Release 1.0"
 status = "not_started"
 # CORE-293 installs mm3.service (milestone 6) and mm3-kiosk.service (milestone 3);
@@ -181,4 +200,6 @@ status = "not_started"
 # CORE-294 and the script of CORE-293 were implemented ahead of this milestone in
 #   the packaging chat (modules/mm3-modules-default, install/mm3-install.sh);
 #   the Release 1.0 CI job that runs the script on clean images closes CORE-293 here.
+# Core 0.21 changes CORE-293: on kiosk systems the script also installs the audio
+#   packages of CORE-295 and the VA-API drivers of CORE-297.
 requirements = ["CORE-65", "CORE-293", "CORE-294"]
