@@ -7,6 +7,29 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 2, spec-change issue #41)
+
+- Configuration `audio` block (CORE-201, CORE-296; core spec 0.21): the
+  optional top-level key `audio` with `sink` (`auto`, `hdmi`, `analog` or the
+  name of an output; default `auto`), `volume` (0 to 100, unset by default)
+  and `mute` (default `false`). Without the block `MirrorConfig.audio` is
+  `None` and the kiosk keeps PipeWire's output and volume; an output name the
+  kiosk does not report is not a configuration error. The block is validated
+  with the existing `CORE_CFG_*` codes (`RANGE`, `LENGTH`, `UNKNOWN_KEY`).
+- `audio` is a history section (CORE-216, CORE-155): it shows in the changed
+  sections of a version and in `mm3 config diff`, and can be restored alone
+  with `mm3 config restore --section audio`, also when it lives in an included
+  file. `TOP_SECTIONS` now lives in `mm3.core.config.diff` and the history
+  imports it, so the two cannot drift apart.
+- Hot reload (CORE-296): `ReloadPlan.audio` is set when the block changed,
+  appeared or went away. It restarts no instance and re-lays out no shell; the
+  kiosk agent applies it live in milestone 3.
+- CORE-211 (core spec 0.19, `engine.location`) was already implemented with
+  milestone 5; the issue is closed with the rest after a review of the code
+  and of `test_core_211_*` and `test_core_288_*`.
+- Citations reviewed against 0.21 in `config/model.py`, `config/diff.py`,
+  `config/history.py`, `config/assets.py` and `settings.py`.
+
 ### Fixed
 
 - CORE-268 (core spec 0.20): when the group `mm3-kiosk` is missing or the

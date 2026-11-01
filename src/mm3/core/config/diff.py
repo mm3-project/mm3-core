@@ -7,9 +7,9 @@ next engine restart; and whether custom.css changed.
 
 Implements:
     CORE-02: Core spec 0.9, §3 Engine components.
-    -: Core spec 0.9, §6.3 Hot reload.
-    CORE-201: Core spec 0.19, §6.2 Rules.
-    CORE-216: Core spec 0.11, §6.8 Configuration history, undo and redo.
+    -: Core spec 0.21, §6.3 Hot reload.
+    CORE-201: Core spec 0.21, §6.2 Rules.
+    CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
 """
 
 from __future__ import annotations
@@ -25,6 +25,7 @@ from mm3.core.config.validate import ConfigResult, ResolvedInstance
 __all__ = [
     "LIVE_SUBKEYS",
     "RESTART_KEYS",
+    "TOP_SECTIONS",
     "ReloadPlan",
     "changed_sections",
     "plan_reload",
@@ -41,7 +42,9 @@ afterwards, and is reported as the live key ``server.allow``.
 LIVE_SUBKEYS = {"server": frozenset({"allow"})}
 """Sub-keys of restart keys that apply live (CORE-201)."""
 
-_TOP_SECTIONS = ("engine", "display", "layout", "pages", "backup")
+TOP_SECTIONS = ("engine", "display", "audio", "layout", "pages", "backup")
+"""Top-level sections of the history, in the order of the file (CORE-201, CORE-216)."""
+
 _LAYOUT_KEYS = ("position", "positions", "pages", "appearance")
 
 
@@ -90,17 +93,17 @@ def changed_sections(old: ConfigResult, new: ConfigResult) -> list[str]:
 
     Returns:
         Changed sections in a stable order: ``engine``, ``display``,
-        ``layout``, ``pages``, ``backup``, then ``modules/<id>`` in file order (removed
-        ones last), then ``modules/_order``, ``custom_css`` and
-        ``widget_templates/<name>`` in name order.
+        ``audio``, ``layout``, ``pages``, ``backup``, then ``modules/<id>`` in
+        file order (removed ones last), then ``modules/_order``, ``custom_css``
+        and ``widget_templates/<name>`` in name order.
 
     Implements:
-        CORE-216: Core spec 0.11, §6.8 Configuration history, undo and redo.
+        CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
     """
     a, b = unsubstituted(old.loaded), unsubstituted(new.loaded)
     am = a if isinstance(a, Mapping) else {}
     bm = b if isinstance(b, Mapping) else {}
-    out = [s for s in _TOP_SECTIONS if am.get(s) != bm.get(s)]
+    out = [s for s in TOP_SECTIONS if am.get(s) != bm.get(s)]
     old_by_id = {i.id: i for i in old.instances}
     new_by_id = {i.id: i for i in new.instances}
     for iid, inst in new_by_id.items():
@@ -135,6 +138,9 @@ class ReloadPlan:
         engine_live: ``engine`` keys that changed and apply live.
         engine_restart: ``engine`` keys that changed and apply at the next restart.
         display: Whether the ``display`` block changed.
+        audio: Whether the ``audio`` block changed, or appeared or went away.
+            The kiosk agent applies it live; nothing else restarts or
+            re-lays out (CORE-296).
         layout: Whether the ``layout`` block changed.
         pages: Whether the ``pages`` block changed.
         custom_css: Whether custom.css changed (CORE-262).
@@ -151,6 +157,7 @@ class ReloadPlan:
     engine_live: set[str] = field(default_factory=set)
     engine_restart: set[str] = field(default_factory=set)
     display: bool = False
+    audio: bool = False
     layout: bool = False
     pages: bool = False
     custom_css: bool = False
@@ -170,6 +177,7 @@ class ReloadPlan:
             or self.engine_live
             or self.engine_restart
             or self.display
+            or self.audio
             or self.layout
             or self.pages
             or self.custom_css
@@ -195,8 +203,8 @@ def plan_reload(old: ConfigResult, new: ConfigResult) -> ReloadPlan:
         ValueError: One of the configurations has errors.
 
     Implements:
-        -: Core spec 0.9, §6.3 Hot reload.
-        CORE-201: Core spec 0.19, §6.2 Rules.
+        -: Core spec 0.21, §6.3 Hot reload.
+        CORE-201: Core spec 0.21, §6.2 Rules.
     """
     if old.config is None or new.config is None:
         raise ValueError("both configurations must be valid")
@@ -218,6 +226,7 @@ def plan_reload(old: ConfigResult, new: ConfigResult) -> ReloadPlan:
         if changed - live:
             plan.engine_restart.add(key)
     plan.display = _dump(old.config.display) != _dump(new.config.display)
+    plan.audio = _dump(old.config.audio) != _dump(new.config.audio)
     plan.layout = _dump(old.config.layout) != _dump(new.config.layout)
     plan.pages = _dump(old.config.pages) != _dump(new.config.pages)
     plan.custom_css = old.assets.custom_css != new.assets.custom_css

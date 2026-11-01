@@ -16,7 +16,7 @@ from pydantic import Field, SecretStr
 from mm3.cli.main import check_config, run
 from mm3.config import LocalizedText, ModuleConfig, locale_chain, parse_duration
 from mm3.core.config import ConfigResult, load_config
-from mm3.core.config.model import BackupConfig, MirrorConfig
+from mm3.core.config.model import AudioConfig, BackupConfig, MirrorConfig
 from mm3.core.config.modelcheck import check_config_model
 from mm3.core.config.records import CODES, MESSAGES, WARNING_CODES
 from mm3.core.publicconfig import public_config
@@ -833,3 +833,62 @@ def test_core_243_css_code_message_names_the_reason(tmp_path: Path, registry: Re
     (tmp_path / "etc" / "custom.css").write_text("@import 'x';")
     (rec,) = load(tmp_path, "{}\n", registry).errors
     assert rec.message == "CSS breaks a limit: @import is not allowed"
+
+
+# --- CORE-201: the audio block ---------------------------------------------
+
+
+def test_core_201_audio_is_a_top_level_key(tmp_path: Path, registry: Registry) -> None:
+    result = load(tmp_path, "audio:\n  sink: hdmi\n  volume: 60\n  mute: true\n", registry)
+    assert result.ok, result.records
+    assert result.config is not None
+    assert result.config.audio == AudioConfig(sink="hdmi", volume=60, mute=True)
+    # any other top-level key stays an error
+    other = load(tmp_path, "sound: {sink: hdmi}\n", registry)
+    assert [(r.code, r.path) for r in other.errors] == [("CORE_CFG_UNKNOWN_KEY", "/sound")]
+
+
+def test_core_201_audio_block_is_optional_and_has_no_default_instance(
+    tmp_path: Path, registry: Registry
+) -> None:
+    absent = load(tmp_path, "{}\n", registry)
+    assert absent.config is not None
+    assert absent.config.audio is None  # the kiosk keeps PipeWire's output and volume
+    empty = load(tmp_path, "audio: {}\n", registry)
+    assert empty.config is not None
+    assert empty.config.audio == AudioConfig()
+    assert empty.config.audio is not None
+    assert (empty.config.audio.sink, empty.config.audio.volume, empty.config.audio.mute) == (
+        "auto",
+        None,
+        False,
+    )
+
+
+def test_core_201_audio_fields_are_checked(tmp_path: Path, registry: Registry) -> None:
+    for volume in ("101", "-1"):
+        bad = load(tmp_path, f"audio: {{volume: {volume}}}\n", registry)
+        assert [(r.code, r.path) for r in bad.errors] == [("CORE_CFG_RANGE", "/audio/volume")]
+    edge = load(tmp_path, "audio: {volume: 0}\n", registry)
+    assert edge.ok
+    assert edge.config is not None
+    assert edge.config.audio is not None
+    assert edge.config.audio.volume == 0
+    top = load(tmp_path, "audio: {volume: 100}\n", registry)
+    assert top.ok
+    empty_sink = load(tmp_path, "audio: {sink: ''}\n", registry)
+    assert [(r.code, r.path) for r in empty_sink.errors] == [("CORE_CFG_LENGTH", "/audio/sink")]
+    unknown = load(tmp_path, "audio: {device: hdmi}\n", registry)
+    assert [(r.code, r.path) for r in unknown.errors] == [("CORE_CFG_UNKNOWN_KEY", "/audio/device")]
+
+
+def test_core_201_an_unreported_output_name_is_not_a_configuration_error(
+    tmp_path: Path, registry: Registry
+) -> None:
+    name = "alsa_output.pci-0000_00_1f.3.hdmi-stereo"
+    result = load(tmp_path, f"audio:\n  sink: {name}\n", registry)
+    assert result.ok, result.records
+    assert result.config is not None
+    assert result.config.audio is not None
+    assert result.config.audio.sink == name
+    assert result.warnings == []

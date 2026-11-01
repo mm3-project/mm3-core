@@ -10,7 +10,7 @@ that it may be up to 64 KiB (CORE-262); a file that breaks them is a
 
 Implements:
     CORE-153: Core spec 0.11, §6.8 Configuration history, undo and redo.
-    CORE-216: Core spec 0.11, §6.8 Configuration history, undo and redo.
+    CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
     CORE-262: Core spec 0.11, §6.10 Theme and custom CSS.
 """
 
@@ -98,7 +98,7 @@ def read_assets(config_dir: Path) -> tuple[ConfigAssets, list[ValidationRecord]]
         or ``CORE_CFG_CSS`` errors about custom.css.
 
     Implements:
-        CORE-216: Core spec 0.11, §6.8 Configuration history, undo and redo.
+        CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
         CORE-262: Core spec 0.11, §6.10 Theme and custom CSS.
     """
     records: list[ValidationRecord] = []

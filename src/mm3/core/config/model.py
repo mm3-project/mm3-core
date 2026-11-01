@@ -7,11 +7,11 @@ geometry rules of screen layout, display and pages (core spec 6.5, 6.7,
 6.9) are added with the layout work of milestone 2.
 
 Implements:
-    CORE-201: Core spec 0.19, §6.2 Rules.
+    CORE-201: Core spec 0.21, §6.2 Rules.
     CORE-202: Core spec 0.8, §6.2 Rules.
     CORE-244: Core spec 0.8, §10.8 Backup and restore.
     CORE-91: Core spec 0.8, §6.5 Screen layout.
-    -: Core spec 0.8, §6.7 Display output.
+    -: Core spec 0.21, §6.7 Display output.
     -: Core spec 0.8, §6.9 Pages and visibility.
     CORE-213: Core spec 0.9, §6.5 Screen layout.
     CORE-230: Core spec 0.9, §6.9 Pages and visibility.
@@ -43,6 +43,7 @@ __all__ = [
     "PAGE_ID_PATTERN",
     "PRESETS",
     "Appearance",
+    "AudioConfig",
     "BackupConfig",
     "DisplayConfig",
     "Grants",
@@ -239,6 +240,31 @@ class DisplayConfig(_Model):
     scale: float = Field(default=1.0, ge=0.5, le=3.0)
 
 
+class AudioConfig(_Model):
+    """The ``audio`` block: output, volume and mute of the local kiosk (core spec 6.7).
+
+    The block is optional and, unlike ``display``, has no default instance:
+    without it the kiosk keeps PipeWire's default output and volume. An output
+    name that the kiosk agent does not report is not a configuration error;
+    the mismatch is shown as for a display mode (CORE-296).
+
+    Attributes:
+        sink: ``auto`` (WirePlumber's default output), ``hdmi`` or ``analog``
+            (the first available output of that kind), or the exact name of
+            an output reported by the agent.
+        volume: Volume of the chosen output in percent; ``None`` leaves the
+            volume as it is.
+        mute: Mutes the chosen output.
+
+    Implements:
+        -: Core spec 0.21, §6.7 Display output.
+    """
+
+    sink: str = Field(default="auto", min_length=1)
+    volume: int | None = Field(default=None, ge=0, le=100)
+    mute: bool = False
+
+
 class PageConfig(_Model):
     """One entry of ``pages.list`` (CORE-230)."""
 
@@ -348,13 +374,16 @@ def _check_version(value: int) -> int:
 class MirrorConfig(_Model):
     """The whole configuration file (CORE-201, CORE-230).
 
+    ``audio`` is ``None`` when the block is absent (CORE-296).
+
     Implements:
-        CORE-201: Core spec 0.19, §6.2 Rules.
+        CORE-201: Core spec 0.21, §6.2 Rules.
     """
 
     config_version: Annotated[int, Field(ge=1)] = 1
     engine: EngineSettings = Field(default_factory=EngineSettings)
     display: DisplayConfig = DisplayConfig()
+    audio: AudioConfig | None = None
     layout: LayoutConfig = LayoutConfig()
     pages: PagesConfig | None = None
     modules: list[InstanceConfig] = Field(default_factory=list)
