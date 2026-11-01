@@ -41,6 +41,15 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 - Packaging and deployment, part 3: `install/mm3-install.sh` installs or updates MM3 on Debian 12 and 13 (CORE-293, CORE-268, CORE-143): users and groups, a timestamped venv with a rollback symlink, config and env created only when absent, configuration validated before the switch, units from the package. `install/ci-check.sh` and the CI job `install` run it on clean Debian 12 and 13 images.
 
+- Spec sync to core spec 0.21 (kiosk audio base): PipeWire in the kiosk
+  user's session through seat ACLs (CORE-295), the `audio` block with sink,
+  volume and mute applied live by the kiosk agent with `pactl` (CORE-296) and
+  hardware video decoding (CORE-297), all in milestone 3. Changed: CORE-63
+  (`media-src 'self'`), CORE-143, CORE-270, CORE-277 (`sinks` and `audio`
+  frames, `failure` area) for milestone 3; CORE-201, CORE-216, CORE-155
+  (`audio` top-level key and history section) for milestone 2; CORE-293
+  (audio and VA-API packages). Milestones renumbered: 8 Media (new), 9
+  Extensions, 10 Release 1.0 (CORE-65, CORE-293, CORE-294).
 - Spec sync to core spec 0.20: sd_notify and loop watchdog (CORE-290, CORE-291), `mm3.service` unit (CORE-292), `mm3-install.sh` (CORE-293) and `mm3-modules-default` (CORE-294); CORE-268 now requires `mm3` to be a member of group `mm3-kiosk`. Milestones 6 and 9 updated.
 
 - Spec sync for core spec 0.19 and Module Contract 1.0 rev 12 (milestone 5

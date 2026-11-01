@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.20"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20"]
+version = "0.21"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21"]
 
 [[spec]]
 name = "Module Contract"
@@ -427,9 +427,9 @@ id = "CORE-63"
 spec = "Core spec"
 section = "10.1"
 title = "Security"
-hash = "4db29ad7bd8e"
+hash = "4394454d05e8"
 introduced_in = "0.1"
-changed_in = "0.11"
+changed_in = "0.21"
 status = "active"
 
 [[requirement]]
@@ -997,9 +997,9 @@ id = "CORE-143"
 spec = "Core spec"
 section = "6.7"
 title = "Display output"
-hash = "c8620cde0a97"
+hash = "b4848971e948"
 introduced_in = "0.1"
-changed_in = "0.16"
+changed_in = "0.21"
 status = "active"
 
 [[requirement]]
@@ -1087,9 +1087,9 @@ id = "CORE-155"
 spec = "Core spec"
 section = "6.8"
 title = "Configuration history, undo and redo"
-hash = "6a5efff7e911"
+hash = "c2fe6e3df070"
 introduced_in = "0.5"
-changed_in = "0.11"
+changed_in = "0.21"
 status = "active"
 
 [[requirement]]
@@ -1447,9 +1447,9 @@ id = "CORE-201"
 spec = "Core spec"
 section = "6.2"
 title = "Rules"
-hash = "47aac27c33a3"
+hash = "cc44ca8d8879"
 introduced_in = "0.5"
-changed_in = "0.19"
+changed_in = "0.21"
 status = "active"
 
 [[requirement]]
@@ -1597,9 +1597,9 @@ id = "CORE-216"
 spec = "Core spec"
 section = "6.8"
 title = "Configuration history, undo and redo"
-hash = "63b9a2dde259"
+hash = "cd25cb9bd2bb"
 introduced_in = "0.5"
-changed_in = "0.11"
+changed_in = "0.21"
 status = "active"
 
 [[requirement]]
@@ -2107,9 +2107,9 @@ id = "CORE-270"
 spec = "Core spec"
 section = "6.7"
 title = "Display output"
-hash = "89611a0a3e3d"
+hash = "24ab0c60709f"
 introduced_in = "0.11"
-changed_in = "0.11"
+changed_in = "0.21"
 status = "active"
 
 [[requirement]]
@@ -2177,9 +2177,9 @@ id = "CORE-277"
 spec = "Core spec"
 section = "6.7"
 title = "Display output"
-hash = "e43d318f5a37"
+hash = "a8e8bac81f78"
 introduced_in = "0.14"
-changed_in = "0.16"
+changed_in = "0.21"
 status = "active"
 
 [[requirement]]
@@ -2337,9 +2337,9 @@ id = "CORE-293"
 spec = "Core spec"
 section = "10.2"
 title = "Packaging and deployment"
-hash = "44388fc16036"
+hash = "17bc89f0cfac"
 introduced_in = "0.20"
-changed_in = "0.20"
+changed_in = "0.21"
 status = "active"
 
 [[requirement]]
@@ -2350,6 +2350,36 @@ title = "Packaging and deployment"
 hash = "18888f2be365"
 introduced_in = "0.20"
 changed_in = "0.20"
+status = "active"
+
+[[requirement]]
+id = "CORE-295"
+spec = "Core spec"
+section = "6.7"
+title = "Display output"
+hash = "12d4055a119a"
+introduced_in = "0.21"
+changed_in = "0.21"
+status = "active"
+
+[[requirement]]
+id = "CORE-296"
+spec = "Core spec"
+section = "6.7"
+title = "Display output"
+hash = "916be38ceb0e"
+introduced_in = "0.21"
+changed_in = "0.21"
+status = "active"
+
+[[requirement]]
+id = "CORE-297"
+spec = "Core spec"
+section = "6.7"
+title = "Display output"
+hash = "b5a419897801"
+introduced_in = "0.21"
+changed_in = "0.21"
 status = "active"
 
 [[requirement]]
