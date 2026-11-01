@@ -10,8 +10,8 @@ result through its file watcher.
 
 Implements:
     CORE-150, CORE-154, CORE-156: Core spec 0.10, §6.8 Configuration history, undo and redo.
-    CORE-153, CORE-155: Core spec 0.11, §6.8 Configuration history, undo and redo.
-    CORE-216: Core spec 0.11, §6.8 Configuration history, undo and redo.
+    CORE-153: Core spec 0.11, §6.8 Configuration history, undo and redo.
+    CORE-155, CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
     CORE-217, CORE-218: Core spec 0.10, §6.8 Configuration history, undo and redo.
 """
 
@@ -34,7 +34,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, SecretBytes, SecretStr
 
 from mm3.core.config.assets import CUSTOM_CSS, TEMPLATE_DIR
-from mm3.core.config.diff import changed_sections, unsubstituted
+from mm3.core.config.diff import TOP_SECTIONS, changed_sections, unsubstituted
 from mm3.core.config.loader import dump_plain, include_target, rt_dump, rt_load
 from mm3.core.config.records import ValidationRecord
 from mm3.core.config.validate import ConfigResult, load_config
@@ -58,7 +58,6 @@ __all__ = [
 HISTORY_DIR = "config-history"
 MASK = "**********"
 MAX_AGE = timedelta(days=180)
-TOP_SECTIONS = ("engine", "display", "layout", "pages", "backup")
 Origin = Literal["initial", "admin", "file", "cli", "restore", "undo", "redo"]
 
 EXIT_DONE, EXIT_NOTHING, EXIT_INVALID, EXIT_REFUSED = 0, 1, 2, 3
@@ -483,7 +482,7 @@ class ConfigHistory:
 
     Implements:
         CORE-154, CORE-156, CORE-217: Core spec 0.10, §6.8 Configuration history, undo and redo.
-        CORE-155: Core spec 0.11, §6.8 Configuration history, undo and redo.
+        CORE-155: Core spec 0.21, §6.8 Configuration history, undo and redo.
     """
 
     def __init__(
@@ -742,16 +741,19 @@ class ConfigHistory:
         Args:
             version: The version to restore from.
             author: ``cli:<user>`` or the admin client address.
-            section: ``engine``, ``display``, ``layout``, ``pages``, ``backup``,
-                ``modules/<id>``, ``modules/_order``, ``custom_css`` or
-                ``widget_templates/<name>``; ``None`` restores everything.
+            section: ``engine``, ``display``, ``audio``, ``layout``, ``pages``,
+                ``backup``, ``modules/<id>``, ``modules/_order``, ``custom_css``
+                or ``widget_templates/<name>``; ``None`` restores everything.
+                When the chosen version has no such section it is removed from
+                the current configuration; when the current section lives in an
+                included file the restore is refused instead.
             force: Overwrite invalid files on disk.
 
         Returns:
             The outcome.
 
         Implements:
-            CORE-155: Core spec 0.11, §6.8 Configuration history, undo and redo.
+            CORE-155: Core spec 0.21, §6.8 Configuration history, undo and redo.
             CORE-156: Core spec 0.10, §6.8 Configuration history, undo and redo.
         """
         with self.store.lock():

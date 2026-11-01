@@ -440,6 +440,20 @@ async def test_core_275_location_change_resyncs_the_shells(mirror: Mirror) -> No
         assert reload["data"]["scope"] == "resync"
 
 
+async def test_core_275_audio_change_does_not_resync_the_shells(mirror: Mirror) -> None:
+    async with websockets.connect(f"ws://127.0.0.1:{mirror.gateway.mirror.port}/ws") as ws:
+        await ws.send(hello())
+        await frames_until(ws, control("page"))
+        result = mirror.reload(CONFIG)
+        await mirror.hub.reloaded(result, ReloadPlan(audio=True, sections=["audio"]))
+        with pytest.raises(TimeoutError):
+            await frames_until(ws, lambda f: f["kind"] == "control", wait=0.5)
+        # the shells are still served: a layout change right after resyncs as usual
+        await mirror.hub.reloaded(result, ReloadPlan(relayout=["home"]))
+        reload = await frames_until(ws, control("reload"))
+        assert reload["data"]["scope"] == "resync"
+
+
 def display_headers(mirror: Mirror) -> dict[str, str]:
     auth = mirror.hub.auth
     rec = auth.tokens.verify(auth.tokens.new("hall", "display"), "display")

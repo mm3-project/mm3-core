@@ -4,7 +4,7 @@ Every key is optional; defaults follow the table of CORE-201. The bus,
 supervisor and scheduler read their settings from this model.
 
 Implements:
-    CORE-201: Core spec 0.19, §6.2 Rules.
+    CORE-201: Core spec 0.21, §6.2 Rules.
     CORE-61: Core spec 0.11, §10.1 Security.
     CORE-62: Core spec 0.11, §10.1 Security.
     CORE-205: Core spec 0.8, §6.2 Rules.
@@ -110,7 +110,7 @@ class ServerSettings(_Block):
             applies live, for connections made afterwards.
 
     Implements:
-        CORE-201: Core spec 0.19, §6.2 Rules.
+        CORE-201: Core spec 0.21, §6.2 Rules.
         CORE-61: Core spec 0.11, §10.1 Security.
     """
 
@@ -131,7 +131,7 @@ class AdminSettings(_Block):
         allow: Sources other than loopback that may connect (CORE-61).
 
     Implements:
-        CORE-201: Core spec 0.19, §6.2 Rules.
+        CORE-201: Core spec 0.21, §6.2 Rules.
         CORE-62: Core spec 0.11, §10.1 Security.
     """
 
@@ -198,7 +198,7 @@ class EngineSettings(_Block):
         input: Kiosk input settings.
 
     Implements:
-        CORE-201: Core spec 0.19, §6.2 Rules.
+        CORE-201: Core spec 0.21, §6.2 Rules.
         CORE-288: Core spec 0.19, §6.2 Rules.
     """
 

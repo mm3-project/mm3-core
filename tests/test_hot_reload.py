@@ -545,3 +545,77 @@ async def test_core_288_harness_location() -> None:
     ):
         pass
     assert seen == [Location(1.5, 2.5, "Home")]
+
+
+# --- CORE-210, CORE-216: the audio block on reload -------------------------------------
+
+
+async def test_core_210_audio_change_is_a_section_and_touches_nothing_else(
+    mirror: Harness, recorder: Recorder
+) -> None:
+    m = await mirror(BASE)
+    plans: list[Any] = []
+
+    async def listener(new: Any, plan: Any) -> None:
+        plans.append(plan)
+
+    m.manager.layout_listeners.append(listener)
+    assert await m.reload("audio: {sink: hdmi, volume: 60}\n" + BASE)
+    assert EVENTS == []  # no instance starts, stops or reconfigures
+    [plan] = plans
+    assert plan.audio
+    assert plan.sections == ["audio"]
+    assert not plan.display
+    assert not plan.layout
+    assert not plan.pages
+    assert plan.relayout == []
+    assert plan.engine_live == set()
+    assert last(recorder, "CORE_CONFIG_CHANGED").payload["sections"] == ["audio"]
+    # volume, mute and sink each count; so does removing the block
+    for text in (
+        "audio: {sink: hdmi, volume: 40}\n",
+        "audio: {sink: hdmi, volume: 40, mute: true}\n",
+        "audio: {sink: analog, volume: 40, mute: true}\n",
+        "",
+    ):
+        plans.clear()
+        assert await m.reload(text + BASE)
+        assert [(p.audio, p.sections) for p in plans] == [(True, ["audio"])]
+        assert EVENTS == []
+    # a change elsewhere leaves the audio flag down
+    plans.clear()
+    assert await m.reload(BASE.replace("position: top_right", "position: bottom_right"))
+    assert [p.audio for p in plans] == [False]
+
+
+async def test_core_216_unchanged_audio_block_is_not_a_change(mirror: Harness) -> None:
+    text = "audio: {sink: hdmi, volume: 60}\n" + BASE
+    m = await mirror(text)
+    old = m.manager.current
+    assert old.config is not None
+    assert old.config.audio is not None
+    # formatting only: same values, different spelling
+    m.write("audio:\n  volume: 60 # level\n  sink: hdmi\n  mute: false\n" + BASE)
+    new = load_config(m.path, registry=m.engine.registry, env_file=m.manager.env_file, environ={})
+    assert not plan_reload(old, new).audio
+
+
+def test_core_210_audio_makes_the_plan_non_empty() -> None:
+    from mm3.core.config.diff import ReloadPlan
+
+    assert ReloadPlan().empty
+    assert not ReloadPlan(audio=True).empty
+
+
+async def test_core_216_sections_come_in_file_order(mirror: Harness) -> None:
+    m = await mirror(BASE)
+    old = m.manager.current
+    m.write(
+        "engine: {locale: it}\n"
+        "display: {rotation: 90}\n"
+        "audio: {sink: analog}\n"
+        "layout: {gap: 8px}\n"
+        "backup: {schedule: '02:00'}\n" + BASE
+    )
+    new = load_config(m.path, registry=m.engine.registry, env_file=m.manager.env_file, environ={})
+    assert changed_sections(old, new) == ["engine", "display", "audio", "layout", "backup"]

@@ -459,3 +459,83 @@ def test_core_155_restore_custom_css_alone(s: Setup) -> None:
     assert res.code == 0, res.message
     assert not (s.etc / "custom.css").exists()
     assert "locale: de" in s.text()
+
+
+# --- CORE-216, CORE-155: the audio section -------------------------------------------
+
+
+def test_core_216_audio_is_a_section(s: Setup) -> None:
+    s.save(cfg("en"))
+    v2 = s.save(cfg("en", "audio: {sink: hdmi, volume: 60}\n"))
+    assert s.history.store.meta(v2).sections == ["audio"]
+    v3 = s.save(cfg("en", "audio: {sink: hdmi, volume: 40}\n"))
+    assert s.history.store.meta(v3).sections == ["audio"]
+    v4 = s.save(cfg("it", "audio: {sink: hdmi, volume: 40}\ndisplay: {rotation: 90}\n"))
+    assert s.history.store.meta(v4).sections == ["engine", "display"]
+    v5 = s.save(cfg("it", "display: {rotation: 90}\n"))
+    assert s.history.store.meta(v5).sections == ["audio"]  # removing the block counts
+
+
+def test_core_216_audio_diff_shows_the_block(s: Setup) -> None:
+    s.save(cfg("en", "audio: {sink: hdmi, volume: 60}\n"))
+    s.save(cfg("en", "audio: {sink: analog, volume: 60, mute: true}\n"))
+    changes = s.history.diff(1, 2)
+    assert list(changes) == ["audio"]
+    before, after = changes["audio"]
+    assert "sink: hdmi" in before
+    assert "mute" not in before
+    assert "sink: analog" in after
+    assert "mute: true" in after
+    assert s.history.diff(1, 2, section="audio") == changes
+    assert s.history.diff(1, 2, section="display") == {}
+    # a block that did not exist shows as empty on that side
+    s.save(cfg("en"))
+    [(_, gone)] = s.history.diff(2, 3, section="audio").values()
+    assert "sink" not in gone
+
+
+def test_core_155_restore_audio_alone(s: Setup) -> None:
+    s.save("# main comment\n" + cfg("en", "audio: {sink: hdmi, volume: 60}\n"))
+    s.save("# main comment\n" + cfg("it", "audio: {sink: analog, volume: 20, mute: true}\n"))
+    res = s.history.restore(1, "cli:t", section="audio")
+    assert res.code == 0, res.message
+    text = s.text()
+    assert "sink: hdmi" in text
+    assert "volume: 60" in text
+    assert "analog" not in text
+    assert "mute" not in text
+    assert "locale: it" in text  # the rest of the current config stays
+    assert text.startswith("# main comment\n")
+    meta = s.history.store.meta(res.version)
+    assert (meta.sections, meta.origin) == (["audio"], "restore")
+
+
+def test_core_155_restore_audio_removes_a_block_the_version_did_not_have(s: Setup) -> None:
+    s.save(cfg("en"))
+    s.save(cfg("en", "audio: {sink: hdmi}\n"))
+    res = s.history.restore(1, "cli:t", section="audio")
+    assert res.code == 0, res.message
+    assert "audio" not in s.text()
+    assert s.history.store.meta(res.version).sections == ["audio"]
+    # restoring again still writes a version (CORE-155), with no changed section
+    again = s.history.restore(1, "cli:t", section="audio")
+    assert again.code == 0, again.message
+    assert s.history.store.meta(again.version).sections == []
+
+
+def test_core_155_restore_audio_into_an_included_file(s: Setup) -> None:
+    (s.etc / "audio.yaml").write_text("sink: hdmi\nvolume: 60\n")
+    s.save(cfg("en", "audio: !include audio.yaml\n"))
+    (s.etc / "audio.yaml").write_text("sink: analog\nvolume: 20\n")
+    s.save(cfg("en", "audio: !include audio.yaml\n"))
+    res = s.history.restore(1, "cli:t", section="audio")
+    assert res.code == 0, res.message
+    assert s.text("audio.yaml") == "sink: hdmi\nvolume: 60\n"
+    assert "!include audio.yaml" in s.text()
+    # a version without the block cannot refill an included file: refused, nothing written
+    no_audio = s.save(cfg("en"))
+    (s.etc / "audio.yaml").write_text("sink: auto\n")
+    s.save(cfg("en", "audio: !include audio.yaml\n"))
+    res = s.history.restore(no_audio, "cli:t", section="audio")
+    assert (res.code, "audio is not in that version" in res.message) == (2, True)
+    assert s.text("audio.yaml") == "sink: auto\n"

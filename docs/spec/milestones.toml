@@ -51,7 +51,7 @@ requirements = [
 number = 2
 name = "Configuration, layout, display, history, pages"
 status = "done"
-done_at = { core = "0.11", contract = "1.0 rev 7" }
+done_at = { core = "0.21", contract = "1.0 rev 12" }
 # Split into four PRs: A config loading and check-config, B hot reload,
 #   C layout, display and pages, D history. Core spec 0.11 changes
 #   (CORE-153, 155, 201, 208, 216, 243: custom.css as a config section,
@@ -59,7 +59,11 @@ done_at = { core = "0.11", contract = "1.0 rev 7" }
 # CORE-201: server.allow is applied live by the web gateway in milestone 3.
 # CORE-244: only the backup block schema here; backups run in milestone 7.
 # Core 0.21 changes CORE-201, CORE-216 and CORE-155: the audio block (6.7) is a
-#   top-level key and a history section (spec-change issue).
+#   top-level key and a history section (done in issue #41). CORE-211 changed
+#   in 0.19 (engine.location restarts instances with a backend); it was
+#   already implemented with milestone 5 and is covered by test_core_211_* and
+#   test_core_288_*. The kiosk agent side of audio (CORE-295..297, the sinks and
+#   audio frames of CORE-277) belongs to milestone 3.
 # CORE-243: English messages live in mm3.core.config.records; the i18n
 #   service (milestone 3) compiles them into the engine catalog.
 # CORE-101: resending configs on a locale change comes with hot reload and
