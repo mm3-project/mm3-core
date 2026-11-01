@@ -8,9 +8,14 @@ failures. The engine sends the ``display`` block at connect and on every
 change, a one-time kiosk key before each Chromium launch, and ``restart``
 when the kiosk shell has been missing for 60 s.
 
+For sound it sends the ``audio`` block (with any run-time volume and mute) at
+connect and on every change, and records the agent's ``sinks`` reports: the
+outputs, what was applied and whether the requested output was found.
+
 Implements:
-    CORE-144, CORE-145, CORE-268, CORE-269: Core spec 0.20, §6.7 Display output.
-    CORE-277: Core spec 0.16, §5.6 WebSocket protocol.
+    CORE-144, CORE-145, CORE-268, CORE-269: Core spec 0.21, §6.7 Display output.
+    CORE-295, CORE-296: Core spec 0.21, §6.7 Display output.
+    CORE-277: Core spec 0.21, §5.6 WebSocket protocol.
 """
 
 from __future__ import annotations
@@ -134,7 +139,13 @@ class KioskStatus:
         chromium: ``started``, ``exited``, ``failed`` or ``None``.
         restarts: Chromium restarts reported by the agent.
         failed: The agent stopped restarting Chromium.
-        failure: The last ``failure`` reason, if any.
+        failure: The last display ``failure`` reason, if any.
+        sinks: The last ``sinks`` list: ``{name, description, kind, available}``.
+        audio: What the agent applied: ``{sink, volume, mute, matched}``.
+        audio_mismatch: The requested output was not found or is unavailable
+            (CORE-296); the agent kept the current default output.
+        audio_failure: The last ``failure`` reason with area ``audio``, if any;
+            cleared when the agent connects again.
     """
 
     connected: bool = False
@@ -148,6 +159,10 @@ class KioskStatus:
     restarts: int = 0
     failed: bool = False
     failure: str | None = None
+    sinks: list[dict[str, Any]] = field(default_factory=list)
+    audio: dict[str, Any] | None = None
+    audio_mismatch: bool = False
+    audio_failure: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         """Return the status for diagnostics (``GET /api/v1/status`` in milestone 4)."""
@@ -163,6 +178,10 @@ class KioskStatus:
             "restarts": self.restarts,
             "failed": self.failed,
             "failure": self.failure,
+            "sinks": self.sinks,
+            "audio": self.audio,
+            "audio_mismatch": self.audio_mismatch,
+            "audio_failure": self.audio_failure,
         }
 
 
@@ -181,6 +200,8 @@ class KioskAgents:
         clock: Time source for the shell watchdog.
         hello_timeout: Seconds to wait for ``hello``.
         silence: Seconds without a kiosk shell before ``restart`` (CORE-269).
+        audio: Returns the running ``audio`` block as JSON data, or ``None``
+            when the configuration has no such block (CORE-296).
     """
 
     def __init__(
@@ -193,6 +214,7 @@ class KioskAgents:
         *,
         hello_timeout: float = 10.0,
         silence: float = SHELL_SILENCE_S,
+        audio: Callable[[], Mapping[str, Any] | None] = lambda: None,
     ) -> None:
         self.key = key
         self.hub = hub
@@ -201,6 +223,8 @@ class KioskAgents:
         self.clock = clock
         self.hello_timeout = hello_timeout
         self.silence = silence
+        self.audio = audio
+        self._runtime_audio: dict[str, Any] = {}
         self.status = KioskStatus()
         self._ws: WebSocket | None = None
         self._send_lock = asyncio.Lock()
@@ -216,7 +240,7 @@ class KioskAgents:
         """Send a frame to the connected agent.
 
         Args:
-            kind: ``display``, ``launch`` or ``restart``.
+            kind: ``display``, ``audio``, ``launch`` or ``restart``.
             data: The frame's data.
 
         Returns:
@@ -235,6 +259,64 @@ class KioskAgents:
     async def display_changed(self) -> None:
         """Send the new ``display`` block (on hot reload, CORE-143)."""
         await self.send("display", {"display": dict(self.display())})
+
+    def audio_block(self) -> dict[str, Any] | None:
+        """Return the ``audio`` frame data: the configured block with run-time values on top.
+
+        Returns:
+            ``{sink, volume, mute}``; ``None`` when there is no block and no
+            run-time volume or mute, so the kiosk keeps PipeWire's own state.
+        """
+        block = self.audio()
+        if block is None and not self._runtime_audio:
+            return None
+        data: dict[str, Any] = {"sink": "auto", "volume": None, "mute": False}
+        if block is not None:
+            data.update({k: block[k] for k in ("sink", "volume", "mute") if k in block})
+        data.update(self._runtime_audio)
+        return data
+
+    async def audio_changed(self) -> None:
+        """Send the new ``audio`` block (on hot reload, CORE-296).
+
+        The configured values are the new truth, so run-time volume and mute
+        set before the change are dropped.
+        """
+        self._runtime_audio.clear()
+        await self._send_audio()
+
+    async def set_runtime_audio(
+        self, *, volume: int | None = None, mute: bool | None = None
+    ) -> bool:
+        """Change volume or mute at run time without touching the configuration (CORE-296).
+
+        The admin (milestone 6) and the MQTT bridge (milestone 7) call this. The
+        values are never written to the configuration or its history, and the
+        configured values apply again when the agent connects anew.
+
+        Args:
+            volume: New volume in percent, 0 to 100, or ``None`` to leave it.
+            mute: New mute state, or ``None`` to leave it.
+
+        Returns:
+            False when no agent is connected.
+
+        Raises:
+            ValueError: ``volume`` is outside 0 to 100.
+        """
+        if volume is not None:
+            if isinstance(volume, bool) or not 0 <= volume <= 100:
+                raise ValueError("volume must be between 0 and 100")
+            self._runtime_audio["volume"] = volume
+        if mute is not None:
+            self._runtime_audio["mute"] = bool(mute)
+        return await self._send_audio()
+
+    async def _send_audio(self) -> bool:
+        data = self.audio_block()
+        if data is None:
+            return False
+        return await self.send("audio", data)
 
     async def _launch(self) -> None:
         self._launched_at = self.clock.boottime()
@@ -284,8 +366,11 @@ class KioskAgents:
         self._ws = ws
         self.status.connected = True
         self.status.cage_version = str(hello.get("cage_version") or "") or None
+        self.status.audio_failure = None
+        self._runtime_audio.clear()
         _log.info("kiosk_agent_connected", cage_version=self.status.cage_version)
         await self.display_changed()
+        await self._send_audio()
         await self._launch()
         try:
             while True:
@@ -335,9 +420,16 @@ class KioskAgents:
             await self._outputs(data)
         elif kind == "chromium":
             await self._chromium(data)
+        elif kind == "sinks":
+            self._sinks(data)
         elif kind == "failure":
-            self.status.failure = str(data.get("reason"))
-            _log.error("kiosk_display_failed", reason=self.status.failure)
+            area = data.get("area", "display")
+            if area == "display":
+                self.status.failure = str(data.get("reason"))
+                _log.error("kiosk_display_failed", reason=self.status.failure)
+            elif area == "audio":
+                self.status.audio_failure = str(data.get("reason"))
+                _log.error("kiosk_audio_failed", reason=self.status.audio_failure)
 
     async def _outputs(self, data: Mapping[str, Any]) -> None:
         """Record outputs and the applied mode; use the applied mode (CORE-144, CORE-145)."""
@@ -368,6 +460,21 @@ class KioskAgents:
         if self.status.mismatch:
             _log.warning("kiosk_mode_mismatch", wanted=dict(want), applied=self.status.applied)
         await self.on_applied(mode)
+
+    def _sinks(self, data: Mapping[str, Any]) -> None:
+        """Record the outputs and what the agent applied; note a mismatch (CORE-296)."""
+        sinks = data.get("sinks")
+        applied = data.get("applied")
+        self.status.sinks = (
+            [dict(s) for s in sinks if isinstance(s, dict)] if isinstance(sinks, list) else []
+        )
+        self.status.audio = dict(applied) if isinstance(applied, dict) else None
+        mismatch = self.status.audio is not None and self.status.audio.get("matched") is False
+        if mismatch and not self.status.audio_mismatch:
+            _log.warning(
+                "kiosk_audio_mismatch", wanted=self.audio_block(), applied=self.status.audio
+            )
+        self.status.audio_mismatch = mismatch
 
     async def _chromium(self, data: Mapping[str, Any]) -> None:
         """Chromium's state: a new key before a relaunch, failed after give-up (CORE-269)."""

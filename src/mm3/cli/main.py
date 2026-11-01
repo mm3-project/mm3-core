@@ -160,7 +160,8 @@ def _kiosk_agents(hub: ClientHub, manager: ConfigManager, engine: Engine) -> Kio
     """Write the agent key and build ``/ws/kiosk-agent``; ``None`` when the key cannot be written.
 
     Implements:
-        CORE-268: Core spec 0.20, §6.7 Display output.
+        CORE-268: Core spec 0.21, §6.7 Display output.
+        CORE-296: Core spec 0.21, §6.7 Display output.
     """
     from mm3.core.logging import get_logger
     from mm3.core.web.kiosk import AgentKey, KioskAgents, runtime_dir
@@ -178,11 +179,19 @@ def _kiosk_agents(hub: ClientHub, manager: ConfigManager, engine: Engine) -> Kio
         config = manager.current.config
         return config.display.model_dump(mode="json") if config is not None else {}
 
-    agents = KioskAgents(key, hub, display, manager.set_applied, engine.clock)
+    def audio() -> dict[str, Any] | None:
+        config = manager.current.config
+        if config is None or config.audio is None:
+            return None
+        return config.audio.model_dump(mode="json")
+
+    agents = KioskAgents(key, hub, display, manager.set_applied, engine.clock, audio=audio)
 
     async def on_reload(new: ConfigResult, plan: ReloadPlan) -> None:
         if plan.display:
             await agents.display_changed()
+        if plan.audio:
+            await agents.audio_changed()
 
     manager.layout_listeners.append(on_reload)
     return agents

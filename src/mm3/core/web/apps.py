@@ -14,7 +14,7 @@ headers (CORE-63), the headers outermost so that refusals carry them too.
 
 Implements:
     CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
-    CORE-61, CORE-62, CORE-63: Core spec 0.12, §10.1 Security.
+    CORE-61, CORE-62, CORE-63: Core spec 0.21, §10.1 Security.
     CORE-253, CORE-254: Core spec 0.12, §10.1 Security.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
 """
@@ -97,7 +97,7 @@ def protect(app: ASGIApp, networks: Callable[[], Sequence[Network]], listener: s
         The wrapped application.
 
     Implements:
-        CORE-61, CORE-63: Core spec 0.12, §10.1 Security.
+        CORE-61, CORE-63: Core spec 0.21, §10.1 Security.
     """
     return SecurityHeaders(AllowList(app, networks, listener=listener))
 

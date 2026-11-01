@@ -1,7 +1,8 @@
-"""The Chromium command line of the kiosk (CORE-270).
+"""The Chromium command line of the kiosk (CORE-270, CORE-297).
 
 Implements:
-    CORE-270: Core spec 0.16, §6.7 Display output.
+    CORE-270: Core spec 0.21, §6.7 Display output.
+    CORE-297: Core spec 0.21, §6.7 Display output.
 """
 
 from __future__ import annotations
@@ -24,8 +25,14 @@ CHROMIUM_FLAGS: tuple[str, ...] = (
     "--no-default-browser-check",
     "--password-store=basic",
     "--hide-scrollbars",
+    "--enable-features=AcceleratedVideoDecodeLinuxGL",
 )
-"""Every flag Chromium gets; the cursor is hidden by the shell's CSS."""
+"""Every flag Chromium gets; the cursor is hidden by the shell's CSS.
+
+The last flag is the VA-API feature for hardware video decoding on Wayland
+(CORE-297). It is best effort: without a working VA-API driver Chromium
+decodes in software, and the kiosk does not report it. Chromium reads only one
+``--enable-features``, so further features must join this value."""
 
 
 def chromium_command(url: str, profile: Path, binary: str = "chromium") -> list[str]:

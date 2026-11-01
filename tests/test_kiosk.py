@@ -13,6 +13,7 @@ from typing import Any
 import pytest
 import websockets
 
+import pactl_fake as pa
 from mm3.cli.kiosk_cmd import run_kiosk, unit_text
 from mm3.cli.main import main
 from mm3.core.config import load_config
@@ -43,6 +44,7 @@ from mm3.core.web.view import cached_view
 from mm3.core.web.ws import ClientHub
 from mm3.messages import Notification
 from mm3.testing import VirtualClock
+from pactl_fake import FakePactl
 
 # --- CORE-143: cage version and the unit -------------------------------------------------
 
@@ -317,8 +319,11 @@ class FakeRunner:
         self.commands: list[list[str]] = []
         self.spawned: list[tuple[list[str], FakeProcess]] = []
         self.fail_apply = False
+        self.pactl = FakePactl()
 
     async def run(self, cmd: Sequence[str]) -> tuple[int, str, str]:
+        if cmd[0] == "pactl":
+            return await self.pactl.run(cmd)
         self.commands.append(list(cmd))
         if cmd[1:] == ["--json"]:
             return 0, json.dumps(self.randr), ""
@@ -348,6 +353,7 @@ class Rig:
         self.hub = hub
         self.applied: list[tuple[int, int] | None] = []
         self.display: dict[str, Any] = {"width": 1920, "height": 1080, "rotation": 90, "scale": 1.0}
+        self.audio: dict[str, Any] | None = None
 
     @property
     def base(self) -> str:
@@ -378,7 +384,13 @@ async def rig(tmp_path: Path) -> AsyncIterator[Rig]:
         holder["rig"].applied.append(mode)
 
     agents = KioskAgents(
-        key, hub, lambda: holder["rig"].display, applied, VirtualClock(), hello_timeout=1
+        key,
+        hub,
+        lambda: holder["rig"].display,
+        applied,
+        VirtualClock(),
+        hello_timeout=1,
+        audio=lambda: holder["rig"].audio,
     )
     gateway = WebGateway(settings, tmp_path, hub=hub, agents=agents)
     await gateway.start()
@@ -596,3 +608,277 @@ async def test_core_146_applied_mode_relayouts_and_emits(tmp_path: Path) -> None
 def test_core_270_print_command_cli(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["kiosk", "session", "--print-command"]) == 0
     assert "--kiosk" in capsys.readouterr().out
+
+
+# --- CORE-297: hardware video decoding ---------------------------------------------------------
+
+
+def test_core_297_chromium_gets_the_vaapi_feature() -> None:
+    assert CHROMIUM_FLAGS.count("--enable-features=AcceleratedVideoDecodeLinuxGL") == 1
+    # Chromium reads one --enable-features switch; a second would silently replace it.
+    assert sum(f.startswith("--enable-features=") for f in CHROMIUM_FLAGS) == 1
+    out = io.StringIO()
+    assert run_kiosk(_args("session", print_command=True), out) == 0
+    assert "--enable-features=AcceleratedVideoDecodeLinuxGL" in out.getvalue().split()
+
+
+# --- CORE-295, CORE-296, CORE-277: kiosk audio -------------------------------------------------
+
+
+async def run_agent(rig: Rig, runner: FakeRunner, tmp_path: Path) -> asyncio.Task[None]:
+    agent = session(rig, runner, tmp_path, sleep=no_sleep)
+    rig.agent = agent  # type: ignore[attr-defined]
+    task = asyncio.create_task(agent.run())
+    await eventually(lambda: rig.agents.status.chromium == "started")
+    return task
+
+
+async def stop(task: asyncio.Task[None]) -> None:
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+
+
+async def test_core_277_agent_reports_sinks_after_hello(rig: Rig, tmp_path: Path) -> None:
+    runner = FakeRunner()
+    runner.pactl.usb = True
+    task = await run_agent(rig, runner, tmp_path)
+    try:
+        status = rig.agents.status
+        await eventually(lambda: len(status.sinks) == 2)
+        assert status.sinks == [
+            {
+                "name": pa.HDA_ANALOG,
+                "description": "Built-in Audio Analog Stereo",
+                "kind": "analog",
+                "available": True,
+            },
+            {
+                "name": pa.USB_SINK,
+                "description": "USB Audio Analog Stereo",
+                "kind": "usb",
+                "available": True,
+            },
+        ]
+        assert status.audio == {"sink": pa.HDA_ANALOG, "volume": 55, "mute": False, "matched": True}
+        assert not status.audio_mismatch
+        assert status.audio_failure is None
+        # Without an audio block nothing is changed on the sound server (CORE-296).
+        assert not [c for c in runner.pactl.commands if c[1].startswith("set-")]
+        assert rig.agents.audio_block() is None
+    finally:
+        await stop(task)
+
+
+async def test_core_296_block_is_applied_live_with_a_card_profile_switch(
+    rig: Rig, tmp_path: Path
+) -> None:
+    runner = FakeRunner()
+    task = await run_agent(rig, runner, tmp_path)
+    try:
+        rig.audio = {"sink": "hdmi", "volume": 70, "mute": True}
+        await rig.agents.audio_changed()
+        await eventually(lambda: (rig.agents.status.audio or {}).get("sink") == pa.HDA_HDMI)
+        assert runner.pactl.profile == "output:hdmi-stereo"
+        assert runner.pactl.default == pa.HDA_HDMI
+        assert runner.pactl.volume[pa.HDA_HDMI] == 70
+        assert runner.pactl.mute[pa.HDA_HDMI] is True
+        verbs = [c[1] for c in runner.pactl.commands if c[1].startswith("set-")]
+        assert verbs == [
+            "set-card-profile",
+            "set-default-sink",
+            "set-sink-volume",
+            "set-sink-mute",
+        ]
+        assert rig.agents.status.audio == {
+            "sink": pa.HDA_HDMI,
+            "volume": 70,
+            "mute": True,
+            "matched": True,
+        }
+        assert not rig.agents.status.audio_mismatch
+        # Applied live: Chromium was not started again (CORE-296).
+        assert len(runner.spawned) == 1
+        assert rig.agents.status.restarts == 0
+        # Back to the analog output: the card goes back to its other profile.
+        rig.audio = {"sink": "analog", "volume": 30, "mute": False}
+        await rig.agents.audio_changed()
+        await eventually(lambda: (rig.agents.status.audio or {}).get("sink") == pa.HDA_ANALOG)
+        assert runner.pactl.profile == "output:analog-stereo"
+        assert runner.pactl.volume[pa.HDA_ANALOG] == 30
+    finally:
+        await stop(task)
+
+
+async def test_core_296_missing_output_keeps_the_default_and_reports_a_mismatch(
+    rig: Rig, tmp_path: Path
+) -> None:
+    runner = FakeRunner()
+    runner.pactl.hdmi_plugged = False
+    task = await run_agent(rig, runner, tmp_path)
+    try:
+        rig.audio = {"sink": "hdmi", "volume": 90, "mute": False}
+        await rig.agents.audio_changed()
+        await eventually(lambda: rig.agents.status.audio_mismatch)
+        assert rig.agents.status.audio == {
+            "sink": pa.HDA_ANALOG,
+            "volume": 55,
+            "mute": False,
+            "matched": False,
+        }
+        assert runner.pactl.default == pa.HDA_ANALOG
+        assert runner.pactl.volume[pa.HDA_ANALOG] == 55  # nothing was changed
+        assert not [c for c in runner.pactl.commands if c[1].startswith("set-")]
+        assert any(r["event"] == "kiosk_audio_mismatch" for r in recent_records())
+        # A named output that does not exist is a mismatch too, not a failure.
+        rig.audio = {"sink": "no-such-output", "volume": None, "mute": False}
+        await rig.agents.audio_changed()
+        await asyncio.sleep(0.05)
+        assert rig.agents.status.audio_mismatch
+        assert rig.agents.status.audio_failure is None
+        # Asking for the default output again clears it.
+        rig.audio = {"sink": "auto", "volume": None, "mute": False}
+        await rig.agents.audio_changed()
+        await eventually(lambda: not rig.agents.status.audio_mismatch)
+    finally:
+        await stop(task)
+
+
+async def test_core_296_hotplug_reports_again_and_applies_the_block(
+    rig: Rig, tmp_path: Path
+) -> None:
+    runner = FakeRunner()
+    task = await run_agent(rig, runner, tmp_path)
+    try:
+        rig.audio = {"sink": pa.USB_SINK, "volume": 25, "mute": False}
+        await rig.agents.audio_changed()
+        await eventually(lambda: rig.agents.status.audio_mismatch)
+        assert [s["kind"] for s in rig.agents.status.sinks] == ["analog"]
+        runner.pactl.usb = True  # the USB speaker is plugged in
+        await eventually(lambda: not rig.agents.status.audio_mismatch)
+        assert (rig.agents.status.audio or {}).get("sink") == pa.USB_SINK
+        assert runner.pactl.default == pa.USB_SINK
+        assert runner.pactl.volume[pa.USB_SINK] == 25
+        assert {s["kind"] for s in rig.agents.status.sinks} == {"analog", "usb"}
+        runner.pactl.usb = False  # and unplugged again
+        await eventually(lambda: [s["kind"] for s in rig.agents.status.sinks] == ["analog"])
+        assert rig.agents.status.audio_mismatch
+    finally:
+        await stop(task)
+
+
+async def test_core_295_unreachable_server_reports_failure_and_the_kiosk_keeps_running(
+    rig: Rig, tmp_path: Path
+) -> None:
+    runner = FakeRunner()
+    runner.pactl.down = True
+    task = await run_agent(rig, runner, tmp_path)
+    try:
+        status = rig.agents.status
+        await eventually(lambda: status.audio_failure is not None)
+        assert "PipeWire" in (status.audio_failure or "")
+        assert status.sinks == []
+        assert status.failure is None  # the display is fine: failures have an area (CORE-277)
+        assert status.chromium == "started"
+        # The server comes up: the next change is reported, the failure is replaced.
+        runner.pactl.down = False
+        runner.pactl.usb = True
+        await eventually(lambda: len(status.sinks) == 2)
+    finally:
+        await stop(task)
+
+
+async def test_core_277_failed_pactl_command_is_an_audio_failure(rig: Rig, tmp_path: Path) -> None:
+    runner = FakeRunner()
+    runner.pactl.fail = {"set-sink-volume"}
+    task = await run_agent(rig, runner, tmp_path)
+    try:
+        rig.audio = {"sink": "auto", "volume": 10, "mute": False}
+        await rig.agents.audio_changed()
+        await eventually(lambda: rig.agents.status.audio_failure == "Failure: set-sink-volume")
+        assert rig.agents.status.failure is None
+        assert (rig.agents.status.audio or {}).get("matched") is True
+    finally:
+        await stop(task)
+
+
+async def test_core_296_runtime_volume_and_mute_are_never_persisted(
+    rig: Rig, tmp_path: Path
+) -> None:
+    runner = FakeRunner()
+    rig.audio = {"sink": "auto", "volume": 60, "mute": False}
+    task = await run_agent(rig, runner, tmp_path)
+    try:
+        await eventually(lambda: runner.pactl.volume[pa.HDA_ANALOG] == 60)
+        assert await rig.agents.set_runtime_audio(volume=20, mute=True)
+        await eventually(lambda: runner.pactl.volume[pa.HDA_ANALOG] == 20)
+        assert runner.pactl.mute[pa.HDA_ANALOG] is True
+        assert rig.agents.audio_block() == {"sink": "auto", "volume": 20, "mute": True}
+        assert rig.audio == {"sink": "auto", "volume": 60, "mute": False}  # configuration untouched
+        with pytest.raises(ValueError, match="between 0 and 100"):
+            await rig.agents.set_runtime_audio(volume=101)
+        # A changed configuration is the new truth ...
+        rig.audio = {"sink": "auto", "volume": 45, "mute": False}
+        await rig.agents.audio_changed()
+        await eventually(lambda: runner.pactl.volume[pa.HDA_ANALOG] == 45)
+        assert runner.pactl.mute[pa.HDA_ANALOG] is False
+        # ... and a new connection applies the configured values again.
+        await rig.agents.set_runtime_audio(volume=5)
+        await eventually(lambda: runner.pactl.volume[pa.HDA_ANALOG] == 5)
+    finally:
+        await stop(task)
+    await eventually(lambda: not rig.agents.status.connected)
+    assert not await rig.agents.set_runtime_audio(mute=True)  # no agent connected
+    again = await run_agent(rig, runner, tmp_path)
+    try:
+        await eventually(lambda: runner.pactl.volume[pa.HDA_ANALOG] == 45)
+        assert runner.pactl.mute[pa.HDA_ANALOG] is False
+    finally:
+        await stop(again)
+
+
+def test_core_296_audio_block_without_configuration() -> None:
+    from starlette.websockets import WebSocket  # noqa: F401 - the module imports cleanly
+
+    agents = KioskAgents.__new__(KioskAgents)
+    agents.audio = lambda: None
+    agents._runtime_audio = {}
+    assert agents.audio_block() is None
+    agents._runtime_audio = {"volume": 30}
+    assert agents.audio_block() == {"sink": "auto", "volume": 30, "mute": False}
+    agents.audio = lambda: {"sink": "hdmi", "volume": 80, "mute": True}
+    assert agents.audio_block() == {"sink": "hdmi", "volume": 30, "mute": True}
+
+
+async def test_core_296_hot_reload_sends_the_audio_block(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from mm3.cli.main import _kiosk_agents
+    from mm3.core.config.diff import ReloadPlan
+
+    monkeypatch.setenv("RUNTIME_DIRECTORY", str(tmp_path / "run"))
+    (tmp_path / "config.yaml").write_text(
+        "engine:\n  locale: en\naudio:\n  sink: hdmi\n  volume: 70\nmodules: []\n"
+    )
+    registry = Registry()
+    result = load_config(tmp_path / "config.yaml", registry=registry, env_file=tmp_path / "e")
+    assert result.ok, result.records
+    engine = Engine(EngineSettings(), registry=registry, state_dir=tmp_path / "s")
+    manager = ConfigManager(engine, result, registry=registry, env_file=tmp_path / "e")
+    hub = ClientHub(cached_view(lambda: result, registry), WebAuth.open(tmp_path), "1.0+t")
+    agents = _kiosk_agents(hub, manager, engine)
+    assert agents is not None
+    assert agents.audio_block() == {"sink": "hdmi", "volume": 70, "mute": False}
+    sent: list[tuple[str, dict[str, Any]]] = []
+
+    async def record(kind: str, data: Any) -> bool:
+        sent.append((kind, dict(data)))
+        return True
+
+    monkeypatch.setattr(agents, "send", record)
+    listener = manager.layout_listeners[-1]
+    await listener(result, ReloadPlan(audio=True))
+    assert sent == [("audio", {"sink": "hdmi", "volume": 70, "mute": False})]
+    sent.clear()
+    await listener(result, ReloadPlan())  # nothing about audio changed
+    assert sent == []

@@ -6,8 +6,8 @@ the Chromium command line instead. ``mm3 kiosk unit`` prints
 ``mm3-kiosk.service``.
 
 Implements:
-    CORE-143: Core spec 0.16, §6.7 Display output.
-    CORE-270: Core spec 0.16, §6.7 Display output.
+    CORE-143: Core spec 0.21, §6.7 Display output.
+    CORE-270: Core spec 0.21, §6.7 Display output.
 """
 
 from __future__ import annotations

@@ -6,10 +6,16 @@ and reports the outputs, the modes and what it applied; it starts Chromium
 with each kiosk key the engine sends and supervises it: restarts with a
 backoff from 1 s to 30 s, and gives up after 5 restarts in 10 minutes.
 
+The agent also owns the kiosk's sound: it applies every ``audio`` block with
+``pactl`` (default output, card profile, volume, mute) and reports the
+outputs and what it applied in ``sinks`` frames, again whenever an output
+appears, disappears or changes availability.
+
 Implements:
-    CORE-143, CORE-144, CORE-145: Core spec 0.16, §6.7 Display output.
-    CORE-268, CORE-269, CORE-270: Core spec 0.20, §6.7 Display output.
-    CORE-277: Core spec 0.16, §5.6 WebSocket protocol.
+    CORE-143, CORE-144, CORE-145: Core spec 0.21, §6.7 Display output.
+    CORE-268, CORE-269, CORE-270: Core spec 0.21, §6.7 Display output.
+    CORE-295, CORE-296: Core spec 0.21, §6.7 Display output.
+    CORE-277: Core spec 0.21, §5.6 WebSocket protocol.
 """
 
 from __future__ import annotations
@@ -25,6 +31,18 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
 
+from mm3.core.kiosk.audio import (
+    Card,
+    Resolution,
+    Sink,
+    mute_command,
+    parse_cards,
+    parse_sinks,
+    profile_command,
+    resolve_sink,
+    set_default_command,
+    volume_command,
+)
 from mm3.core.kiosk.chromium import chromium_command
 from mm3.core.kiosk.randr import Output, apply_command, choose_mode, parse_outputs, pick_output
 from mm3.core.logging import get_logger
@@ -48,7 +66,7 @@ GIVE_UP_RESTARTS = 5
 GIVE_UP_WINDOW_S = 600.0
 """After 5 restarts in 10 minutes the agent stops trying (CORE-269)."""
 POLL_OUTPUTS_S = 10.0
-"""How often outputs are listed again to notice hot-plugs (CORE-144)."""
+"""How often outputs are listed again to notice hot-plugs (CORE-144, CORE-296)."""
 
 _log = get_logger(subsystem="kiosk-agent")
 
@@ -138,6 +156,7 @@ class KioskSession:
         connect: Opens the WebSocket.
         chromium: The Chromium executable.
         wlr_randr: The wlr-randr executable.
+        pactl: The pactl executable.
         sleep: ``asyncio.sleep`` (tests pass a faster one).
         now: A monotonic clock in seconds.
     """
@@ -153,6 +172,7 @@ class KioskSession:
         connect: Connect = websocket_connect,
         chromium: str = "chromium",
         wlr_randr: str = "wlr-randr",
+        pactl: str = "pactl",
         sleep: Callable[[float], Awaitable[None]] = asyncio.sleep,
         now: Callable[[], float] = time.monotonic,
     ) -> None:
@@ -164,10 +184,12 @@ class KioskSession:
         self.connect = connect
         self.chromium_binary = chromium
         self.wlr_randr = wlr_randr
+        self.pactl = pactl
         self.sleep = sleep
         self.now = now
         self.link: AgentLink | None = None
         self.display: dict[str, Any] = {}
+        self.audio: dict[str, Any] | None = None
         self.launch_key: str | None = None
         self.restarts = 0
         self.failed = False
@@ -175,6 +197,8 @@ class KioskSession:
         self._chromium = _Chromium()
         self._exits: deque[float] = deque()
         self._last_outputs: str | None = None
+        self._last_sinks: str | None = None
+        self._audio_failure: str | None = None
 
     @property
     def agent_url(self) -> str:
@@ -222,14 +246,19 @@ class KioskSession:
             while True:
                 self.link = await self._connect()
                 _log.info("kiosk_agent_connected")
+                self._last_sinks = None
                 try:
+                    await self.report_sinks()
                     while True:
                         raw = await self.link.recv()
                         await self.handle(raw if isinstance(raw, str) else raw.decode())
                 except Exception as exc:  # link lost: reconnect
                     _log.warning("kiosk_agent_link_lost", error=str(exc))
                 finally:
-                    self.link = None
+                    link, self.link = self.link, None
+                    if link is not None:  # leave no half-open link behind, also when cancelled
+                        with contextlib.suppress(Exception):
+                            await link.close()
                 await self.sleep(BACKOFF_MIN_S)
         finally:
             supervisor.cancel()
@@ -254,6 +283,9 @@ class KioskSession:
             display = data.get("display")
             self.display = dict(display) if isinstance(display, dict) else {}
             await self.apply_display()
+        elif kind == "audio":
+            self.audio = dict(data)
+            await self.apply_audio()
         elif kind == "launch" and isinstance(data.get("key"), str):
             self.launch_key = data["key"]
             proc = self._chromium.process
@@ -335,18 +367,150 @@ class KioskSession:
         await self.send("outputs", data)
 
     async def _poll_outputs(self) -> None:
-        """Apply the display again when the outputs change, e.g. a monitor is plugged in."""
+        """Notice hot-plugs: apply the display and the audio block again when they change."""
         while True:
             await self.sleep(POLL_OUTPUTS_S)
-            if self.link is None or (not self.display and self._last_outputs is None):
+            if self.link is None:
                 continue
-            try:
-                outputs = await self._list()
-            except (RuntimeError, ValueError, OSError):
-                continue
-            listed = json.dumps([o.as_dict() for o in outputs], sort_keys=True)
-            if listed != self._last_outputs:
-                await self.apply_display()
+            await self._poll_display()
+            await self._poll_audio()
+
+    async def _poll_display(self) -> None:
+        """Apply the display again when the outputs change, e.g. a monitor is plugged in."""
+        if not self.display and self._last_outputs is None:
+            return
+        try:
+            outputs = await self._list()
+        except (RuntimeError, ValueError, OSError):
+            return
+        listed = json.dumps([o.as_dict() for o in outputs], sort_keys=True)
+        if listed != self._last_outputs:
+            await self.apply_display()
+
+    # --- audio ------------------------------------------------------------------------
+
+    async def _pactl_json(self, what: str) -> str:
+        code, out, err = await self.runner.run([self.pactl, "--format=json", "list", what])
+        if code != 0:
+            raise RuntimeError(err.strip() or f"pactl exited with {code}")
+        return out
+
+    async def _list_audio(self) -> tuple[list[Sink], list[Card]]:
+        """List cards and outputs; raises when the PipeWire server cannot be reached (CORE-295)."""
+        cards = parse_cards(await self._pactl_json("cards"))
+        sinks = parse_sinks(await self._pactl_json("sinks"), cards)
+        return sinks, cards
+
+    async def _default_sink(self) -> str | None:
+        """Return the name of the default output, or ``None``."""
+        code, out, _ = await self.runner.run([self.pactl, "get-default-sink"])
+        name = out.strip()
+        return name if code == 0 and name else None
+
+    async def _audio_failed(self, reason: str) -> None:
+        """Send a ``failure`` with area ``audio``, once per distinct reason (CORE-277)."""
+        if reason != self._audio_failure:
+            self._audio_failure = reason
+            await self.send("failure", {"area": "audio", "reason": reason})
+
+    async def _pactl_run(self, cmd: Sequence[str]) -> bool:
+        code, _, err = await self.runner.run(cmd)
+        if code != 0:
+            await self._audio_failed(err.strip() or f"{cmd[1]} exited with {code}")
+        return code == 0
+
+    async def _send_sinks(
+        self,
+        sinks: Sequence[Sink],
+        in_use: Sink | None,
+        matched: bool,
+    ) -> None:
+        applied = {
+            "sink": in_use.name if in_use is not None else None,
+            "volume": in_use.volume if in_use is not None else None,
+            "mute": in_use.mute if in_use is not None else False,
+            "matched": matched,
+        }
+        self._last_sinks = json.dumps([(s.name, s.available) for s in sinks], sort_keys=True)
+        await self.send("sinks", {"sinks": [s.as_dict() for s in sinks], "applied": applied})
+
+    async def _unreachable(self, exc: Exception) -> None:
+        """PipeWire cannot be reached: empty list and a failure; the kiosk keeps running."""
+        await self._audio_failed(f"cannot reach the PipeWire server: {exc}")
+        wants = (self.audio or {}).get("sink", "auto")
+        await self._send_sinks([], None, matched=wants == "auto")
+
+    async def report_sinks(self) -> None:
+        """Report the outputs without changing anything (after ``hello``, CORE-277)."""
+        try:
+            sinks, _ = await self._list_audio()
+        except (RuntimeError, ValueError, OSError) as exc:
+            await self._unreachable(exc)
+            return
+        self._audio_failure = None
+        default = await self._default_sink()
+        in_use = next((s for s in sinks if s.name == default), None)
+        await self._send_sinks(sinks, in_use, matched=True)
+
+    async def apply_audio(self) -> None:
+        """Apply the ``audio`` block and report the result (CORE-295, CORE-296).
+
+        The output is chosen as :func:`~mm3.core.kiosk.audio.resolve_sink`
+        says; a card profile that has to change first is switched with
+        ``pactl set-card-profile``. A missing or unavailable output leaves the
+        current default as it is and is reported with ``matched: false``.
+        """
+        block = self.audio or {}
+        want = str(block.get("sink") or "auto")
+        volume = block.get("volume")
+        mute = bool(block.get("mute", False))
+        try:
+            sinks, cards = await self._list_audio()
+            resolution = resolve_sink(want, sinks, cards)
+            if resolution.switch is not None:
+                card, profile = resolution.switch
+                if await self._pactl_run(profile_command(self.pactl, card, profile)):
+                    sinks, cards = await self._list_audio()
+                    resolution = resolve_sink(want, sinks, cards)
+                else:
+                    resolution = Resolution(matched=False)
+        except (RuntimeError, ValueError, OSError) as exc:
+            await self._unreachable(exc)
+            return
+        self._audio_failure = None
+        target = resolution.sink
+        if target is None and want == "auto":
+            default = await self._default_sink()
+            target = next((s for s in sinks if s.name == default), None)
+        if target is not None:
+            if resolution.sink is not None:
+                await self._pactl_run(set_default_command(self.pactl, target.name))
+            if isinstance(volume, int) and not isinstance(volume, bool):
+                await self._pactl_run(volume_command(self.pactl, target.name, volume))
+            await self._pactl_run(mute_command(self.pactl, target.name, mute))
+            with contextlib.suppress(RuntimeError, ValueError, OSError):
+                sinks, _ = await self._list_audio()
+            target = next((s for s in sinks if s.name == target.name), target)
+        else:
+            default = await self._default_sink()
+            target = next((s for s in sinks if s.name == default), None)
+        await self._send_sinks(sinks, target, resolution.matched)
+
+    async def _poll_audio(self) -> None:
+        """Report again when an output appears, disappears or changes availability."""
+        try:
+            sinks, _ = await self._list_audio()
+        except (RuntimeError, ValueError, OSError) as exc:
+            if self._last_sinks != "[]":
+                await self._unreachable(exc)
+            return
+        listed = json.dumps([(s.name, s.available) for s in sinks], sort_keys=True)
+        if listed == self._last_sinks:
+            return
+        if self.audio is not None:
+            await self.apply_audio()
+        else:
+            await self.report_sinks()
 
     # --- Chromium ---------------------------------------------------------------------
 

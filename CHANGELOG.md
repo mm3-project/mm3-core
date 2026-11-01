@@ -7,6 +7,43 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 3, spec-change issue #42)
+
+- Kiosk audio (CORE-295, CORE-296; core spec 0.21): the agent lists outputs
+  and cards with `pactl --format=json list sinks|cards`, classifies each output
+  as `hdmi`, `analog`, `usb`, `bluetooth` or `other` from its card and port,
+  and applies the `audio` block live with `pactl set-default-sink`,
+  `set-sink-volume` and `set-sink-mute`, without restarting Chromium. An output
+  that belongs to an inactive card profile (HDMI and analog of one HDA card) is
+  reached with `pactl set-card-profile` first. A missing or unavailable output
+  keeps the current default and is reported with `matched: false`. New module
+  `mm3.core.kiosk.audio` (parsing and the choice, no processes).
+- Agent protocol (CORE-277): the agent sends `sinks` after `hello` and after
+  every change, also when an output appears, disappears or changes availability
+  (checked every 10 s with the display outputs); `failure` frames carry an
+  `area` (`display` or `audio`; absent means display). When the PipeWire server
+  cannot be reached the agent sends an empty `sinks` and an audio failure and
+  the kiosk keeps running (CORE-295).
+- Engine (CORE-277, CORE-296): `KioskAgents` sends the `audio` block at connect
+  and on hot reload (`ReloadPlan.audio`), records `sinks` in `KioskStatus`
+  (`sinks`, `audio`, `audio_mismatch`, `audio_failure`) and offers
+  `set_runtime_audio()` for run-time volume and mute, which are never written to
+  the configuration or its history and are dropped on reconnect and on a changed
+  block. Without an `audio` block the kiosk keeps PipeWire's own output, volume
+  and mute.
+- Chromium (CORE-270, CORE-297): `--enable-features=AcceleratedVideoDecodeLinuxGL`
+  for VA-API video decoding on Wayland, best effort.
+
+### Changed (milestone 3, spec-change issue #42)
+
+- CSP (CORE-63): `media-src 'self'` after `img-src`, on both listeners.
+  The `Permissions-Policy` now also denies `bluetooth`, as CORE-63 lists it.
+- The kiosk agent closes its WebSocket when it stops, so the engine sees the
+  disconnect at once instead of at process exit (CORE-268).
+- Citations reviewed against 0.21 in the web security files, the kiosk package,
+  `mm3 kiosk` and `mm3-kiosk.service` (CORE-63, CORE-143, CORE-270, CORE-277).
+  CORE-246 and CORE-268 were already implemented and tested; no code change.
+
 ### Added (milestone 2, spec-change issue #41)
 
 - Configuration `audio` block (CORE-201, CORE-296; core spec 0.21): the

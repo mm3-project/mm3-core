@@ -528,3 +528,27 @@ async def test_core_254_display_token_grants_nothing_on_admin(auth: WebAuth) -> 
     async with client(admin(auth), ADMIN) as c:
         c.cookies.set(ADMIN_COOKIE, sid)
         assert (await c.get("/admin")).status_code == 303
+
+
+def test_core_63_csp_allows_media_from_self_only_and_denies_bluetooth() -> None:
+    from mm3.core.web.security import PERMISSIONS_POLICY
+
+    for policy in (CSP, CSP_PREVIEW):
+        directives = [d.strip() for d in policy.split(";")]
+        assert "media-src 'self'" in directives
+        assert directives.index("img-src 'self' data:") + 1 == directives.index("media-src 'self'")
+    assert CSP == (
+        "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+        "media-src 'self'; font-src 'self'; connect-src 'self'; base-uri 'none'; "
+        "form-action 'self'; frame-ancestors 'none'"
+    )
+    denied = {p.split("=")[0] for p in PERMISSIONS_POLICY.split(", ")}
+    assert denied == {
+        "camera",
+        "microphone",
+        "geolocation",
+        "usb",
+        "serial",
+        "bluetooth",
+        "payment",
+    }
