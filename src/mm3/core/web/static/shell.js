@@ -150,6 +150,8 @@ function scheduleReconnect() {
   setTimeout(connect, base * jitter);
 }
 
+// Implements CORE-114 (Core spec 0.22, §10.5 Diagnostics and debugging): window errors
+// and unhandled rejections go to the engine as log frames.
 function logError(where, err) {
   host.send("log", {
     level: "error",

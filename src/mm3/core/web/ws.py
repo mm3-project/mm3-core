@@ -21,6 +21,7 @@ Implements:
     CORE-254: Core spec 0.12, §10.1 Security.
     CORE-305: Core spec 0.22, §9.1 Remote-control API.
     CORE-304: Core spec 0.22, §10.5 Diagnostics and debugging.
+    CORE-114: Core spec 0.22, §10.5 Diagnostics and debugging.
 """
 
 from __future__ import annotations
@@ -31,6 +32,7 @@ import fnmatch
 import hashlib
 import json
 import secrets
+import time
 from collections import deque
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
@@ -91,6 +93,8 @@ CLOSE_FRAME_TOO_BIG = 1009
 CLOSE_OVERLOADED = 1013
 
 REF_MAX = 64
+BROWSER_LOGS_PER_MINUTE = 10
+"""Browser log frames logged per instance and minute (CORE-114)."""
 ERROR_KEYS = {
     "reserved_name": "CORE_WS_RESERVED_NAME",
     "unknown_instance": "CORE_WS_UNKNOWN_INSTANCE",
@@ -239,6 +243,8 @@ class ClientHub:
         self.bus: Bus | None = None
         self.pages: PageService | None = None
         self.status: Callable[[str], str] = lambda _iid: "ok"
+        self._browser_logs: dict[str | None, deque[float]] = {}
+        self._browser_limited: set[str | None] = set()
         self.frame_observer: Callable[[str, str, Mapping[str, Any]], None] | None = None
         """Sees every frame queued for or received from a shell (bus inspector, CORE-304)."""
         self.snapshots: dict[str, dict[str, Any]] = {}
@@ -906,10 +912,30 @@ class ClientHub:
         self._push(client, _frame("reply", data, instance))
 
     def _log_frame(self, client: _Client, instance: Any, data: Mapping[str, Any]) -> None:
+        """Log a browser error or log line with source ``browser`` (CORE-114).
+
+        At most :data:`BROWSER_LOGS_PER_MINUTE` per instance are logged; the
+        first one over the limit is logged once as ``browser_log_limited``.
+
+        Implements:
+            CORE-114: Core spec 0.22, §10.5 Diagnostics and debugging.
+        """
         level = data.get("level")
         message = data.get("message")
         if not isinstance(message, str):
             return
+        key = instance if isinstance(instance, str) else None
+        now = time.monotonic()
+        window = self._browser_logs.setdefault(key, deque())
+        while window and now - window[0] >= 60.0:
+            window.popleft()
+        if len(window) >= BROWSER_LOGS_PER_MINUTE:
+            if key not in self._browser_limited:
+                self._browser_limited.add(key)
+                _log.warning("browser_log_limited", instance=key, limit=BROWSER_LOGS_PER_MINUTE)
+            return
+        self._browser_limited.discard(key)
+        window.append(now)
         fields: dict[str, Any] = {
             "client": client.client_id,
             "source": "browser",

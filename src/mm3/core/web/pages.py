@@ -9,6 +9,7 @@ Implements:
     CORE-63: Core spec 0.21, §10.1 Security.
     CORE-253: Core spec 0.12, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
+    -: Core spec 0.24, §10.5 Diagnostics and debugging.
 """
 
 from __future__ import annotations
@@ -17,7 +18,20 @@ from html import escape
 
 from mm3.core.i18n.catalogs import CORE_CATALOG, Table
 
-__all__ = ["TEXT", "admin_home_page", "login_page", "message_page", "pair_page", "t"]
+__all__ = [
+    "ADMIN_PREFIXES",
+    "TEXT",
+    "admin_debug_page",
+    "admin_home_page",
+    "admin_texts",
+    "login_page",
+    "message_page",
+    "pair_page",
+    "t",
+]
+
+ADMIN_PREFIXES = ("CORE_ADMIN_", "CORE_API_", "CORE_WEB_")
+"""Keys the admin pages read from the engine catalog (CORE-11, CORE-298)."""
 
 TEXT: dict[str, str] = {
     key: text
@@ -39,12 +53,70 @@ def t(key: str) -> str:
     return escape(TEXT[key])
 
 
-def _page(title_key: str, body: str, *, script: str | None = None) -> str:
+def _page(
+    title_key: str,
+    body: str,
+    *,
+    script: str | None = None,
+    module: str | None = None,
+    styles: tuple[str, ...] = (),
+) -> str:
     tag = f'\n<script src="{escape(script)}" defer></script>' if script else ""
+    if module:
+        # No favicon request that would 404 (an empty data: icon, allowed by img-src).
+        tag += '\n<link rel="icon" href="data:,">'
+        tag += f'\n<script type="module" src="{escape(module)}"></script>'
+    for href in styles:
+        tag += f'\n<link rel="stylesheet" href="{escape(href)}">'
     return (
         '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
         f"<title>{t(title_key)}</title>{tag}\n</head>\n<body>\n{body}\n</body>\n</html>\n"
+    )
+
+
+def admin_texts(locale: str) -> dict[str, str]:
+    """Return the admin page texts for a locale, falling back to English.
+
+    Args:
+        locale: BCP 47 tag, such as ``it`` or ``pt-BR``.
+
+    Returns:
+        Key to text for the keys of :data:`ADMIN_PREFIXES`.
+    """
+    table = Table(CORE_CATALOG)
+    chain = ["en"]
+    base = locale.split("-")[0]
+    if base != "en":
+        chain.append(base)
+    if locale not in chain:
+        chain.append(locale)
+    out: dict[str, str] = {}
+    for loc in chain:
+        for key, text in table.get(loc).items():
+            if key.startswith(ADMIN_PREFIXES) and isinstance(text, str):
+                out[key] = text
+    return out
+
+
+def admin_debug_page() -> str:
+    """Render ``/admin/debug``: the debug page element loads its data itself (10.5).
+
+    Returns:
+        The HTML.
+    """
+    body = (
+        '<header class="bar"><a href="/admin">'
+        f"{t('CORE_WEB_ADMIN_TITLE')}</a>"
+        '<form method="post" action="/admin/logout">'
+        f'<button type="submit">{t("CORE_WEB_LOGOUT")}</button></form></header>\n'
+        "<mm3-admin-debug></mm3-admin-debug>"
+    )
+    return _page(
+        "CORE_WEB_ADMIN_TITLE",
+        body,
+        module="/admin/static/debug.js",
+        styles=("/admin/static/admin.css",),
     )
 
 

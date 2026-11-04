@@ -273,6 +273,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         api=api,
         channel=AdminChannel(hub.auth, lambda: status_object(api), inspector),
         socket_path=runtime_dir() / "admin.sock",
+        locale=lambda: manager.current.config.engine.locale if manager.current.config else "en",
     )
     await engine.start(result.instance_specs())
     await manager.start()

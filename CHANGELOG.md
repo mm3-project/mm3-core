@@ -7,6 +7,30 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 6, part B2: debug page)
+
+- Admin debug page `/admin/debug` (core spec 10.5), Web Components with
+  lit-html and no inline script or style (CORE-63): an overview with engine,
+  displays and kiosk status, mismatches and failures highlighted (CORE-305),
+  one row per instance with state, restarts and last error, and on opening it
+  the traceback, health record, recent logs, log-level control (CORE-112) and
+  restart; recent browser errors (CORE-114); live logs with the filters of
+  CORE-316, pause and download as JSON lines; the bus inspector with name and
+  source filters, search, pause, payload viewer, follow trace and re-send
+  through `/api/v1/notify`, subscribed only while its tab is open (CORE-115);
+  a "Download diagnostics" link to the bundle (CORE-318).
+- Admin page files under `/admin/static/` and their texts at
+  `/admin/i18n.json` (`CORE_ADMIN_*`, `CORE_API_*`, `CORE_WEB_*` in the engine
+  locale), on the admin listener only; 57 `CORE_ADMIN_*` keys in EN, IT, FR,
+  ES and DE.
+
+### Changed (milestone 6, part B2)
+
+- CORE-114: element errors (render, `onMessage`, `onNotification`) now carry
+  the stack and the user agent; the engine logs at most 10 browser log frames
+  per instance and minute and notes the first one over the limit as
+  `browser_log_limited`.
+
 ### Added (milestone 6, part B1: diagnostics, server side)
 
 - Admin channel `/admin/ws` (CORE-304): admin session and matching `Origin`,

@@ -235,3 +235,171 @@ msgstr ""
 
 msgid "CORE_API_REQUEST_TIMEOUT"
 msgstr ""
+
+msgid "CORE_ADMIN_AUDIO_FAILURE"
+msgstr ""
+
+msgid "CORE_ADMIN_AUDIO_MISMATCH"
+msgstr ""
+
+msgid "CORE_ADMIN_BROWSER_ERRORS"
+msgstr ""
+
+msgid "CORE_ADMIN_CHROMIUM"
+msgstr ""
+
+msgid "CORE_ADMIN_CHROMIUM_FAILED"
+msgstr ""
+
+msgid "CORE_ADMIN_CLIENTS"
+msgstr ""
+
+msgid "CORE_ADMIN_CLOSE"
+msgstr ""
+
+msgid "CORE_ADMIN_CONFIG_VERSION"
+msgstr ""
+
+msgid "CORE_ADMIN_DISK_INVALID"
+msgstr ""
+
+msgid "CORE_ADMIN_DISPLAY_MISMATCH"
+msgstr ""
+
+msgid "CORE_ADMIN_DOWNLOAD_BUNDLE"
+msgstr ""
+
+msgid "CORE_ADMIN_DOWNLOAD_JSONL"
+msgstr ""
+
+msgid "CORE_ADMIN_DROPPED"
+msgstr ""
+
+msgid "CORE_ADMIN_ENGINE"
+msgstr ""
+
+msgid "CORE_ADMIN_EVENT"
+msgstr ""
+
+msgid "CORE_ADMIN_FILTER_LEVEL"
+msgstr ""
+
+msgid "CORE_ADMIN_FILTER_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_FILTER_SOURCE"
+msgstr ""
+
+msgid "CORE_ADMIN_FILTER_TEXT"
+msgstr ""
+
+msgid "CORE_ADMIN_FILTER_TRACE"
+msgstr ""
+
+msgid "CORE_ADMIN_FOLLOW_TRACE"
+msgstr ""
+
+msgid "CORE_ADMIN_HEALTH"
+msgstr ""
+
+msgid "CORE_ADMIN_INSTANCE"
+msgstr ""
+
+msgid "CORE_ADMIN_INSTANCES"
+msgstr ""
+
+msgid "CORE_ADMIN_KIOSK"
+msgstr ""
+
+msgid "CORE_ADMIN_KIOSK_DISCONNECTED"
+msgstr ""
+
+msgid "CORE_ADMIN_KIOSK_NONE"
+msgstr ""
+
+msgid "CORE_ADMIN_LAST_ERROR"
+msgstr ""
+
+msgid "CORE_ADMIN_LEVEL_DEFAULT"
+msgstr ""
+
+msgid "CORE_ADMIN_LIVE"
+msgstr ""
+
+msgid "CORE_ADMIN_LOG_LEVEL"
+msgstr ""
+
+msgid "CORE_ADMIN_MODULE"
+msgstr ""
+
+msgid "CORE_ADMIN_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_NONE"
+msgstr ""
+
+msgid "CORE_ADMIN_PAGE"
+msgstr ""
+
+msgid "CORE_ADMIN_PAUSE"
+msgstr ""
+
+msgid "CORE_ADMIN_PAYLOAD"
+msgstr ""
+
+msgid "CORE_ADMIN_RECENT_LOGS"
+msgstr ""
+
+msgid "CORE_ADMIN_RECONNECTING"
+msgstr ""
+
+msgid "CORE_ADMIN_RESEND"
+msgstr ""
+
+msgid "CORE_ADMIN_RESENT"
+msgstr ""
+
+msgid "CORE_ADMIN_RESTART"
+msgstr ""
+
+msgid "CORE_ADMIN_RESTARTS"
+msgstr ""
+
+msgid "CORE_ADMIN_RESUME"
+msgstr ""
+
+msgid "CORE_ADMIN_SEARCH"
+msgstr ""
+
+msgid "CORE_ADMIN_SIZE"
+msgstr ""
+
+msgid "CORE_ADMIN_STATE"
+msgstr ""
+
+msgid "CORE_ADMIN_SUSPENDED"
+msgstr ""
+
+msgid "CORE_ADMIN_TAB_BUS"
+msgstr ""
+
+msgid "CORE_ADMIN_TAB_LOGS"
+msgstr ""
+
+msgid "CORE_ADMIN_TAB_OVERVIEW"
+msgstr ""
+
+msgid "CORE_ADMIN_TIME"
+msgstr ""
+
+msgid "CORE_ADMIN_TRACE_TITLE"
+msgstr ""
+
+msgid "CORE_ADMIN_UPTIME"
+msgstr ""
+
+msgid "CORE_ADMIN_VERSION"
+msgstr ""
+
+msgid "CORE_ADMIN_VIEWPORT"
+msgstr ""
