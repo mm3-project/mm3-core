@@ -7,6 +7,7 @@ Implements:
 
 from __future__ import annotations
 
+import asyncio
 import re
 import sys
 from collections.abc import AsyncIterator
@@ -123,6 +124,23 @@ async def count(h: BrowserHarness, selector: str) -> int:
     )
 
 
+async def entries(h: BrowserHarness, expected: int, wait: float = 3.0) -> int:
+    """Count the list entries once the element has its cell size.
+
+    The element renders with a default size until ``onResize`` reports the
+    cell, and then renders again with as many entries as fit (WTH-10); a count
+    taken in between sees the default. Wait for ``expected``, then return the
+    count, so a wrong number still fails with the number seen.
+    """
+    seen = await count(h, ".list li")
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + wait
+    while seen != expected and loop.time() < deadline:
+        await asyncio.sleep(0.05)
+        seen = await count(h, ".list li")
+    return seen
+
+
 def plain(value: str) -> str:
     return value.replace("\N{NARROW NO-BREAK SPACE}", " ").replace("\N{NO-BREAK SPACE}", " ")
 
@@ -214,7 +232,7 @@ async def test_wth_10_night_variants_of_the_condition_text() -> None:
 async def test_wth_10_daily_lists_days_with_weekday_range_and_probability() -> None:
     async with weather({"type": "daily"}) as h:
         await h.state(daily(3))
-        assert await count(h, ".list li") == 3
+        assert await entries(h, 3) == 3
         first = plain(await text(h, ".list li"))
         assert first.startswith("Mon")  # 2026-06-01 is a Monday, in any time zone
         assert "23°C" in first
@@ -239,7 +257,7 @@ async def test_wth_10_daily_sun_option() -> None:
 async def test_wth_10_hourly_lists_hours() -> None:
     async with weather({"type": "hourly"}) as h:
         await h.state(hourly(4))
-        assert await count(h, ".list li") == 4
+        assert await entries(h, 4) == 4
         first = plain(await text(h, ".list li"))
         assert first.startswith("2 PM")
         assert "20°C" in first
@@ -328,7 +346,8 @@ async def test_wth_12_three_views_render_in_five_languages(lang: str, view: str)
             for key in ("FEELS_LIKE", "HUMIDITY", "WIND", "PRECIPITATION"):
                 assert cat[key] in shown
         else:
-            assert await count(h, ".list li") == (5 if view == "daily" else 6)
+            want = 5 if view == "daily" else 6
+            assert await entries(h, want) == want
         report = await h.report()
         assert not report["csp"], report["csp"]
 

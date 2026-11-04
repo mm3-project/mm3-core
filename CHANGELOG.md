@@ -96,6 +96,9 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Fixed
 
+- `mm3-weather` browser tests (WTH-10, WTH-12): the list counts wait for the
+  render that follows `onResize`, so they no longer race the default cell
+  size and see 3 hours instead of 6.
 - CORE-268 (core spec 0.20): when the group `mm3-kiosk` is missing or the
   change of group on `kiosk.key` fails, the engine now logs the warning
   `kiosk_key_group` naming the group instead of staying silent, and keeps
