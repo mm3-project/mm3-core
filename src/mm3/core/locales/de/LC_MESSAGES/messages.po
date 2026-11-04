@@ -191,3 +191,51 @@ msgstr "Dieser Bildschirm zeigt diese Instanz nicht an."
 msgid "REQUEST_TIMEOUT"
 msgstr "Es kam keine Antwort rechtzeitig an."
 
+
+msgid "CORE_API_UNAUTHORIZED"
+msgstr "Melde dich mit einem Admin-Token an."
+
+msgid "CORE_API_FORBIDDEN"
+msgstr "Diese Anfrage ist von dieser Seite aus nicht erlaubt."
+
+msgid "CORE_API_NOT_FOUND"
+msgstr "Nicht gefunden."
+
+msgid "CORE_API_INVALID_REQUEST"
+msgstr "Die Anfrage ist ungültig."
+
+msgid "CORE_API_TOO_LARGE"
+msgstr "Der Inhalt ist zu groß."
+
+msgid "CORE_API_PRECONDITION_REQUIRED"
+msgstr "Lade die Konfiguration neu, bevor du speicherst."
+
+msgid "CORE_API_CONFLICT"
+msgstr "Die Konfiguration wurde inzwischen geändert."
+
+msgid "CORE_API_DISK_INVALID"
+msgstr "Die Konfiguration auf der Festplatte ist ungültig."
+
+msgid "CORE_API_NO_KIOSK"
+msgstr "Kein Kiosk ist verbunden."
+
+msgid "CORE_API_CONFIG_INVALID"
+msgstr "Die Konfiguration ist ungültig."
+
+msgid "CORE_API_PATCH_FAILED"
+msgstr "Die Änderung konnte nicht angewendet werden."
+
+msgid "CORE_API_MASKED_UNKNOWN"
+msgstr "Ein verborgener Wert existiert nicht mehr; gib ihn erneut ein."
+
+msgid "CORE_API_RESERVED_NAME"
+msgstr "Namen, die mit CORE_ beginnen, sind der Engine vorbehalten."
+
+msgid "CORE_API_PAYLOAD_INVALID"
+msgstr "Der Inhalt passt nicht zur registrierten Benachrichtigung."
+
+msgid "CORE_API_UNAVAILABLE"
+msgstr "Die Engine startet oder stoppt gerade."
+
+msgid "CORE_API_REQUEST_TIMEOUT"
+msgstr "Keine Antwort ist rechtzeitig eingetroffen."

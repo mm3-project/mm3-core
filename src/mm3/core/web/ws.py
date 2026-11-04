@@ -19,6 +19,7 @@ Implements:
     CORE-21: Core spec 0.9, §5.3 Routing rules.
     CORE-223: Core spec 0.13, §5.4 Request and reply.
     CORE-254: Core spec 0.12, §10.1 Security.
+    CORE-305: Core spec 0.22, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -183,6 +184,9 @@ class _Client:
     tasks: set[asyncio.Task[Any]] = field(default_factory=set)
     viewport: tuple[int, int] = (0, 0)
     dpr: float = 1.0
+    address: str | None = None
+    user_agent: str | None = None
+    since: datetime | None = None
 
 
 def _frame(kind: str, data: Any, instance: str | None = None) -> dict[str, Any]:
@@ -388,7 +392,10 @@ class ClientHub:
         """Describe the connected shells (for diagnostics and tests).
 
         Returns:
-            ``{client_id, role, interactive, instances, queued, dropped_inbound}`` per shell.
+            ``{client_id, role, interactive, instances, queued, dropped_inbound,
+            viewport, address, user_agent, since}`` per shell; ``role``,
+            ``address``, ``user_agent`` and ``since`` are the ``clients`` of
+            ``GET /api/v1/status`` (CORE-305).
         """
         return [
             {
@@ -399,6 +406,9 @@ class ClientHub:
                 "queued": len(c.queue),
                 "dropped_inbound": c.dropped_inbound,
                 "viewport": list(c.viewport),
+                "address": c.address,
+                "user_agent": c.user_agent,
+                "since": c.since.isoformat() if c.since else None,
             }
             for c in self._clients.values()
         ]
@@ -545,6 +555,9 @@ class ClientHub:
             instances={i.id for i in view.instances},
             viewport=(hello["viewport"][0], hello["viewport"][1]),
             dpr=float(hello["dpr"]),
+            address=ws.client.host if ws.client else None,
+            user_agent=(ws.headers.get("user-agent") or "")[:300] or None,
+            since=datetime.now(UTC),
         )
         welcome = {
             "engine_build": self.build,
