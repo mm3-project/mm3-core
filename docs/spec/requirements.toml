@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.22"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22"]
+version = "0.23"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23"]
 
 [[spec]]
 name = "Module Contract"
@@ -767,9 +767,9 @@ id = "CORE-112"
 spec = "Core spec"
 section = "10.5"
 title = "Diagnostics and debugging"
-hash = "1895ad97c92c"
+hash = "d947b56639ef"
 introduced_in = "0.1"
-changed_in = "0.1"
+changed_in = "0.23"
 status = "active"
 
 [[requirement]]
@@ -2387,9 +2387,9 @@ id = "CORE-298"
 spec = "Core spec"
 section = "9.1"
 title = "Remote-control API"
-hash = "ad4f31e188b6"
+hash = "0ddc3d81951e"
 introduced_in = "0.22"
-changed_in = "0.22"
+changed_in = "0.23"
 status = "active"
 
 [[requirement]]
@@ -2540,6 +2540,26 @@ title = "Remote-control API"
 hash = "0d06eedec9ae"
 introduced_in = "0.22"
 changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-314"
+spec = "Core spec"
+section = "9.1"
+title = "Remote-control API"
+hash = "75271f54b713"
+introduced_in = "0.23"
+changed_in = "0.23"
+status = "active"
+
+[[requirement]]
+id = "CORE-315"
+spec = "Core spec"
+section = "9.1"
+title = "Remote-control API"
+hash = "940a9aa77d78"
+introduced_in = "0.23"
+changed_in = "0.23"
 status = "active"
 
 [[requirement]]

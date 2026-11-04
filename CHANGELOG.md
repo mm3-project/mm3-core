@@ -77,6 +77,14 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Spec sync to core spec 0.23 (REST base gaps, start of milestone 6
+  development): `CORE_API_REQUEST_TIMEOUT` 504 (CORE-298 changed); log-level
+  API with body `{level}`, null for the default, `GET /api/v1/debug/log-level`
+  and the fixed `debug_ttl` expiry (CORE-112 changed); `POST /api/v1/request`
+  returns `{payload}`, error replies as 200 and 504 on timeout (CORE-314
+  added); `GET /api/v1/modules` entries, idempotent instance controls and 404
+  for unknown instances and pages (CORE-315 added). Both new ids belong to
+  milestone 6.
 - Spec sync to core spec 0.22 (milestone 6 settled): API errors as
   `application/problem+json` with `CORE_API_*` codes (CORE-298), paging of
   history and logs (CORE-299), config ETag with 428 and 409 conflicts
