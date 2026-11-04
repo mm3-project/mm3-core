@@ -17,23 +17,33 @@ Implements:
     CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
     CORE-223: Core spec 0.13, §5.4 Request and reply.
     CORE-236, CORE-240: Core spec 0.14, §6.9 Pages and visibility.
+    CORE-299: Core spec 0.22, §9.1 Remote-control API.
+    CORE-311, CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
+    CORE-316, CORE-318: Core spec 0.24, §10.5 Diagnostics and debugging.
 """
 
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+import json
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.openapi.utils import get_openapi
+from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, ValidationError
 
 from mm3.__about__ import __version__
 from mm3.core.context import REQUEST_TIMEOUT_RANGE
-from mm3.core.logging import get_logger, log_levels
+from mm3.core.diag.bundle import Bundle, bundle_name, package_list
+from mm3.core.diag.logfilter import LogFilter
+from mm3.core.diag.secrets import Masker
+from mm3.core.logging import get_logger, log_levels, numbered_records
 from mm3.core.web.auth import WebAuth
 from mm3.core.web.kiosk import KioskStatus
 from mm3.core.web.problems import ApiError
@@ -48,7 +58,7 @@ if TYPE_CHECKING:
     from mm3.core.web.kiosk import KioskAgents
     from mm3.core.web.ws import ClientHub
 
-__all__ = ["ApiServices", "api_router", "check_api_auth", "openapi_schema"]
+__all__ = ["ApiServices", "api_router", "check_api_auth", "openapi_schema", "status_object"]
 
 _log = get_logger(subsystem="api")
 
@@ -66,6 +76,8 @@ class ApiServices:
         hub: Connected shells, for ``clients`` and shell reload.
         agents: The kiosk agent endpoint, if the kiosk key could be written.
         build: The shell's ``engine_build`` (CORE-273).
+        masker: Returns the masker for the running configuration's secrets
+            (CORE-116, CORE-319).
     """
 
     engine: Engine
@@ -74,6 +86,7 @@ class ApiServices:
     hub: ClientHub | None = None
     agents: KioskAgents | None = None
     build: str = ""
+    masker: Callable[[], Masker] = field(default=Masker)
 
 
 # --- request bodies ---------------------------------------------------------------------
@@ -140,22 +153,24 @@ async def check_api_auth(auth: WebAuth, request: Request) -> None:
 # --- the router ---------------------------------------------------------------------
 
 
-def api_router(auth: WebAuth, services: ApiServices) -> APIRouter:
+def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
     """Build the ``/api/v1`` routes of the REST base.
 
     Args:
-        auth: Token store and sessions.
+        auth: Token store and sessions; ``None`` on the local admin socket,
+            where the socket's permissions are the authentication (CORE-311).
         services: What the routes read and control.
 
     Returns:
-        The router; every route needs admin authentication.
+        The router; with ``auth`` every route needs admin authentication.
 
     Implements:
         CORE-298: Core spec 0.23, §9.1 Remote-control API.
     """
 
     async def authenticated(request: Request) -> None:
-        await check_api_auth(auth, request)
+        if auth is not None:
+            await check_api_auth(auth, request)
         engine = services.engine
         if not engine.running or engine.stopping:
             raise ApiError("CORE_API_UNAVAILABLE", "The engine is starting or stopping")
@@ -175,33 +190,8 @@ def api_router(auth: WebAuth, services: ApiServices) -> APIRouter:
 
     # --- status ---------------------------------------------------------------------
 
-    def page_info() -> dict[str, Any]:
-        pages = services.pages
-        if pages is None:
-            return {"id": "main", "index": 0, "count": 1}
-        ids = pages.ids
-        return {"id": pages.page, "index": ids.index(pages.page), "count": len(ids)}
-
     def status() -> dict[str, Any]:
-        """The status object (CORE-305)."""
-        engine = services.engine
-        started = engine.started_at
-        uptime = (engine.clock.wall() - started).total_seconds() if started else 0.0
-        clients = services.hub.clients() if services.hub is not None else []
-        agents = services.agents
-        return {
-            "version": __version__,
-            "engine_build": services.build,
-            "started_at": started.isoformat() if started else None,
-            "uptime_s": round(max(uptime, 0.0), 3),
-            "suspended": sup.suspended,
-            "config": services.manager.status() if services.manager is not None else None,
-            "page": page_info(),
-            "clients": [
-                {k: c.get(k) for k in ("role", "address", "user_agent", "since")} for c in clients
-            ],
-            "kiosk": agents.status.api_object() if agents is not None else None,
-        }
+        return status_object(services)
 
     @router.get("/status")
     async def get_status() -> dict[str, Any]:
@@ -460,6 +450,43 @@ def api_router(auth: WebAuth, services: ApiServices) -> APIRouter:
             services.pages.set_page(page, "rest")
         return await pages_after()
 
+    # --- diagnostics ----------------------------------------------------------------
+
+    @router.get("/debug/logs", response_model=None)
+    async def debug_logs(request: Request) -> dict[str, Any] | Response:
+        """The ring buffer, newest first, filtered and paged (CORE-299, CORE-316)."""
+        query = dict(request.query_params)
+        unknown = set(query) - {"limit", "before", *LOG_FILTER_KEYS}
+        if unknown:
+            raise ApiError("CORE_API_INVALID_REQUEST", f"Unknown parameter {sorted(unknown)[0]!r}")
+        try:
+            log_filter = LogFilter.parse({k: v for k, v in query.items() if k in LOG_FILTER_KEYS})
+            limit = int(query.get("limit", PAGE_DEFAULT))
+            before = int(query["before"]) if query.get("before") else None
+        except ValueError as exc:
+            raise ApiError("CORE_API_INVALID_REQUEST", str(exc)) from None
+        if not 1 <= limit <= PAGE_MAX:
+            raise ApiError("CORE_API_INVALID_REQUEST", f"limit must be 1 to {PAGE_MAX}")
+        items, next_cursor = page_logs(log_filter, limit, before)
+        if "application/x-ndjson" in request.headers.get("accept", ""):
+            body = "".join(json.dumps(r, default=str) + "\n" for r in items)
+            headers = {}
+            if next_cursor is not None:
+                headers["Link"] = f'<{request.url.path}?before={next_cursor}>; rel="next"'
+            return Response(body, media_type="application/x-ndjson", headers=headers)
+        return {"items": items, "next": next_cursor}
+
+    @router.get("/debug/bundle", response_class=Response)
+    async def debug_bundle() -> Response:
+        """The diagnostic bundle (CORE-311, CORE-318)."""
+        name, data = engine_bundle(services)
+        _log.info("api_diag_bundle", bytes=len(data))
+        return Response(
+            data,
+            media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{name}"'},
+        )
+
     # --- shells ---------------------------------------------------------------------
 
     @router.post("/shell/reload")
@@ -472,6 +499,134 @@ def api_router(auth: WebAuth, services: ApiServices) -> APIRouter:
         return {"clients": len(hub.clients())}
 
     return router
+
+
+PAGE_DEFAULT = 50
+PAGE_MAX = 500
+LOG_FILTER_KEYS = ("level", "module", "instance", "trace", "text")
+
+
+def page_logs(
+    log_filter: LogFilter, limit: int, before: int | None
+) -> tuple[list[dict[str, Any]], str | None]:
+    """Return one page of matching ring-buffer records, newest first (CORE-299).
+
+    Args:
+        log_filter: The filter (CORE-316).
+        limit: Records per page.
+        before: Cursor of the page, or ``None`` for the newest.
+
+    Returns:
+        The records and the cursor of the next page, or ``None``.
+
+    Implements:
+        CORE-299: Core spec 0.22, §9.1 Remote-control API.
+    """
+    items: list[dict[str, Any]] = []
+    last: int | None = None
+    more = False
+    for seq, record in reversed(numbered_records()):
+        if before is not None and seq >= before:
+            continue
+        if not log_filter.matches(record):
+            continue
+        if len(items) == limit:
+            more = True
+            break
+        items.append(record)
+        last = seq
+    return items, (str(last) if more and last is not None else None)
+
+
+def config_files(services: ApiServices) -> tuple[list[Path], Path | None]:
+    """Return the files of the running config set and the config directory."""
+    manager = services.manager
+    if manager is None:
+        return [], None
+    files = {p for p in manager.watched_files() if p != manager.env_file and p.is_file()}
+    for directory in manager.watched_directories():
+        if directory.is_dir():
+            files.update(p for p in directory.rglob("*") if p.is_file())
+    return sorted(files), manager.current.path.parent
+
+
+def engine_bundle(services: ApiServices) -> tuple[str, bytes]:
+    """Build the full diagnostic bundle from the running engine (CORE-318).
+
+    Args:
+        services: What the API reads.
+
+    Returns:
+        The file name and the zip.
+
+    Implements:
+        CORE-318: Core spec 0.24, §10.5 Diagnostics and debugging.
+        CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
+    """
+    bundle = Bundle(masker=services.masker())
+    sup = services.engine.supervisor
+    bundle.modules = {i.spec.module: sup.module_version(i.spec.module) for i in sup.instances()}
+    bundle.add_bytes("packages.txt", package_list().encode("utf-8"))
+    files, config_dir = config_files(services)
+    if config_dir is None:
+        bundle.missing.append("config/")
+    else:
+        bundle.add_config(files, config_dir)
+    records = [r for _, r in numbered_records()]
+    bundle.add_jsonl("logs.jsonl", records)
+    bundle.add_json("health.json", [i.health() for i in sup.instances()])
+    bundle.add_jsonl("browser-errors.jsonl", [r for r in records if r.get("source") == "browser"])
+    clients = services.hub.clients() if services.hub is not None else []
+    kiosk = services.agents.status.api_object() if services.agents is not None else None
+    bundle.add_json(
+        "kiosk.json",
+        {
+            "kiosk": kiosk,
+            "clients": [
+                {k: c.get(k) for k in ("role", "address", "user_agent", "since", "viewport")}
+                for c in clients
+            ],
+        },
+    )
+    return bundle_name(bundle.now), bundle.build()
+
+
+def status_object(services: ApiServices) -> dict[str, Any]:
+    """Return the object of ``GET /api/v1/status`` and the ``status`` topic (CORE-305).
+
+    Args:
+        services: What the API reads.
+
+    Returns:
+        ``{version, engine_build, started_at, uptime_s, suspended, config,
+        page, clients, kiosk}``.
+
+    Implements:
+        CORE-305: Core spec 0.22, §9.1 Remote-control API.
+    """
+    engine = services.engine
+    started = engine.started_at
+    uptime = (engine.clock.wall() - started).total_seconds() if started else 0.0
+    clients = services.hub.clients() if services.hub is not None else []
+    agents = services.agents
+    pages = services.pages
+    if pages is None:
+        page = {"id": "main", "index": 0, "count": 1}
+    else:
+        page = {"id": pages.page, "index": pages.ids.index(pages.page), "count": len(pages.ids)}
+    return {
+        "version": __version__,
+        "engine_build": services.build,
+        "started_at": started.isoformat() if started else None,
+        "uptime_s": round(max(uptime, 0.0), 3),
+        "suspended": engine.supervisor.suspended,
+        "config": services.manager.status() if services.manager is not None else None,
+        "page": page,
+        "clients": [
+            {k: c.get(k) for k in ("role", "address", "user_agent", "since")} for c in clients
+        ],
+        "kiosk": agents.status.api_object() if agents is not None else None,
+    }
 
 
 def openapi_schema(router: APIRouter) -> dict[str, Any]:

@@ -18,6 +18,7 @@ Implements:
     -: Core spec 0.8, §7.2 Error reporting.
     CORE-208: Core spec 0.11, §6.3 Hot reload.
     CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
+    CORE-311: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-62: Core spec 0.12, §10.1 Security.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
@@ -39,6 +40,7 @@ from typing import TYPE_CHECKING, Any, TextIO
 
 from mm3.__about__ import MODULE_API_VERSION, __version__
 from mm3.cli.config_cmd import add_config_parser, run_config
+from mm3.cli.diag_cmd import add_diag_parser, run_diag
 from mm3.cli.i18n_cmd import add_i18n_parser, run_i18n
 from mm3.cli.kiosk_cmd import add_kiosk_parser, run_kiosk
 from mm3.cli.module_cmd import add_module_parser, run_module
@@ -91,6 +93,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_service_parser(sub)
     add_module_parser(sub)
     add_new_module_parser(sub)
+    add_diag_parser(sub, _config_args)
     return parser
 
 
@@ -200,12 +203,16 @@ def _kiosk_agents(hub: ClientHub, manager: ConfigManager, engine: Engine) -> Kio
 async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> None:
     from mm3.core.config.history import ConfigHistory, HistoryRecorder
     from mm3.core.config.manager import ConfigManager
+    from mm3.core.diag.inspector import BusInspector
+    from mm3.core.diag.secrets import Masker, config_secrets
     from mm3.core.engine import Engine
     from mm3.core.pages import PageService
     from mm3.core.services.storage import resolve_state_dir
-    from mm3.core.web.api import ApiServices
+    from mm3.core.web.adminws import AdminChannel
+    from mm3.core.web.api import ApiServices, status_object
     from mm3.core.web.auth import WebAuth
     from mm3.core.web.gateway import WebGateway
+    from mm3.core.web.kiosk import runtime_dir
     from mm3.core.web.shell import STATIC_DIR, ShellSources
     from mm3.core.web.view import cached_view
     from mm3.core.web.ws import ClientHub, engine_build
@@ -241,6 +248,21 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     hub.attach_pages(pages, engine.supervisor)
     manager.layout_listeners.append(hub.reloaded)
     agents = _kiosk_agents(hub, manager, engine)
+    masks: dict[str, Any] = {}
+
+    def masker() -> Masker:
+        # CORE-319: the secrets of the running configuration, rebuilt on reload.
+        if masks.get("for") is not manager.current:
+            extra = [agents.key.value] if agents is not None else []
+            masks["for"] = manager.current
+            masks["masker"] = Masker(config_secrets(manager.current, env_file, extra=extra))
+        mk: Masker = masks["masker"]
+        return mk
+
+    inspector = BusInspector(masker)
+    engine.bus.add_endpoint(inspector)
+    hub.frame_observer = inspector.frame
+    api = ApiServices(engine, manager, pages, hub, agents, build, masker)
     gateway = WebGateway(
         result.config.engine,
         state_dir,
@@ -248,7 +270,9 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         hub=hub,
         sources=ShellSources(view, lambda: manager.current, engine.i18n),
         agents=agents,
-        api=ApiServices(engine, manager, pages, hub, agents, build),
+        api=api,
+        channel=AdminChannel(hub.auth, lambda: status_object(api), inspector),
+        socket_path=runtime_dir() / "admin.sock",
     )
     await engine.start(result.instance_specs())
     await manager.start()
@@ -334,6 +358,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_module(args)
     if args.command == "new-module":
         return run_new_module(args)
+    if args.command == "diag":
+        return run_diag(args)
     parser.print_help()
     return 0
 
