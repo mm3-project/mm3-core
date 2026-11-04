@@ -159,6 +159,12 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Spec sync to core spec 0.25 (editor and history API for milestone 6
+  part C): `CORE_API_NOTHING_TO_DO` 409 (CORE-298); tagged nodes in JSON Patch
+  values as one-key objects and an in-house JSON Patch on the ruamel nodes
+  (CORE-320); history routes and answers (CORE-321); `/admin/config` as one
+  page with Layout, Form, YAML and History tabs (CORE-322). All belong to
+  milestone 6.
 - Spec sync to core spec 0.24 (diagnostics details for milestone 6 part B):
   log filters with a minimum level and case-insensitive text (CORE-316);
   `status` frames on change, at most once a second, ignoring `uptime_s`
