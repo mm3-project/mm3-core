@@ -187,13 +187,16 @@ status = "not_started"
 #   {payload}, error replies as 200, 504 timeout) and CORE-315 (GET /modules
 #   entries, idempotent controls, 404 for unknown instances and pages) added;
 #   CORE-112 (log-level API) and CORE-298 (CORE_API_REQUEST_TIMEOUT) changed.
+# Core spec 0.24 (4 Nov 2026, start of part B): CORE-316 (log filters),
+#   CORE-317 (status frames), CORE-318 (bundle layout) and CORE-319
+#   (inspector masking) added.
 # Part A (REST base) covers the REST side of CORE-236 and CORE-240; the Home
 #   Assistant page select and "enabled" switch come with the MQTT bridge
 #   (milestone 7, CORE-120..126), the admin buttons with part D.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
-  "CORE-290..292", "CORE-298..315",
+  "CORE-290..292", "CORE-298..319",
 ]
 
 [[milestone]]

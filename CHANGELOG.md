@@ -107,6 +107,12 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Spec sync to core spec 0.24 (diagnostics details for milestone 6 part B):
+  log filters with a minimum level and case-insensitive text (CORE-316);
+  `status` frames on change, at most once a second, ignoring `uptime_s`
+  (CORE-317); fixed file list of the diagnostic bundle (CORE-318); secret
+  values masked as `!masked` in captured bus payloads (CORE-319). All four
+  belong to milestone 6.
 - Spec sync to core spec 0.23 (REST base gaps, start of milestone 6
   development): `CORE_API_REQUEST_TIMEOUT` 504 (CORE-298 changed); log-level
   API with body `{level}`, null for the default, `GET /api/v1/debug/log-level`
