@@ -77,6 +77,20 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Spec sync to core spec 0.22 (milestone 6 settled): API errors as
+  `application/problem+json` with `CORE_API_*` codes (CORE-298), paging of
+  history and logs (CORE-299), config ETag with 428 and 409 conflicts
+  (CORE-300), editing protocol with `POST /api/v1/config/patch` (CORE-301),
+  validate with diff preview and save responses (CORE-302), `!masked` secrets
+  (CORE-303), the admin channel `/admin/ws` (CORE-304), `GET /api/v1/status`
+  contents with the kiosk object (CORE-305), kiosk dropdowns and run-time volume
+  and mute (CORE-306), Show on mirror on the kiosk only (CORE-307), notify
+  checks (CORE-308), admin language per session (CORE-309), form label and help
+  keys (CORE-310), the local admin socket `/run/mm3/admin.sock` and
+  `mm3 diag bundle` (CORE-311), `mm3 diag check` (CORE-312) and OpenAPI as JSON
+  only (CORE-313), all in milestone 6. Changed: CORE-152 (section undo uses the
+  history sections).
+
 - Packaging after the first manual install, part 1 (core spec 0.20):
   - Service notification (CORE-290): the engine tells systemd its state with
     `sd_notify` datagrams to `$NOTIFY_SOCKET`, on the standard library only and

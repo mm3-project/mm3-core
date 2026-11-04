@@ -170,10 +170,23 @@ status = "not_started"
 #   not_started until its admin requirements are done.
 # Also serves the CORE-113 health record (assigned to milestone 1) at
 #   GET /api/v1/modules/{id}/health, with the rest of the REST API.
+# Requirements settled in core spec 0.22 (4 Nov 2026): CORE-298..313 added
+#   (problem+json errors, paging, ETag and conflicts, editing protocol with
+#   /config/patch, validate diff, !masked secrets, /admin/ws, status contents,
+#   kiosk controls, Show on mirror, notify checks, admin language, form keys,
+#   admin socket and mm3 diag); CORE-152 changed (sections of CORE-216).
+# CORE-305 and CORE-306 are the admin and API side of CORE-145, CORE-269 and
+#   CORE-296 (milestone 3, where the engine already keeps KioskStatus).
+# CORE-102: only the mechanism (admin_element, admin_scripts, the authenticated
+#   API helper); the widget builder that uses it comes in milestone 9.
+# The catalog, installer and backup routes of 9.1 are not mounted here; they
+#   come with milestone 7 (CORE-120..136, CORE-160..165).
+# MQTT checks of `mm3 diag check` (CORE-312) and MQTT messages in the bus
+#   inspector (CORE-304) report skip or stay empty until milestone 7.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
-  "CORE-290..292",
+  "CORE-290..292", "CORE-298..313",
 ]
 
 [[milestone]]

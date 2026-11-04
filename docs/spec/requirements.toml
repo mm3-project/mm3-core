@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.21"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21"]
+version = "0.22"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22"]
 
 [[spec]]
 name = "Module Contract"
@@ -1057,9 +1057,9 @@ id = "CORE-152"
 spec = "Core spec"
 section = "6.8"
 title = "Configuration history, undo and redo"
-hash = "950fc7a62791"
+hash = "54a438c8f8e6"
 introduced_in = "0.1"
-changed_in = "0.1"
+changed_in = "0.22"
 status = "active"
 
 [[requirement]]
@@ -2380,6 +2380,166 @@ title = "Display output"
 hash = "b5a419897801"
 introduced_in = "0.21"
 changed_in = "0.21"
+status = "active"
+
+[[requirement]]
+id = "CORE-298"
+spec = "Core spec"
+section = "9.1"
+title = "Remote-control API"
+hash = "ad4f31e188b6"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-299"
+spec = "Core spec"
+section = "9.1"
+title = "Remote-control API"
+hash = "0c9e12943135"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-300"
+spec = "Core spec"
+section = "6.4"
+title = "Web configuration editor"
+hash = "99acf41b9248"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-301"
+spec = "Core spec"
+section = "6.4"
+title = "Web configuration editor"
+hash = "e9630407e9a8"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-302"
+spec = "Core spec"
+section = "6.4"
+title = "Web configuration editor"
+hash = "7cf112783d40"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-303"
+spec = "Core spec"
+section = "6.4"
+title = "Web configuration editor"
+hash = "baba24ad17c9"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-304"
+spec = "Core spec"
+section = "10.5"
+title = "Diagnostics and debugging"
+hash = "f62f5877646a"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-305"
+spec = "Core spec"
+section = "9.1"
+title = "Remote-control API"
+hash = "0e4830ccd483"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-306"
+spec = "Core spec"
+section = "9.1"
+title = "Remote-control API"
+hash = "b98bd0781530"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-307"
+spec = "Core spec"
+section = "6.6"
+title = "Live layout preview"
+hash = "0226cf8e58c6"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-308"
+spec = "Core spec"
+section = "9.1"
+title = "Remote-control API"
+hash = "75440e7145e0"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-309"
+spec = "Core spec"
+section = "9.1"
+title = "Remote-control API"
+hash = "f48da187899c"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-310"
+spec = "Core spec"
+section = "6.4"
+title = "Web configuration editor"
+hash = "700d63eaaf09"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-311"
+spec = "Core spec"
+section = "10.5"
+title = "Diagnostics and debugging"
+hash = "d2a58d7dadbf"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-312"
+spec = "Core spec"
+section = "10.5"
+title = "Diagnostics and debugging"
+hash = "3916b05ccb9e"
+introduced_in = "0.22"
+changed_in = "0.22"
+status = "active"
+
+[[requirement]]
+id = "CORE-313"
+spec = "Core spec"
+section = "9.1"
+title = "Remote-control API"
+hash = "0d06eedec9ae"
+introduced_in = "0.22"
+changed_in = "0.22"
 status = "active"
 
 [[requirement]]
