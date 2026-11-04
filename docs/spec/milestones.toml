@@ -193,6 +193,10 @@ status = "not_started"
 # Part A (REST base) covers the REST side of CORE-236 and CORE-240; the Home
 #   Assistant page select and "enabled" switch come with the MQTT bridge
 #   (milestone 7, CORE-120..126), the admin buttons with part D.
+# Part B1 (server side of diagnostics): /admin/ws, the bus inspector, log
+#   paging, the bundle, the admin socket and mm3 diag (CORE-299 for the logs;
+#   the history paging of CORE-299 comes with part C). Part B2 is the
+#   /admin/debug page (CORE-114 view, CORE-115 UI).
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",

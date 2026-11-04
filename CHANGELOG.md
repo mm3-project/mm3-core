@@ -7,6 +7,34 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 6, part B1: diagnostics, server side)
+
+- Admin channel `/admin/ws` (CORE-304): admin session and matching `Origin`,
+  else close 4403; topics `status` (at subscribe and on change, compared once
+  a second, `uptime_s` ignored, CORE-317), `logs` (newest 200 matching
+  records, then live) and `bus`; `dropped` when an admin falls behind its
+  queue of 1 000 frames per topic. Invalid subscribes are ignored and logged
+  (CORE-316). New module `mm3.core.web.adminws`.
+- Bus inspector `mm3.core.diag.inspector` (CORE-115): captures notifications,
+  requests, replies and shell WebSocket frames only while a `bus`
+  subscription is open, last 1 000 entries; secret values of the running
+  configuration become `!masked` (CORE-319, `mm3.core.diag.secrets`).
+- `GET /api/v1/debug/logs`: ring buffer newest first, `limit` and `before`
+  paging, the filters of CORE-316, JSON lines with
+  `Accept: application/x-ndjson` (CORE-299).
+- Diagnostic bundle (CORE-318, CORE-116): `GET /api/v1/debug/bundle` and
+  `mm3 diag bundle` write `manifest.json`, `packages.txt`, the redacted
+  `config/`, `logs.jsonl`, `health.json`, `browser-errors.jsonl` and
+  `kiosk.json`; secrets in YAML become `!masked ''` and are listed as
+  `{file, path}`. Without the engine the CLI builds a partial bundle with
+  `journal.txt`.
+- Local admin socket `/run/mm3/admin.sock` (CORE-311): the REST API without
+  token, mode 0660, group `mm3`, removed at stop; the engine runs on without it
+  when it cannot be created.
+- `mm3 diag check` (CORE-312): config, socket, listener ports, kiosk agent,
+  audio output, MQTT broker (skip), display driver (skip), locale catalogs;
+  exit 0, 1 or 2.
+
 ### Added (milestone 6, part A: REST base)
 
 - Admin REST API under `/api/v1` on the admin listener (core spec 9.1), new

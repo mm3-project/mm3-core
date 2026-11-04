@@ -41,6 +41,7 @@ __all__ = [
     "get_logger",
     "is_configured",
     "log_levels",
+    "numbered_records",
     "observe",
     "recent_records",
     "set_log_level",
@@ -49,7 +50,8 @@ __all__ = [
 RING_SIZE = 5000
 """Records kept in memory for the admin debug page (CORE-110)."""
 
-_ring: deque[dict[str, Any]] = deque(maxlen=RING_SIZE)
+_ring: deque[tuple[int, dict[str, Any]]] = deque(maxlen=RING_SIZE)
+_seq = 0
 _LEVELS = {
     "debug": logging.DEBUG,
     "info": logging.INFO,
@@ -198,8 +200,10 @@ _observers: list[Callable[[dict[str, Any]], None]] = []
 
 
 def _to_ring(_: Any, __: str, event: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
+    global _seq
     record = dict(event)
-    _ring.append(record)
+    _seq += 1
+    _ring.append((_seq, record))
     for observer in list(_observers):
         observer(dict(record))
     return event
@@ -277,7 +281,19 @@ def recent_records() -> list[dict[str, Any]]:
     Returns:
         Copies of the last records (at most :data:`RING_SIZE`).
     """
-    return list(_ring)
+    return [dict(r) for _, r in _ring]
+
+
+def numbered_records() -> list[tuple[int, dict[str, Any]]]:
+    """Return the ring buffer with a sequence number per record, oldest first.
+
+    The number grows by one per record and is never reused, so it can mark a
+    position for paging (CORE-299).
+
+    Returns:
+        ``(seq, record)`` pairs; the records are copies.
+    """
+    return [(n, dict(r)) for n, r in _ring]
 
 
 class Logger:

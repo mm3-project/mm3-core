@@ -22,6 +22,7 @@ Implements:
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-298: Core spec 0.23, §9.1 Remote-control API.
     CORE-313: Core spec 0.22, §9.1 Remote-control API.
+    CORE-304, CORE-311: Core spec 0.22, §10.5 Diagnostics and debugging.
 """
 
 from __future__ import annotations
@@ -55,6 +56,7 @@ from mm3.core.web.shell import STATIC_DIR, ShellSources, add_shell_files, inside
 from mm3.core.web.ws import DISPLAY_COOKIE_MAX_AGE
 
 if TYPE_CHECKING:
+    from mm3.core.web.adminws import AdminChannel
     from mm3.core.web.kiosk import KioskAgents
     from mm3.core.web.ws import ClientHub
 
@@ -64,6 +66,7 @@ __all__ = [
     "admin_app",
     "mirror_app",
     "protect",
+    "socket_app",
 ]
 
 
@@ -221,6 +224,7 @@ def admin_app(
     hub: ClientHub | None = None,
     sources: ShellSources | None = None,
     api: ApiServices | None = None,
+    channel: AdminChannel | None = None,
 ) -> FastAPI:
     """Build the admin listener's application (without the protection wrappers).
 
@@ -230,6 +234,7 @@ def admin_app(
         sources: The shell's files, for the preview shell at ``/admin/preview``.
         api: What the REST API reads and controls; without it every
             authenticated ``/api`` request is 404.
+        channel: The admin channel ``/admin/ws`` (CORE-304).
 
     Returns:
         The application.
@@ -240,9 +245,17 @@ def admin_app(
         CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
         CORE-298: Core spec 0.23, §9.1 Remote-control API.
         CORE-313: Core spec 0.22, §9.1 Remote-control API.
+        CORE-304: Core spec 0.22, §10.5 Diagnostics and debugging.
     """
     app = _bare()
     _api_errors(app)
+
+    if channel is not None:
+        admin_channel = channel
+
+        @app.websocket("/admin/ws")
+        async def admin_ws(websocket: WebSocket) -> None:
+            await admin_channel.serve(websocket)
 
     if hub is not None:
         shells = hub
@@ -326,5 +339,38 @@ def admin_app(
     async def api_fallback(request: Request, path: str) -> Response:
         await check_api_auth(auth, request)
         return problem("CORE_API_NOT_FOUND", f"No route /api/{path}")
+
+    return app
+
+
+def socket_app(api: ApiServices) -> FastAPI:
+    """Build the application of the local admin socket (CORE-311).
+
+    It serves the REST API without a token, because only ``mm3`` and members
+    of group ``mm3`` can open the socket; there are no ``/admin`` pages and no
+    WebSockets.
+
+    Args:
+        api: What the REST API reads and controls.
+
+    Returns:
+        The application.
+
+    Implements:
+        CORE-311: Core spec 0.22, §10.5 Diagnostics and debugging.
+    """
+    app = _bare()
+    _api_errors(app)
+    router = api_router(None, api)
+    app.include_router(router)
+    schema = openapi_schema(router)
+
+    @app.get("/api/openapi.json", include_in_schema=False)
+    async def openapi() -> Response:
+        return JSONResponse(schema)
+
+    @app.api_route("/{path:path}", methods=_ALL_METHODS, include_in_schema=False)
+    async def fallback(path: str) -> Response:
+        return problem("CORE_API_NOT_FOUND", f"No route /{path}")
 
     return app

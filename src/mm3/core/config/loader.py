@@ -10,13 +10,14 @@ Implements:
     CORE-200: Core spec 0.8, §6.2 Rules.
     CORE-206: Core spec 0.8, §6.2 Rules.
     -: Core spec 0.8, §10.9 Dependency management.
+    CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
 """
 
 from __future__ import annotations
 
 import io
 import re
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -37,6 +38,7 @@ __all__ = [
     "read_yaml_file",
     "rt_dump",
     "rt_load",
+    "rt_mask_strings",
 ]
 
 MAX_INCLUDE_DEPTH = 8
@@ -354,6 +356,47 @@ def rt_dump(doc: Any) -> str:
     out = io.StringIO()
     _yaml().dump(doc, out)
     return out.getvalue()
+
+
+def rt_mask_strings(text: str, secret: Callable[[str], bool], tag: str) -> tuple[str, list[str]]:
+    """Replace every string scalar for which ``secret`` is true by an empty tagged scalar.
+
+    Used to redact configuration files for diagnostics (CORE-116): a secret
+    becomes ``!masked ''``, the marker of CORE-303, and comments, order and
+    the other values stay as written.
+
+    Args:
+        text: YAML text.
+        secret: Tells whether a string is a secret value.
+        tag: The tag to write, such as ``!masked``.
+
+    Returns:
+        The text (unchanged when nothing matched) and the JSON Pointers of
+        the replaced values.
+
+    Raises:
+        YAMLError: The text does not parse.
+
+    Implements:
+        CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
+    """
+    doc = rt_load(text)
+    found: list[str] = []
+
+    def walk(node: Any, parts: tuple[str | int, ...]) -> Any:
+        if isinstance(node, CommentedMap):
+            for key in list(node):
+                node[key] = walk(node[key], (*parts, str(key)))
+        elif isinstance(node, CommentedSeq):
+            for i in range(len(node)):
+                node[i] = walk(node[i], (*parts, i))
+        elif isinstance(node, str) and secret(str(node)):
+            found.append(pointer(parts))
+            return TaggedScalar(value="", style="'", tag=tag)
+        return node
+
+    doc = walk(doc, ())
+    return (rt_dump(doc), found) if found else (text, [])
 
 
 def include_target(node: Any) -> str | None:

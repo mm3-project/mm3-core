@@ -20,6 +20,7 @@ Implements:
     CORE-223: Core spec 0.13, §5.4 Request and reply.
     CORE-254: Core spec 0.12, §10.1 Security.
     CORE-305: Core spec 0.22, §9.1 Remote-control API.
+    CORE-304: Core spec 0.22, §10.5 Diagnostics and debugging.
 """
 
 from __future__ import annotations
@@ -238,6 +239,8 @@ class ClientHub:
         self.bus: Bus | None = None
         self.pages: PageService | None = None
         self.status: Callable[[str], str] = lambda _iid: "ok"
+        self.frame_observer: Callable[[str, str, Mapping[str, Any]], None] | None = None
+        """Sees every frame queued for or received from a shell (bus inspector, CORE-304)."""
         self.snapshots: dict[str, dict[str, Any]] = {}
         self._clients: dict[int, _Client] = {}
 
@@ -437,6 +440,8 @@ class ClientHub:
             _log.warning("ws_queue_full", client=client.client_id, role=client.role)
         else:
             client.queue.append(frame)
+            if self.frame_observer is not None:
+                self.frame_observer("out", client.client_id, frame)
         client.ready.set()
 
     def send_client(
@@ -710,6 +715,8 @@ class ClientHub:
         if not isinstance(frame, dict):
             self._error(client, "invalid_frame", None, None)
             return
+        if self.frame_observer is not None:
+            self.frame_observer("in", client.client_id, frame)
         ref = frame.get("ref")
         if not (ref is None or (isinstance(ref, str) and len(ref) <= REF_MAX)):
             ref = None
