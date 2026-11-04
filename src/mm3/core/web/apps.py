@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import asyncio
 from collections.abc import Callable, Sequence
+from pathlib import Path
 from typing import TYPE_CHECKING
 from urllib.parse import parse_qs
 
@@ -48,11 +49,25 @@ from starlette.types import ASGIApp
 from mm3.core.logging import get_logger
 from mm3.core.web.api import ApiServices, api_router, check_api_auth, openapi_schema
 from mm3.core.web.auth import WebAuth, origin_matches
-from mm3.core.web.pages import admin_home_page, login_page, message_page, pair_page
+from mm3.core.web.pages import (
+    admin_debug_page,
+    admin_home_page,
+    admin_texts,
+    login_page,
+    message_page,
+    pair_page,
+)
 from mm3.core.web.problems import ApiError, problem
 from mm3.core.web.security import AllowList, Network, SecurityHeaders
 from mm3.core.web.sessions import ADMIN_COOKIE, ADMIN_SESSION_TTL, DISPLAY_COOKIE
-from mm3.core.web.shell import STATIC_DIR, ShellSources, add_shell_files, inside, shell_page
+from mm3.core.web.shell import (
+    STATIC_DIR,
+    VENDOR_DIR,
+    ShellSources,
+    add_shell_files,
+    inside,
+    shell_page,
+)
 from mm3.core.web.ws import DISPLAY_COOKIE_MAX_AGE
 
 if TYPE_CHECKING:
@@ -71,6 +86,8 @@ __all__ = [
 
 
 MAX_FORM_BYTES = 4096
+ADMIN_STATIC_DIR = Path(__file__).parent / "adminui"
+"""The admin page's scripts and styles, served only on the admin listener (CORE-34)."""
 _ALL_METHODS = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
 _log = get_logger(subsystem="web")
 
@@ -225,6 +242,7 @@ def admin_app(
     sources: ShellSources | None = None,
     api: ApiServices | None = None,
     channel: AdminChannel | None = None,
+    locale: Callable[[], str] = lambda: "en",
 ) -> FastAPI:
     """Build the admin listener's application (without the protection wrappers).
 
@@ -235,6 +253,7 @@ def admin_app(
         api: What the REST API reads and controls; without it every
             authenticated ``/api`` request is 404.
         channel: The admin channel ``/admin/ws`` (CORE-304).
+        locale: Returns the language of the admin pages (``engine.locale``).
 
     Returns:
         The application.
@@ -317,6 +336,28 @@ def admin_app(
             return _html(shell_page("preview"))
 
         add_shell_files(app, sources)
+
+    @app.get("/admin/debug")
+    async def admin_debug(request: Request) -> Response:
+        check = await auth.check_admin(request, request.method)
+        if check.outcome != "ok":
+            return RedirectResponse("/admin/login", status_code=303)
+        return _html(admin_debug_page())
+
+    @app.get("/admin/static/{path:path}")
+    async def admin_static(path: str) -> Response:
+        if path == "lit-html.js":  # the vendored lit-html, for the admin's own templates
+            return FileResponse(VENDOR_DIR / "lit-html" / "lit-html.js")
+        target = inside(ADMIN_STATIC_DIR, path)
+        return Response(status_code=404) if target is None else FileResponse(target)
+
+    @app.get("/admin/i18n.json")
+    async def admin_i18n(request: Request) -> Response:
+        check = await auth.check_admin(request, request.method)
+        if check.outcome != "ok":
+            return Response(status_code=401)
+        lang = locale()
+        return JSONResponse({"locale": lang, "messages": admin_texts(lang)})
 
     @app.get("/admin")
     async def admin_home(request: Request) -> Response:

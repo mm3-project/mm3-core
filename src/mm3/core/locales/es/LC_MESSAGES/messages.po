@@ -237,3 +237,171 @@ msgstr "El motor se está iniciando o deteniendo."
 
 msgid "CORE_API_REQUEST_TIMEOUT"
 msgstr "No ha llegado ninguna respuesta a tiempo."
+
+msgid "CORE_ADMIN_AUDIO_FAILURE"
+msgstr "Problema de audio"
+
+msgid "CORE_ADMIN_AUDIO_MISMATCH"
+msgstr "No se ha encontrado la salida de audio configurada."
+
+msgid "CORE_ADMIN_BROWSER_ERRORS"
+msgstr "Errores del navegador"
+
+msgid "CORE_ADMIN_CHROMIUM"
+msgstr "Chromium"
+
+msgid "CORE_ADMIN_CHROMIUM_FAILED"
+msgstr "Chromium ha fallado varias veces."
+
+msgid "CORE_ADMIN_CLIENTS"
+msgstr "Pantallas"
+
+msgid "CORE_ADMIN_CLOSE"
+msgstr "Cerrar"
+
+msgid "CORE_ADMIN_CONFIG_VERSION"
+msgstr "Versión de la configuración"
+
+msgid "CORE_ADMIN_DISK_INVALID"
+msgstr "La configuración en el disco no es válida; sigue funcionando la anterior."
+
+msgid "CORE_ADMIN_DISPLAY_MISMATCH"
+msgstr "El modo de pantalla no coincide con la configuración."
+
+msgid "CORE_ADMIN_DOWNLOAD_BUNDLE"
+msgstr "Descargar diagnóstico"
+
+msgid "CORE_ADMIN_DOWNLOAD_JSONL"
+msgstr "Descargar en JSON lines"
+
+msgid "CORE_ADMIN_DROPPED"
+msgstr "Se han descartado {count} entradas porque la página se quedó atrás."
+
+msgid "CORE_ADMIN_ENGINE"
+msgstr "Motor"
+
+msgid "CORE_ADMIN_EVENT"
+msgstr "Evento"
+
+msgid "CORE_ADMIN_FILTER_LEVEL"
+msgstr "Nivel"
+
+msgid "CORE_ADMIN_FILTER_NAME"
+msgstr "Nombre (glob)"
+
+msgid "CORE_ADMIN_FILTER_SOURCE"
+msgstr "Origen"
+
+msgid "CORE_ADMIN_FILTER_TEXT"
+msgstr "Texto"
+
+msgid "CORE_ADMIN_FILTER_TRACE"
+msgstr "Traza"
+
+msgid "CORE_ADMIN_FOLLOW_TRACE"
+msgstr "Seguir la traza"
+
+msgid "CORE_ADMIN_HEALTH"
+msgstr "Estado de salud"
+
+msgid "CORE_ADMIN_INSTANCE"
+msgstr "Instancia"
+
+msgid "CORE_ADMIN_INSTANCES"
+msgstr "Instancias"
+
+msgid "CORE_ADMIN_KIOSK"
+msgstr "Quiosco"
+
+msgid "CORE_ADMIN_KIOSK_DISCONNECTED"
+msgstr "El agente del quiosco está desconectado."
+
+msgid "CORE_ADMIN_KIOSK_NONE"
+msgstr "No se ha conectado ningún agente de quiosco."
+
+msgid "CORE_ADMIN_LAST_ERROR"
+msgstr "Último error"
+
+msgid "CORE_ADMIN_LEVEL_DEFAULT"
+msgstr "Predeterminado"
+
+msgid "CORE_ADMIN_LIVE"
+msgstr "En directo"
+
+msgid "CORE_ADMIN_LOG_LEVEL"
+msgstr "Nivel de registro"
+
+msgid "CORE_ADMIN_MODULE"
+msgstr "Módulo"
+
+msgid "CORE_ADMIN_NAME"
+msgstr "Nombre"
+
+msgid "CORE_ADMIN_NONE"
+msgstr "Nada que mostrar."
+
+msgid "CORE_ADMIN_PAGE"
+msgstr "Página"
+
+msgid "CORE_ADMIN_PAUSE"
+msgstr "Pausa"
+
+msgid "CORE_ADMIN_PAYLOAD"
+msgstr "Contenido"
+
+msgid "CORE_ADMIN_RECENT_LOGS"
+msgstr "Registros recientes"
+
+msgid "CORE_ADMIN_RECONNECTING"
+msgstr "Reconectando…"
+
+msgid "CORE_ADMIN_RESEND"
+msgstr "Reenviar"
+
+msgid "CORE_ADMIN_RESENT"
+msgstr "Reenviado."
+
+msgid "CORE_ADMIN_RESTART"
+msgstr "Reiniciar"
+
+msgid "CORE_ADMIN_RESTARTS"
+msgstr "Reinicios"
+
+msgid "CORE_ADMIN_RESUME"
+msgstr "Reanudar"
+
+msgid "CORE_ADMIN_SEARCH"
+msgstr "Buscar"
+
+msgid "CORE_ADMIN_SIZE"
+msgstr "Tamaño"
+
+msgid "CORE_ADMIN_STATE"
+msgstr "Estado"
+
+msgid "CORE_ADMIN_SUSPENDED"
+msgstr "Suspendido"
+
+msgid "CORE_ADMIN_TAB_BUS"
+msgstr "Inspector del bus"
+
+msgid "CORE_ADMIN_TAB_LOGS"
+msgstr "Registros en directo"
+
+msgid "CORE_ADMIN_TAB_OVERVIEW"
+msgstr "Resumen"
+
+msgid "CORE_ADMIN_TIME"
+msgstr "Hora"
+
+msgid "CORE_ADMIN_TRACE_TITLE"
+msgstr "Traza {trace}"
+
+msgid "CORE_ADMIN_UPTIME"
+msgstr "Tiempo activo"
+
+msgid "CORE_ADMIN_VERSION"
+msgstr "Versión"
+
+msgid "CORE_ADMIN_VIEWPORT"
+msgstr "Área visible"

@@ -181,6 +181,7 @@ class WebGateway:
         api: What the REST API reads and controls (core 9.1).
         channel: The admin channel ``/admin/ws`` (CORE-304).
         socket_path: The local admin socket; it is served only with ``api`` (CORE-311).
+        locale: Returns the language of the admin pages.
 
     Implements:
         CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
@@ -200,6 +201,7 @@ class WebGateway:
         api: ApiServices | None = None,
         channel: AdminChannel | None = None,
         socket_path: Path | None = None,
+        locale: Callable[[], str] = lambda: "en",
     ) -> None:
         self.auth = auth or (hub.auth if hub is not None else WebAuth.open(state_dir))
         self.hub = hub
@@ -217,7 +219,11 @@ class WebGateway:
         )
         self.admin = Listener(
             "admin",
-            protect(admin_app(self.auth, hub, sources, api, channel), lambda: admin_allow, "admin"),
+            protect(
+                admin_app(self.auth, hub, sources, api, channel, locale),
+                lambda: admin_allow,
+                "admin",
+            ),
             settings.admin.host,
             settings.admin.port,
         )

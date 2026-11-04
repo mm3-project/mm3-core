@@ -197,6 +197,10 @@ status = "not_started"
 #   paging, the bundle, the admin socket and mm3 diag (CORE-299 for the logs;
 #   the history paging of CORE-299 comes with part C). Part B2 is the
 #   /admin/debug page (CORE-114 view, CORE-115 UI).
+# Part B2: /admin/debug (overview, live logs, bus inspector) with its own
+#   scripts under /admin/static and texts from /admin/i18n.json; CORE-114
+#   completed (stack and user agent from elements, 10 per minute per
+#   instance). The admin language picker of CORE-309 comes with part D.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",

@@ -5,6 +5,8 @@
 // Implements CORE-95, CORE-255, CORE-259 (Core spec 0.14, §6.5 Screen layout)
 // Implements CORE-276 (Core spec 0.14, §5.6 WebSocket protocol)
 // Implements CORE-265, CORE-266 (Core spec 0.15, §8.5 Catalogs at run time)
+// Implements CORE-114 (Core spec 0.22, §10.5 Diagnostics and debugging): render,
+// onMessage and onNotification are wrapped; errors go out with stack and user agent
 import { html, svg, nothing, render as litRender } from "/core/vendor/lit-html/lit-html.js";
 
 export { html, svg, nothing };
@@ -202,7 +204,17 @@ export class MirrorElement extends HTMLElement {
   _fail(where, err) {
     this._failed = true;
     this._host?.failed(this.instanceId, true);
-    this._log("error", `${where}: ${err && err.message ? err.message : err}`, {});
+    this._host?.send(
+      "log",
+      {
+        level: "error",
+        message: `${where}: ${err && err.message ? err.message : err}`,
+        stack: err && err.stack ? String(err.stack) : undefined,
+        user_agent: navigator.userAgent,
+        fields: {},
+      },
+      this.instanceId,
+    );
   }
 
   _renderNow() {

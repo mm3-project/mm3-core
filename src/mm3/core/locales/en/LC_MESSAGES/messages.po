@@ -237,3 +237,171 @@ msgstr "The engine is starting or stopping."
 
 msgid "CORE_API_REQUEST_TIMEOUT"
 msgstr "No reply arrived in time."
+
+msgid "CORE_ADMIN_AUDIO_FAILURE"
+msgstr "Audio problem"
+
+msgid "CORE_ADMIN_AUDIO_MISMATCH"
+msgstr "The configured audio output was not found."
+
+msgid "CORE_ADMIN_BROWSER_ERRORS"
+msgstr "Browser errors"
+
+msgid "CORE_ADMIN_CHROMIUM"
+msgstr "Chromium"
+
+msgid "CORE_ADMIN_CHROMIUM_FAILED"
+msgstr "Chromium failed repeatedly."
+
+msgid "CORE_ADMIN_CLIENTS"
+msgstr "Displays"
+
+msgid "CORE_ADMIN_CLOSE"
+msgstr "Close"
+
+msgid "CORE_ADMIN_CONFIG_VERSION"
+msgstr "Configuration version"
+
+msgid "CORE_ADMIN_DISK_INVALID"
+msgstr "The configuration on disk is not valid; the previous one is still running."
+
+msgid "CORE_ADMIN_DISPLAY_MISMATCH"
+msgstr "The display mode differs from the configuration."
+
+msgid "CORE_ADMIN_DOWNLOAD_BUNDLE"
+msgstr "Download diagnostics"
+
+msgid "CORE_ADMIN_DOWNLOAD_JSONL"
+msgstr "Download JSON lines"
+
+msgid "CORE_ADMIN_DROPPED"
+msgstr "{count} entries were dropped because the page fell behind."
+
+msgid "CORE_ADMIN_ENGINE"
+msgstr "Engine"
+
+msgid "CORE_ADMIN_EVENT"
+msgstr "Event"
+
+msgid "CORE_ADMIN_FILTER_LEVEL"
+msgstr "Level"
+
+msgid "CORE_ADMIN_FILTER_NAME"
+msgstr "Name (glob)"
+
+msgid "CORE_ADMIN_FILTER_SOURCE"
+msgstr "Source"
+
+msgid "CORE_ADMIN_FILTER_TEXT"
+msgstr "Text"
+
+msgid "CORE_ADMIN_FILTER_TRACE"
+msgstr "Trace"
+
+msgid "CORE_ADMIN_FOLLOW_TRACE"
+msgstr "Follow trace"
+
+msgid "CORE_ADMIN_HEALTH"
+msgstr "Health record"
+
+msgid "CORE_ADMIN_INSTANCE"
+msgstr "Instance"
+
+msgid "CORE_ADMIN_INSTANCES"
+msgstr "Instances"
+
+msgid "CORE_ADMIN_KIOSK"
+msgstr "Kiosk"
+
+msgid "CORE_ADMIN_KIOSK_DISCONNECTED"
+msgstr "The kiosk agent is disconnected."
+
+msgid "CORE_ADMIN_KIOSK_NONE"
+msgstr "No kiosk agent has connected."
+
+msgid "CORE_ADMIN_LAST_ERROR"
+msgstr "Last error"
+
+msgid "CORE_ADMIN_LEVEL_DEFAULT"
+msgstr "Default"
+
+msgid "CORE_ADMIN_LIVE"
+msgstr "Live"
+
+msgid "CORE_ADMIN_LOG_LEVEL"
+msgstr "Log level"
+
+msgid "CORE_ADMIN_MODULE"
+msgstr "Module"
+
+msgid "CORE_ADMIN_NAME"
+msgstr "Name"
+
+msgid "CORE_ADMIN_NONE"
+msgstr "Nothing to show."
+
+msgid "CORE_ADMIN_PAGE"
+msgstr "Page"
+
+msgid "CORE_ADMIN_PAUSE"
+msgstr "Pause"
+
+msgid "CORE_ADMIN_PAYLOAD"
+msgstr "Payload"
+
+msgid "CORE_ADMIN_RECENT_LOGS"
+msgstr "Recent logs"
+
+msgid "CORE_ADMIN_RECONNECTING"
+msgstr "Reconnecting…"
+
+msgid "CORE_ADMIN_RESEND"
+msgstr "Re-send"
+
+msgid "CORE_ADMIN_RESENT"
+msgstr "Sent again."
+
+msgid "CORE_ADMIN_RESTART"
+msgstr "Restart"
+
+msgid "CORE_ADMIN_RESTARTS"
+msgstr "Restarts"
+
+msgid "CORE_ADMIN_RESUME"
+msgstr "Resume"
+
+msgid "CORE_ADMIN_SEARCH"
+msgstr "Search"
+
+msgid "CORE_ADMIN_SIZE"
+msgstr "Size"
+
+msgid "CORE_ADMIN_STATE"
+msgstr "State"
+
+msgid "CORE_ADMIN_SUSPENDED"
+msgstr "Suspended"
+
+msgid "CORE_ADMIN_TAB_BUS"
+msgstr "Bus inspector"
+
+msgid "CORE_ADMIN_TAB_LOGS"
+msgstr "Live logs"
+
+msgid "CORE_ADMIN_TAB_OVERVIEW"
+msgstr "Overview"
+
+msgid "CORE_ADMIN_TIME"
+msgstr "Time"
+
+msgid "CORE_ADMIN_TRACE_TITLE"
+msgstr "Trace {trace}"
+
+msgid "CORE_ADMIN_UPTIME"
+msgstr "Uptime"
+
+msgid "CORE_ADMIN_VERSION"
+msgstr "Version"
+
+msgid "CORE_ADMIN_VIEWPORT"
+msgstr "Viewport"
