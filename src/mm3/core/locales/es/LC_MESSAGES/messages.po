@@ -405,3 +405,105 @@ msgstr "Versión"
 
 msgid "CORE_ADMIN_VIEWPORT"
 msgstr "Área visible"
+
+msgid "CORE_API_NOTHING_TO_DO"
+msgstr "No hay nada que deshacer ni rehacer."
+
+msgid "CORE_WEB_NAV_CONFIG"
+msgstr "Configuración"
+
+msgid "CORE_WEB_NAV_DEBUG"
+msgstr "Depuración"
+
+msgid "CORE_ADMIN_TAB_HISTORY"
+msgstr "Historial"
+
+msgid "CORE_ADMIN_UNDO_SAVE"
+msgstr "Deshacer el último guardado"
+
+msgid "CORE_ADMIN_REDO_SAVE"
+msgstr "Rehacer"
+
+msgid "CORE_ADMIN_COMPARE"
+msgstr "Comparar"
+
+msgid "CORE_ADMIN_FROM"
+msgstr "Desde"
+
+msgid "CORE_ADMIN_TO"
+msgstr "Hasta"
+
+msgid "CORE_ADMIN_ORIGIN"
+msgstr "Origen"
+
+msgid "CORE_ADMIN_AUTHOR"
+msgstr "Autor"
+
+msgid "CORE_ADMIN_SECTIONS"
+msgstr "Secciones"
+
+msgid "CORE_ADMIN_ALL_SECTIONS"
+msgstr "Todas las secciones"
+
+msgid "CORE_ADMIN_CURRENT"
+msgstr "actual"
+
+msgid "CORE_ADMIN_RESTORE_ALL"
+msgstr "Restaurar todo"
+
+msgid "CORE_ADMIN_RESTORE_SECTION"
+msgstr "Restaurar la sección"
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE"
+msgstr "¿Restaurar la versión {version}?"
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE_SECTION"
+msgstr "¿Restaurar {section} de la versión {version}?"
+
+msgid "CORE_ADMIN_CONFIRM"
+msgstr "Confirmar"
+
+msgid "CORE_ADMIN_CANCEL"
+msgstr "Cancelar"
+
+msgid "CORE_ADMIN_LOAD_MORE"
+msgstr "Cargar más"
+
+msgid "CORE_ADMIN_NO_CHANGES"
+msgstr "Sin cambios."
+
+msgid "CORE_ADMIN_SELECT_TWO"
+msgstr "Elige las dos versiones que comparar."
+
+msgid "CORE_ADMIN_DIFF_TITLE"
+msgstr "Cambios de la versión {a} a la versión {b}"
+
+msgid "CORE_ADMIN_DONE_VERSION"
+msgstr "Versión {version} creada."
+
+msgid "CORE_ADMIN_ORIGIN_INITIAL"
+msgstr "inicial"
+
+msgid "CORE_ADMIN_ORIGIN_ADMIN"
+msgstr "admin"
+
+msgid "CORE_ADMIN_ORIGIN_FILE"
+msgstr "edición del archivo"
+
+msgid "CORE_ADMIN_ORIGIN_CLI"
+msgstr "línea de comandos"
+
+msgid "CORE_ADMIN_ORIGIN_RESTORE"
+msgstr "restauración"
+
+msgid "CORE_ADMIN_ORIGIN_UNDO"
+msgstr "deshacer"
+
+msgid "CORE_ADMIN_ORIGIN_REDO"
+msgstr "rehacer"
+
+msgid "CORE_ADMIN_NOW"
+msgstr "Ahora"
+
+msgid "CORE_ADMIN_AFTER_RESTORE"
+msgstr "Después de restaurar"

@@ -130,7 +130,9 @@ async def test_admin_texts_follow_the_engine_locale(auth: WebAuth) -> None:
 def test_every_admin_key_is_in_five_languages() -> None:
     used: set[str] = set()
     for path in ADMIN_STATIC_DIR.glob("*.js"):
-        used.update(re.findall(r"CORE_ADMIN_[A-Z_]+", path.read_text()))
+        used.update(
+            k for k in re.findall(r"CORE_ADMIN_[A-Z_]+", path.read_text()) if not k.endswith("_")
+        )
     assert len(used) > 40
     table = Table(CORE_CATALOG)
     for lang in LANGS:

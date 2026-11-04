@@ -10,6 +10,7 @@ Implements:
     CORE-253: Core spec 0.12, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
     -: Core spec 0.24, §10.5 Diagnostics and debugging.
+    CORE-322: Core spec 0.25, §6.4 Web configuration editor.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from mm3.core.i18n.catalogs import CORE_CATALOG, Table
 __all__ = [
     "ADMIN_PREFIXES",
     "TEXT",
+    "admin_config_page",
     "admin_debug_page",
     "admin_home_page",
     "admin_texts",
@@ -99,25 +101,51 @@ def admin_texts(locale: str) -> dict[str, str]:
     return out
 
 
+def _admin_page(element: str, script: str, current: str) -> str:
+    """An admin page: the header with navigation, then one element that loads its data."""
+    here = ' aria-current="page"'
+    links = "".join(
+        f'<a href="{href}"{here if href == current else ""}>{t(key)}</a>'
+        for href, key in (
+            ("/admin/config", "CORE_WEB_NAV_CONFIG"),
+            ("/admin/debug", "CORE_WEB_NAV_DEBUG"),
+        )
+    )
+    body = (
+        '<header class="bar"><a class="home" href="/admin">'
+        f"{t('CORE_WEB_ADMIN_TITLE')}</a><nav>{links}</nav>"
+        '<form method="post" action="/admin/logout">'
+        f'<button type="submit">{t("CORE_WEB_LOGOUT")}</button></form></header>\n'
+        f"<{element}></{element}>"
+    )
+    return _page(
+        "CORE_WEB_ADMIN_TITLE",
+        body,
+        module=f"/admin/static/{script}",
+        styles=("/admin/static/admin.css",),
+    )
+
+
 def admin_debug_page() -> str:
     """Render ``/admin/debug``: the debug page element loads its data itself (10.5).
 
     Returns:
         The HTML.
     """
-    body = (
-        '<header class="bar"><a href="/admin">'
-        f"{t('CORE_WEB_ADMIN_TITLE')}</a>"
-        '<form method="post" action="/admin/logout">'
-        f'<button type="submit">{t("CORE_WEB_LOGOUT")}</button></form></header>\n'
-        "<mm3-admin-debug></mm3-admin-debug>"
-    )
-    return _page(
-        "CORE_WEB_ADMIN_TITLE",
-        body,
-        module="/admin/static/debug.js",
-        styles=("/admin/static/admin.css",),
-    )
+    return _admin_page("mm3-admin-debug", "debug.js", "/admin/debug")
+
+
+def admin_config_page() -> str:
+    """Render ``/admin/config``, the page of the editor and the history (CORE-322).
+
+    Returns:
+        The HTML.
+
+    Implements:
+        CORE-322: Core spec 0.25, §6.4 Web configuration editor.
+        CORE-34: Core spec 0.22, §6.4 Web configuration editor.
+    """
+    return _admin_page("mm3-admin-config", "config.js", "/admin/config")
 
 
 def login_page(error_key: str | None = None) -> str:

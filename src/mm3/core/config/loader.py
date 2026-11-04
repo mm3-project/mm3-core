@@ -11,13 +11,17 @@ Implements:
     CORE-206: Core spec 0.8, §6.2 Rules.
     -: Core spec 0.8, §10.9 Dependency management.
     CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
+    CORE-301, CORE-303: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-320: Core spec 0.25, §6.4 Web configuration editor.
 """
 
 from __future__ import annotations
 
+import contextlib
+import copy
 import io
 import re
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -25,20 +29,28 @@ from typing import Any
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq, TaggedScalar
 from ruamel.yaml.error import MarkedYAMLError, YAMLError
+from ruamel.yaml.tag import Tag
+from ruamel.yaml.util import load_yaml_guess_indent
 
 from mm3.core.config.records import SourceMap, ValidationRecord, make_record, pointer
 
 __all__ = [
+    "JSON_TAGS",
     "MAX_INCLUDE_DEPTH",
     "EnvRef",
     "LoadedConfig",
+    "PatchError",
     "dump_plain",
     "include_target",
+    "json_to_node",
     "load_yaml",
+    "node_to_json",
     "read_yaml_file",
     "rt_dump",
     "rt_load",
     "rt_mask_strings",
+    "rt_patch",
+    "rt_unmask",
 ]
 
 MAX_INCLUDE_DEPTH = 8
@@ -344,17 +356,26 @@ def rt_load(text: str) -> Any:
     return _yaml().load(text)
 
 
-def rt_dump(doc: Any) -> str:
+def rt_dump(doc: Any, like: str | None = None) -> str:
     """Write a round-trip document back to YAML text.
 
     Args:
         doc: A document from :func:`rt_load`, possibly edited.
+        like: The text the document came from; its indentation of mappings
+            and lists is kept, so an edit changes only the edited lines.
 
     Returns:
         The YAML text.
     """
     out = io.StringIO()
-    _yaml().dump(doc, out)
+    y = _yaml()
+    if like:
+        with contextlib.suppress(Exception):
+            _, indent, offset = load_yaml_guess_indent(like)
+            if indent:
+                offset = offset or 0
+                y.indent(mapping=max(indent - offset, 2), sequence=indent, offset=offset)
+    y.dump(doc, out)
     return out.getvalue()
 
 
@@ -384,6 +405,8 @@ def rt_mask_strings(text: str, secret: Callable[[str], bool], tag: str) -> tuple
     found: list[str] = []
 
     def walk(node: Any, parts: tuple[str | int, ...]) -> Any:
+        if _tag(node) is not None:
+            return node  # !env and !include are shown as written (CORE-303)
         if isinstance(node, CommentedMap):
             for key in list(node):
                 node[key] = walk(node[key], (*parts, str(key)))
@@ -396,7 +419,283 @@ def rt_mask_strings(text: str, secret: Callable[[str], bool], tag: str) -> tuple
         return node
 
     doc = walk(doc, ())
-    return (rt_dump(doc), found) if found else (text, [])
+    return (rt_dump(doc, text), found) if found else (text, [])
+
+
+# --- JSON Patch on round-trip documents (CORE-301, CORE-320) ---------------------------
+
+JSON_TAGS = ("!env", "!include", "!masked")
+"""Tags a JSON value may carry as a one-key object (CORE-320)."""
+
+
+class PatchError(ValueError):
+    """A JSON Patch operation that cannot be applied, or a ``!masked`` node without a value.
+
+    Attributes:
+        index: Index of the failing operation, or ``None``.
+        pointer: The JSON Pointer concerned, if any.
+    """
+
+    def __init__(self, message: str, *, index: int | None = None, pointer: str = "") -> None:
+        super().__init__(message)
+        self.index = index
+        self.pointer = pointer
+
+
+def json_to_node(value: Any) -> Any:
+    """Turn a JSON value into round-trip nodes; one-key tag objects become tagged nodes.
+
+    ``{"!env": "NAME"}``, ``{"!env": ["NAME", "default"]}``, ``{"!include": "f.yaml"}``
+    and ``{"!masked": null}`` become the YAML tags (CORE-320).
+
+    Args:
+        value: Parsed JSON.
+
+    Returns:
+        A node for a round-trip document.
+
+    Raises:
+        PatchError: Another one-key object whose key starts with ``!``, or a
+            tag object of the wrong shape.
+
+    Implements:
+        CORE-320: Core spec 0.25, §6.4 Web configuration editor.
+    """
+    if isinstance(value, dict):
+        if len(value) == 1:
+            ((key, inner),) = value.items()
+            if isinstance(key, str) and key.startswith("!"):
+                return _tagged(key, inner)
+        out = CommentedMap()
+        for k, v in value.items():
+            out[str(k)] = json_to_node(v)
+        return out
+    if isinstance(value, list):
+        return CommentedSeq([json_to_node(v) for v in value])
+    return value
+
+
+def _tagged(tag: str, inner: Any) -> Any:
+    if tag == "!masked" and inner is None:
+        return TaggedScalar(value="", style="'", tag="!masked")
+    if tag == "!include" and isinstance(inner, str) and inner:
+        return TaggedScalar(value=inner, style=None, tag="!include")
+    if tag == "!env" and isinstance(inner, str) and inner:
+        return TaggedScalar(value=inner, style=None, tag="!env")
+    if (
+        tag == "!env"
+        and isinstance(inner, list)
+        and len(inner) == 2
+        and all(isinstance(v, str) for v in inner)
+    ):
+        seq = CommentedSeq(list(inner))
+        seq.yaml_set_ctag(Tag(suffix="!env"))
+        seq.fa.set_flow_style()
+        return seq
+    raise PatchError(f"{tag} is not a tagged node of CORE-320")
+
+
+def node_to_json(node: Any) -> Any:
+    """Turn a round-trip node into JSON; tagged nodes become one-key objects (CORE-320)."""
+    tag = _tag(node)
+    if tag is not None:
+        if isinstance(node, TaggedScalar):
+            value = node.value
+            return {tag: None if tag == "!masked" else value}
+        if isinstance(node, CommentedSeq):
+            return {tag: [node_to_json(v) for v in node]}
+    if isinstance(node, CommentedMap):
+        return {str(k): node_to_json(v) for k, v in node.items()}
+    if isinstance(node, CommentedSeq):
+        return [node_to_json(v) for v in node]
+    return _plain(node)
+
+
+def _parts(ptr: str) -> list[str]:
+    if ptr == "":
+        return []
+    if not ptr.startswith("/"):
+        raise PatchError(f"{ptr!r} is not a JSON Pointer", pointer=ptr)
+    return [p.replace("~1", "/").replace("~0", "~") for p in ptr.split("/")[1:]]
+
+
+def _child(node: Any, part: str, ptr: str) -> Any:
+    if _tag(node) is not None:
+        raise PatchError(f"{ptr} points inside a tagged node", pointer=ptr)
+    if isinstance(node, CommentedMap):
+        if part not in node:
+            raise PatchError(f"{ptr} does not exist", pointer=ptr)
+        return node[part]
+    if isinstance(node, CommentedSeq):
+        if not part.isdigit() or int(part) >= len(node):
+            raise PatchError(f"{ptr} does not exist", pointer=ptr)
+        return node[int(part)]
+    raise PatchError(f"{ptr} does not exist", pointer=ptr)
+
+
+def _parent(doc: Any, ptr: str) -> tuple[Any, str]:
+    parts = _parts(ptr)
+    if not parts:
+        raise PatchError("the document root cannot be changed", pointer=ptr)
+    node = doc
+    for part in parts[:-1]:
+        node = _child(node, part, ptr)
+    if _tag(node) is not None:
+        raise PatchError(f"{ptr} points inside a tagged node", pointer=ptr)
+    return node, parts[-1]
+
+
+def _get(doc: Any, ptr: str) -> Any:
+    node = doc
+    for part in _parts(ptr):
+        node = _child(node, part, ptr)
+    return node
+
+
+def _add(doc: Any, ptr: str, value: Any) -> None:
+    parent, last = _parent(doc, ptr)
+    if isinstance(parent, CommentedMap):
+        parent[last] = value
+    elif isinstance(parent, CommentedSeq):
+        if last == "-":
+            parent.append(value)
+        elif last.isdigit() and int(last) <= len(parent):
+            parent.insert(int(last), value)
+        else:
+            raise PatchError(f"{ptr}: index out of range", pointer=ptr)
+    else:
+        raise PatchError(f"{ptr}: parent is not an object or array", pointer=ptr)
+
+
+def _remove(doc: Any, ptr: str) -> Any:
+    parent, last = _parent(doc, ptr)
+    value = _child(parent, last, ptr)
+    if isinstance(parent, CommentedMap):
+        del parent[last]
+    else:
+        del parent[int(last)]
+    return value
+
+
+def rt_patch(text: str, ops: Sequence[Mapping[str, Any]]) -> str:
+    """Apply an RFC 6902 JSON Patch to a YAML text, keeping comments and key order.
+
+    Supports ``add``, ``remove``, ``replace``, ``move``, ``copy`` and ``test``;
+    values may hold the tagged nodes of CORE-320. Paths address the document
+    before ``!env`` substitution and never enter a tagged node.
+
+    Args:
+        text: The file's YAML text.
+        ops: The operations.
+
+    Returns:
+        The new YAML text.
+
+    Raises:
+        PatchError: An operation cannot be applied (``index`` names it).
+        YAMLError: The text does not parse.
+
+    Implements:
+        CORE-301: Core spec 0.22, §6.4 Web configuration editor.
+        CORE-320: Core spec 0.25, §6.4 Web configuration editor.
+    """
+    doc = rt_load(text)
+    if doc is None:
+        doc = CommentedMap()
+    for index, op in enumerate(ops):
+        try:
+            if not isinstance(op, Mapping):
+                raise PatchError("an operation must be an object")
+            kind, path = op.get("op"), op.get("path")
+            if not isinstance(path, str):
+                raise PatchError("path must be a string")
+            if kind in ("add", "replace", "test") and "value" not in op:
+                raise PatchError(f"{kind} needs a value", pointer=path)
+            if kind == "add":
+                _add(doc, path, json_to_node(op["value"]))
+            elif kind == "remove":
+                _remove(doc, path)
+            elif kind == "replace":
+                parent, last = _parent(doc, path)
+                _child(parent, last, path)
+                if isinstance(parent, CommentedMap):
+                    parent[last] = json_to_node(op["value"])
+                else:
+                    parent[int(last)] = json_to_node(op["value"])
+            elif kind in ("move", "copy"):
+                source = op.get("from")
+                if not isinstance(source, str):
+                    raise PatchError(f"{kind} needs from", pointer=path)
+                if kind == "move" and (path + "/").startswith(source + "/") and path != source:
+                    raise PatchError("cannot move a value into itself", pointer=path)
+                value = _remove(doc, source) if kind == "move" else copy.deepcopy(_get(doc, source))
+                _add(doc, path, value)
+            elif kind == "test":
+                if node_to_json(_get(doc, path)) != op["value"]:
+                    raise PatchError(f"test failed at {path}", pointer=path)
+            else:
+                raise PatchError(f"unknown op {kind!r}", pointer=path)
+        except PatchError as exc:
+            raise PatchError(str(exc), index=index, pointer=exc.pointer) from None
+    return rt_dump(doc, text)
+
+
+def rt_unmask(text: str, base: str | None, secret: Callable[[str], bool]) -> str:
+    """Put the values of ``base`` back where a draft holds ``!masked`` (CORE-303).
+
+    Args:
+        text: The draft file's YAML text.
+        base: The same file as it is now, with real values; ``None`` for a new file.
+        secret: Tells whether a value of ``base`` is a secret (one that views mask).
+
+    Returns:
+        The text with real values (unchanged when it holds no ``!masked`` node).
+
+    Raises:
+        PatchError: A ``!masked`` node at a pointer where ``base`` has no secret value.
+        YAMLError: A text does not parse.
+
+    Implements:
+        CORE-303: Core spec 0.22, §6.4 Web configuration editor.
+    """
+    if "!masked" not in text:
+        return text
+    doc = rt_load(text)
+    base_doc = rt_load(base) if base is not None else None
+    found = False
+
+    def original(parts: tuple[str | int, ...]) -> Any:
+        node = base_doc
+        for part in parts:
+            if (isinstance(node, CommentedMap) and part in node) or (
+                isinstance(node, CommentedSeq) and isinstance(part, int) and part < len(node)
+            ):
+                node = node[part]
+            else:
+                return None
+        return node
+
+    def walk(node: Any, parts: tuple[str | int, ...]) -> Any:
+        nonlocal found
+        if _tag(node) == "!masked":
+            found = True
+            value = original(parts)
+            if not isinstance(value, str) or _tag(value) is not None or not secret(str(value)):
+                raise PatchError(
+                    f"{pointer(parts) or '/'} is !masked but has no secret value",
+                    pointer=pointer(parts),
+                )
+            return value
+        if isinstance(node, CommentedMap):
+            for key in list(node):
+                node[key] = walk(node[key], (*parts, str(key)))
+        elif isinstance(node, CommentedSeq):
+            for i in range(len(node)):
+                node[i] = walk(node[i], (*parts, i))
+        return node
+
+    doc = walk(doc, ())
+    return rt_dump(doc, text) if found else text
 
 
 def include_target(node: Any) -> str | None:

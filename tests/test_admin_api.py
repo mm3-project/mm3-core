@@ -175,7 +175,7 @@ async def api(tmp_path: Path) -> AsyncIterator[Api]:
 
 def test_core_298_codes_are_the_spec_list() -> None:
     assert CODES["CORE_API_REQUEST_TIMEOUT"] == (504, "Request timed out")
-    assert len(CODES) == 16
+    assert len(CODES) == 17
     with pytest.raises(KeyError):
         ApiError("CORE_API_TEAPOT", "no")
     body = json.loads(problem("CORE_API_CONFIG_INVALID", "bad", errors=[{"line": 1}]).body)

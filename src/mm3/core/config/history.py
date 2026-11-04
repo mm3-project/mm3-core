@@ -13,6 +13,7 @@ Implements:
     CORE-153: Core spec 0.11, §6.8 Configuration history, undo and redo.
     CORE-155, CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
     CORE-217, CORE-218: Core spec 0.10, §6.8 Configuration history, undo and redo.
+    CORE-300, CORE-302: Core spec 0.22, §6.4 Web configuration editor.
 """
 
 from __future__ import annotations
@@ -61,6 +62,8 @@ MAX_AGE = timedelta(days=180)
 Origin = Literal["initial", "admin", "file", "cli", "restore", "undo", "redo"]
 
 EXIT_DONE, EXIT_NOTHING, EXIT_INVALID, EXIT_REFUSED = 0, 1, 2, 3
+EXIT_CONFLICT = 4
+"""Internal: the files on disk no longer match the expected hash (CORE-300); never a CLI code."""
 
 
 # --- config sets -----------------------------------------------------------------------
@@ -461,6 +464,7 @@ class OpResult:
     version: int | None = None
     message: str = ""
     records: list[ValidationRecord] = field(default_factory=list)
+    disk_valid: bool = True
 
 
 @dataclass
@@ -610,6 +614,108 @@ class ConfigHistory:
                 with contextlib.suppress(FileNotFoundError):
                     (self.root / rel).unlink()
 
+    def _expect(self, expect: str | None) -> OpResult | None:
+        """Refuse when the files on disk no longer hash to ``expect`` (CORE-300).
+
+        Call with the lock held.
+        """
+        if expect is None:
+            return None
+        disk = self._disk()
+        if disk.set.sha256() == expect:
+            return None
+        return OpResult(
+            EXIT_CONFLICT,
+            message="the configuration changed since it was loaded",
+            records=[] if disk.result.ok else disk.result.errors,
+            disk_valid=disk.result.ok,
+        )
+
+    def save(self, target: ConfigSet, author: str, *, expect: str | None = None) -> OpResult:
+        """Write a config set from the admin and record it as a version (CORE-302).
+
+        A set equal to the files on disk creates no version.
+
+        Args:
+            target: The whole config set to write.
+            author: The admin client address.
+            expect: The hash the files on disk must have (the ``If-Match`` ETag).
+
+        Returns:
+            The outcome; the version is the new or the current one.
+
+        Implements:
+            CORE-302: Core spec 0.22, §6.4 Web configuration editor.
+            CORE-300: Core spec 0.22, §6.4 Web configuration editor.
+            CORE-217: Core spec 0.10, §6.8 Configuration history, undo and redo.
+        """
+        with self.store.lock():
+            conflict = self._expect(expect)
+            if conflict is not None:
+                return conflict
+            refused, current = self._prepare(False)
+            if refused is not None or current is None:
+                return refused or OpResult(EXIT_REFUSED)
+            latest = self.store.latest()
+            if latest is not None and target.sha256() == current.set.sha256():
+                return OpResult(EXIT_DONE, latest.version, "no change")
+            return self._apply(
+                target,
+                current,
+                origin="admin",
+                author=author,
+                parent=latest.version if latest is not None else None,
+                restores=None,
+            )
+
+    def validate_set(self, config_set: ConfigSet) -> ConfigResult:
+        """Validate a config set in a scratch copy, as the engine would load it (CORE-36).
+
+        Args:
+            config_set: The set.
+
+        Returns:
+            The result, with file names of the real config directory.
+        """
+        return self._validate_set(config_set)
+
+    def disk(self) -> tuple[ConfigSet, ConfigResult]:
+        """Return the config set on disk and its validation."""
+        loaded = self._disk()
+        return loaded.set, loaded.result
+
+    def version_set(self, version: int) -> tuple[ConfigSet, ConfigResult]:
+        """Return a stored version and its validation.
+
+        Raises:
+            KeyError: Unknown version.
+        """
+        loaded = self._version(version)
+        return loaded.set, loaded.result
+
+    def sections(self, config_set: ConfigSet, result: ConfigResult) -> dict[str, Any]:
+        """Return the sections of CORE-216 with secrets masked, as plain data."""
+        return _section_values(_Loaded(config_set, result))
+
+    def section_diff(
+        self,
+        before: tuple[ConfigSet, ConfigResult],
+        after: tuple[ConfigSet, ConfigResult],
+    ) -> list[tuple[str, str, str]]:
+        """Compare two loaded sets per section, secrets masked (CORE-302).
+
+        Returns:
+            ``(section, yaml_before, yaml_after)`` for each changed section.
+        """
+        a, b = _Loaded(*before), _Loaded(*after)
+        ra, rb = _section_values(a, mask=False), _section_values(b, mask=False)
+        sa, sb = _section_values(a), _section_values(b)
+        out = []
+        for name in dict.fromkeys([*ra, *rb]):
+            if ra.get(name) != rb.get(name):
+                out.append((name, dump_plain(sa.get(name)), dump_plain(sb.get(name))))
+        return out
+
     def _prepare(self, force: bool) -> tuple[OpResult | None, _Loaded | None]:
         """Bring history up to date with the disk; refuse when the disk is invalid."""
         disk = self._disk()
@@ -671,12 +777,13 @@ class ConfigHistory:
         self.store.prune(self._keep(checked))
         return OpResult(EXIT_DONE, meta.version, f"version {meta.version}")
 
-    def undo(self, author: str, *, force: bool = False) -> OpResult:
+    def undo(self, author: str, *, force: bool = False, expect: str | None = None) -> OpResult:
         """Undo the last save: a new version with the content of the current one's parent.
 
         Args:
             author: ``cli:<user>`` or the admin client address.
             force: Overwrite invalid files on disk.
+            expect: The hash the files on disk must have (``If-Match``, CORE-300).
 
         Returns:
             The outcome.
@@ -685,6 +792,8 @@ class ConfigHistory:
             CORE-154: Core spec 0.10, §6.8 Configuration history, undo and redo.
         """
         with self.store.lock():
+            if (conflict := self._expect(expect)) is not None:
+                return conflict
             refused, current = self._prepare(force)
             if refused is not None or current is None:
                 return refused or OpResult(EXIT_REFUSED)
@@ -704,12 +813,13 @@ class ConfigHistory:
                 restores=target.version,
             )
 
-    def redo(self, author: str, *, force: bool = False) -> OpResult:
+    def redo(self, author: str, *, force: bool = False, expect: str | None = None) -> OpResult:
         """Redo: a new version with the content undone most recently.
 
         Args:
             author: ``cli:<user>`` or the admin client address.
             force: Overwrite invalid files on disk.
+            expect: The hash the files on disk must have (``If-Match``, CORE-300).
 
         Returns:
             The outcome.
@@ -718,6 +828,8 @@ class ConfigHistory:
             CORE-154: Core spec 0.10, §6.8 Configuration history, undo and redo.
         """
         with self.store.lock():
+            if (conflict := self._expect(expect)) is not None:
+                return conflict
             refused, current = self._prepare(force)
             if refused is not None or current is None:
                 return refused or OpResult(EXIT_REFUSED)
@@ -734,7 +846,13 @@ class ConfigHistory:
             )
 
     def restore(
-        self, version: int, author: str, *, section: str | None = None, force: bool = False
+        self,
+        version: int,
+        author: str,
+        *,
+        section: str | None = None,
+        force: bool = False,
+        expect: str | None = None,
     ) -> OpResult:
         """Restore a whole version, or one section of it (CORE-155).
 
@@ -748,6 +866,7 @@ class ConfigHistory:
                 the current configuration; when the current section lives in an
                 included file the restore is refused instead.
             force: Overwrite invalid files on disk.
+            expect: The hash the files on disk must have (``If-Match``, CORE-300).
 
         Returns:
             The outcome.
@@ -757,6 +876,8 @@ class ConfigHistory:
             CORE-156: Core spec 0.10, §6.8 Configuration history, undo and redo.
         """
         with self.store.lock():
+            if (conflict := self._expect(expect)) is not None:
+                return conflict
             refused, current = self._prepare(force)
             if refused is not None or current is None:
                 return refused or OpResult(EXIT_REFUSED)

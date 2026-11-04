@@ -405,3 +405,105 @@ msgstr "Version"
 
 msgid "CORE_ADMIN_VIEWPORT"
 msgstr "Viewport"
+
+msgid "CORE_API_NOTHING_TO_DO"
+msgstr "There is nothing to undo or redo."
+
+msgid "CORE_WEB_NAV_CONFIG"
+msgstr "Configuration"
+
+msgid "CORE_WEB_NAV_DEBUG"
+msgstr "Debug"
+
+msgid "CORE_ADMIN_TAB_HISTORY"
+msgstr "History"
+
+msgid "CORE_ADMIN_UNDO_SAVE"
+msgstr "Undo last save"
+
+msgid "CORE_ADMIN_REDO_SAVE"
+msgstr "Redo"
+
+msgid "CORE_ADMIN_COMPARE"
+msgstr "Compare"
+
+msgid "CORE_ADMIN_FROM"
+msgstr "From"
+
+msgid "CORE_ADMIN_TO"
+msgstr "To"
+
+msgid "CORE_ADMIN_ORIGIN"
+msgstr "Origin"
+
+msgid "CORE_ADMIN_AUTHOR"
+msgstr "Author"
+
+msgid "CORE_ADMIN_SECTIONS"
+msgstr "Sections"
+
+msgid "CORE_ADMIN_ALL_SECTIONS"
+msgstr "All sections"
+
+msgid "CORE_ADMIN_CURRENT"
+msgstr "current"
+
+msgid "CORE_ADMIN_RESTORE_ALL"
+msgstr "Restore all"
+
+msgid "CORE_ADMIN_RESTORE_SECTION"
+msgstr "Restore section"
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE"
+msgstr "Restore version {version}?"
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE_SECTION"
+msgstr "Restore {section} from version {version}?"
+
+msgid "CORE_ADMIN_CONFIRM"
+msgstr "Confirm"
+
+msgid "CORE_ADMIN_CANCEL"
+msgstr "Cancel"
+
+msgid "CORE_ADMIN_LOAD_MORE"
+msgstr "Load more"
+
+msgid "CORE_ADMIN_NO_CHANGES"
+msgstr "No changes."
+
+msgid "CORE_ADMIN_SELECT_TWO"
+msgstr "Choose the two versions to compare."
+
+msgid "CORE_ADMIN_DIFF_TITLE"
+msgstr "Changes from version {a} to version {b}"
+
+msgid "CORE_ADMIN_DONE_VERSION"
+msgstr "Version {version} created."
+
+msgid "CORE_ADMIN_ORIGIN_INITIAL"
+msgstr "initial"
+
+msgid "CORE_ADMIN_ORIGIN_ADMIN"
+msgstr "admin"
+
+msgid "CORE_ADMIN_ORIGIN_FILE"
+msgstr "file edit"
+
+msgid "CORE_ADMIN_ORIGIN_CLI"
+msgstr "command line"
+
+msgid "CORE_ADMIN_ORIGIN_RESTORE"
+msgstr "restore"
+
+msgid "CORE_ADMIN_ORIGIN_UNDO"
+msgstr "undo"
+
+msgid "CORE_ADMIN_ORIGIN_REDO"
+msgstr "redo"
+
+msgid "CORE_ADMIN_NOW"
+msgstr "Now"
+
+msgid "CORE_ADMIN_AFTER_RESTORE"
+msgstr "After the restore"

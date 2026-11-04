@@ -407,3 +407,105 @@ msgstr "Version"
 
 msgid "CORE_ADMIN_VIEWPORT"
 msgstr "Zone d'affichage"
+
+msgid "CORE_API_NOTHING_TO_DO"
+msgstr "Il n'y a rien à annuler ni à rétablir."
+
+msgid "CORE_WEB_NAV_CONFIG"
+msgstr "Configuration"
+
+msgid "CORE_WEB_NAV_DEBUG"
+msgstr "Débogage"
+
+msgid "CORE_ADMIN_TAB_HISTORY"
+msgstr "Historique"
+
+msgid "CORE_ADMIN_UNDO_SAVE"
+msgstr "Annuler le dernier enregistrement"
+
+msgid "CORE_ADMIN_REDO_SAVE"
+msgstr "Rétablir"
+
+msgid "CORE_ADMIN_COMPARE"
+msgstr "Comparer"
+
+msgid "CORE_ADMIN_FROM"
+msgstr "De"
+
+msgid "CORE_ADMIN_TO"
+msgstr "À"
+
+msgid "CORE_ADMIN_ORIGIN"
+msgstr "Origine"
+
+msgid "CORE_ADMIN_AUTHOR"
+msgstr "Auteur"
+
+msgid "CORE_ADMIN_SECTIONS"
+msgstr "Sections"
+
+msgid "CORE_ADMIN_ALL_SECTIONS"
+msgstr "Toutes les sections"
+
+msgid "CORE_ADMIN_CURRENT"
+msgstr "actuelle"
+
+msgid "CORE_ADMIN_RESTORE_ALL"
+msgstr "Tout restaurer"
+
+msgid "CORE_ADMIN_RESTORE_SECTION"
+msgstr "Restaurer la section"
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE"
+msgstr "Restaurer la version {version} ?"
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE_SECTION"
+msgstr "Restaurer {section} depuis la version {version} ?"
+
+msgid "CORE_ADMIN_CONFIRM"
+msgstr "Confirmer"
+
+msgid "CORE_ADMIN_CANCEL"
+msgstr "Annuler"
+
+msgid "CORE_ADMIN_LOAD_MORE"
+msgstr "Charger plus"
+
+msgid "CORE_ADMIN_NO_CHANGES"
+msgstr "Aucun changement."
+
+msgid "CORE_ADMIN_SELECT_TWO"
+msgstr "Choisissez les deux versions à comparer."
+
+msgid "CORE_ADMIN_DIFF_TITLE"
+msgstr "Changements de la version {a} à la version {b}"
+
+msgid "CORE_ADMIN_DONE_VERSION"
+msgstr "Version {version} créée."
+
+msgid "CORE_ADMIN_ORIGIN_INITIAL"
+msgstr "initiale"
+
+msgid "CORE_ADMIN_ORIGIN_ADMIN"
+msgstr "admin"
+
+msgid "CORE_ADMIN_ORIGIN_FILE"
+msgstr "modification du fichier"
+
+msgid "CORE_ADMIN_ORIGIN_CLI"
+msgstr "ligne de commande"
+
+msgid "CORE_ADMIN_ORIGIN_RESTORE"
+msgstr "restauration"
+
+msgid "CORE_ADMIN_ORIGIN_UNDO"
+msgstr "annulation"
+
+msgid "CORE_ADMIN_ORIGIN_REDO"
+msgstr "rétablissement"
+
+msgid "CORE_ADMIN_NOW"
+msgstr "Maintenant"
+
+msgid "CORE_ADMIN_AFTER_RESTORE"
+msgstr "Après la restauration"
