@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.21 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.22 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -44,6 +44,7 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | Shell and WebSocket | hello/welcome handshake with client roles kiosk, browser, preview; bounded queues with coalesced state; full resync on reconnect; templates with lit-html behind /core/mm3.js (5.6, 6.5) |
 | Theme | MM²-like core theme as CSS variables, Roboto Condensed vendored; optional /etc/mm3/custom.css in the config set (6.10) |
 | Kiosk | System unit as user mm3-kiosk running cage with a kiosk agent that applies the display block and the audio output and volume live and supervises Chromium; sound through PipeWire in the kiosk session; Debian 13+ (6.7) |
+| Admin and REST API | Errors as problem+json with CORE\_API\_\* codes; the draft lives in the browser, the server applies JSON Patch without storing; ETag = hash of the config set; secrets round-trip as !masked; one admin WebSocket /admin/ws with status, logs and bus topics; Show on mirror reaches the kiosk only; OpenAPI as JSON without an interactive page; the CLI reaches the engine on the Unix socket /run/mm3/admin.sock (6.4, 6.6, 9.1, 10.5; decided 4 Nov) |
 
 ### 1.2 Approved frameworks (27 Oct 2026)
 
@@ -581,17 +582,25 @@ The configuration can be edited through three synchronized views (layout, forms,
 - **Two listeners.** `engine.server` (default 127.0.0.1:8080) serves only the shell, module assets and `/ws`; `/admin` and `/api` return 404 there. `engine.admin` (default 8081) serves admin UI and REST, guarded by the CIDR allow list and token (CORE-61, CORE-62).
 - **Schema.** `GET /api/v1/config/schema` returns one JSON Schema generated from the engine model and every installed module's `config_model`, including the `!env` and `!include` tags and the region enum. All three views are driven by it.
 - **Layout view.** A live, scaled preview of the real mirror with an editing overlay (6.6); module instances show their real content, snap to cells and can be moved, resized from their corners, layered, or dropped on a region preset, added from a catalog of installed modules, enabled/disabled, or deleted. Backend-only modules (e.g. presence) appear in a separate "Services" lane.
-- **Form view.** Selecting a card opens a form generated from that module's schema: text, number with min/max, enum dropdowns, toggles, lists, nested objects, duration and time pickers, and a secret field that can hold a value or an `!env` reference. Field labels and help text are translation keys resolved from the module catalog, so forms appear in EN, IT, FR, ES, DE.
+- **Form view.** Selecting a card opens a form generated from that module's schema: text, number with min/max, enum dropdowns, toggles, lists, nested objects, duration and time pickers, and a secret field that can hold a value or an `!env` reference. Field labels and help text are translation keys resolved from the module catalog (CORE-310), so forms appear in EN, IT, FR, ES, DE.
 - **YAML view.** CodeMirror 6 with YAML language support, JSON-Schema linting and autocompletion, for advanced edits and for anything the forms cannot express.
-- **Synchronization.** Layout and form edits are sent as JSON Patch operations; the server applies them to the ruamel.yaml document and returns the new YAML, so comments and key order survive GUI edits. Switching to the YAML view always shows the true file content.
+- **Synchronization.** Layout and form edits are sent as JSON Patch operations; the server applies them to the ruamel.yaml document and returns the new YAML, so comments and key order survive GUI edits. Switching to the YAML view always shows the true file content, one tab per file of the config set (CORE-301).
 - **Validation while editing.** Forms validate each field on change; the YAML view checks syntax and schema 300 ms after the last keystroke. Errors show inline on the field, on the layout card, and in the YAML gutter, with localized messages.
 - **Authoritative validation.** `POST /api/v1/config/validate` runs the full engine validation (unknown module, duplicate instance id, missing env var, module-specific checks) and returns `[{line, col, severity, path, message}]`; `path` lets the GUI map errors to fields. Save is disabled while any error remains (CORE-35).
-- **Save.** `PUT /api/v1/config` with `If-Match: <etag>`: the server validates again, shows a diff preview, writes atomically (temp file + rename), and records a new version in the configuration history with undo, redo and restore (6.8). Hot reload (6.3) then applies it.
-- **Conflicts.** If the file changed on disk since it was loaded, save returns 409 with both versions so the user can merge.
-- **Secrets.** `!env NAME` references are shown as written; literal secret values are masked and kept unchanged unless the user types a new one.
+- **Save.** `PUT /api/v1/config` with `If-Match: <etag>`: the server validates again (the diff preview comes from validate, CORE-302), writes atomically (temp file + rename), and records a new version in the configuration history with undo, redo and restore (6.8). Hot reload (6.3) then applies it.
+- **Conflicts.** If the file changed on disk since it was loaded, save returns 409 with the current files so the user can merge (CORE-300).
+- **Secrets.** `!env NAME` references are shown as written; literal secret values are masked and kept unchanged unless the user types a new one (CORE-303).
 - **Front-end stack.** Admin UI built with the same no-build Web Components as the shell: an in-house schema-to-form renderer (`<mm3-schema-form>`), gridstack.js for grid drag, resize and snapping, CodeMirror 6 as a vendored ES-module bundle.
 - CORE-36: File edits and GUI edits go through the same validator and produce identical runtime config; the GUI can never write a file that fails `mm3 check-config`.
 - CORE-37: A module MAY add `json_schema_extra={"ui": {...}}` hints (widget, order, group, hidden) to its fields; without hints, the form is generated from types alone.
+
+**Editor API**
+
+- CORE-300: Config ETag and conflicts. The ETag of the config is `"<SHA-256 of the config set>"`, the hash of CORE-153, quoted; `GET /api/v1/config` returns it in the `ETag` header and the body. `PUT /api/v1/config` and the history actions that write (undo, redo, restore) need `If-Match` with it; without it they return 428 `CORE_API_PRECONDITION_REQUIRED`. When it no longer matches the files on disk, they return 409 `CORE_API_CONFLICT` with `etag` (the current one) and `files` (the current content of every file of the set, secrets masked as in CORE-303); when the files on disk are invalid (CORE-209), the code is `CORE_API_DISK_INVALID` and `errors` carries their records. Nothing is written in either case.
+- CORE-301: Editing protocol. The admin page holds the draft (6.6, CORE-151); the server keeps none. `GET /api/v1/config` returns `{etag, version, files: [{path, role, content}]}`, with `path` relative to the config directory and `role` `main`, `include`, `widget_template` or `custom_css`; the YAML view shows one tab per file. `POST /api/v1/config/patch` takes `{base, files, ops}`: `base` is an ETag, `files` are `[{path, content}]` edited in the YAML view since `base`, and `ops` are `[{file, patch}]`, each `patch` an RFC 6902 JSON Patch on that file's document before `!env` substitution, with `!include` and `!env` nodes kept as nodes. The server applies them to the ruamel.yaml documents, so comments and key order survive, and returns `{files, records}`: the new content of every changed file and the full validation records (CORE-35). It writes nothing. A `base` that is not current returns 409 as in CORE-300; an operation that cannot be applied returns 422 `CORE_API_PATCH_FAILED` naming its index.
+- CORE-302: Validate and save. `POST /api/v1/config/validate` takes `{base, files}`, the full draft content of the changed files, and returns `{records, diff}`: `records` as in CORE-35 and `diff` the change against the current version per section (CORE-216), each `{section, before, after}` with secrets masked; the admin shows `diff` as the preview before Save. `PUT /api/v1/config` takes the same body with `If-Match`, validates again and writes as in CORE-217; it returns 200 with `{version, etag}`. With any record of severity error it writes nothing and returns 422 `CORE_API_CONFIG_INVALID` with the records. A save whose content equals the current version returns 200 with the current version and creates none.
+- CORE-303: Masked secrets. Every API response and admin view shows the literal value of a secret field (CORE-13) as the YAML tag `!masked` with no value. A `!masked` node sent back means "keep the value of `base`": the server puts the original value back before it validates or writes. A `!masked` node at a path with no secret value in `base` returns 422 `CORE_API_MASKED_UNKNOWN`. `!env` references are shown and kept as written (CORE-218).
+- CORE-310: Form texts. Labels and help come from the catalog of the module that owns the model, keys `CONFIG_<PATH>_LABEL` and `CONFIG_<PATH>_HELP`, where `<PATH>` is the field path in UPPER\_SNAKE with nested names joined by `_` (`CONFIG_UNITS_LABEL`, `CONFIG_PROVIDER_API_KEY_HELP`); engine fields use the core catalog with the section first (`CONFIG_ENGINE_LOCALE_LABEL`). A missing label shows the field name and a missing help shows nothing; `mm3 i18n check` does not require them. A `LocalizedText` field (CORE-101) shows one input per language it holds, plus an "add language" control.
 
 ### 6.5 Screen layout
 
@@ -665,12 +674,13 @@ modules:
 The layout view shows the actual mirror, with real module content, scaled into the admin page; positions are edited directly on it and reach the real display only on Save (CORE-97).
 
 - **Preview shell.** The admin listener serves the normal shell at `/admin/preview` in preview mode, embedded in an iframe. It loads the same Web Components and receives the same `state` frames as the kiosk, so no module backend does extra work or extra API calls.
-- **Resolution.** The preview renders at the display's logical viewport (6.7), as reported by the kiosk in its `hello` frame, and with several kiosks connected the admin picks one. The iframe is scaled with a CSS transform to fit the admin window, keeping the aspect ratio.
+- **Resolution.** The preview renders at the logical viewport the engine uses (6.7): the one the kiosk agent applied and reported in its `outputs` frame (CORE-145, CORE-277), or, with no kiosk connected, the one derived from the `display` block (CORE-215). There is only one kiosk (CORE-268), so there is nothing to pick. The iframe is scaled with a CSS transform to fit the admin window, keeping the aspect ratio.
 - **Editing overlay.** A transparent layer above the iframe draws grid lines and a handle box per instance. Drag moves, corner handles resize, a toolbar sets layer, appearance and enable/disable. Everything snaps to whole cells; invalid placements (overlap on the same layer, outside the grid) turn red and cannot be dropped.
 - **Draft.** Edits form a draft layout held in the admin page and applied to the preview through `control` / `layout` frames. The same draft is converted to JSON Patch for the YAML and form views (6.4), so all three views stay in sync before saving.
-- **Show on mirror.** An optional toggle pushes the draft to the real display for checking from across the room; it reverts automatically after 60 s or when the admin page closes, unless saved.
+- **Show on mirror.** An optional toggle pushes the draft to the real display for checking from across the room; it reverts automatically after 60 s or when the admin page closes, unless saved (CORE-307).
 - CORE-98: In preview mode `MirrorElement.preview` is true. Modules with side effects or sensitive content (camera, microphone, private calendars) SHOULD render a placeholder of the same size instead.
 - CORE-99: Preview clients are not counted as displays: they never trigger presence, suspend or HA state, and they receive no `client` messages meant for the kiosk.
+- CORE-307: Show on mirror. The toggle sends the draft layout object (CORE-274) with `POST /api/v1/preview/mirror`; the engine sends it to the kiosk shell only, as a `control` frame with action `layout` (CORE-275), never to LAN browsers. The draft stays until `DELETE /api/v1/preview/mirror`, a save, 60 s after the last push, or until the admin session that pushed it has no open `/admin/ws` connection (CORE-304); then the engine sends the running layout again. A push from another admin replaces the draft shown. Without a connected kiosk the request returns 409 `CORE_API_NO_KIOSK`.
 
 ### 6.7 Display output
 
@@ -745,7 +755,7 @@ Every change to the configuration can be undone and redone, both while editing a
 
 - CORE-151: The admin editor keeps one undo/redo history for the current draft, shared by layout, form and YAML views: Ctrl+Z undo, Ctrl+Shift+Z or Ctrl+Y redo, plus toolbar buttons. Each step is a JSON Patch with a readable label ("Move clock to 1,1", "weather.lat 42.1 → 42.2"); at least 200 steps.
 - Typing in the YAML view is grouped into one step per pause of 1 s or per view switch. The history is lost on page reload; the draft itself is kept in the browser until saved or discarded.
-- CORE-152: Section undo: each module card, form and core section (`engine`, `display`, `layout`, `widget templates`) has "Undo last change here", which reverts only the latest step touching that section, leaving later steps elsewhere intact.
+- CORE-152: Section undo: each module card, form and section of CORE-216 has "Undo last change here", which reverts only the latest step touching that section, leaving later steps elsewhere intact.
 
 **Saved versions**
 
@@ -900,17 +910,17 @@ Remote control and the MQTT bridge are engine services; presence and power is a 
 
 ### 9.1 Remote-control API
 
-REST under `/api/v1`, OpenAPI at `/api/docs`, admin single-page UI at `/admin` built from core Web Components.
+REST under `/api/v1`, OpenAPI at `/api/openapi.json`, admin single-page UI at `/admin` built from core Web Components.
 
 | Method | Path | Effect |
 | --- | --- | --- |
-| GET | `/api/v1/status` | Engine version, uptime, suspend state, clients |
+| GET | `/api/v1/status` | Engine, config, page, clients and kiosk status (CORE-305) |
 | GET | `/api/v1/modules` | Instances, state, position, health |
 | POST | `/api/v1/modules/{id}/show` · `/hide` · `/restart` | Per-instance control |
 | ANY | `/api/v1/modules/{id}/...` | Routes a module registers on `ctx.router` |
-| GET | `/api/v1/config` · `/config/schema` | Raw YAML (secrets masked) · JSON Schema |
-| POST | `/api/v1/config/validate` | Diagnostics with line and column, nothing written |
-| PUT | `/api/v1/config` | Validate, back up and save; needs `If-Match` |
+| GET | `/api/v1/config` · `/config/schema` | Config set with ETag, secrets masked (CORE-301) · JSON Schema |
+| POST | `/api/v1/config/validate` | Records and diff preview, nothing written (CORE-302) |
+| PUT | `/api/v1/config` | Validate and save as a new history version (CORE-302); needs `If-Match` |
 | POST | `/api/v1/notify` | Inject a `Notification` (source `remote`) |
 | POST | `/api/v1/shell/reload` | Reload all browsers |
 | GET | /api/v1/catalog · /catalog/{name} | Cached catalog index, module details, compatibility |
@@ -921,6 +931,21 @@ REST under `/api/v1`, OpenAPI at `/api/docs`, admin single-page UI at `/admin` b
 | POST | /api/v1/modules/{id}/stop · /start | Runtime stop and start, not saved (CORE-240) |
 | GET / POST | /api/v1/pages · /pages/{id} · /pages/next · /pages/prev | Pages and current page; change page (CORE-236) |
 | POST | /api/v1/request | Send a request on the bus and return the reply (CORE-223) |
+| POST | /api/v1/config/patch | Apply JSON Patch and YAML edits to the draft, nothing written (CORE-301) |
+| GET | /api/v1/modules/{id}/health | Health record of one instance (CORE-113) |
+| PUT | /api/v1/modules/{id}/log-level · /debug/log-level/{logger} | Run-time log level, expires after debug\_ttl (CORE-112) |
+| GET | /api/v1/debug/logs · /debug/bundle | Ring buffer with filters, paged · diagnostic bundle (CORE-304, CORE-311) |
+| GET / PUT | /api/v1/kiosk · /kiosk/audio | Reported outputs, modes and sinks · run-time volume and mute, not saved (CORE-306) |
+| POST / DELETE | /api/v1/preview/mirror | Show the draft layout on the kiosk, or stop (CORE-307) |
+| PUT | /api/v1/session/locale | Language of the admin UI for this session (CORE-309) |
+
+- CORE-298: API errors. Every error response of the engine's own `/api` routes is `application/problem+json` (RFC 9457) with `type` (`about:blank`), `title`, `status`, `detail` and `code`, a stable name from this list; validation failures add `errors`, the records of CORE-35. Codes: `CORE_API_UNAUTHORIZED` 401, `CORE_API_FORBIDDEN` 403 (origin mismatch, CORE-253), `CORE_API_NOT_FOUND` 404, `CORE_API_INVALID_REQUEST` 422 (body or query does not match the endpoint's model), `CORE_API_TOO_LARGE` 413 (CORE-26), `CORE_API_PRECONDITION_REQUIRED` 428, `CORE_API_CONFLICT` 409, `CORE_API_DISK_INVALID` 409, `CORE_API_NO_KIOSK` 409, `CORE_API_CONFIG_INVALID` 422, `CORE_API_PATCH_FAILED` 422, `CORE_API_MASKED_UNKNOWN` 422, `CORE_API_RESERVED_NAME` 403, `CORE_API_PAYLOAD_INVALID` 422, `CORE_API_UNAVAILABLE` 503 (engine starting or stopping). `title` and `detail` are English; the admin shows the core catalog text of `code`. A new code is a spec change. Routes a module registers on `ctx.router` answer in their own format.
+- CORE-299: Paging. `GET /api/v1/config/history` and `GET /api/v1/debug/logs` take `limit` (default 50, at most 500) and `before`, an opaque cursor, and return `{items, next}`, newest first, with `next` the cursor of the following page or null. Every other list is returned whole. `/debug/logs` takes the filters of CORE-304 and returns JSON lines with `Accept: application/x-ndjson`, for the download of the live logs view.
+- CORE-305: Status. `GET /api/v1/status` returns `{version, engine_build, started_at, uptime_s, suspended, config, page, clients, kiosk}`: `config` as in CORE-209; `page` `{id, index, count}`; `clients` `[{role, address, user_agent, since}]` (CORE-247); `kiosk` `{connected, cage_version, display: {applied, viewport, dpr, mismatch}, chromium: {state, restarts, failed}, audio: {sinks, applied, mismatch, failure}}` from the agent's reports (CORE-145, CORE-269, CORE-277, CORE-296), with `connected: false` and the last reported values when the agent has gone, or null when no agent has connected since start. The admin home and the debug overview show it, with mismatches and failures highlighted.
+- CORE-306: Kiosk controls. `GET /api/v1/kiosk` returns the `kiosk` object of CORE-305 with the agent's last `outputs` and `sinks` reports (CORE-277). The form view offers `display.output`, the mode and `audio.sink` as dropdowns of these values, the sink with `auto`, `hdmi` and `analog` first (CORE-144). `PUT /api/v1/kiosk/audio` takes `{volume?, mute?}` (volume int 0–100) and sends them to the agent as run-time values (CORE-296); the admin shows a volume slider and a mute toggle beside the kiosk status. They are never written to the configuration and are cleared when the `audio` block changes or the agent connects again. Without a connected agent it returns 409 `CORE_API_NO_KIOSK`.
+- CORE-308: Notify. `POST /api/v1/notify` takes `{name, payload, target}` (`target` optional) and sends the notification with source `remote`. A name starting with `CORE_` returns 403 `CORE_API_RESERVED_NAME`; a name in the shared registry (5.5) whose payload does not match the registered schema returns 422 `CORE_API_PAYLOAD_INVALID`; other names are sent as they are. The bus inspector's re-send (10.5) uses this endpoint.
+- CORE-309: Admin language. The admin UI uses `engine.locale` (8.2) unless the admin picks another language in its header, which calls `PUT /api/v1/session/locale`; the choice is kept with the admin session on the server and is not part of the configuration. `Accept-Language` is ignored.
+- CORE-313: OpenAPI. The schema is served at `GET /api/openapi.json` on the admin listener, with the authentication of `/api/*`. There is no interactive documentation page, because it would need inline or third-party scripts (CORE-63).
 
 ### 9.2 Presence and power: module boundary
 
@@ -1076,15 +1101,20 @@ Any failure can be traced to its module, message and code line from the admin UI
 **Admin debug page** (`/admin/debug`, admin listener only)
 
 - **Overview**: engine status and a row per instance with state, restarts and last error; opening a row shows the traceback, health record and that instance's recent logs, with its log-level control.
-- **Live logs**: streamed over the admin WebSocket; filter by level, module, instance, trace id and text; pause, and download as JSON lines.
+- **Live logs**: streamed over the admin WebSocket (CORE-304); filter by level, module, instance, trace id and text; pause, and download as JSON lines.
 - **Bus inspector**: live list of notifications, WebSocket frames and MQTT messages with time, name, source → target and size; JSON payload viewer; filter by name glob and source; pause and search; "follow trace" shows every log and message sharing a trace id; "re-send" injects a captured notification again through `/api/v1/notify`.
 - CORE-115: The inspector captures only while an admin page has it open (last 1 000 entries), so it costs nothing in normal operation. Config fields marked `secret` are masked in captured payloads.
 
+- CORE-304: Admin channel. `/admin/ws` on the admin listener needs an admin session (CORE-253) and an `Origin` matching the listener, else it closes with code 4403; liveness and size limits are those of `/ws` (5.6). Frames are `{v: 1, kind, data}`. The admin sends `subscribe` `{topic, filter}` and `unsubscribe` `{topic}`. Topics: `status`, the object of CORE-305 at subscribe and on every change; `logs`, with `filter` keys `level`, `module`, `instance`, `trace` and `text`, first the newest 200 matching records of the ring buffer (CORE-110), then live ones; `bus`, with `filter` keys `name` (a glob) and `source`, the captured entries of CORE-115. The engine sends `status` `{status}`, `log` `{record}`, `bus` `{entry}` with entry `{ts, channel, name, source, target, size, trace, payload}` (`channel` `bus`, `ws` or `mqtt`; requests and replies paired, CORE-223), and `dropped` `{topic, count}` when an admin falls behind its queue of 1 000 per topic. The inspector captures while at least one `bus` subscription is open. A new frame kind is a spec change.
+
 **Diagnostic bundle and checks**
 
-- `mm3 diag bundle` or the admin "Download diagnostics" button produces a zip with engine and module versions, Python and OS information, the venv package list, redacted config, recent logs, health records, browser errors, and kiosk details (resolution, user agent).
+- `mm3 diag bundle` or the admin "Download diagnostics" button produces a zip with engine and module versions, Python and OS information, the venv package list, redacted config, recent logs, health records, browser errors, and kiosk details (resolution, user agent, the kiosk object of CORE-305) (CORE-311).
 - CORE-116: Redaction is mandatory: secrets, tokens and `!env` values are removed, and the bundle lists every redacted field.
-- `mm3 diag check` runs a self-test: config valid, ports free, MQTT broker reachable, kiosk connected, display driver available, locale catalogs complete. Each check prints pass or fail with a hint.
+- `mm3 diag check` runs a self-test: config valid, ports free, MQTT broker reachable, kiosk connected, display driver available, locale catalogs complete. Each check prints pass, fail with a hint, or skip (CORE-312).
+
+- CORE-311: Local admin socket. The engine also serves the REST API (without `/admin` pages and WebSockets) on the Unix socket `/run/mm3/admin.sock`, mode 0660, owner and group `mm3`, created at start and removed at stop. Requests on it need no token, because only `mm3` and members of group `mm3` can open it; the kiosk user is not one (CORE-268). CLI commands that need the running engine, starting with `mm3 diag`, use it. `mm3 diag bundle` builds the zip from `GET /api/v1/debug/bundle`, the same endpoint as the admin button; when the socket does not answer, it builds a partial bundle (versions, Python and OS, package list, redacted config, the last 1 000 journal lines of `mm3.service`) that names what is missing. Redaction follows CORE-116 in both cases.
+- CORE-312: Self-test. `mm3 diag check` prints one line per check: `pass`, `fail` with a hint, or `skip` with the reason, such as MQTT when no broker is configured or the display driver when no presence module is configured. Checks: config valid, engine reachable on the socket, listener ports free or held by the engine, kiosk agent connected with Chromium not failed, audio output matched, MQTT broker reachable, display driver available, locale catalogs complete. Exit code 0 when no check failed, 1 when one failed, 2 on a tool error.
 
 **On the mirror**
 
@@ -1368,6 +1398,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.22 | 2026-11-04 | Milestone 6 settled: API errors as problem+json with CORE\_API\_\* codes (CORE-298 added); paging of history and logs (CORE-299 added); config ETag, 428 and 409 conflicts with disk\_invalid (CORE-300 added); editing protocol with files per role and POST /config/patch (CORE-301 added); validate returns the diff preview, save responses (CORE-302 added); !masked secrets (CORE-303 added); admin channel /admin/ws with status, logs and bus topics (CORE-304 added); GET /status contents with the kiosk object (CORE-305 added); kiosk dropdowns and run-time volume and mute (CORE-306 added); Show on mirror on the kiosk only (CORE-307 added); notify rejects CORE\_ names and payloads that do not match the registry (CORE-308 added); admin language per session (CORE-309 added); form label and help keys (CORE-310 added); local admin socket and mm3 diag bundle (CORE-311 added); mm3 diag check with skip and exit codes (CORE-312 added); OpenAPI as JSON only (CORE-313 added); section undo uses the history sections (CORE-152 changed); preview resolution from the agent's outputs, one kiosk (6.6); 9.1 table and 1.1 updated |
 | 0.21 | 2026-11-01 | Kiosk audio base: PipeWire in the kiosk user's session, seat ACLs instead of group audio (CORE-295 added); audio block with sink, volume and mute applied live by the agent with pactl, run-time volume never persisted (CORE-296 added); hardware video decoding with VA-API drivers and Chromium features (CORE-297 added); media-src 'self' in the CSP (CORE-63 changed); kiosk session plays sound (CORE-143 changed); audio as a top-level key and a history section (CORE-201, CORE-216, CORE-155 changed); VA-API features in the Chromium flags (CORE-270 changed); sinks and audio frames, failure area (CORE-277 changed); installer adds the audio and video packages (CORE-293 changed); PipeWire and pactl approved (1.2); reload table, 1.1 and 10.9 updated |
 | 0.20 | 2026-10-31 | Packaging and deployment settled after the first manual install: sd\_notify messages READY, STATUS, RELOADING and STOPPING (CORE-290 added; 7.1 steps 5 and 6 cite it); watchdog on event-loop liveness only (CORE-291 added); mm3.service unit shipped in the package, mm3 service unit (CORE-292 added); mm3-install.sh behaviour, staged venv, no overwrite, modules installed with --no-deps until mm3-core 1.0 (CORE-293 added); mm3-modules-default as a distribution without code (CORE-294 added); the engine user mm3 is a member of group mm3-kiosk and a failed key group change is logged (CORE-268 changed); 10.2 table cites the new ids |
 | 0.19 | 2026-10-30 | Milestone 5 settled: HTTP transport behind ctx.http (new 3.4: CORE-282–287); engine.location and ctx.location (CORE-288; CORE-201, CORE-211 and CORE-246 changed); WEATHER\_CURRENT in the registry (5.5); reference modules mm3-greeting, mm3-clock and mm3-weather (new 9.4: CORE-289, CLK-01–08, WTH-01–12) |
