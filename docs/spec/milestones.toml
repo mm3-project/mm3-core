@@ -183,10 +183,14 @@ status = "not_started"
 #   come with milestone 7 (CORE-120..136, CORE-160..165).
 # MQTT checks of `mm3 diag check` (CORE-312) and MQTT messages in the bus
 #   inspector (CORE-304) report skip or stay empty until milestone 7.
+# Core spec 0.23 (4 Nov 2026, start of development): CORE-314 (REST requests:
+#   {payload}, error replies as 200, 504 timeout) and CORE-315 (GET /modules
+#   entries, idempotent controls, 404 for unknown instances and pages) added;
+#   CORE-112 (log-level API) and CORE-298 (CORE_API_REQUEST_TIMEOUT) changed.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
-  "CORE-290..292", "CORE-298..313",
+  "CORE-290..292", "CORE-298..315",
 ]
 
 [[milestone]]
