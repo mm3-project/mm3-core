@@ -16,6 +16,7 @@ Implements:
     CORE-144, CORE-145, CORE-268, CORE-269: Core spec 0.21, §6.7 Display output.
     CORE-295, CORE-296: Core spec 0.21, §6.7 Display output.
     CORE-277: Core spec 0.21, §5.6 WebSocket protocol.
+    CORE-305, CORE-306: Core spec 0.22, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -163,9 +164,45 @@ class KioskStatus:
     audio: dict[str, Any] | None = None
     audio_mismatch: bool = False
     audio_failure: str | None = None
+    seen: bool = False
+
+    def api_object(self, *, always: bool = False) -> dict[str, Any] | None:
+        """Return the ``kiosk`` object of ``GET /api/v1/status`` (CORE-305).
+
+        Args:
+            always: Return the object with empty values, never ``None``
+                (``GET /api/v1/kiosk``, CORE-306).
+
+        Returns:
+            ``{connected, cage_version, display, chromium, audio}`` from the
+            agent's reports, the last values when the agent has gone, or
+            ``None`` when no agent has connected since the engine started.
+
+        Implements:
+            CORE-305: Core spec 0.22, §9.1 Remote-control API.
+        """
+        if not self.seen and not always:
+            return None
+        return {
+            "connected": self.connected,
+            "cage_version": self.cage_version,
+            "display": {
+                "applied": self.applied,
+                "viewport": list(self.viewport) if self.viewport else None,
+                "dpr": self.dpr,
+                "mismatch": self.mismatch,
+            },
+            "chromium": {"state": self.chromium, "restarts": self.restarts, "failed": self.failed},
+            "audio": {
+                "sinks": self.sinks,
+                "applied": self.audio,
+                "mismatch": self.audio_mismatch,
+                "failure": self.audio_failure,
+            },
+        }
 
     def as_dict(self) -> dict[str, Any]:
-        """Return the status for diagnostics (``GET /api/v1/status`` in milestone 4)."""
+        """Return everything the engine knows about the kiosk, for diagnostics and tests."""
         return {
             "connected": self.connected,
             "cage_version": self.cage_version,
@@ -365,6 +402,7 @@ class KioskAgents:
             return
         self._ws = ws
         self.status.connected = True
+        self.status.seen = True
         self.status.cage_version = str(hello.get("cage_version") or "") or None
         self.status.audio_failure = None
         self._runtime_audio.clear()

@@ -7,6 +7,33 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 6, part A: REST base)
+
+- Admin REST API under `/api/v1` on the admin listener (core spec 9.1), new
+  module `mm3.core.web.api`, mounted by `mm3 run` through `ApiServices`:
+  `GET /status` (CORE-305), `GET /modules` and `/modules/{id}/health`
+  (CORE-315, CORE-113), idempotent `show`, `hide`, `restart`, `stop` and
+  `start` (CORE-315, CORE-240), `GET /kiosk` and `PUT /kiosk/audio` (CORE-306),
+  `POST /notify` (CORE-308), `POST /request` with `{payload}`, error replies as
+  200 and 504 on timeout (CORE-314, CORE-223), `GET /pages` and
+  `POST /pages/{id}|next|prev` (CORE-236), `POST /shell/reload`, and the
+  schema at `GET /api/openapi.json` with admin authentication only (CORE-313).
+- Errors of every `/api` route, including 401, 403, unknown routes and body
+  validation, are `application/problem+json` with the `CORE_API_*` codes of
+  CORE-298 (`mm3.core.web.problems`); the codes have core catalog texts in EN,
+  IT, FR, ES and DE. Routes answer 503 `CORE_API_UNAVAILABLE` while the engine
+  is starting or stopping.
+- Run-time log levels (CORE-112): `PUT /modules/{id}/log-level`,
+  `GET /debug/log-level` and `PUT /debug/log-level/{logger}` with `{level}`
+  (null for the default). The logging adapter filters records per instance
+  and per engine subsystem; a level more verbose than the default expires
+  after `debug_ttl`.
+- Runtime stop and start in the supervisor (`runtime_stop()`,
+  `runtime_start()`): state STOPPED with reason `runtime`, not saved, cleared
+  by a configuration change to the instance (CORE-240).
+- Shells record address, user agent and connect time for `clients`;
+  `KioskStatus.api_object()` builds the kiosk object of CORE-305.
+
 ### Added (milestone 3, spec-change issue #42)
 
 - Kiosk audio (CORE-295, CORE-296; core spec 0.21): the agent lists outputs

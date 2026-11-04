@@ -33,6 +33,7 @@ from mm3.core.web.shell import ShellSources
 from mm3.core.web.ws import MAX_FRAME_BYTES, PING_INTERVAL_S, PING_TIMEOUT_S, ClientHub
 
 if TYPE_CHECKING:
+    from mm3.core.web.api import ApiServices
     from mm3.core.web.kiosk import KioskAgents
 
 __all__ = ["Listener", "ListenerError", "WebGateway"]
@@ -136,6 +137,7 @@ class WebGateway:
         auth: Token store and sessions; opened in ``state_dir`` by default.
         sources: The shell's files; without them only ``/core`` is served.
         agents: The kiosk agent endpoint; ``/ws/kiosk-agent`` exists only with it.
+        api: What the REST API reads and controls (core 9.1).
 
     Implements:
         CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
@@ -152,6 +154,7 @@ class WebGateway:
         auth: WebAuth | None = None,
         sources: ShellSources | None = None,
         agents: KioskAgents | None = None,
+        api: ApiServices | None = None,
     ) -> None:
         self.auth = auth or (hub.auth if hub is not None else WebAuth.open(state_dir))
         self.hub = hub
@@ -169,7 +172,7 @@ class WebGateway:
         )
         self.admin = Listener(
             "admin",
-            protect(admin_app(self.auth, hub, sources), lambda: admin_allow, "admin"),
+            protect(admin_app(self.auth, hub, sources, api), lambda: admin_allow, "admin"),
             settings.admin.host,
             settings.admin.port,
         )

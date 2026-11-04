@@ -203,6 +203,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.engine import Engine
     from mm3.core.pages import PageService
     from mm3.core.services.storage import resolve_state_dir
+    from mm3.core.web.api import ApiServices
     from mm3.core.web.auth import WebAuth
     from mm3.core.web.gateway import WebGateway
     from mm3.core.web.shell import STATIC_DIR, ShellSources
@@ -231,11 +232,8 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         return list(current.engine.server.allow) if current is not None else []
 
     view = cached_view(lambda: manager.current, registry, i18n=engine.i18n)
-    hub = ClientHub(
-        view,
-        WebAuth.open(state_dir),
-        engine_build(STATIC_DIR),
-    )
+    build = engine_build(STATIC_DIR)
+    hub = ClientHub(view, WebAuth.open(state_dir), build)
     engine.attach_clients(hub)
     pages = PageService(result, engine.supervisor, engine.clock)
     engine.supervisor.pages = pages
@@ -250,6 +248,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         hub=hub,
         sources=ShellSources(view, lambda: manager.current, engine.i18n),
         agents=agents,
+        api=ApiServices(engine, manager, pages, hub, agents, build),
     )
     await engine.start(result.instance_specs())
     await manager.start()

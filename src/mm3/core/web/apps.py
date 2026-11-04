@@ -7,7 +7,10 @@ never answer on the mirror display. The admin listener also carries the
 preview shell's ``/admin/preview/ws`` (CORE-273).
 
 The admin listener serves ``/admin`` and ``/api/*`` behind an admin token or
-session; ``/admin/login`` and ``/admin/logout`` manage the session.
+session; ``/admin/login`` and ``/admin/logout`` manage the session. With the
+API services the REST routes of core 9.1 are mounted, with OpenAPI only as
+``/api/openapi.json`` (CORE-313); every ``/api`` error, also outside those
+routes, is ``application/problem+json`` (CORE-298).
 
 Both applications are wrapped in the allow list (CORE-61) and the security
 headers (CORE-63), the headers outermost so that refusals carry them too.
@@ -17,6 +20,8 @@ Implements:
     CORE-61, CORE-62, CORE-63: Core spec 0.21, §10.1 Security.
     CORE-253, CORE-254: Core spec 0.12, §10.1 Security.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
+    CORE-298: Core spec 0.23, §9.1 Remote-control API.
+    CORE-313: Core spec 0.22, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -27,6 +32,8 @@ from typing import TYPE_CHECKING
 from urllib.parse import parse_qs
 
 from fastapi import FastAPI, Request, WebSocket
+from fastapi.exception_handlers import http_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import (
     FileResponse,
     HTMLResponse,
@@ -34,11 +41,14 @@ from fastapi.responses import (
     RedirectResponse,
     Response,
 )
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.types import ASGIApp
 
 from mm3.core.logging import get_logger
+from mm3.core.web.api import ApiServices, api_router, check_api_auth, openapi_schema
 from mm3.core.web.auth import WebAuth, origin_matches
 from mm3.core.web.pages import admin_home_page, login_page, message_page, pair_page
+from mm3.core.web.problems import ApiError, problem
 from mm3.core.web.security import AllowList, Network, SecurityHeaders
 from mm3.core.web.sessions import ADMIN_COOKIE, ADMIN_SESSION_TTL, DISPLAY_COOKIE
 from mm3.core.web.shell import STATIC_DIR, ShellSources, add_shell_files, inside, shell_page
@@ -182,8 +192,35 @@ def mirror_app(
     return app
 
 
+def _api_errors(app: FastAPI) -> None:
+    """Answer every ``/api`` error as a problem document (CORE-298)."""
+
+    @app.exception_handler(ApiError)
+    async def api_error(_: Request, exc: ApiError) -> Response:
+        return exc.response()
+
+    @app.exception_handler(RequestValidationError)
+    async def invalid(request: Request, exc: RequestValidationError) -> Response:
+        problems = "; ".join(
+            f"{'.'.join(str(p) for p in e.get('loc', ()))}: {e.get('msg', '')}"
+            for e in exc.errors()
+        )
+        return problem("CORE_API_INVALID_REQUEST", problems or "Invalid request")
+
+    @app.exception_handler(StarletteHTTPException)
+    async def http_error(request: Request, exc: StarletteHTTPException) -> Response:
+        if request.url.path.startswith("/api"):
+            if exc.status_code == 404:
+                return problem("CORE_API_NOT_FOUND", "Not found")
+            return problem("CORE_API_INVALID_REQUEST", str(exc.detail))
+        return await http_exception_handler(request, exc)
+
+
 def admin_app(
-    auth: WebAuth, hub: ClientHub | None = None, sources: ShellSources | None = None
+    auth: WebAuth,
+    hub: ClientHub | None = None,
+    sources: ShellSources | None = None,
+    api: ApiServices | None = None,
 ) -> FastAPI:
     """Build the admin listener's application (without the protection wrappers).
 
@@ -191,6 +228,8 @@ def admin_app(
         auth: Token store, sessions and login lockout.
         hub: Connected shells; ``/admin/preview/ws`` exists only with a hub.
         sources: The shell's files, for the preview shell at ``/admin/preview``.
+        api: What the REST API reads and controls; without it every
+            authenticated ``/api`` request is 404.
 
     Returns:
         The application.
@@ -199,8 +238,11 @@ def admin_app(
         CORE-62: Core spec 0.12, §10.1 Security.
         CORE-253: Core spec 0.12, §10.1 Security.
         CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
+        CORE-298: Core spec 0.23, §9.1 Remote-control API.
+        CORE-313: Core spec 0.22, §9.1 Remote-control API.
     """
     app = _bare()
+    _api_errors(app)
 
     if hub is not None:
         shells = hub
@@ -270,17 +312,19 @@ def admin_app(
             return RedirectResponse("/admin/login", status_code=303)
         return _html(admin_home_page())
 
-    @app.api_route("/api/{path:path}", methods=_ALL_METHODS)
-    async def api(request: Request, path: str) -> Response:
-        check = await auth.check_admin(request, request.method)
-        if check.outcome == "origin":
-            return JSONResponse({"detail": "origin mismatch"}, status_code=403)
-        if check.outcome != "ok":
-            return JSONResponse(
-                {"detail": "admin token required"},
-                status_code=401,
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-        return JSONResponse({"detail": "Not Found"}, status_code=404)
+    if api is not None:
+        router = api_router(auth, api)
+        app.include_router(router)
+        schema = openapi_schema(router)
+
+        @app.get("/api/openapi.json", include_in_schema=False)
+        async def openapi(request: Request) -> Response:
+            await check_api_auth(auth, request)
+            return JSONResponse(schema)
+
+    @app.api_route("/api/{path:path}", methods=_ALL_METHODS, include_in_schema=False)
+    async def api_fallback(request: Request, path: str) -> Response:
+        await check_api_auth(auth, request)
+        return problem("CORE_API_NOT_FOUND", f"No route /api/{path}")
 
     return app

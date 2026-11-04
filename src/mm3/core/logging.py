@@ -6,8 +6,14 @@ of the last 5 000 records. Each record has ``ts``, ``level``, ``module``,
 ``instance``, ``event``, ``trace_id`` and, on errors, the exception with
 traceback.
 
+Run-time log levels per instance and per engine subsystem (CORE-112) are a
+filter in front of the ring buffer: the structlog wrapper lets through the
+most verbose level in use, and the filter drops what a record's own level
+does not allow. A level more verbose than the default expires.
+
 Implements:
     CORE-110, CORE-111: Core spec 0.4, §10.5 Diagnostics and debugging.
+    CORE-112: Core spec 0.23, §10.5 Diagnostics and debugging.
     CORE-177: Core spec 0.4, §10.9 Dependency management.
 """
 
@@ -17,19 +23,24 @@ import logging
 import sys
 from collections import deque
 from collections.abc import Callable, MutableMapping
-from datetime import UTC, datetime
-from typing import Any, TextIO
+from dataclasses import dataclass
+from datetime import UTC, datetime, timedelta
+from typing import Any, Literal, TextIO
 
 import structlog
 
 from mm3.core.trace import current_trace
 
 __all__ = [
+    "LEVELS",
     "RING_SIZE",
+    "LevelOverride",
+    "LogLevels",
     "Logger",
     "configure_logging",
     "get_logger",
     "is_configured",
+    "log_levels",
     "observe",
     "recent_records",
     "set_log_level",
@@ -45,6 +56,132 @@ _LEVELS = {
     "warning": logging.WARNING,
     "error": logging.ERROR,
 }
+LEVELS = tuple(_LEVELS)
+"""The levels, most verbose first (CORE-112)."""
+
+Scope = Literal["instance", "logger"]
+
+
+@dataclass(frozen=True)
+class LevelOverride:
+    """A run-time level for one instance or one engine logger.
+
+    Attributes:
+        level: ``debug``, ``info``, ``warning`` or ``error``.
+        expires_at: When the default applies again; ``None`` when it does not expire.
+    """
+
+    level: str
+    expires_at: datetime | None
+
+
+class LogLevels:
+    """The default level and the run-time overrides (CORE-112).
+
+    Args:
+        now: Wall clock; the system clock by default.
+
+    Implements:
+        CORE-112: Core spec 0.23, §10.5 Diagnostics and debugging.
+    """
+
+    def __init__(self, now: Callable[[], datetime] | None = None) -> None:
+        self.now = now or (lambda: datetime.now(UTC))
+        self.default = "info"
+        self._overrides: dict[tuple[Scope, str], LevelOverride] = {}
+        self.subsystems: set[str] = set()
+
+    def set(self, scope: Scope, key: str, level: str | None, ttl: timedelta) -> LevelOverride:
+        """Set or clear the level of an instance or engine logger.
+
+        Args:
+            scope: ``instance`` or ``logger``.
+            key: Instance id or the logger's ``subsystem``.
+            level: The level, or ``None`` for the default.
+            ttl: How long a level more verbose than the default lasts (``debug_ttl``).
+
+        Returns:
+            The level that applies now and when it expires.
+
+        Raises:
+            ValueError: Unknown level.
+        """
+        if level is None:
+            self._overrides.pop((scope, key), None)
+            _apply()
+            return LevelOverride(self.default, None)
+        if level not in _LEVELS:
+            raise ValueError(f"unknown log level {level!r}")
+        raised = _LEVELS[level] < _LEVELS[self.default]
+        override = LevelOverride(level, self.now() + ttl if raised else None)
+        self._overrides[(scope, key)] = override
+        _apply()
+        return override
+
+    def get(self, scope: Scope, key: str) -> LevelOverride:
+        """Return the level that applies to an instance or engine logger now.
+
+        Args:
+            scope: ``instance`` or ``logger``.
+            key: Instance id or subsystem.
+
+        Returns:
+            The override, or the default with no expiry.
+        """
+        self._expire()
+        return self._overrides.get((scope, key), LevelOverride(self.default, None))
+
+    def _expire(self) -> None:
+        now = self.now()
+        gone = [k for k, o in self._overrides.items() if o.expires_at and o.expires_at <= now]
+        for key in gone:
+            del self._overrides[key]
+        if gone:
+            _apply()
+
+    def minimum(self) -> int:
+        """Return the most verbose level in use, as a ``logging`` number."""
+        levels = [_LEVELS[self.default], *(_LEVELS[o.level] for o in self._overrides.values())]
+        return min(levels)
+
+    def allows(self, method: str, event: MutableMapping[str, Any]) -> bool:
+        """Return whether a record passes its instance's or logger's level.
+
+        Args:
+            method: The record's level.
+            event: The record.
+
+        Returns:
+            True when the record is at or above the level that applies to it.
+        """
+        if self._overrides:
+            self._expire()
+        level = self.default
+        instance = event.get("instance")
+        subsystem = event.get("subsystem")
+        if instance is not None and ("instance", str(instance)) in self._overrides:
+            level = self._overrides[("instance", str(instance))].level
+        elif subsystem is not None and ("logger", str(subsystem)) in self._overrides:
+            level = self._overrides[("logger", str(subsystem))].level
+        return _LEVELS.get(method, logging.ERROR) >= _LEVELS[level]
+
+
+_levels = LogLevels()
+
+
+def log_levels() -> LogLevels:
+    """Return the engine's log levels (CORE-112)."""
+    return _levels
+
+
+def _apply() -> None:
+    structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(_levels.minimum()))
+
+
+def _filter(_: Any, method: str, event: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
+    if not _levels.allows("warning" if method == "warn" else method, event):
+        raise structlog.DropEvent
+    return event
 
 
 def _add_common(_: Any, method: str, event: MutableMapping[str, Any]) -> MutableMapping[str, Any]:
@@ -104,6 +241,7 @@ def configure_logging(
         json: Force JSON (True) or console (False) output; default is JSON
             unless the stream is a TTY.
     """
+    _levels.default = level
     out = stream or sys.stdout
     use_json = json if json is not None else not out.isatty()
     renderer: Any = (
@@ -112,11 +250,12 @@ def configure_logging(
     structlog.configure(
         processors=[
             _add_common,
+            _filter,
             structlog.processors.format_exc_info,
             _to_ring,
             renderer,
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(_LEVELS[level]),
+        wrapper_class=structlog.make_filtering_bound_logger(min(_LEVELS[level], _levels.minimum())),
         logger_factory=structlog.PrintLoggerFactory(file=out),
         cache_logger_on_first_use=False,
     )
@@ -128,7 +267,8 @@ def set_log_level(level: str) -> None:
     Args:
         level: ``debug``, ``info``, ``warning`` or ``error``.
     """
-    structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(_LEVELS[level]))
+    _levels.default = level
+    _apply()
 
 
 def recent_records() -> list[dict[str, Any]]:
@@ -183,9 +323,13 @@ def get_logger(module: str = "core", instance: str | None = None, **fields: Any)
     Args:
         module: Module name or ``"core"``.
         instance: Instance id.
-        fields: Extra bound fields, e.g. ``subsystem="bus"``.
+        fields: Extra bound fields, e.g. ``subsystem="bus"``; a subsystem
+            becomes an engine logger whose level can be set (CORE-112).
 
     Returns:
         The logger.
     """
+    subsystem = fields.get("subsystem")
+    if isinstance(subsystem, str):
+        _levels.subsystems.add(subsystem)
     return Logger(module, instance, **fields)

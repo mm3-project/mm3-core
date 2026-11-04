@@ -187,6 +187,9 @@ status = "not_started"
 #   {payload}, error replies as 200, 504 timeout) and CORE-315 (GET /modules
 #   entries, idempotent controls, 404 for unknown instances and pages) added;
 #   CORE-112 (log-level API) and CORE-298 (CORE_API_REQUEST_TIMEOUT) changed.
+# Part A (REST base) covers the REST side of CORE-236 and CORE-240; the Home
+#   Assistant page select and "enabled" switch come with the MQTT bridge
+#   (milestone 7, CORE-120..126), the admin buttons with part D.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",

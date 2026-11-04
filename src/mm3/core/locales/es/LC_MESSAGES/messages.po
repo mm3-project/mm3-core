@@ -189,3 +189,51 @@ msgstr "Esta pantalla no muestra esa instancia."
 msgid "REQUEST_TIMEOUT"
 msgstr "No llegó ninguna respuesta a tiempo."
 
+
+msgid "CORE_API_UNAUTHORIZED"
+msgstr "Inicia sesión con un token de administración."
+
+msgid "CORE_API_FORBIDDEN"
+msgstr "Esta solicitud no está permitida desde esta página."
+
+msgid "CORE_API_NOT_FOUND"
+msgstr "No encontrado."
+
+msgid "CORE_API_INVALID_REQUEST"
+msgstr "La solicitud no es válida."
+
+msgid "CORE_API_TOO_LARGE"
+msgstr "El contenido es demasiado grande."
+
+msgid "CORE_API_PRECONDITION_REQUIRED"
+msgstr "Vuelve a cargar la configuración antes de guardar."
+
+msgid "CORE_API_CONFLICT"
+msgstr "La configuración ha cambiado mientras tanto."
+
+msgid "CORE_API_DISK_INVALID"
+msgstr "La configuración en el disco no es válida."
+
+msgid "CORE_API_NO_KIOSK"
+msgstr "No hay ningún quiosco conectado."
+
+msgid "CORE_API_CONFIG_INVALID"
+msgstr "La configuración no es válida."
+
+msgid "CORE_API_PATCH_FAILED"
+msgstr "No se ha podido aplicar el cambio."
+
+msgid "CORE_API_MASKED_UNKNOWN"
+msgstr "Un valor oculto ya no existe; escríbelo de nuevo."
+
+msgid "CORE_API_RESERVED_NAME"
+msgstr "Los nombres que empiezan por CORE_ están reservados al motor."
+
+msgid "CORE_API_PAYLOAD_INVALID"
+msgstr "El contenido no coincide con la notificación registrada."
+
+msgid "CORE_API_UNAVAILABLE"
+msgstr "El motor se está iniciando o deteniendo."
+
+msgid "CORE_API_REQUEST_TIMEOUT"
+msgstr "No ha llegado ninguna respuesta a tiempo."

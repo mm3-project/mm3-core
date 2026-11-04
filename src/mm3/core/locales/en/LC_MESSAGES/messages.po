@@ -189,3 +189,51 @@ msgstr "This display does not show that instance."
 msgid "REQUEST_TIMEOUT"
 msgstr "No reply arrived in time."
 
+
+msgid "CORE_API_UNAUTHORIZED"
+msgstr "Sign in with an admin token."
+
+msgid "CORE_API_FORBIDDEN"
+msgstr "This request is not allowed from this page."
+
+msgid "CORE_API_NOT_FOUND"
+msgstr "Not found."
+
+msgid "CORE_API_INVALID_REQUEST"
+msgstr "The request is not valid."
+
+msgid "CORE_API_TOO_LARGE"
+msgstr "The payload is too large."
+
+msgid "CORE_API_PRECONDITION_REQUIRED"
+msgstr "Reload the configuration before saving."
+
+msgid "CORE_API_CONFLICT"
+msgstr "The configuration changed in the meantime."
+
+msgid "CORE_API_DISK_INVALID"
+msgstr "The configuration on disk is not valid."
+
+msgid "CORE_API_NO_KIOSK"
+msgstr "No kiosk is connected."
+
+msgid "CORE_API_CONFIG_INVALID"
+msgstr "The configuration is not valid."
+
+msgid "CORE_API_PATCH_FAILED"
+msgstr "The change could not be applied."
+
+msgid "CORE_API_MASKED_UNKNOWN"
+msgstr "A hidden value no longer exists; type it again."
+
+msgid "CORE_API_RESERVED_NAME"
+msgstr "Names starting with CORE_ are reserved for the engine."
+
+msgid "CORE_API_PAYLOAD_INVALID"
+msgstr "The payload does not match the registered notification."
+
+msgid "CORE_API_UNAVAILABLE"
+msgstr "The engine is starting or stopping."
+
+msgid "CORE_API_REQUEST_TIMEOUT"
+msgstr "No reply arrived in time."

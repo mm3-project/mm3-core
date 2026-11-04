@@ -191,3 +191,51 @@ msgstr "Cet écran n'affiche pas cette instance."
 msgid "REQUEST_TIMEOUT"
 msgstr "Aucune réponse n'est arrivée à temps."
 
+
+msgid "CORE_API_UNAUTHORIZED"
+msgstr "Connectez-vous avec un jeton d'administration."
+
+msgid "CORE_API_FORBIDDEN"
+msgstr "Cette requête n'est pas autorisée depuis cette page."
+
+msgid "CORE_API_NOT_FOUND"
+msgstr "Introuvable."
+
+msgid "CORE_API_INVALID_REQUEST"
+msgstr "La requête n'est pas valide."
+
+msgid "CORE_API_TOO_LARGE"
+msgstr "Le contenu est trop volumineux."
+
+msgid "CORE_API_PRECONDITION_REQUIRED"
+msgstr "Rechargez la configuration avant d'enregistrer."
+
+msgid "CORE_API_CONFLICT"
+msgstr "La configuration a changé entre-temps."
+
+msgid "CORE_API_DISK_INVALID"
+msgstr "La configuration sur le disque n'est pas valide."
+
+msgid "CORE_API_NO_KIOSK"
+msgstr "Aucun kiosque n'est connecté."
+
+msgid "CORE_API_CONFIG_INVALID"
+msgstr "La configuration n'est pas valide."
+
+msgid "CORE_API_PATCH_FAILED"
+msgstr "La modification n'a pas pu être appliquée."
+
+msgid "CORE_API_MASKED_UNKNOWN"
+msgstr "Une valeur masquée n'existe plus ; saisissez-la à nouveau."
+
+msgid "CORE_API_RESERVED_NAME"
+msgstr "Les noms commençant par CORE_ sont réservés au moteur."
+
+msgid "CORE_API_PAYLOAD_INVALID"
+msgstr "Le contenu ne correspond pas à la notification enregistrée."
+
+msgid "CORE_API_UNAVAILABLE"
+msgstr "Le moteur démarre ou s'arrête."
+
+msgid "CORE_API_REQUEST_TIMEOUT"
+msgstr "Aucune réponse n'est arrivée à temps."

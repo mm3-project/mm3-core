@@ -22,6 +22,7 @@ Implements:
     CORE-278: Core spec 0.17, §3.3 Scheduler.
     CORE-100: Core spec 0.18, §11.1 Engine additions.
     MOD-85: Module Contract 1.0 rev 9, §9 Logging, health and errors.
+    CORE-240: Core spec 0.14, §6.9 Pages and visibility.
 """
 
 from __future__ import annotations
@@ -508,11 +509,57 @@ class ManagedInstance:
             self._cancel_timer()
             self.failures.clear()
             await self._teardown(call_stop=True)
+            if self.reason == "runtime":
+                self.reason = None
             self.restarts += 1
             await self._launch()
 
+    async def runtime_stop(self) -> None:
+        """Stop the instance without changing the configuration (CORE-240).
+
+        The state becomes STOPPED with reason ``runtime``; nothing is saved, so
+        an engine restart, or any configuration change to the instance, starts
+        it again. Stopping an instance that is not running changes nothing.
+
+        Implements:
+            CORE-240: Core spec 0.14, §6.9 Pages and visibility.
+        """
+        async with self._lock:
+            if self.state not in (State.STARTING, State.RUNNING, State.SUSPENDED, State.FAILED):
+                return
+            self._cancel_timer()
+            await self._teardown(call_stop=True)
+            self.reason = "runtime"
+            self._set(State.STOPPED)
+
+    async def runtime_start(self) -> None:
+        """Start the instance again after a runtime stop (CORE-240).
+
+        A FAILED or DISABLED instance starts again as :meth:`restart` does; a
+        running one is left alone.
+
+        Implements:
+            CORE-240: Core spec 0.14, §6.9 Pages and visibility.
+        """
+        if self.state in (State.FAILED, State.DISABLED):
+            await self.restart()
+            return
+        async with self._lock:
+            if self.state is not State.STOPPED:
+                return
+            self.reason = None
+            await self._launch()
+
+    @property
+    def runtime_stopped(self) -> bool:
+        """The instance was stopped at run time (CORE-240)."""
+        return self.state is State.STOPPED and self.reason == "runtime"
+
     async def reconfigure(self, config: Mapping[str, Any]) -> None:
         """Apply a changed configuration.
+
+        A configuration change clears a runtime stop: the instance starts
+        again with the new configuration (CORE-240).
 
         Args:
             config: The new raw configuration block.
@@ -521,7 +568,10 @@ class ManagedInstance:
             self.spec = replace(self.spec, config=dict(config))
             inc = self._inc
             if self.state not in (State.RUNNING, State.SUSPENDED) or inc is None:
-                if self.state in (State.DISABLED, State.FAILED):
+                if self.runtime_stopped:
+                    self.reason = None
+                    await self._launch()
+                elif self.state in (State.DISABLED, State.FAILED):
                     self._cancel_timer()
                     self.failures.clear()
                     await self._launch()
@@ -724,7 +774,7 @@ class Supervisor:
             engine_locale=lambda: self.settings.locale,
             grants=inst.spec.grants,
             http_transport=self.http_transport,
-            module_version=self._module_version(inst.spec.module),
+            module_version=self.module_version(inst.spec.module),
             mqtt_broker=self.mqtt_broker,
             enqueue=inst.inbox.put,
             on_denied=(
@@ -844,8 +894,15 @@ class Supervisor:
         """
         await self._instances[instance_id].restart()
 
-    def _module_version(self, module: str) -> str:
-        """Version of the distribution that provides a module (CORE-283)."""
+    def module_version(self, module: str) -> str:
+        """Version of the distribution that provides a module (CORE-283).
+
+        Args:
+            module: Module name.
+
+        Returns:
+            The distribution version, or ``"0"`` when it is unknown.
+        """
         entry = self.registry.get(module)
         if entry is None or entry.distribution is None:
             return "0"

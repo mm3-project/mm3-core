@@ -187,3 +187,51 @@ msgstr ""
 msgid "REQUEST_TIMEOUT"
 msgstr ""
 
+
+msgid "CORE_API_UNAUTHORIZED"
+msgstr ""
+
+msgid "CORE_API_FORBIDDEN"
+msgstr ""
+
+msgid "CORE_API_NOT_FOUND"
+msgstr ""
+
+msgid "CORE_API_INVALID_REQUEST"
+msgstr ""
+
+msgid "CORE_API_TOO_LARGE"
+msgstr ""
+
+msgid "CORE_API_PRECONDITION_REQUIRED"
+msgstr ""
+
+msgid "CORE_API_CONFLICT"
+msgstr ""
+
+msgid "CORE_API_DISK_INVALID"
+msgstr ""
+
+msgid "CORE_API_NO_KIOSK"
+msgstr ""
+
+msgid "CORE_API_CONFIG_INVALID"
+msgstr ""
+
+msgid "CORE_API_PATCH_FAILED"
+msgstr ""
+
+msgid "CORE_API_MASKED_UNKNOWN"
+msgstr ""
+
+msgid "CORE_API_RESERVED_NAME"
+msgstr ""
+
+msgid "CORE_API_PAYLOAD_INVALID"
+msgstr ""
+
+msgid "CORE_API_UNAVAILABLE"
+msgstr ""
+
+msgid "CORE_API_REQUEST_TIMEOUT"
+msgstr ""

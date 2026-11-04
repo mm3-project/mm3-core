@@ -18,6 +18,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Iterable, Mapping
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -94,6 +95,7 @@ class Engine:
         self.i18n = I18n(registry_roots(registry))
         self.supervisor.i18n = self.i18n
         self.running = False
+        self.started_at: datetime | None = None
         self.notifier = notifier or ServiceNotifier.from_environ()
         self.watchdog_task: asyncio.Task[None] | None = None
         self._ready_sent = False
@@ -106,6 +108,7 @@ class Engine:
         Args:
             instances: Instances to run, in configuration order.
         """
+        self.started_at = self.clock.wall()
         await self.http.start()
         for spec in instances:
             self.supervisor.add(spec)
@@ -124,6 +127,11 @@ class Engine:
         self.executor.shutdown(wait=False, cancel_futures=True)
         self.running = False
         _log.info("engine_stopped")
+
+    @property
+    def stopping(self) -> bool:
+        """Shutdown has begun (the REST API answers 503, CORE-298)."""
+        return self._stopping
 
     # --- systemd (CORE-290, CORE-291) ----------------------------------------------
 
