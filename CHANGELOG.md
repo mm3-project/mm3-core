@@ -7,6 +7,15 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (repository tooling)
+
+- **Restack** workflow and `tools/restack.py` (CORE-75): after a pull request
+  is merged with squash, the open PRs stacked on it are rebased onto main
+  with `git rebase --onto`, `docs/spec/coverage.md` conflicts are resolved by
+  regenerating it, other conflicts are reported on the PR, and the branch is
+  pushed with `--force-with-lease`. Needs the `RESTACK_TOKEN` secret
+  (CONTRIBUTING.md, *Stacked pull requests*).
+
 ### Added (milestone 6, part D2: Layout view)
 
 - Layout tab of `/admin/config` (CORE-97, CORE-322): the real shell in preview

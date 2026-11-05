@@ -1,0 +1,62 @@
+name: Restack
+
+# Implements CORE-75 (Core spec 0.6, §10.3 Documentation and quality): a pull request
+# stacked on a spec sync PR is rebased onto main when that PR is merged with squash,
+# so only its own commits are left (tools/restack.py, CONTRIBUTING.md "Stacked pull
+# requests"). Pushes use RESTACK_TOKEN: a push made with GITHUB_TOKEN would not start
+# CI on the rebased pull request.
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: restack
+  cancel-in-progress: false
+
+jobs:
+  restack:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    env:
+      RESTACK_TOKEN: ${{ secrets.RESTACK_TOKEN }}
+    steps:
+      - name: RESTACK_TOKEN is set
+        run: |
+          if [ -z "$RESTACK_TOKEN" ]; then
+            echo "::error::Set the RESTACK_TOKEN secret (CONTRIBUTING.md, Stacked pull requests)"
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          token: ${{ secrets.RESTACK_TOKEN }}
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.13"
+      - run: uv sync --frozen --all-extras
+      - name: Git identity
+        run: |
+          git config user.name "mm3-restack[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+      - name: Open pull requests on main from this repository
+        env:
+          GH_TOKEN: ${{ secrets.RESTACK_TOKEN }}
+        run: |
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/pulls?state=open&base=main&per_page=100" \
+            --jq ".[] | select(.head.repo.full_name == \"${GITHUB_REPOSITORY}\") | \"\(.number) \(.head.ref)\"" \
+            > "$RUNNER_TEMP/prs.txt"
+          cat "$RUNNER_TEMP/prs.txt"
+      - name: Rebase the stacked ones
+        env:
+          GH_TOKEN: ${{ secrets.RESTACK_TOKEN }}
+          MERGED_SHA: ${{ github.event.pull_request.head.sha }}
+          MERGED_NUMBER: ${{ github.event.pull_request.number }}
+        run: >-
+          uv run python tools/restack.py
+          --merged-sha "$MERGED_SHA" --merged-number "$MERGED_NUMBER"
+          --prs "$RUNNER_TEMP/prs.txt" --push --comment

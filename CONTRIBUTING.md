@@ -79,6 +79,45 @@ Implements:
 - Mention affected requirement ids in the description.
 - CI (lint, types, tests, i18n checks) must be green.
 
+### Stacked pull requests
+
+A code PR is often opened on top of its spec sync PR, before that one is
+merged. Every PR is merged with **Squash and merge**, so after the spec PR
+is merged main has one new commit while the code PR still carries the spec
+PR's original commits, and GitHub reports a conflict.
+
+The **Restack** workflow (`.github/workflows/restack.yml`, `tools/restack.py`)
+fixes this by itself: after any merge it finds the open PRs whose branch
+contains the merged PR's last commit and runs
+
+```bash
+git rebase --onto origin/main <merged PR head> <branch>
+```
+
+so only the PR's own commits are left. A conflict in `docs/spec/coverage.md`
+is resolved by regenerating the file; any other conflict stops the rebase,
+changes nothing and leaves a comment on the PR. A rebased branch is pushed
+with `--force-with-lease` and gets a comment; CI runs again.
+
+The workflow needs the repository secret `RESTACK_TOKEN`: a fine-grained
+personal access token (or GitHub App token) for this repository with
+**Contents: Read and write** and **Pull requests: Read and write**. A push
+made with the default `GITHUB_TOKEN` would not start CI on the PR.
+
+By hand, the same steps are:
+
+```bash
+git fetch origin
+git switch <branch>
+git log --oneline origin/main..HEAD           # the merged PR's commits are at the bottom
+git rebase --onto origin/main <last commit of the merged PR>
+# only coverage.md in conflict:
+uv run python tools/trace_report.py --out docs/spec/coverage.md
+git add docs/spec/coverage.md && git rebase --continue
+uv run python tools/spec_sync.py --check
+git push --force-with-lease
+```
+
 ## Dependencies (core spec 10.9)
 
 - Add a dependency only after it is approved in core spec section 1.2.
