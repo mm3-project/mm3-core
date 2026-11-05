@@ -68,6 +68,9 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Fixed
 
+- Test `test_core_62_tokens_are_hashed_named_and_private` (CORE-62) took the
+  token secret as the text after the last `_`, which the base64url secret
+  may contain; it now takes everything after the second `_` (random flake).
 - Config schema: a module's `config` is now `{"$ref": ...}` instead of a bare
   string (CORE-37).
 

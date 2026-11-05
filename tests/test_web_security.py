@@ -223,7 +223,10 @@ def test_core_62_tokens_are_hashed_named_and_private(tmp_path: Path, now: Now) -
     assert re.fullmatch(r"mm3_[0-9a-f]{12}_[A-Za-z0-9_-]{43}", token)
     raw = (tmp_path / "tokens.json").read_text()
     assert token not in raw
-    assert token.split("_")[-1] not in raw
+    # The secret is everything after the second "_"; it may contain "_" itself.
+    secret = token.split("_", 2)[2]
+    assert len(secret) == 43
+    assert secret not in raw
     assert stat.S_IMODE((tmp_path / "tokens.json").stat().st_mode) == 0o600
     (rec,) = store.all()
     assert (rec.name, rec.kind, rec.created, rec.last_used) == (
