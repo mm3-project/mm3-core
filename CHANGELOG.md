@@ -190,6 +190,13 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Spec sync to core spec 0.26 (editor views for milestone 6 part D): YAML
+  view lint through `POST /config/validate`, in-house completion from the
+  schema and CodeMirror 6 bundled once with esbuild (CORE-323);
+  `GET /api/v1/config/history/{version}` for Open in editor (CORE-324);
+  `PUT /api/v1/session/locale` takes `{locale}` (a shipped language or null),
+  returns `{locale, effective}` and works only with an admin session
+  (CORE-309).
 - Spec sync to core spec 0.25 (editor and history API for milestone 6
   part C): `CORE_API_NOTHING_TO_DO` 409 (CORE-298); tagged nodes in JSON Patch
   values as one-key objects and an in-house JSON Patch on the ruamel nodes

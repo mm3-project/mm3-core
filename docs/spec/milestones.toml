@@ -193,6 +193,13 @@ status = "not_started"
 # Core spec 0.25 (4 Nov 2026, start of part C): CORE-320 (tagged nodes in
 #   JSON Patch, in-house patch), CORE-321 (history API) and CORE-322
 #   (/admin/config page) added; CORE-298 (CORE_API_NOTHING_TO_DO) changed.
+# Core spec 0.26 (5 Nov 2026, start of part D): CORE-323 (YAML view lint
+#   through validate, in-house completion, CodeMirror bundled with esbuild)
+#   and CORE-324 (version files for Open in editor) added; CORE-309 (session
+#   locale body and answer) changed. Part D ships as D1 (YAML and Form views,
+#   Open in editor, editor undo, form texts, admin language), D2 (Layout view,
+#   preview, page selector, Show on mirror) and D3 (admin extensions,
+#   CORE-102, after its own defining step).
 # Part A (REST base) covers the REST side of CORE-236 and CORE-240; the Home
 #   Assistant page select and "enabled" switch come with the MQTT bridge
 #   (milestone 7, CORE-120..126), the admin buttons with part D.
@@ -212,7 +219,7 @@ status = "not_started"
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
-  "CORE-290..292", "CORE-298..322",
+  "CORE-290..292", "CORE-298..324",
 ]
 
 [[milestone]]
