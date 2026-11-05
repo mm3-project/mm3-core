@@ -7,6 +7,11 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (core spec 0.29, Module Contract 1.0 rev 13)
+
+- Spec sync for core spec 0.29 and Module Contract 1.0 rev 13, the admin
+  extensions of milestone 6: CORE-329..332, MOD-38, MOD-39 and MOD-74 added.
+
 ### Added (repository tooling)
 
 - Every workflow job has `timeout-minutes` (10 to 30 minutes instead of
