@@ -17,13 +17,15 @@ headers (CORE-63), the headers outermost so that refusals carry them too.
 
 Implements:
     CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
-    CORE-61, CORE-62, CORE-63: Core spec 0.21, §10.1 Security.
+    CORE-61, CORE-62: Core spec 0.21, §10.1 Security.
+    CORE-63: Core spec 0.28, §10.1 Security.
     CORE-253, CORE-254: Core spec 0.12, §10.1 Security.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-298: Core spec 0.25, §9.1 Remote-control API.
     CORE-313: Core spec 0.22, §9.1 Remote-control API.
     CORE-304, CORE-311: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
+    CORE-329, CORE-330: Core spec 0.29, §11.1 Engine additions.
 """
 
 from __future__ import annotations
@@ -48,12 +50,21 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.types import ASGIApp
 
 from mm3.core.i18n import module_catalog_root
+from mm3.core.i18n.catalogs import locale_chain
 from mm3.core.logging import get_logger
 from mm3.core.web.api import ApiServices, api_router, check_api_auth, openapi_schema
 from mm3.core.web.auth import WebAuth, origin_matches
+from mm3.core.web.extensions import (
+    Extension,
+    admin_extensions,
+    data_attributes,
+    extension_page_data,
+    header_label,
+)
 from mm3.core.web.pages import (
     admin_config_page,
     admin_debug_page,
+    admin_extension_page,
     admin_home_page,
     admin_texts,
     form_texts,
@@ -66,6 +77,7 @@ from mm3.core.web.problems import ApiError, problem
 from mm3.core.web.security import AllowList, Network, SecurityHeaders
 from mm3.core.web.sessions import ADMIN_COOKIE, ADMIN_SESSION_TTL, DISPLAY_COOKIE
 from mm3.core.web.shell import (
+    IMMUTABLE,
     STATIC_DIR,
     VENDOR_DIR,
     ShellSources,
@@ -132,7 +144,8 @@ def protect(app: ASGIApp, networks: Callable[[], Sequence[Network]], listener: s
         The wrapped application.
 
     Implements:
-        CORE-61, CORE-63: Core spec 0.21, §10.1 Security.
+        CORE-61: Core spec 0.21, §10.1 Security.
+        CORE-63: Core spec 0.28, §10.1 Security.
     """
     return SecurityHeaders(AllowList(app, networks, listener=listener))
 
@@ -342,19 +355,91 @@ def admin_app(
 
         add_shell_files(app, sources)
 
+    # --- admin extensions (CORE-329) ---------------------------------------------------
+
+    def extensions() -> list[Extension]:
+        if api is None or api.manager is None:
+            return []
+        return admin_extensions(api.engine.supervisor.registry, api.manager.current)
+
+    async def admin_language(request: Request, via: str | None) -> tuple[str, str | None]:
+        # CORE-309: the session's language, else engine.locale; never Accept-Language.
+        picked = None
+        if via == "session":
+            picked = await asyncio.to_thread(
+                auth.sessions.locale, request.cookies.get(ADMIN_COOKIE)
+            )
+        return picked or locale(), picked
+
+    async def extension_links(request: Request, via: str | None) -> list[tuple[str, str]]:
+        exts = extensions()
+        if not exts:
+            return []
+        lang, _ = await admin_language(request, via)
+        chain = locale_chain(None, lang)
+        i18n = api.engine.i18n if api is not None else None
+        return [(f"/admin/ext/{e.module}", header_label(i18n, e.module, chain)) for e in exts]
+
+    def find_extension(module: str) -> Extension | None:
+        return next((e for e in extensions() if e.module == module), None)
+
+    @app.get("/admin/ext/{module}")
+    async def admin_extension(module: str, request: Request) -> Response:
+        check = await auth.check_admin(request, request.method)
+        if check.outcome != "ok":
+            return RedirectResponse("/admin/login", status_code=303)
+        ext = find_extension(module)
+        if ext is None:
+            return Response(status_code=404)
+        current = api.manager.current if api is not None and api.manager is not None else None
+        enabled = {i.id: i.enabled for i in current.instances} if current is not None else {}
+        data = extension_page_data(
+            ext, api.engine.supervisor if api is not None else None, lambda i: enabled.get(i, True)
+        )
+        links = await extension_links(request, check.via)
+        return _html(admin_extension_page(f"/admin/ext/{module}", links, data_attributes(data)))
+
+    @app.get("/admin/ext/{module}/i18n.json")
+    async def admin_extension_texts(module: str, request: Request) -> Response:
+        check = await auth.check_admin(request, request.method)
+        if check.outcome != "ok":
+            return Response(status_code=401)
+        ext = find_extension(module)
+        if ext is None or api is None or api.engine.i18n is None:
+            return Response(status_code=404)
+        lang, _ = await admin_language(request, check.via)
+        # CORE-330: the module's catalog along the admin language's chain, then the core's.
+        _version, data = api.engine.i18n.merged(module, locale_chain(None, lang))
+        return Response(data, media_type="application/json")
+
+    @app.get("/admin/ext/{module}/{version}/{path:path}")
+    async def admin_extension_file(
+        module: str, version: str, path: str, request: Request
+    ) -> Response:
+        check = await auth.check_admin(request, request.method)
+        if check.outcome != "ok":
+            return Response(status_code=401)
+        ext = find_extension(module)
+        if ext is None or ext.files.static is None or ext.files.version != version:
+            return Response(status_code=404)
+        target = inside(ext.files.static, path)
+        if target is None:
+            return Response(status_code=404)
+        return FileResponse(target, headers={"Cache-Control": IMMUTABLE})
+
     @app.get("/admin/debug")
     async def admin_debug(request: Request) -> Response:
         check = await auth.check_admin(request, request.method)
         if check.outcome != "ok":
             return RedirectResponse("/admin/login", status_code=303)
-        return _html(admin_debug_page())
+        return _html(admin_debug_page(await extension_links(request, check.via)))
 
     @app.get("/admin/config")
     async def admin_config(request: Request) -> Response:
         check = await auth.check_admin(request, request.method)
         if check.outcome != "ok":
             return RedirectResponse("/admin/login", status_code=303)
-        return _html(admin_config_page())
+        return _html(admin_config_page(await extension_links(request, check.via)))
 
     @app.get("/admin/static/{path:path}")
     async def admin_static(path: str) -> Response:
@@ -372,13 +457,7 @@ def admin_app(
         check = await auth.check_admin(request, request.method)
         if check.outcome != "ok":
             return Response(status_code=401)
-        # CORE-309: the session's language, else engine.locale; never Accept-Language.
-        picked = None
-        if check.via == "session":
-            picked = await asyncio.to_thread(
-                auth.sessions.locale, request.cookies.get(ADMIN_COOKIE)
-            )
-        lang = picked or locale()
+        lang, picked = await admin_language(request, check.via)
         roots: dict[str, Path | None] = {}
         if api is not None:
             for entry in api.engine.supervisor.registry.entries():

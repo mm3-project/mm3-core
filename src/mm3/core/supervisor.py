@@ -18,6 +18,7 @@ Implements:
     CORE-202: Core spec 0.8, §6.2 Rules.
     CORE-211: Core spec 0.19, §6.3 Hot reload.
     CORE-288: Core spec 0.19, §6.2 Rules.
+    CORE-332: Core spec 0.29, §9.1 Remote-control API.
     CORE-239: Core spec 0.14, §6.9 Pages and visibility.
     CORE-278: Core spec 0.17, §3.3 Scheduler.
     CORE-100: Core spec 0.18, §11.1 Engine additions.
@@ -42,6 +43,7 @@ from typing import Any
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
+from fastapi import APIRouter
 from pydantic import ValidationError
 
 from mm3.config import ModuleConfig
@@ -654,6 +656,52 @@ class ManagedInstance:
             return
         inc.ctx.engine_scheduler.set_suspended(suspended)
         self._set(State.SUSPENDED if suspended else State.RUNNING)
+
+    # --- module routes (CORE-332) --------------------------------------------------
+
+    def routes(self) -> APIRouter | None:
+        """The router of the running incarnation, from the end of ``start()`` until stop.
+
+        Returns:
+            The router the module registered routes on, or ``None`` while
+            the instance is not running or suspended, or has no router.
+
+        Implements:
+            CORE-332: Core spec 0.29, §9.1 Remote-control API.
+        """
+        inc = self._inc
+        if inc is None or inc.ending or self.state not in (State.RUNNING, State.SUSPENDED):
+            return None
+        return inc.ctx.routes()
+
+    def route_finished(self, *, timed_out: bool) -> None:
+        """Count a route request like a handler run (CORE-193).
+
+        Three timeouts in a row (with handler runs in between counted too)
+        fail the instance as handler timeouts do.
+
+        Args:
+            timed_out: The handler went over its budget and was cancelled.
+        """
+        self.counters.handler_calls += 1
+        if not timed_out:
+            self._consecutive_timeouts = 0
+            return
+        self.counters.handler_timeouts += 1
+        self._consecutive_timeouts += 1
+        get_logger(self.spec.module, self.instance_id).warning(
+            "route_timeout",
+            budget_s=self._sup.settings.timeouts.handler,
+            row=self._consecutive_timeouts,
+        )
+        inc = self._inc
+        if self._consecutive_timeouts >= HANDLER_TIMEOUT_LIMIT and inc and inc.group:
+            exc = HandlerTimeoutsExceeded(f"{HANDLER_TIMEOUT_LIMIT} handler timeouts in a row")
+
+            async def fail() -> None:
+                raise exc
+
+            inc.group.create_task(fail(), name=f"{self.instance_id}:route-timeouts")
 
     def health(self) -> dict[str, Any]:
         """Return the instance's health record.

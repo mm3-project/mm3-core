@@ -161,7 +161,8 @@ requirements = [
 [[milestone]]
 number = 6
 name = "Admin: REST API, config editor, preview, debug page"
-status = "not_started"
+status = "done"
+done_at = { core = "0.29", contract = "1.0 rev 13" }
 # CORE-290..292 (sd_notify, loop watchdog, mm3.service) come from the first
 #   manual install; the unit already carries the CORE-65 hardening directives,
 #   which stays in milestone 10 and is closed there by the install test.
@@ -222,6 +223,11 @@ status = "not_started"
 #   admin session) and CORE-332 (module routes on ctx.router, capability
 #   api.routes) added; MOD-38, MOD-39 (admin element) and MOD-74 (routes)
 #   added, checked by mm3 module check and the test kit.
+# Part D3 (admin extensions) implements CORE-102, CORE-329..332, MOD-38, MOD-39
+#   and MOD-74: the module page /admin/ext/<module>, the admin element with
+#   the API helper, ctx.router, and their rows in mm3 module check and the
+#   test kit. With it every requirement of milestone 6 is implemented and
+#   tested; the milestone is done (5 Nov 2026).
 # Part A (REST base) covers the REST side of CORE-236 and CORE-240; the Home
 #   Assistant page select and "enabled" switch come with the MQTT bridge
 #   (milestone 7, CORE-120..126), the admin buttons with part D.

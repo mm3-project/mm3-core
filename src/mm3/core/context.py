@@ -19,6 +19,8 @@ Implements:
     MOD-28: Module Contract 1.0 rev 8, §3.3 Rules.
     CORE-100: Core spec 0.18, §11.1 Engine additions.
     MOD-85: Module Contract 1.0 rev 9, §9 Logging, health and errors.
+    CORE-332: Core spec 0.29, §9.1 Remote-control API.
+    MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
 """
 
 from __future__ import annotations
@@ -36,6 +38,8 @@ from types import MappingProxyType
 from typing import Any, Literal, Protocol, TypeVar
 from uuid import UUID, uuid4
 from zoneinfo import ZoneInfo
+
+from fastapi import APIRouter
 
 from mm3.__about__ import __version__
 from mm3.context import Location, PageInfo
@@ -349,6 +353,7 @@ class EngineContext:
         )
         self._health = InstanceHealth(counters, self._guard)
         self._on_denied = on_denied
+        self._router: APIRouter | None = None
 
     # --- engine side ----------------------------------------------------------
 
@@ -588,6 +593,29 @@ class EngineContext:
         """Publish and subscribe on granted topics (CORE-100, Contract 4.4)."""
         self._guard()
         return self._mqtt
+
+    @property
+    def router(self) -> APIRouter:
+        """Routes served under ``/api/v1/modules/<instance id>/`` (CORE-332).
+
+        Raises:
+            PermissionError: The module does not declare ``api.routes`` (MOD-70).
+
+        Implements:
+            CORE-332: Core spec 0.29, §9.1 Remote-control API.
+        """
+        self._guard()
+        if "api.routes" not in self._capabilities:
+            if self._on_denied is not None:
+                self._on_denied("api.routes")
+            raise PermissionError("capability api.routes is not declared")
+        if self._router is None:
+            self._router = APIRouter()
+        return self._router
+
+    def routes(self) -> APIRouter | None:
+        """The router the module registered routes on, if any (engine side)."""
+        return self._router
 
     @property
     def health(self) -> InstanceHealth:

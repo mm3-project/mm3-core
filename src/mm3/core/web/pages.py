@@ -6,18 +6,19 @@ The pages carry no inline script or style (CORE-63): the pairing page loads
 
 Implements:
     CORE-11: Core spec 0.15, §4.4 Contract rules.
-    CORE-63: Core spec 0.21, §10.1 Security.
+    CORE-63: Core spec 0.28, §10.1 Security.
     CORE-253: Core spec 0.12, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
     -: Core spec 0.24, §10.5 Diagnostics and debugging.
     CORE-322: Core spec 0.25, §6.4 Web configuration editor.
     CORE-310: Core spec 0.22, §6.4 Web configuration editor.
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
+    CORE-329: Core spec 0.29, §11.1 Engine additions.
 """
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from html import escape
 from pathlib import Path
 
@@ -154,22 +155,39 @@ def admin_texts(locale: str) -> dict[str, str]:
     return out
 
 
-def _admin_page(element: str, script: str, current: str) -> str:
-    """An admin page: the header with navigation, then one element that loads its data."""
+def _admin_page(
+    element: str,
+    script: str,
+    current: str,
+    extensions: Sequence[tuple[str, str]] = (),
+    attrs: str = "",
+) -> str:
+    """An admin page: the header with navigation, then one element that loads its data.
+
+    Args:
+        element: The page's element.
+        script: Its script under ``/admin/static/``.
+        current: The page's own link, marked as current.
+        extensions: ``(href, label)`` of the module pages (CORE-329).
+        attrs: Extra attributes of the element (data only, CORE-63).
+    """
     here = ' aria-current="page"'
+    items = [
+        ("/admin/config", t("CORE_WEB_NAV_CONFIG")),
+        ("/admin/debug", t("CORE_WEB_NAV_DEBUG")),
+        *extensions,
+    ]
     links = "".join(
-        f'<a href="{href}"{here if href == current else ""}>{t(key)}</a>'
-        for href, key in (
-            ("/admin/config", "CORE_WEB_NAV_CONFIG"),
-            ("/admin/debug", "CORE_WEB_NAV_DEBUG"),
-        )
+        f'<a href="{escape(href)}"{here if href == current else ""}>{escape(label)}</a>'
+        for href, label in items
     )
+    space = " " if attrs else ""
     body = (
         '<header class="bar"><a class="home" href="/admin">'
         f"{t('CORE_WEB_ADMIN_TITLE')}</a><nav>{links}</nav>"
         '<form method="post" action="/admin/logout">'
         f'<button type="submit">{t("CORE_WEB_LOGOUT")}</button></form></header>\n'
-        f"<{element}></{element}>"
+        f"<{element}{space}{attrs}></{element}>"
     )
     return _page(
         "CORE_WEB_ADMIN_TITLE",
@@ -179,17 +197,23 @@ def _admin_page(element: str, script: str, current: str) -> str:
     )
 
 
-def admin_debug_page() -> str:
+def admin_debug_page(extensions: Sequence[tuple[str, str]] = ()) -> str:
     """Render ``/admin/debug``: the debug page element loads its data itself (10.5).
+
+    Args:
+        extensions: Links to the module pages (CORE-329).
 
     Returns:
         The HTML.
     """
-    return _admin_page("mm3-admin-debug", "debug.js", "/admin/debug")
+    return _admin_page("mm3-admin-debug", "debug.js", "/admin/debug", extensions)
 
 
-def admin_config_page() -> str:
+def admin_config_page(extensions: Sequence[tuple[str, str]] = ()) -> str:
     """Render ``/admin/config``, the page of the editor and the history (CORE-322).
+
+    Args:
+        extensions: Links to the module pages (CORE-329).
 
     Returns:
         The HTML.
@@ -198,7 +222,24 @@ def admin_config_page() -> str:
         CORE-322: Core spec 0.25, §6.4 Web configuration editor.
         CORE-34: Core spec 0.22, §6.4 Web configuration editor.
     """
-    return _admin_page("mm3-admin-config", "config.js", "/admin/config")
+    return _admin_page("mm3-admin-config", "config.js", "/admin/config", extensions)
+
+
+def admin_extension_page(href: str, extensions: Sequence[tuple[str, str]], attrs: str) -> str:
+    """Render ``/admin/ext/<module>``: ``ext.js`` loads the module's element (CORE-329).
+
+    Args:
+        href: The page's own link.
+        extensions: Links to every module page.
+        attrs: The ``data-ext`` attribute with the page data (CORE-330).
+
+    Returns:
+        The HTML.
+
+    Implements:
+        CORE-329, CORE-330: Core spec 0.29, §11.1 Engine additions.
+    """
+    return _admin_page("mm3-admin-ext", "ext.js", href, extensions, attrs)
 
 
 def login_page(error_key: str | None = None) -> str:

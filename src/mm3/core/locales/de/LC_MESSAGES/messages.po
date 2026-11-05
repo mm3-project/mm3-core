@@ -695,3 +695,9 @@ msgstr "{id}: deaktiviert"
 
 msgid "CORE_ADMIN_STEP_RESCALED"
 msgstr "Skaliert auf {columns} × {rows}"
+
+msgid "CORE_ADMIN_EXT_FAILED"
+msgstr "Die Admin-Seite von {module} konnte nicht geladen werden."
+
+msgid "CORE_ADMIN_CAPABILITIES"
+msgstr "Fähigkeiten"

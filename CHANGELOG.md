@@ -7,6 +7,32 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 6, part D3: admin extensions)
+
+- Module routes (CORE-332, MOD-74): `ctx.router` with the capability
+  `api.routes`, served under `/api/v1/modules/<instance id>/` on the admin
+  listener and the admin socket with the API's authentication, from the end
+  of `start()` until stop (503 otherwise); the engine's own instance
+  sub-paths win; handler budget with 504 and the CORE-193 count; an
+  exception answers 500 and the instance keeps running. New
+  `mm3.core.web.modroutes`.
+- Admin extension pages (CORE-102, CORE-329): `/admin/ext/<module>` for a
+  module with `admin_element`, `admin.extension` and an instance, linked in
+  the admin header with its `HEADER` text; its files under
+  `/admin/ext/<module>/<version>/`, and the admin scripts never through the
+  shell's `/modules/` route. New `mm3.core.web.extensions` and
+  `adminui/ext.js`.
+- The admin element gets `api`, `module`, `instances`, `locale` and `t()`
+  (CORE-330); the API helper covers `/api/v1` with the admin session and
+  `api.module(id)` (CORE-331). `/core/mm3.js` also exports `render` (MOD-38).
+- The Form view lists an instance's capabilities (`x-mm3-capabilities` in
+  `/config/schema`, MOD-71).
+- `mm3 module check`: MOD-38 (admin element, scripts in the wheel, the
+  capability, one define with its tag, imports) and MOD-39 (no network of
+  its own) for admin scripts; the test kit adds `h.route()` and the MOD-74
+  check (no engine sub-paths, answers within budget, no secrets).
+- Milestone 6 is done (`milestones.toml`).
+
 ### Changed (core spec 0.29, Module Contract 1.0 rev 13)
 
 - Spec sync for core spec 0.29 and Module Contract 1.0 rev 13, the admin

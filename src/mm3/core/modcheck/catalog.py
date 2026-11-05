@@ -11,6 +11,8 @@ Implements:
     MOD-64, MOD-65: Module Contract 1.0 rev 11, §7 Internationalization.
     MOD-81, MOD-82: Module Contract 1.0 rev 11, §9 Logging, health and errors.
     -: Module Contract 1.0 rev 11, §11 Compliance checklist.
+    MOD-38, MOD-39: Module Contract 1.0 rev 13, §5.3 Rules.
+    MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
 """
 
 from __future__ import annotations
@@ -81,6 +83,8 @@ def _rows() -> dict[str, Row]:
         ("MOD-35", m, ("static",), ""),
         ("MOD-36", m, ("harness",), ""),
         ("MOD-37", m, ("static",), ""),
+        ("MOD-38", m, ("static",), ""),
+        ("MOD-39", m, ("static",), ""),
         ("MOD-40", m, ("static",), ""),
         ("MOD-41", m, ("static",), ""),
         ("MOD-42", m, ("kit",), ""),
@@ -116,6 +120,7 @@ def _rows() -> dict[str, Row]:
             "Each requested scope is the narrowest the module needs.",
         ),
         ("MOD-72", m, ("kit",), ""),
+        ("MOD-74", m, ("kit", "review"), "Route handlers return no secret values."),
         ("MOD-80", m, ("static",), ""),
         ("MOD-81", s, ("review",), "Log events are short snake-case identifiers with fields."),
         ("MOD-82", s, ("review",), "Log levels are used as defined."),

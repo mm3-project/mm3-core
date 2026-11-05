@@ -14,6 +14,7 @@ Implements:
     CORE-252: Core spec 0.14, §5.6 WebSocket protocol.
     CORE-261, CORE-262: Core spec 0.14, §6.10 Theme and custom CSS.
     CORE-264: Core spec 0.15, §8.5 Catalogs at run time.
+    CORE-329: Core spec 0.29, §11.1 Engine additions.
 """
 
 from __future__ import annotations
@@ -135,6 +136,8 @@ def add_shell_files(app: FastAPI, sources: ShellSources) -> None:
         files = view().files.get(module)
         if files is None or files.static is None or files.version != version:
             return not_found()
+        if path.lstrip("/") in files.admin_only:
+            return not_found()  # admin scripts only on the module's admin page (CORE-329)
         target = inside(files.static, path)
         if target is None:
             return not_found()

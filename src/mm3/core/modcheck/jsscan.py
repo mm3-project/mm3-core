@@ -7,6 +7,7 @@ The rules look at token sequences.
 
 Implements:
     MOD-30, MOD-31, MOD-32, MOD-33, MOD-35, MOD-37: Module Contract 1.0 rev 10, §5.3 Rules.
+    MOD-38, MOD-39: Module Contract 1.0 rev 13, §5.3 Rules.
     MOD-61: Module Contract 1.0 rev 10, §7 Internationalization.
     MOD-80: Module Contract 1.0 rev 10, §9 Logging, health and errors.
     CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
@@ -222,11 +223,16 @@ class JsContext:
         module: The module ``name``.
         element: The tag the backend declares (``mm3-<name>``).
         static_rel: Path of the file inside the module's ``static/`` directory.
+        admin: The file is one of the ``admin_scripts``: the element rules apply
+            as MOD-38 (tag and imports) and MOD-39 (no network of its own);
+            the ``this.setInterval`` rule (MOD-35) does not, as admin elements
+            extend ``HTMLElement``.
     """
 
     module: str
     element: str | None
     static_rel: str
+    admin: bool = False
 
 
 def _sig(tokens: list[Tok]) -> list[Tok]:
@@ -247,6 +253,10 @@ def _member_of(sig: list[Tok], i: int) -> str | None:
     return None
 
 
+_ADMIN_IDS = {"MOD-30": "MOD-38", "MOD-37": "MOD-38", "MOD-32": "MOD-39"}
+"""How the element rules read for an admin script (Contract MOD-38, MOD-39)."""
+
+
 def scan_js(rel: str, text: str, ctx: JsContext) -> tuple[list[tuple[str, Finding]], int]:
     """Run every JavaScript rule on one file.
 
@@ -261,6 +271,10 @@ def scan_js(rel: str, text: str, ctx: JsContext) -> tuple[list[tuple[str, Findin
     out: list[tuple[str, Finding]] = []
 
     def hit(mod_id: str, tok: Tok, message: str) -> None:
+        if ctx.admin:
+            if mod_id == "MOD-35":
+                return
+            mod_id = _ADMIN_IDS.get(mod_id, mod_id)
         out.append((mod_id, Finding(message, rel, tok.line)))
 
     sig = _sig(list(walk(tokenize(text))))

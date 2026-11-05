@@ -693,3 +693,9 @@ msgstr "{id}: disabled"
 
 msgid "CORE_ADMIN_STEP_RESCALED"
 msgstr "Rescaled to {columns} × {rows}"
+
+msgid "CORE_ADMIN_EXT_FAILED"
+msgstr "The admin page of {module} could not be loaded."
+
+msgid "CORE_ADMIN_CAPABILITIES"
+msgstr "Capabilities"

@@ -13,6 +13,7 @@ Implements:
     MOD-24, MOD-25, MOD-26, MOD-27: Module Contract 1.0 rev 9, §6.1 Messaging.
     MOD-29, MOD-42, MOD-43: Module Contract 1.0 rev 9, §6.1 Messaging.
     MOD-70, MOD-72: Module Contract 1.0 rev 9, §8 Capabilities and grants.
+    MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
     MOD-83: Module Contract 1.0 rev 9, §9 Logging, health and errors.
     -: Module Contract 1.0 rev 9, §11 Compliance checklist.
     -: Module Contract 1.0 rev 9, §12.2 mm3.testing kit.
@@ -72,6 +73,7 @@ KIT_CHECKS: tuple[str, ...] = (
     "MOD-43",
     "MOD-70",
     "MOD-72",
+    "MOD-74",
     "MOD-83",
 )
 """Section 11 rows checked by the test kit, in report order."""
@@ -748,6 +750,35 @@ async def _no_grants(run: _Run) -> None:
             r.fail("logs no warning when its grants are missing")
 
 
+async def _routes(run: _Run) -> None:
+    """MOD-74: routes off the engine's sub-paths, answering in time, without secrets."""
+    from mm3.core.web.modroutes import RESERVED
+
+    if "api.routes" not in run.module.capabilities:
+        return
+    r = run.result("MOD-74")
+    h = run.harness()
+    async with run.open(h):
+        await _exercise(h)
+        router = h.managed.routes()
+        if router is None:
+            return
+        for route in list(router.routes):
+            path = str(getattr(route, "path", ""))
+            methods: set[str] = getattr(route, "methods", None) or set()
+            if path.lstrip("/").split("/", 1)[0] in RESERVED:
+                r.fail(f"route {path} uses an engine sub-path of the instance")
+                continue
+            if "GET" not in methods or "{" in path:
+                continue
+            status, body = await h.route("GET", path)
+            if status == 504:
+                r.fail(f"GET {path} did not answer within the handler budget")
+            text = body.decode(errors="replace") if isinstance(body, bytes) else json.dumps(body)
+            if run.canary in text:
+                r.fail(f"GET {path} returns a secret value")
+
+
 async def run_kit_checks(h: ModuleHarness) -> list[CheckResult]:
     """Run the test-kit checks for the module of an open harness.
 
@@ -767,6 +798,7 @@ async def run_kit_checks(h: ModuleHarness) -> list[CheckResult]:
         _suspend_cycles,
         _payload_fuzz,
         _no_grants,
+        _routes,
     ):
         try:
             await step(run)
@@ -779,6 +811,7 @@ async def run_kit_checks(h: ModuleHarness) -> list[CheckResult]:
                 "_suspend_cycles": "MOD-27",
                 "_payload_fuzz": "MOD-43",
                 "_no_grants": "MOD-72",
+                "_routes": "MOD-74",
             }[step.__name__]
             run.result(mid).fail(f"the check could not run: {type(exc).__name__}: {exc}")
     results = list(run.results.values())

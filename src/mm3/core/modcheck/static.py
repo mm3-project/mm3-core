@@ -8,6 +8,7 @@ Implements:
     MOD-17: Module Contract 1.0 rev 10, §3.4 Error semantics.
     MOD-23: Module Contract 1.0 rev 10, §4.3 HttpClient.
     MOD-32, MOD-33, MOD-35: Module Contract 1.0 rev 10, §5.3 Rules.
+    MOD-38, MOD-39: Module Contract 1.0 rev 13, §5.3 Rules.
     MOD-24, MOD-29, MOD-40, MOD-41, MOD-44: Module Contract 1.0 rev 10, §6.1 Messaging.
     MOD-52: Module Contract 1.0 rev 10, §6.3 Layout and preview.
     MOD-60, MOD-61, MOD-62, MOD-63, MOD-67: Module Contract 1.0 rev 10, §7 Internationalization.
@@ -326,10 +327,19 @@ class _Static:
             return
         static = (mod.pkg_dir / "static").resolve()
         defines = 0
+        admin_defines = 0
+        admin = {a.lstrip("/") for a in facts.admin_scripts}
         for rel, text in mod.js.items():
             inside = Path(mod.root, rel).resolve().relative_to(static).as_posix()
-            found, count = scan_js(rel, text, JsContext(facts.name or "", facts.element, inside))
-            defines += count
+            is_admin = inside in admin
+            tag = facts.admin_element if is_admin else facts.element
+            found, count = scan_js(
+                rel, text, JsContext(facts.name or "", tag, inside, admin=is_admin)
+            )
+            if is_admin:
+                admin_defines += count
+            else:
+                defines += count
             for mod_id, finding in found:
                 self.found[mod_id].append(finding)
             self.scans.append(PyScan())
@@ -341,6 +351,7 @@ class _Static:
                 f"the scripts must define exactly one element, found {defines}",
                 f"{mod.pkg_dir.name}/static",
             )
+        self.admin_extension(admin_defines)
         for rel, text in mod.css.items():
             for m in re.finditer(r"@font-face|@import\s+url\(\s*['\"]?https?:", text):
                 self.add(
@@ -355,6 +366,39 @@ class _Static:
                     self.add(
                         "MOD-05",
                         f"{script} (declared in scripts/styles) is not in the wheel under static/",
+                        facts.file,
+                        facts.line,
+                    )
+
+    def admin_extension(self, defines: int) -> None:
+        """MOD-38: the admin element, its scripts and the capability."""
+        mod, facts = self.mod, self.facts
+        if facts is None or not facts.admin:
+            return
+        if facts.admin_element is None:
+            self.add("MOD-38", "admin_scripts without a literal admin_element", facts.file)
+            return
+        if "admin.extension" not in facts.capabilities:
+            self.add(
+                "MOD-38",
+                "admin_element needs the capability admin.extension",
+                facts.file,
+                facts.line,
+            )
+        if not facts.admin_scripts:
+            self.add("MOD-38", "admin_element without admin_scripts", facts.file, facts.line)
+        elif defines != 1:
+            self.add(
+                "MOD-38",
+                f"the admin scripts must define exactly one element, found {defines}",
+                f"{mod.pkg_dir.name}/static" if mod.pkg_dir else facts.file,
+            )
+        if mod.wheel is not None:
+            for script in facts.admin_scripts:
+                if f"{mod.pkg}/static/{script}" not in mod.wheel_names:
+                    self.add(
+                        "MOD-38",
+                        f"{script} (declared in admin_scripts) is not in the wheel under static/",
                         facts.file,
                         facts.line,
                     )
