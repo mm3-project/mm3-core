@@ -7,6 +7,13 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (core spec 0.28)
+
+- Spec sync for core spec 0.28, the Layout view of milestone 6:
+  CORE-325..328 added; CORE-301, CORE-302 and CORE-307 changed;
+  gridstack.js dropped from the approved stack (spec 1.2) in favour of an
+  in-house editing overlay (CORE-326).
+
 ### Added (milestone 6, part D1: editor views)
 
 - `/admin/config` now has Form, YAML and History tabs over one draft kept in
