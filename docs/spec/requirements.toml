@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.27"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27"]
+version = "0.28"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28"]
 
 [[spec]]
 name = "Module Contract"
@@ -427,9 +427,9 @@ id = "CORE-63"
 spec = "Core spec"
 section = "10.1"
 title = "Security"
-hash = "4394454d05e8"
+hash = "fb269740a997"
 introduced_in = "0.1"
-changed_in = "0.21"
+changed_in = "0.28"
 status = "active"
 
 [[requirement]]
@@ -2417,9 +2417,9 @@ id = "CORE-301"
 spec = "Core spec"
 section = "6.4"
 title = "Web configuration editor"
-hash = "39aec8fa5b50"
+hash = "7fe2f918dae7"
 introduced_in = "0.22"
-changed_in = "0.27"
+changed_in = "0.28"
 status = "active"
 
 [[requirement]]
@@ -2427,9 +2427,9 @@ id = "CORE-302"
 spec = "Core spec"
 section = "6.4"
 title = "Web configuration editor"
-hash = "7cf112783d40"
+hash = "da57bbb8c4f5"
 introduced_in = "0.22"
-changed_in = "0.22"
+changed_in = "0.28"
 status = "active"
 
 [[requirement]]
@@ -2477,9 +2477,9 @@ id = "CORE-307"
 spec = "Core spec"
 section = "6.6"
 title = "Live layout preview"
-hash = "0226cf8e58c6"
+hash = "67da0ae9e4c7"
 introduced_in = "0.22"
-changed_in = "0.22"
+changed_in = "0.28"
 status = "active"
 
 [[requirement]]
@@ -2650,6 +2650,46 @@ title = "Web configuration editor"
 hash = "1e417989a557"
 introduced_in = "0.26"
 changed_in = "0.26"
+status = "active"
+
+[[requirement]]
+id = "CORE-325"
+spec = "Core spec"
+section = "6.6"
+title = "Live layout preview"
+hash = "b5832de221f6"
+introduced_in = "0.28"
+changed_in = "0.28"
+status = "active"
+
+[[requirement]]
+id = "CORE-326"
+spec = "Core spec"
+section = "6.6"
+title = "Live layout preview"
+hash = "3a60d55d5a8e"
+introduced_in = "0.28"
+changed_in = "0.28"
+status = "active"
+
+[[requirement]]
+id = "CORE-327"
+spec = "Core spec"
+section = "6.6"
+title = "Live layout preview"
+hash = "0ae7b3f7aec8"
+introduced_in = "0.28"
+changed_in = "0.28"
+status = "active"
+
+[[requirement]]
+id = "CORE-328"
+spec = "Core spec"
+section = "6.6"
+title = "Live layout preview"
+hash = "735ff12c59c1"
+introduced_in = "0.28"
+changed_in = "0.28"
 status = "active"
 
 [[requirement]]
