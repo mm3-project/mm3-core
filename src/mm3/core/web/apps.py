@@ -20,7 +20,7 @@ Implements:
     CORE-61, CORE-62, CORE-63: Core spec 0.21, §10.1 Security.
     CORE-253, CORE-254: Core spec 0.12, §10.1 Security.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
-    CORE-298: Core spec 0.23, §9.1 Remote-control API.
+    CORE-298: Core spec 0.25, §9.1 Remote-control API.
     CORE-313: Core spec 0.22, §9.1 Remote-control API.
     CORE-304, CORE-311: Core spec 0.22, §10.5 Diagnostics and debugging.
 """
@@ -50,6 +50,7 @@ from mm3.core.logging import get_logger
 from mm3.core.web.api import ApiServices, api_router, check_api_auth, openapi_schema
 from mm3.core.web.auth import WebAuth, origin_matches
 from mm3.core.web.pages import (
+    admin_config_page,
     admin_debug_page,
     admin_home_page,
     admin_texts,
@@ -262,7 +263,7 @@ def admin_app(
         CORE-62: Core spec 0.12, §10.1 Security.
         CORE-253: Core spec 0.12, §10.1 Security.
         CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
-        CORE-298: Core spec 0.23, §9.1 Remote-control API.
+        CORE-298: Core spec 0.25, §9.1 Remote-control API.
         CORE-313: Core spec 0.22, §9.1 Remote-control API.
         CORE-304: Core spec 0.22, §10.5 Diagnostics and debugging.
     """
@@ -343,6 +344,13 @@ def admin_app(
         if check.outcome != "ok":
             return RedirectResponse("/admin/login", status_code=303)
         return _html(admin_debug_page())
+
+    @app.get("/admin/config")
+    async def admin_config(request: Request) -> Response:
+        check = await auth.check_admin(request, request.method)
+        if check.outcome != "ok":
+            return RedirectResponse("/admin/login", status_code=303)
+        return _html(admin_config_page())
 
     @app.get("/admin/static/{path:path}")
     async def admin_static(path: str) -> Response:

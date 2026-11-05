@@ -7,6 +7,37 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 6, part C: config API and history)
+
+- `GET /api/v1/config` (CORE-301): the config set as `{etag, version, files}`
+  with roles `main`, `include`, `widget_template` and `custom_css`, the ETag in
+  the header (CORE-300) and secret values as `!masked` while `!env` stays as
+  written (CORE-303). New module `mm3.core.config.editor`.
+- `GET /api/v1/config/schema`: one JSON Schema from the engine model and every
+  installed module, `!env` and `!include` in the JSON form of CORE-320, region
+  presets as an enum and `ui` hints passed through (CORE-37,
+  `mm3.core.config.schema`).
+- `POST /api/v1/config/patch` (CORE-301, CORE-320): YAML edits and JSON Patch
+  (`add`, `remove`, `replace`, `move`, `copy`, `test`), in-house in the YAML
+  adapter on the ruamel nodes, so comments, key order and indentation
+  survive; tagged nodes as one-key objects. Returns the changed files and the
+  full records (CORE-35); writes nothing.
+- `POST /api/v1/config/validate` and `PUT /api/v1/config` (CORE-302,
+  CORE-36): the engine's own validation in a scratch copy, the diff per
+  section with secrets masked, save with `If-Match` as a new history version
+  (origin `admin`, author the client address); `!masked` keeps the base value
+  and is refused where there is none (CORE-303). 428 without `If-Match`, 409
+  `CORE_API_CONFLICT` or `CORE_API_DISK_INVALID` with the current files
+  (CORE-300).
+- History API (CORE-321, CORE-299): paged list with `current`, diff of two
+  versions as a whole or per section, undo, redo and restore with `If-Match`
+  returning `{version, etag}`, 409 `CORE_API_NOTHING_TO_DO`, 422 when the target
+  does not validate, 404 for unknown versions and sections.
+- `/admin/config` with the History tab (CORE-322): versions with origin, author
+  and changed sections, compare two versions, Restore all and Restore section
+  after a confirmation that shows the diff, Undo last save and Redo. The admin
+  header now links Configuration and Debug.
+
 ### Added (milestone 6, part B2: debug page)
 
 - Admin debug page `/admin/debug` (core spec 10.5), Web Components with

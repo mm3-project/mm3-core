@@ -10,7 +10,7 @@ errors as ``application/problem+json`` (CORE-298). Before the engine is
 running and while it stops, routes answer 503 ``CORE_API_UNAVAILABLE``.
 
 Implements:
-    CORE-298: Core spec 0.23, §9.1 Remote-control API.
+    CORE-298: Core spec 0.25, §9.1 Remote-control API.
     CORE-305, CORE-306, CORE-308, CORE-313: Core spec 0.22, §9.1 Remote-control API.
     CORE-314, CORE-315: Core spec 0.23, §9.1 Remote-control API.
     CORE-112: Core spec 0.23, §10.5 Diagnostics and debugging.
@@ -20,6 +20,8 @@ Implements:
     CORE-299: Core spec 0.22, §9.1 Remote-control API.
     CORE-311, CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-316, CORE-318: Core spec 0.24, §10.5 Diagnostics and debugging.
+    CORE-300, CORE-301, CORE-302, CORE-303, CORE-35: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-321: Core spec 0.25, §6.8 Configuration history, undo and redo.
 """
 
 from __future__ import annotations
@@ -33,7 +35,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Header, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, ValidationError
@@ -51,6 +53,7 @@ from mm3.messages import MAX_PAYLOAD_BYTES, Notification, check_payload
 from mm3.notifications import validate_payload
 
 if TYPE_CHECKING:
+    from mm3.core.config.editor import ConfigEditor
     from mm3.core.config.manager import ConfigManager
     from mm3.core.engine import Engine
     from mm3.core.pages import PageService
@@ -78,6 +81,7 @@ class ApiServices:
         build: The shell's ``engine_build`` (CORE-273).
         masker: Returns the masker for the running configuration's secrets
             (CORE-116, CORE-319).
+        editor: The configuration editor and history (CORE-301, CORE-321).
     """
 
     engine: Engine
@@ -87,6 +91,7 @@ class ApiServices:
     agents: KioskAgents | None = None
     build: str = ""
     masker: Callable[[], Masker] = field(default=Masker)
+    editor: ConfigEditor | None = None
 
 
 # --- request bodies ---------------------------------------------------------------------
@@ -117,6 +122,42 @@ class NotifyBody(_Body):
     target: str | None = None
 
 
+class FileBody(_Body):
+    """One draft file: path relative to the config directory and its content (CORE-301)."""
+
+    path: str = Field(min_length=1, max_length=512)
+    content: str
+
+
+class FileOps(_Body):
+    """A JSON Patch on one file's document (CORE-301, CORE-320)."""
+
+    file: str = Field(min_length=1, max_length=512)
+    patch: list[dict[str, Any]]
+
+
+class PatchBody(_Body):
+    """``POST /api/v1/config/patch`` (CORE-301)."""
+
+    base: str
+    files: list[FileBody] = Field(default_factory=list)
+    ops: list[FileOps] = Field(default_factory=list)
+
+
+class DraftBody(_Body):
+    """``POST /api/v1/config/validate`` and ``PUT /api/v1/config`` (CORE-302)."""
+
+    base: str | None = None
+    files: list[FileBody] = Field(default_factory=list)
+
+
+class RestoreBody(_Body):
+    """``POST /api/v1/config/restore`` (CORE-321)."""
+
+    version: StrictInt = Field(ge=1)
+    section: str | None = None
+
+
 class RequestBody(NotifyBody):
     """``POST /api/v1/request`` (CORE-314)."""
 
@@ -137,7 +178,7 @@ async def check_api_auth(auth: WebAuth, request: Request) -> None:
         ApiError: 401 ``CORE_API_UNAUTHORIZED`` or 403 ``CORE_API_FORBIDDEN``.
 
     Implements:
-        CORE-298: Core spec 0.23, §9.1 Remote-control API.
+        CORE-298: Core spec 0.25, §9.1 Remote-control API.
     """
     check = await auth.check_admin(request, request.method)
     if check.outcome == "origin":
@@ -165,7 +206,7 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
         The router; with ``auth`` every route needs admin authentication.
 
     Implements:
-        CORE-298: Core spec 0.23, §9.1 Remote-control API.
+        CORE-298: Core spec 0.25, §9.1 Remote-control API.
     """
 
     async def authenticated(request: Request) -> None:
@@ -449,6 +490,121 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
         if services.pages is not None:
             services.pages.set_page(page, "rest")
         return await pages_after()
+
+    # --- configuration editor and history (CORE-300..303, CORE-321) -------------------
+
+    def editor() -> ConfigEditor:
+        if services.editor is None:
+            raise ApiError("CORE_API_NOT_FOUND", "The configuration editor is not available")
+        return services.editor
+
+    async def run(call: Callable[[], Any]) -> Any:
+        from mm3.core.config.editor import EditorError
+
+        try:
+            return await asyncio.to_thread(call)
+        except EditorError as exc:
+            raise ApiError(exc.code, exc.detail, errors=exc.errors, extra=exc.extra) from None
+
+    def author(request: Request) -> str:
+        return request.client.host if request.client else "admin"
+
+    def dumped(files: list[FileBody]) -> list[dict[str, Any]]:
+        return [f.model_dump() for f in files]
+
+    @router.get("/config", response_model=None)
+    async def get_config() -> Response:
+        """The config set with its ETag, secrets masked (CORE-301, CORE-303)."""
+        view = await run(editor().view)
+        return Response(
+            json.dumps(view), media_type="application/json", headers={"ETag": view["etag"]}
+        )
+
+    @router.get("/config/schema")
+    async def get_schema() -> dict[str, Any]:
+        """One JSON Schema of the engine and every installed module (6.4, CORE-37)."""
+        from mm3.core.config.schema import config_schema
+
+        return config_schema(sup.registry)
+
+    @router.post("/config/patch")
+    async def post_patch(body: PatchBody) -> dict[str, Any]:
+        """Apply JSON Patch and YAML edits to the draft; nothing written (CORE-301)."""
+        ops = [o.model_dump() for o in body.ops]
+        result: dict[str, Any] = await run(
+            lambda: editor().patch(body.base, dumped(body.files), ops)
+        )
+        return result
+
+    @router.post("/config/validate")
+    async def post_validate(body: DraftBody) -> dict[str, Any]:
+        """Records and the diff preview; nothing written (CORE-302)."""
+        result: dict[str, Any] = await run(lambda: editor().validate(body.base, dumped(body.files)))
+        return result
+
+    @router.put("/config")
+    async def put_config(
+        body: DraftBody, request: Request, if_match: str | None = Header(default=None)
+    ) -> dict[str, Any]:
+        """Validate and save as a new history version (CORE-302, CORE-300)."""
+        who = author(request)
+        result: dict[str, Any] = await run(
+            lambda: editor().save(if_match, body.base, dumped(body.files), who)
+        )
+        _log.info("api_config_saved", version=result.get("version"), author=who)
+        return result
+
+    @router.get("/config/history")
+    async def get_history(request: Request) -> dict[str, Any]:
+        """Versions newest first, paged (CORE-321, CORE-299)."""
+        query = dict(request.query_params)
+        unknown = set(query) - {"limit", "before"}
+        if unknown:
+            raise ApiError("CORE_API_INVALID_REQUEST", f"Unknown parameter {sorted(unknown)[0]!r}")
+        try:
+            limit = int(query.get("limit", PAGE_DEFAULT))
+            before = int(query["before"]) if query.get("before") else None
+        except ValueError as exc:
+            raise ApiError("CORE_API_INVALID_REQUEST", str(exc)) from None
+        if not 1 <= limit <= PAGE_MAX:
+            raise ApiError("CORE_API_INVALID_REQUEST", f"limit must be 1 to {PAGE_MAX}")
+        page: dict[str, Any] = await run(lambda: editor().history_page(limit, before))
+        return page
+
+    @router.get("/config/history/{a}/diff/{b}")
+    async def get_history_diff(a: int, b: int, section: str | None = None) -> list[dict[str, str]]:
+        """The diff between two versions, whole or per section (CORE-321)."""
+        diff: list[dict[str, str]] = await run(lambda: editor().history_diff(a, b, section))
+        return diff
+
+    @router.post("/config/undo")
+    async def post_undo(
+        request: Request, if_match: str | None = Header(default=None)
+    ) -> dict[str, Any]:
+        """Undo the last save (CORE-154, CORE-321)."""
+        who = author(request)
+        result: dict[str, Any] = await run(lambda: editor().undo(if_match, who))
+        return result
+
+    @router.post("/config/redo")
+    async def post_redo(
+        request: Request, if_match: str | None = Header(default=None)
+    ) -> dict[str, Any]:
+        """Redo the save undone most recently (CORE-154, CORE-321)."""
+        who = author(request)
+        result: dict[str, Any] = await run(lambda: editor().redo(if_match, who))
+        return result
+
+    @router.post("/config/restore")
+    async def post_restore(
+        body: RestoreBody, request: Request, if_match: str | None = Header(default=None)
+    ) -> dict[str, Any]:
+        """Restore a version or one section of it (CORE-155, CORE-321)."""
+        who = author(request)
+        result: dict[str, Any] = await run(
+            lambda: editor().restore(if_match, body.version, body.section, who)
+        )
+        return result
 
     # --- diagnostics ----------------------------------------------------------------
 

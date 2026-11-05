@@ -7,7 +7,7 @@ the core catalog text of ``code``. Routes a module registers on
 ``ctx.router`` answer in their own format.
 
 Implements:
-    CORE-298: Core spec 0.23, §9.1 Remote-control API.
+    CORE-298: Core spec 0.25, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -38,6 +38,7 @@ CODES: dict[str, tuple[int, str]] = {
     "CORE_API_PAYLOAD_INVALID": (422, "Payload invalid"),
     "CORE_API_UNAVAILABLE": (503, "Engine unavailable"),
     "CORE_API_REQUEST_TIMEOUT": (504, "Request timed out"),
+    "CORE_API_NOTHING_TO_DO": (409, "Nothing to undo or redo"),
 }
 """Every code of CORE-298 with its HTTP status and English title; a new code is a spec change."""
 
@@ -50,6 +51,8 @@ class ApiError(Exception):
         detail: English explanation for this occurrence.
         errors: Validation records (CORE-35), when the failure is a validation.
         headers: Extra response headers.
+        extra: Further members of the problem document (``etag`` and
+            ``files`` of a conflict, CORE-300).
 
     Raises:
         KeyError: ``code`` is not a code of CORE-298.
@@ -62,6 +65,7 @@ class ApiError(Exception):
         *,
         errors: Sequence[Mapping[str, Any]] | None = None,
         headers: Mapping[str, str] | None = None,
+        extra: Mapping[str, Any] | None = None,
     ) -> None:
         CODES[code]  # unknown codes are a programming error
         super().__init__(detail)
@@ -69,10 +73,13 @@ class ApiError(Exception):
         self.detail = detail
         self.errors = errors
         self.headers = headers
+        self.extra = extra
 
     def response(self) -> JSONResponse:
         """Return the problem document."""
-        return problem(self.code, self.detail, errors=self.errors, headers=self.headers)
+        return problem(
+            self.code, self.detail, errors=self.errors, headers=self.headers, extra=self.extra
+        )
 
 
 def problem(
@@ -81,6 +88,7 @@ def problem(
     *,
     errors: Sequence[Mapping[str, Any]] | None = None,
     headers: Mapping[str, str] | None = None,
+    extra: Mapping[str, Any] | None = None,
 ) -> JSONResponse:
     """Build a problem response.
 
@@ -89,12 +97,13 @@ def problem(
         detail: English explanation.
         errors: Validation records, added as ``errors``.
         headers: Extra response headers.
+        extra: Further members, such as ``etag`` and ``files`` (CORE-300).
 
     Returns:
         The response with media type ``application/problem+json``.
 
     Implements:
-        CORE-298: Core spec 0.23, §9.1 Remote-control API.
+        CORE-298: Core spec 0.25, §9.1 Remote-control API.
     """
     status, title = CODES[code]
     body: dict[str, Any] = {
@@ -106,4 +115,6 @@ def problem(
     }
     if errors is not None:
         body["errors"] = [dict(e) for e in errors]
+    for key, value in (extra or {}).items():
+        body.setdefault(key, value)
     return JSONResponse(body, status_code=status, media_type=PROBLEM_JSON, headers=headers)

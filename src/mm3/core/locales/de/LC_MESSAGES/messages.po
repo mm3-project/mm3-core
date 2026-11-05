@@ -407,3 +407,105 @@ msgstr "Version"
 
 msgid "CORE_ADMIN_VIEWPORT"
 msgstr "Anzeigebereich"
+
+msgid "CORE_API_NOTHING_TO_DO"
+msgstr "Es gibt nichts rückgängig zu machen oder zu wiederholen."
+
+msgid "CORE_WEB_NAV_CONFIG"
+msgstr "Konfiguration"
+
+msgid "CORE_WEB_NAV_DEBUG"
+msgstr "Debug"
+
+msgid "CORE_ADMIN_TAB_HISTORY"
+msgstr "Verlauf"
+
+msgid "CORE_ADMIN_UNDO_SAVE"
+msgstr "Letztes Speichern rückgängig"
+
+msgid "CORE_ADMIN_REDO_SAVE"
+msgstr "Wiederholen"
+
+msgid "CORE_ADMIN_COMPARE"
+msgstr "Vergleichen"
+
+msgid "CORE_ADMIN_FROM"
+msgstr "Von"
+
+msgid "CORE_ADMIN_TO"
+msgstr "Bis"
+
+msgid "CORE_ADMIN_ORIGIN"
+msgstr "Ursprung"
+
+msgid "CORE_ADMIN_AUTHOR"
+msgstr "Autor"
+
+msgid "CORE_ADMIN_SECTIONS"
+msgstr "Abschnitte"
+
+msgid "CORE_ADMIN_ALL_SECTIONS"
+msgstr "Alle Abschnitte"
+
+msgid "CORE_ADMIN_CURRENT"
+msgstr "aktuell"
+
+msgid "CORE_ADMIN_RESTORE_ALL"
+msgstr "Alles wiederherstellen"
+
+msgid "CORE_ADMIN_RESTORE_SECTION"
+msgstr "Abschnitt wiederherstellen"
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE"
+msgstr "Version {version} wiederherstellen?"
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE_SECTION"
+msgstr "{section} aus Version {version} wiederherstellen?"
+
+msgid "CORE_ADMIN_CONFIRM"
+msgstr "Bestätigen"
+
+msgid "CORE_ADMIN_CANCEL"
+msgstr "Abbrechen"
+
+msgid "CORE_ADMIN_LOAD_MORE"
+msgstr "Mehr laden"
+
+msgid "CORE_ADMIN_NO_CHANGES"
+msgstr "Keine Änderungen."
+
+msgid "CORE_ADMIN_SELECT_TWO"
+msgstr "Wähle die zwei Versionen zum Vergleich."
+
+msgid "CORE_ADMIN_DIFF_TITLE"
+msgstr "Änderungen von Version {a} zu Version {b}"
+
+msgid "CORE_ADMIN_DONE_VERSION"
+msgstr "Version {version} erstellt."
+
+msgid "CORE_ADMIN_ORIGIN_INITIAL"
+msgstr "initial"
+
+msgid "CORE_ADMIN_ORIGIN_ADMIN"
+msgstr "Admin"
+
+msgid "CORE_ADMIN_ORIGIN_FILE"
+msgstr "Dateiänderung"
+
+msgid "CORE_ADMIN_ORIGIN_CLI"
+msgstr "Kommandozeile"
+
+msgid "CORE_ADMIN_ORIGIN_RESTORE"
+msgstr "Wiederherstellung"
+
+msgid "CORE_ADMIN_ORIGIN_UNDO"
+msgstr "Rückgängig"
+
+msgid "CORE_ADMIN_ORIGIN_REDO"
+msgstr "Wiederholen"
+
+msgid "CORE_ADMIN_NOW"
+msgstr "Jetzt"
+
+msgid "CORE_ADMIN_AFTER_RESTORE"
+msgstr "Nach der Wiederherstellung"

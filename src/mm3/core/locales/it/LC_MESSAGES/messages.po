@@ -405,3 +405,105 @@ msgstr "Versione"
 
 msgid "CORE_ADMIN_VIEWPORT"
 msgstr "Area visibile"
+
+msgid "CORE_API_NOTHING_TO_DO"
+msgstr "Non c'è niente da annullare o ripetere."
+
+msgid "CORE_WEB_NAV_CONFIG"
+msgstr "Configurazione"
+
+msgid "CORE_WEB_NAV_DEBUG"
+msgstr "Debug"
+
+msgid "CORE_ADMIN_TAB_HISTORY"
+msgstr "Cronologia"
+
+msgid "CORE_ADMIN_UNDO_SAVE"
+msgstr "Annulla l'ultimo salvataggio"
+
+msgid "CORE_ADMIN_REDO_SAVE"
+msgstr "Ripeti"
+
+msgid "CORE_ADMIN_COMPARE"
+msgstr "Confronta"
+
+msgid "CORE_ADMIN_FROM"
+msgstr "Da"
+
+msgid "CORE_ADMIN_TO"
+msgstr "A"
+
+msgid "CORE_ADMIN_ORIGIN"
+msgstr "Origine"
+
+msgid "CORE_ADMIN_AUTHOR"
+msgstr "Autore"
+
+msgid "CORE_ADMIN_SECTIONS"
+msgstr "Sezioni"
+
+msgid "CORE_ADMIN_ALL_SECTIONS"
+msgstr "Tutte le sezioni"
+
+msgid "CORE_ADMIN_CURRENT"
+msgstr "attuale"
+
+msgid "CORE_ADMIN_RESTORE_ALL"
+msgstr "Ripristina tutto"
+
+msgid "CORE_ADMIN_RESTORE_SECTION"
+msgstr "Ripristina la sezione"
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE"
+msgstr "Ripristinare la versione {version}?"
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE_SECTION"
+msgstr "Ripristinare {section} dalla versione {version}?"
+
+msgid "CORE_ADMIN_CONFIRM"
+msgstr "Conferma"
+
+msgid "CORE_ADMIN_CANCEL"
+msgstr "Annulla"
+
+msgid "CORE_ADMIN_LOAD_MORE"
+msgstr "Carica altre"
+
+msgid "CORE_ADMIN_NO_CHANGES"
+msgstr "Nessuna modifica."
+
+msgid "CORE_ADMIN_SELECT_TWO"
+msgstr "Scegli le due versioni da confrontare."
+
+msgid "CORE_ADMIN_DIFF_TITLE"
+msgstr "Modifiche dalla versione {a} alla versione {b}"
+
+msgid "CORE_ADMIN_DONE_VERSION"
+msgstr "Creata la versione {version}."
+
+msgid "CORE_ADMIN_ORIGIN_INITIAL"
+msgstr "iniziale"
+
+msgid "CORE_ADMIN_ORIGIN_ADMIN"
+msgstr "admin"
+
+msgid "CORE_ADMIN_ORIGIN_FILE"
+msgstr "modifica del file"
+
+msgid "CORE_ADMIN_ORIGIN_CLI"
+msgstr "riga di comando"
+
+msgid "CORE_ADMIN_ORIGIN_RESTORE"
+msgstr "ripristino"
+
+msgid "CORE_ADMIN_ORIGIN_UNDO"
+msgstr "annullamento"
+
+msgid "CORE_ADMIN_ORIGIN_REDO"
+msgstr "ripetizione"
+
+msgid "CORE_ADMIN_NOW"
+msgstr "Ora"
+
+msgid "CORE_ADMIN_AFTER_RESTORE"
+msgstr "Dopo il ripristino"

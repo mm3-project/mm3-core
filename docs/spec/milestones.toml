@@ -204,6 +204,11 @@ status = "not_started"
 #   scripts under /admin/static and texts from /admin/i18n.json; CORE-114
 #   completed (stack and user agent from elements, 10 per minute per
 #   instance). The admin language picker of CORE-309 comes with part D.
+# Part C: GET /config with ETag and masked secrets, /config/schema, patch,
+#   validate with diff, save, the history API and the History tab of
+#   /admin/config (CORE-35..37, CORE-299 history, CORE-300..303,
+#   CORE-320..322). Open in editor and the Layout, Form and YAML tabs of
+#   CORE-322 come with part D, with CORE-151 and CORE-152.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",

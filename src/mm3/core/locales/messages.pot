@@ -403,3 +403,105 @@ msgstr ""
 
 msgid "CORE_ADMIN_VIEWPORT"
 msgstr ""
+
+msgid "CORE_API_NOTHING_TO_DO"
+msgstr ""
+
+msgid "CORE_WEB_NAV_CONFIG"
+msgstr ""
+
+msgid "CORE_WEB_NAV_DEBUG"
+msgstr ""
+
+msgid "CORE_ADMIN_TAB_HISTORY"
+msgstr ""
+
+msgid "CORE_ADMIN_UNDO_SAVE"
+msgstr ""
+
+msgid "CORE_ADMIN_REDO_SAVE"
+msgstr ""
+
+msgid "CORE_ADMIN_COMPARE"
+msgstr ""
+
+msgid "CORE_ADMIN_FROM"
+msgstr ""
+
+msgid "CORE_ADMIN_TO"
+msgstr ""
+
+msgid "CORE_ADMIN_ORIGIN"
+msgstr ""
+
+msgid "CORE_ADMIN_AUTHOR"
+msgstr ""
+
+msgid "CORE_ADMIN_SECTIONS"
+msgstr ""
+
+msgid "CORE_ADMIN_ALL_SECTIONS"
+msgstr ""
+
+msgid "CORE_ADMIN_CURRENT"
+msgstr ""
+
+msgid "CORE_ADMIN_RESTORE_ALL"
+msgstr ""
+
+msgid "CORE_ADMIN_RESTORE_SECTION"
+msgstr ""
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE"
+msgstr ""
+
+msgid "CORE_ADMIN_CONFIRM_RESTORE_SECTION"
+msgstr ""
+
+msgid "CORE_ADMIN_CONFIRM"
+msgstr ""
+
+msgid "CORE_ADMIN_CANCEL"
+msgstr ""
+
+msgid "CORE_ADMIN_LOAD_MORE"
+msgstr ""
+
+msgid "CORE_ADMIN_NO_CHANGES"
+msgstr ""
+
+msgid "CORE_ADMIN_SELECT_TWO"
+msgstr ""
+
+msgid "CORE_ADMIN_DIFF_TITLE"
+msgstr ""
+
+msgid "CORE_ADMIN_DONE_VERSION"
+msgstr ""
+
+msgid "CORE_ADMIN_ORIGIN_INITIAL"
+msgstr ""
+
+msgid "CORE_ADMIN_ORIGIN_ADMIN"
+msgstr ""
+
+msgid "CORE_ADMIN_ORIGIN_FILE"
+msgstr ""
+
+msgid "CORE_ADMIN_ORIGIN_CLI"
+msgstr ""
+
+msgid "CORE_ADMIN_ORIGIN_RESTORE"
+msgstr ""
+
+msgid "CORE_ADMIN_ORIGIN_UNDO"
+msgstr ""
+
+msgid "CORE_ADMIN_ORIGIN_REDO"
+msgstr ""
+
+msgid "CORE_ADMIN_NOW"
+msgstr ""
+
+msgid "CORE_ADMIN_AFTER_RESTORE"
+msgstr ""

@@ -201,6 +201,7 @@ def _kiosk_agents(hub: ClientHub, manager: ConfigManager, engine: Engine) -> Kio
 
 
 async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> None:
+    from mm3.core.config.editor import ConfigEditor
     from mm3.core.config.history import ConfigHistory, HistoryRecorder
     from mm3.core.config.manager import ConfigManager
     from mm3.core.diag.inspector import BusInspector
@@ -262,7 +263,9 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     inspector = BusInspector(masker)
     engine.bus.add_endpoint(inspector)
     hub.frame_observer = inspector.frame
-    api = ApiServices(engine, manager, pages, hub, agents, build, masker)
+    api = ApiServices(
+        engine, manager, pages, hub, agents, build, masker, editor=ConfigEditor(history, masker)
+    )
     gateway = WebGateway(
         result.config.engine,
         state_dir,

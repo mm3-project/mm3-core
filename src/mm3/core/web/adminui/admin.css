@@ -47,7 +47,11 @@ header.bar {
   background: var(--panel);
   border-bottom: 1px solid var(--line);
 }
-header.bar a { color: var(--text); font-weight: 600; text-decoration: none; }
+header.bar a { color: var(--text); text-decoration: none; }
+header.bar a.home { font-weight: 600; }
+header.bar nav { display: flex; gap: 16px; flex: 1; margin-left: 24px; }
+header.bar nav a { color: var(--muted); }
+header.bar nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 header.bar form { margin: 0; }
 
 button, select, input {
@@ -64,7 +68,7 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 a.button { color: var(--accent); }
 input { min-width: 0; }
 
-mm3-admin-debug { display: block; padding: 16px; max-width: 1400px; margin: 0 auto; }
+mm3-admin-debug, mm3-admin-config { display: block; padding: 16px; max-width: 1400px; margin: 0 auto; }
 
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
 .tabs button {
@@ -135,3 +139,10 @@ pre {
 .muted { color: var(--muted); }
 .split { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 12px; }
 @media (max-width: 900px) { .split { grid-template-columns: 1fr; } }
+
+dialog { min-width: min(640px, 92vw); border: 1px solid var(--line); border-radius: 8px; background: var(--panel); color: var(--text); max-width: min(900px, 92vw); }
+dialog::backdrop { background: rgb(0 0 0 / 35%); }
+.diff { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.diff h3 { grid-column: 1 / -1; margin: 10px 0 0; font-size: 13px; }
+.diff pre { max-height: 240px; }
+tr.current td:first-child::after { content: " ●"; color: var(--ok); }
