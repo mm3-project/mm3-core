@@ -194,6 +194,18 @@ def test_core_264_module_then_core_and_packages(tmp_path: Path) -> None:
     assert i18n.translate("other", it, "HELLO") == "HELLO"
 
 
+def test_mod_66_locale_package_overrides_nothing_the_module_ships(tmp_path: Path) -> None:
+    module = json_root(tmp_path, "mod", {"en": {"A": "a", "B": "b"}, "de": {"A": "ä"}})
+    core = json_root(tmp_path, "core", {"en": {}})
+    pack = json_root(tmp_path, "pack", {"de": {"A": "X", "B": "bé"}, "fr": {"A": "à"}})
+    i18n = I18n(lambda m: module, core_root=core, packages={"m": [pack]})
+    de = ["de", "en"]
+    assert i18n.translate("m", de, "A") == "ä"  # shipped by the module: the module's text
+    assert i18n.translate("m", de, "B") == "bé"  # missing in the module's de: the package's
+    assert i18n.translate("m", ["fr", "en"], "A") == "à"  # a language the module lacks
+    assert json.loads(i18n.merged("m", de)[1]) == {"A": "ä", "B": "bé"}
+
+
 def test_core_264_merged_catalog_and_version(tmp_path: Path) -> None:
     module = json_root(tmp_path, "mod", {"en": {"A": "a", "B": "b"}, "de": {"A": "ä"}})
     core = json_root(tmp_path, "core", {"en": {"CORE_X": "x"}})

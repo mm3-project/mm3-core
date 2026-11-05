@@ -7,6 +7,21 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 4 coverage, issue #39)
+
+- `mm3 module check` warns about client message types that are not lower
+  snake case in `ctx.send_to_client()` and `this.send()` (MOD-44, a SHOULD).
+- One test per row of the module check, named after its id, and new
+  defects for MOD-07 (wheel tag), MOD-08 (README without a configuration
+  example), MOD-41 (declared notification missing from the README),
+  MOD-44 and MOD-71 (scoped capability without a README grant); browser
+  harness tests for MOD-54 (media in the preview) and MOD-84 (info logs
+  on every refresh); the review rows MOD-53, MOD-64, MOD-65, MOD-81 and
+  MOD-82 each have a test.
+- MOD-66: the lookup of locale packages cites the Contract and has a test
+  (a package overrides nothing the module ships). MOD-73 is waived (API
+  policy). Milestone 4 is complete at core 0.29 / contract 1.0 rev 13.
+
 ### Added (milestone 6, part D3: admin extensions)
 
 - Module routes (CORE-332, MOD-74): `ctx.router` with the capability

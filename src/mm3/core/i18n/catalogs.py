@@ -11,6 +11,7 @@ shells fetch the merged catalog of an instance at ``/i18n/<instance>.json``.
 Implements:
     CORE-07: Core spec 0.15, §3 Engine components.
     CORE-264, CORE-265, CORE-266: Core spec 0.15, §8.5 Catalogs at run time.
+    MOD-66: Module Contract 1.0 rev 13, §7 Internationalization.
 """
 
 from __future__ import annotations
@@ -194,6 +195,7 @@ class I18n:
     Implements:
         CORE-07: Core spec 0.15, §3 Engine components.
         CORE-264: Core spec 0.15, §8.5 Catalogs at run time.
+        MOD-66: Module Contract 1.0 rev 13, §7 Internationalization.
     """
 
     def __init__(
