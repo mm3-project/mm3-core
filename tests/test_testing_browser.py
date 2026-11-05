@@ -213,3 +213,29 @@ async def test_core_288_this_location_is_resolved_for_the_element(
     assert '"name":"Roma BR"' in await shown("pt-br", place)  # tags compare case-insensitively
     assert '"name":"Home"' in await shown("fr", {"lat": 0, "lon": 0, "name": "Home"})
     assert '"name":null' in await shown("en", {"lat": 0, "lon": 0})
+
+
+async def test_mod_54_preview_that_shows_video_fails(
+    greeting: tuple[Path, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    proj, _ = greeting
+    edit(js(proj), "if (!state.part) return html``;", "return html`<video></video>`;")
+    cls = load(proj, "greeting", monkeypatch)
+    results = await rows(proj, cls)
+    assert results["MOD-54"].status == "fail"
+    assert "placeholder" in " ".join(results["MOD-54"].findings)
+
+
+async def test_mod_84_info_log_on_every_refresh_warns(
+    greeting: tuple[Path, Any], monkeypatch: pytest.MonkeyPatch
+) -> None:
+    proj, _ = greeting
+    edit(
+        js(proj),
+        "if (!state.part) return html``;",
+        'this.log.info("render"); this.log.info("render");\n    if (!state.part) return html``;',
+    )
+    cls = load(proj, "greeting", monkeypatch)
+    results = await rows(proj, cls)
+    assert (results["MOD-84"].level, results["MOD-84"].status) == ("SHOULD", "warn")
+    assert "debug" in " ".join(results["MOD-84"].findings)

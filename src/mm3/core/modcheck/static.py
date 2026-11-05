@@ -51,6 +51,8 @@ SEMVER_NORMALISED = re.compile(
 )
 SCOPED = {"http.outbound": "http", "mqtt.publish": "mqtt", "mqtt.subscribe": "mqtt"}
 CLIENT_MESSAGE_TYPE = re.compile(r"""\.(?:send_to_client|send)\(\s*["']([^"']+)["']""")
+"""A client message type in ``ctx.send_to_client("…")`` or ``this.send("…")`` (MOD-44)."""
+LOWER_SNAKE = re.compile(r"^[a-z][a-z0-9_]*$")
 Found = dict[str, list[Finding]]
 
 
@@ -428,6 +430,19 @@ class _Static:
         for name, rel, line in [*(e for s in self.scans for e in s.emitted), *self._emitted_js]:
             if literal and name not in declared:
                 self.add("MOD-29", f"{name} is sent but not declared in emits", rel, line)
+        # MOD-44: client message types are lower snake case (a SHOULD).
+        for rel, text in sorted({**self.mod.sources, **self.mod.js}.items()):
+            if not rel.endswith((".py", ".js")):
+                continue
+            for m in CLIENT_MESSAGE_TYPE.finditer(text):
+                if not LOWER_SNAKE.match(m.group(1)):
+                    self.add(
+                        "MOD-44",
+                        f"client message type {m.group(1)!r} should be lower snake case",
+                        rel,
+                        text.count("\n", 0, m.start()) + 1,
+                        "warn",
+                    )
         if facts.answers and "on_request" not in facts.hooks:
             self.add(
                 "MOD-24",

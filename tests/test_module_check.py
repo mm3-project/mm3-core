@@ -125,6 +125,9 @@ JS = STATIC / "greeting.js"
 CSS = STATIC / "greeting.css"
 
 
+README = Path("README.md")
+
+
 def po(lang: str) -> Path:
     return Path(f"src/mm3_greeting/locales/{lang}/LC_MESSAGES/messages.po")
 
@@ -186,6 +189,18 @@ MUTATIONS = {
     "MOD-60": (po("en"), 'msgid "HEADER"', 'msgid "Header text"'),
     "MOD-63": (po("en"), "Optional name", "{count} names"),
     "MOD-67": (po("en"), 'msgid "HEADER"\nmsgstr "Greeting"\n\n', ""),
+    "MOD-08": (README, "```yaml\n- module: greeting\n  id: hello\n```\n", ""),
+    "MOD-41": py_edit(
+        "    min_size_px:",
+        '    emits: ClassVar[dict[str, Any]] = {"GREETING_SENT": None}\n    min_size_px:',
+    ),
+    "MOD-44": py_edit(
+        "        await self._publish()", "        await self.ctx.send_to_client('partChanged', {})"
+    ),
+    "MOD-71": py_edit(
+        "    min_size_px:",
+        '    capabilities: ClassVar = frozenset({"http.outbound"})\n    min_size_px:',
+    ),
 }
 
 
@@ -206,8 +221,8 @@ RELATED = {
 }
 
 
-@pytest.mark.parametrize("mod_id", sorted(MUTATIONS))
-def test_core_281_one_defect_fails_its_row(mod_id: str, proj: Path, tmp_path: Path) -> None:
+def one_defect_fails_its_row(mod_id: str, proj: Path, tmp_path: Path) -> None:
+    """Apply the row's mutation; the row fails (or warns), unrelated rows still pass."""
     rel, old, new = MUTATIONS[mod_id]
     edit(proj / rel, old, new)
     if mod_id == "MOD-17":
@@ -219,6 +234,178 @@ def test_core_281_one_defect_fails_its_row(mod_id: str, proj: Path, tmp_path: Pa
         assert checks[mod_id].status == "fail", checks[mod_id]
     failed = {i for i, s in statuses(checks).items() if s == "fail"} - {mod_id}
     assert failed <= RELATED.get(mod_id, set()), failed
+
+
+def test_core_281_every_mutation_has_its_test() -> None:
+    names = {n for n in globals() if n.startswith("test_mod_")}
+    for mod_id in MUTATIONS:
+        prefix = "test_mod_" + mod_id.removeprefix("MOD-") + "_"
+        assert any(n.startswith(prefix) for n in names), mod_id
+
+
+# One test per row, named after it (the trace report reads the id from the name).
+
+
+def test_mod_01_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-01", proj, tmp_path)
+
+
+def test_mod_02_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-02", proj, tmp_path)
+
+
+def test_mod_03_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-03", proj, tmp_path)
+
+
+def test_mod_04_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-04", proj, tmp_path)
+
+
+def test_mod_05_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-05", proj, tmp_path)
+
+
+def test_mod_08_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-08", proj, tmp_path)
+
+
+def test_mod_11_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-11", proj, tmp_path)
+
+
+def test_mod_12_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-12", proj, tmp_path)
+
+
+def test_mod_17_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-17", proj, tmp_path)
+
+
+def test_mod_23_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-23", proj, tmp_path)
+
+
+def test_mod_28_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-28", proj, tmp_path)
+
+
+def test_mod_29_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-29", proj, tmp_path)
+
+
+def test_mod_30_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-30", proj, tmp_path)
+
+
+def test_mod_31_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-31", proj, tmp_path)
+
+
+def test_mod_32_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-32", proj, tmp_path)
+
+
+def test_mod_33_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-33", proj, tmp_path)
+
+
+def test_mod_35_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-35", proj, tmp_path)
+
+
+def test_mod_37_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-37", proj, tmp_path)
+
+
+def test_mod_40_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-40", proj, tmp_path)
+
+
+def test_mod_41_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-41", proj, tmp_path)
+
+
+def test_mod_44_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-44", proj, tmp_path)
+
+
+def test_mod_45_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-45", proj, tmp_path)
+
+
+def test_mod_46_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-46", proj, tmp_path)
+
+
+def test_mod_47_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-47", proj, tmp_path)
+
+
+def test_mod_52_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-52", proj, tmp_path)
+
+
+def test_mod_60_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-60", proj, tmp_path)
+
+
+def test_mod_61_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-61", proj, tmp_path)
+
+
+def test_mod_62_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-62", proj, tmp_path)
+
+
+def test_mod_63_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-63", proj, tmp_path)
+
+
+def test_mod_67_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-67", proj, tmp_path)
+
+
+def test_mod_70_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-70", proj, tmp_path)
+
+
+def test_mod_71_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-71", proj, tmp_path)
+
+
+def test_mod_80_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-80", proj, tmp_path)
+
+
+def test_mod_86_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-86", proj, tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("tag", "ok"),
+    [
+        ("py3-none-any", True),
+        ("py312-none-any", True),
+        ("cp312-cp312-manylinux_2_28_x86_64", True),
+        ("cp312-cp312-linux_x86_64", False),
+        ("cp312-cp312-macosx_14_0_arm64", False),
+        ("cp312-cp312-manylinux_2_28_aarch64", False),
+    ],
+)
+def test_mod_07_wheel_is_pure_or_manylinux_x86_64(
+    tag: str, ok: bool, proj: Path, tmp_path: Path
+) -> None:
+    wheel = build(proj, tmp_path)
+    renamed = wheel.with_name(wheel.name.replace("py3-none-any", tag))
+    wheel.rename(renamed)
+    mod = load_project(proj)
+    extract = tmp_path / "wheel"
+    extract.mkdir()
+    mod.attach_wheel(renamed, extract)
+    checks, _ = run_static(mod)
+    [row] = [c for c in checks if c.id == "MOD-07"]
+    assert row.status == ("pass" if ok else "warn"), row  # a SHOULD
 
 
 # --- suppressions -----------------------------------------------------------------------
@@ -477,11 +664,31 @@ def test_core_281_a_failing_build_fails_mod_05_not_the_tool(
     assert "FAIL MOD-05 [static] the wheel cannot be built" in capsys.readouterr().out
 
 
-def test_mod_53_64_65_81_82_rows_for_a_person_are_on_the_review_list() -> None:
+def on_review_list(mod_id: str) -> None:
     from mm3.core.modcheck.report import review_checks
 
-    listed = {c.id for c in review_checks()}
-    assert {"MOD-53", "MOD-64", "MOD-65", "MOD-81", "MOD-82"} <= listed
+    assert mod_id in {c.id for c in review_checks()}
+    assert CATALOG[mod_id].categories == ("review",) or "review" in CATALOG[mod_id].categories
+
+
+def test_mod_53_is_on_the_review_list() -> None:
+    on_review_list("MOD-53")
+
+
+def test_mod_64_is_on_the_review_list() -> None:
+    on_review_list("MOD-64")
+
+
+def test_mod_65_is_on_the_review_list() -> None:
+    on_review_list("MOD-65")
+
+
+def test_mod_81_is_on_the_review_list() -> None:
+    on_review_list("MOD-81")
+
+
+def test_mod_82_is_on_the_review_list() -> None:
+    on_review_list("MOD-82")
 
 
 def test_core_281_compiled_catalog_does_not_depend_on_the_clock(tmp_path: Path) -> None:
