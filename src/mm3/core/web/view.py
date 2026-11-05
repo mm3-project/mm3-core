@@ -11,6 +11,7 @@ Implements:
     CORE-246: Core spec 0.19, §5.6 WebSocket protocol.
     CORE-288: Core spec 0.19, §6.2 Rules.
     CORE-274: Core spec 0.14, §5.6 WebSocket protocol.
+    CORE-329: Core spec 0.29, §11.1 Engine additions.
 """
 
 from __future__ import annotations
@@ -62,10 +63,13 @@ class ModuleFiles:
     Attributes:
         version: Distribution version, part of the URL (CORE-252).
         static: The package's ``static/`` directory, or ``None``.
+        admin_only: The ``admin_scripts``, served only on the module's admin
+            page and never by the shell's ``/modules/`` route (CORE-329).
     """
 
     version: str
     static: Path | None
+    admin_only: frozenset[str] = frozenset()
 
 
 def module_files(cls: type[MirrorModule], distribution: str | None) -> ModuleFiles:
@@ -92,7 +96,8 @@ def module_files(cls: type[MirrorModule], distribution: str | None) -> ModuleFil
         candidate = None
     if candidate is not None and candidate.is_dir():
         static = candidate
-    return ModuleFiles(version, static)
+    admin = frozenset(s.lstrip("/") for s in cls.admin_scripts)
+    return ModuleFiles(version, static, admin)
 
 
 @dataclass(frozen=True)

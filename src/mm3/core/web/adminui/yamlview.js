@@ -3,7 +3,7 @@
 // from the CodeMirror parser at once; the schema check is POST /config/validate
 // 300 ms after the last keystroke, its records in the gutter; key and enum
 // completion in-house from /config/schema.
-// Implements CORE-301 (Core spec 0.27, §6.4 Web configuration editor): one tab per
+// Implements CORE-301 (Core spec 0.28, §6.4 Web configuration editor): one tab per
 // file, showing the true file content.
 // Implements CORE-151 (Core spec 0.10, §6.8 Configuration history, undo and redo):
 // Ctrl+Z, Ctrl+Shift+Z and Ctrl+Y go to the shared draft history.

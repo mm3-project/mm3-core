@@ -11,6 +11,7 @@ Implements:
     CORE-37: Core spec 0.22, §6.4 Web configuration editor.
     CORE-320: Core spec 0.25, §6.4 Web configuration editor.
     -: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-329: Core spec 0.29, §11.1 Engine additions.
 """
 
 from __future__ import annotations
@@ -78,7 +79,9 @@ def config_schema(registry: Registry) -> dict[str, Any]:
 
     Returns:
         A JSON Schema (draft 2020-12) with ``$defs``; ``x-mm3-modules`` maps each
-        installed module to the definition of its ``config``.
+        installed module to the definition of its ``config``, and
+        ``x-mm3-capabilities`` to its declared capabilities, which the Form
+        view shows with the instance (MOD-71, CORE-329).
 
     Implements:
         CORE-37: Core spec 0.22, §6.4 Web configuration editor.
@@ -98,6 +101,10 @@ def config_schema(registry: Registry) -> dict[str, Any]:
     instance = defs["InstanceConfig"]
     variants = []
     refs: dict[str, str] = {}
+    capabilities: dict[str, list[str]] = {}
+    for entry in registry.entries():
+        if entry.cls is not None:
+            capabilities[entry.name] = sorted(entry.cls.capabilities)
     for name, model in modules.items():
         ref = keys[(model, "validation")]["$ref"]
         refs[name] = ref
@@ -120,4 +127,5 @@ def config_schema(registry: Registry) -> dict[str, Any]:
         **root,
         "$defs": defs,
         "x-mm3-modules": refs,
+        "x-mm3-capabilities": capabilities,
     }

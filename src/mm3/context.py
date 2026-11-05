@@ -5,8 +5,8 @@ Provided so far: identity, ``now()``, messaging, state, tasks,
 ``format_date``, ``format_number``, the current page and pages, ``http``
 and ``mqtt`` (checked against capabilities and grants; their transports
 arrive in milestones 5 and 7, the test kit fakes them) and ``layout``
-(capability ``layout.control``). ``system`` and ``router`` are added with
-their milestones (implementation plan 6 and 7).
+(capability ``layout.control``) and ``router`` (capability ``api.routes``,
+CORE-332). ``system`` is added with its milestone (implementation plan 7).
 
 Implements:
     -: Module Contract 1.0 rev 6, §4 ModuleContext reference.
@@ -18,6 +18,7 @@ Implements:
     -: Module Contract 1.0 rev 9, §4.3 HttpClient.
     -: Module Contract 1.0 rev 9, §4.4 Mqtt.
     MOD-85: Module Contract 1.0 rev 9, §9 Logging, health and errors.
+    MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
 """
 
 from __future__ import annotations
@@ -30,6 +31,8 @@ from pathlib import Path
 from typing import Any, Literal, Protocol, TypeVar
 from uuid import UUID
 from zoneinfo import ZoneInfo
+
+from fastapi import APIRouter
 
 from mm3.http import HttpClient
 from mm3.mqtt import Mqtt
@@ -292,6 +295,11 @@ class ModuleContext(Protocol):
     @property
     def layout(self) -> Layout:
         """Hide or show other instances; needs ``layout.control`` (CORE-241)."""
+        ...
+
+    @property
+    def router(self) -> APIRouter:
+        """Routes under ``/api/v1/modules/<instance id>/``; needs ``api.routes`` (MOD-74)."""
         ...
 
     def create_task(self, coro: Coroutine[Any, Any, Any], *, name: str) -> asyncio.Task[Any]:

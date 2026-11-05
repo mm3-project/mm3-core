@@ -10,6 +10,7 @@ as on a mirror.
 Implements:
     -: Module Contract 1.0 rev 9, §12.2 mm3.testing kit.
     CORE-278: Core spec 0.17, §3.3 Scheduler.
+    MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
 """
 
 from __future__ import annotations
@@ -613,6 +614,49 @@ class ModuleHarness:
     async def restart(self) -> None:
         """Restart the instance: a new object and context (MOD-19)."""
         await self.clock.drive(self.engine.supervisor.restart(self.instance_id))
+
+    async def route(self, method: str, path: str, *, json: Any = None) -> tuple[int, Any]:
+        """Call one of the instance's ``ctx.router`` routes as the API would (MOD-74).
+
+        The request goes through the engine's module-route dispatcher
+        (CORE-332), without authentication; virtual time moves until it is
+        answered, so a handler over budget answers 504.
+
+        Args:
+            method: HTTP method.
+            path: Path below ``/api/v1/modules/<instance id>/``.
+            json: JSON body, if any.
+
+        Returns:
+            ``(status, body)``: the body parsed as JSON when it is JSON, else bytes.
+        """
+        import httpx
+        from fastapi import APIRouter, FastAPI, Request
+        from fastapi.responses import Response
+
+        from mm3.core.web.modroutes import ModuleRoutes
+        from mm3.core.web.modroutes import register as register_routes
+        from mm3.core.web.problems import ApiError
+
+        app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
+        api = APIRouter(prefix="/api/v1")
+        register_routes(api, ModuleRoutes(self.engine.supervisor))
+        app.include_router(api)
+
+        async def problem(_request: Request, exc: Exception) -> Response:
+            assert isinstance(exc, ApiError)  # noqa: S101
+            return exc.response()
+
+        app.add_exception_handler(ApiError, problem)
+        url = f"/api/v1/modules/{self.instance_id}/{path.lstrip('/')}"
+        async with httpx.AsyncClient(
+            transport=httpx.ASGITransport(app=app), base_url="http://kit"
+        ) as client:
+            resp = await self.clock.drive(client.request(method, url, json=json))
+        try:
+            return resp.status_code, resp.json()
+        except ValueError:
+            return resp.status_code, resp.content
 
     async def check_contract(self) -> None:
         """Run every test-kit row of Contract section 11 on fresh instances.

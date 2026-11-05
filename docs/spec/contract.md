@@ -1,6 +1,6 @@
 # MM3 Module Contract v1.0
 
-Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 12 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 13 (draft)
 
 ## 1. Scope and conformance
 
@@ -292,6 +292,8 @@ customElements.define("mm3-weather", WeatherElement);
 - MOD-35: Timers MUST be created with `this.setInterval` / `this.setTimeout` (cleared automatically on disconnect), not `window.setInterval`.
 - MOD-36: The element MUST render something sensible for an empty state `{}` (e.g. a skeleton), because it may receive one before data arrives.
 - MOD-37: The element MUST import templating only from `/core/mm3.js` and MUST NOT import scripts from outside its own `static/` directory and `/core/`; lit-html is an engine detail behind `/core/mm3.js`, not part of the Module API (MOD-94).
+- MOD-38: An `admin_element` (core CORE-102, CORE-329) is a custom element defined by the module's `admin_scripts`, ES modules from its own `static/` directory. It extends `HTMLElement`, not `MirrorElement`, and may import `html`, `svg`, `nothing` and `render` from `/core/mm3.js`. Before it is connected it receives `api`, `module`, `instances`, `locale` and `t(key, params)` (core CORE-330, CORE-331). It loads only on the admin page `/admin/ext/<module>`, never on the mirror, and needs the capability `admin.extension` (section 8).
+- MOD-39: An admin element MUST reach the engine and its own backend only through `api` (no `fetch`, XHR, WebSocket or EventSource of its own, as MOD-32), MUST take every user-visible text from `t()` (MOD-61), and MUST NOT use inline script or style (core CORE-63).
 
 ## 6. Messaging, configuration, layout and preview
 
@@ -388,6 +390,7 @@ Privileged context members work only if the module declares the capability in `c
 - MOD-71: A module MUST request the narrowest scope it needs and document required grants in its README; the admin UI shows requested vs granted scopes when the module is added.
 - MOD-72: A module MUST keep working (degraded, with a clear message) when a grant is missing, rather than crash.
 - MOD-73: The capability list is closed in API 1.x; new capabilities arrive only in a minor API release and are added to this table.
+- MOD-74: Routes on `ctx.router` (capability `api.routes`) are served under `/api/v1/modules/<instance id>/` with admin authentication, from the end of `start()` until the instance stops (core CORE-332, MOD-22). Handlers MUST NOT block the event loop and MUST answer within the handler budget; they MUST NOT use the engine's own sub-paths (`health`, `show`, `hide`, `restart`, `stop`, `start`, `log-level`), and MUST NOT return secret values (MOD-47).
 
 ## 9. Logging, health and errors
 
@@ -453,6 +456,8 @@ A module is compliant when every MUST below passes; `mm3 module check` runs all 
 | MOD-35 | Timers via `this.setInterval/setTimeout` | MUST | static |
 | MOD-36 | Renders empty state `{}` | MUST | harness |
 | MOD-37 | Templating and imports only from /core/mm3.js and own static/ | MUST | static |
+| MOD-38 | Admin element from own static/, admin.extension declared | MUST | static |
+| MOD-39 | Admin element uses only api, t() and no inline code | MUST | static (JS scan) |
 | MOD-40 | `UPPER_SNAKE` notification names | MUST | static |
 | MOD-41 | Notifications documented in README | MUST | static (README vs code) |
 | MOD-42 | Payload size, no secrets, ISO times | MUST | test kit |
@@ -478,6 +483,7 @@ A module is compliant when every MUST below passes; `mm3 module check` runs all 
 | MOD-70 | All used capabilities declared | MUST | static + test kit |
 | MOD-71 | Narrowest scopes, grants in README | MUST | static (README) + review |
 | MOD-72 | Degrades cleanly without grants | MUST | test kit (run with no grants) |
+| MOD-74 | Routes under own prefix, non-blocking, no engine sub-paths, no secrets | MUST | test kit + review |
 | MOD-80 | Logging only via `ctx.log` / `this.log` | MUST | static |
 | MOD-81 | Event-style log records | SHOULD | review |
 | MOD-82 | Correct log levels | SHOULD | review |
@@ -698,6 +704,7 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
+| 1.0 rev 13 | 2026-11-05 | Aligned with core spec 0.29: the admin element and its rules (MOD-38, MOD-39 added, §5.3, §11) and module routes on ctx.router (MOD-74 added, §8, §11); /core/mm3.js also exports render |
 | 1.0 rev 12 | 2026-10-30 | Aligned with core spec 0.19: ctx.location and this.location (§4, §5.2; core CORE-288); transport rules for ctx.http: TLS verification, User-Agent, address rule, redirects, 60 s timeout cap (§4.3; core CORE-282–287); grant entries {prefix, ca} (§8; core CORE-284). No MOD ids added, changed or removed |
 | 1.0 rev 11 | 2026-10-30 | §12.1 check options: the test kit's configuration and grants come from config\_model and the module's capabilities, and the optional \[tool.mm3.check\] table of pyproject.toml replaces them. No MOD ids added, changed or removed |
 | 1.0 rev 10 | 2026-10-30 | §12.2 contract checks aligned with the test kit: slow callbacks timed with a real clock instead of asyncio debug mode; the no-grants run applies only to modules declaring a capability with a grant scope; fresh instances reuse the test's HTTP mocks and responders. No MOD ids added, changed or removed |

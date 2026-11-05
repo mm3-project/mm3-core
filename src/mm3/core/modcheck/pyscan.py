@@ -81,6 +81,8 @@ class ClassFacts:
         config_model: Name of the ``config_model`` class.
         hooks: Hook name to ``(is_async, line)``.
         admin: ``admin_element`` or ``admin_scripts`` assigned.
+        admin_element: The ``admin_element`` tag, if a literal (MOD-38).
+        admin_scripts: The ``admin_scripts`` (MOD-38).
     """
 
     cls: str
@@ -98,6 +100,8 @@ class ClassFacts:
     non_literal: list[str] = field(default_factory=list)
     min_size: bool = False
     api_version: str | None = None
+    admin_element: str | None = None
+    admin_scripts: list[str] = field(default_factory=list)
     config_model: str | None = None
     hooks: dict[str, tuple[bool, int]] = field(default_factory=dict)
     admin: bool = False
@@ -221,6 +225,14 @@ def _read_attribute(facts: ClassFacts, attr: str, value: ast.expr) -> None:
         const is None and attr == "admin_element"
     ):
         facts.admin = True
+        if attr == "admin_element" and isinstance(const, str):
+            facts.admin_element = const
+        elif attr == "admin_scripts":
+            items = _str_items(value)
+            if items is None:
+                facts.non_literal.append(attr)
+            else:
+                facts.admin_scripts.extend(items)
 
 
 class _Visitor(ast.NodeVisitor):

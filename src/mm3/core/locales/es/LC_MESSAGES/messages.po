@@ -693,3 +693,9 @@ msgstr "{id}: desactivado"
 
 msgid "CORE_ADMIN_STEP_RESCALED"
 msgstr "Reescalado a {columns} × {rows}"
+
+msgid "CORE_ADMIN_EXT_FAILED"
+msgstr "No se pudo cargar la página de administración de {module}."
+
+msgid "CORE_ADMIN_CAPABILITIES"
+msgstr "Capacidades"

@@ -13,6 +13,8 @@
 // shows the diff first.
 // Implements CORE-324 (Core spec 0.26, §6.8 Configuration history, undo and redo):
 // Open in editor loads a version as the draft.
+// Implements CORE-329 (Core spec 0.29, §11.1 Engine additions): the Form view lists the
+// instance's capabilities, admin.extension among them (MOD-71).
 
 import { html, nothing, render } from "/admin/static/lit-html.js";
 import { loadTexts, t } from "/admin/static/admin.js";
@@ -239,6 +241,7 @@ class AdminConfig extends HTMLElement {
           <button ?disabled=${!last || this.busy} title=${last ? last.label : ""} @click=${() => this.sectionUndo(section)}>
             ${t("CORE_ADMIN_UNDO_HERE")}</button>
         </div>
+        ${this.capabilityLine(value)}
         <mm3-schema-form
           .data=${{
             schema: this.schema,
@@ -253,6 +256,15 @@ class AdminConfig extends HTMLElement {
           @mm3-change=${(e) => this.formChange(e.detail)}></mm3-schema-form>
       </section>
     </div>`;
+  }
+
+  /** The module's declared capabilities, shown with the instance (MOD-71, CORE-329). */
+  capabilityLine(value) {
+    const caps = (this.schema && this.schema["x-mm3-capabilities"]) || {};
+    const list = value && typeof value === "object" ? caps[value.module] : null;
+    if (!list || !list.length) return nothing;
+    return html`<p class="muted capabilities">${t("CORE_ADMIN_CAPABILITIES")}:
+      ${list.map((c, i) => html`${i ? ", " : ""}<code>${c}</code>`)}</p>`;
   }
 
   hasError(section) {

@@ -26,6 +26,7 @@ Implements:
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
     CORE-301, CORE-302: Core spec 0.28, §6.4 Web configuration editor.
     CORE-307: Core spec 0.28, §6.6 Live layout preview.
+    CORE-332: Core spec 0.29, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -52,6 +53,8 @@ from mm3.core.diag.secrets import Masker
 from mm3.core.logging import get_logger, log_levels, numbered_records
 from mm3.core.web.auth import WebAuth
 from mm3.core.web.kiosk import KioskStatus
+from mm3.core.web.modroutes import ModuleRoutes
+from mm3.core.web.modroutes import register as register_module_routes
 from mm3.core.web.problems import ApiError
 from mm3.messages import MAX_PAYLOAD_BYTES, Notification, check_payload
 from mm3.notifications import validate_payload
@@ -748,6 +751,8 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
         hub.control("reload", {"scope": "page"})
         return {"clients": len(hub.clients())}
 
+    # Module routes last, so the engine's own routes answer first (CORE-332).
+    register_module_routes(router, ModuleRoutes(sup))
     return router
 
 

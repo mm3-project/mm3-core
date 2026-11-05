@@ -287,3 +287,32 @@ def test_mod_23_importing_an_http_library_is_flagged(src: str) -> None:
 )
 def test_mod_23_ctx_http_and_non_client_imports_pass(src: str) -> None:
     assert py_ids(src) == []
+
+
+# --- admin scripts (MOD-38, MOD-39) ---------------------------------------------------
+
+ADMIN = JsContext("demo", "mm3-demo-admin", "admin.js", admin=True)
+
+
+def test_mod_39_admin_script_gets_no_network_of_its_own() -> None:
+    src = 'customElements.define("mm3-demo-admin", E);\nfetch("/api/v1/status");\n'
+    assert js_ids(src, ADMIN) == ["MOD-39"]
+    assert js_ids(
+        "new WebSocket('ws://x');\n" + 'customElements.define("mm3-demo-admin", E);', ADMIN
+    ) == ["MOD-39"]
+    # this.api is the way (CORE-331): no finding.
+    assert (
+        js_ids('customElements.define("mm3-demo-admin", E);\nthis.api.get("status");\n', ADMIN)
+        == []
+    )
+
+
+def test_mod_38_admin_script_tag_imports_and_timers() -> None:
+    assert js_ids('customElements.define("mm3-other", E);', ADMIN) == ["MOD-38"]
+    assert js_ids(
+        'import x from "https://cdn.example/x.js";\ncustomElements.define("mm3-demo-admin", E);',
+        ADMIN,
+    ) == ["MOD-38"]
+    # Admin elements extend HTMLElement: plain timers are not MOD-35 findings there.
+    assert js_ids('setInterval(f, 1000);\ncustomElements.define("mm3-demo-admin", E);', ADMIN) == []
+    assert "MOD-35" in js_ids("setInterval(f, 1000);\n" + DEFINE)

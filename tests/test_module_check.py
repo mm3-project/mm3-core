@@ -25,6 +25,8 @@ from module_projects import chromium_available, edit, write_greeting
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_ONLY = {"MOD-96", "MOD-97", "MOD-98", "MOD-99"}
+STATIC_ROWS = sum("static" in r.categories for r in CATALOG.values())
+KIT_ROWS = sum("kit" in r.categories for r in CATALOG.values())
 
 
 def contract_rows() -> dict[str, tuple[str, str]]:
@@ -396,8 +398,9 @@ def test_core_281_compliant_module_passes_all_stages(
     junit = tmp_path / "junit.xml"
     assert main(["module", "check", str(proj), "--junit", str(junit)]) == 0
     out = capsys.readouterr().out
-    assert "Static      36 passed, 0 failed, 0 warnings" in out
-    assert "Test kit    17 passed, 0 failed" in out
+    # Counted from the section 11 rows, so new rows do not break the test.
+    assert f"Static      {STATIC_ROWS} passed, 0 failed, 0 warnings" in out
+    assert f"Test kit    {KIT_ROWS} passed, 0 failed" in out
     assert "Harness     6 passed, 0 failed" in out
     assert "Result      COMPLIANT (API 1.0)" in out
     report = json.loads((proj / ".mm3" / "check-report.json").read_text())
@@ -444,7 +447,7 @@ def test_core_281_kit_finds_what_the_static_stage_cannot(
     assert main(["module", "check", str(proj)]) == 1
     out = capsys.readouterr().out
     assert "FAIL MOD-10 [kit]" in out
-    assert "Static      36 passed, 0 failed" in out
+    assert f"Static      {STATIC_ROWS} passed, 0 failed" in out
 
 
 @needs_uv
@@ -508,3 +511,50 @@ def test_core_281_compiled_catalog_does_not_depend_on_the_clock(tmp_path: Path) 
     shifted = types.SimpleNamespace(**{**vars(dt), "datetime": Later})
     with mock.patch.object(babel_catalog, "datetime", shifted):
         assert compiled(po)[0] == first
+
+
+# --- MOD-38: the admin element ------------------------------------------------------------
+
+ADMIN_JS = """import { html, render } from "/core/mm3.js";
+
+class GreetingAdmin extends HTMLElement {
+  connectedCallback() {
+    render(html`<p>${this.t("HEADER")}</p>`, this);
+  }
+}
+customElements.define("mm3-greeting-admin", GreetingAdmin);
+"""
+
+
+def add_admin(proj: Path, *, capability: bool = True, script: bool = True) -> None:
+    init = pkg(proj) / "__init__.py"
+    caps = '    capabilities: ClassVar[frozenset[str]] = frozenset({"admin.extension"})\n'
+    edit(
+        init,
+        '    styles: ClassVar[list[str]] = ["greeting.css"]\n',
+        '    styles: ClassVar[list[str]] = ["greeting.css"]\n'
+        '    admin_element: ClassVar[str | None] = "mm3-greeting-admin"\n'
+        '    admin_scripts: ClassVar[list[str]] = ["admin.js"]\n' + (caps if capability else ""),
+    )
+    if script:
+        (pkg(proj) / "static" / "admin.js").write_text(ADMIN_JS)
+
+
+def test_mod_38_admin_extension_passes(proj: Path, tmp_path: Path) -> None:
+    add_admin(proj)
+    assert statuses(static(proj, tmp_path)) == {}
+
+
+def test_mod_38_admin_element_needs_the_capability(proj: Path, tmp_path: Path) -> None:
+    add_admin(proj, capability=False)
+    checks = static(proj, tmp_path)
+    assert checks["MOD-38"].status == "fail"
+    assert any("admin.extension" in f.message for f in checks["MOD-38"].findings)
+
+
+def test_mod_38_admin_scripts_must_be_in_the_wheel(proj: Path, tmp_path: Path) -> None:
+    add_admin(proj, script=False)
+    checks = static(proj, tmp_path)
+    assert checks["MOD-38"].status == "fail"
+    messages = " ".join(f.message for f in checks["MOD-38"].findings)
+    assert "admin.js" in messages

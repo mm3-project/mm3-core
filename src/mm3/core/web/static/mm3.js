@@ -9,9 +9,12 @@
 // onMessage and onNotification are wrapped; errors go out with stack and user agent
 // Implements CORE-98 (Core spec 0.1, §6.6 Live layout preview): `preview` is true in
 // the admin's preview shell, so modules can render a placeholder instead
+// Implements MOD-38 (Module Contract 1.0 rev 13, §5.3 Rules): `render` is exported for
+// admin elements
 import { html, svg, nothing, render as litRender } from "/core/vendor/lit-html/lit-html.js";
 
-export { html, svg, nothing };
+// `render` is for admin elements (MOD-38), which extend HTMLElement and render themselves.
+export { html, svg, nothing, litRender as render };
 
 const BIND = Symbol("mm3.bind");
 export const bind = BIND;
