@@ -12,6 +12,7 @@ Implements:
     CORE-212, CORE-213, CORE-214: Core spec 0.9, §6.5 Screen layout.
     CORE-140, CORE-141, CORE-142, CORE-215: Core spec 0.9, §6.7 Display output.
     CORE-230, CORE-231, CORE-232: Core spec 0.9, §6.9 Pages and visibility.
+    CORE-274: Core spec 0.14, §5.6 WebSocket protocol.
     MOD-67: Module Contract 1.0 rev 6, §7 Internationalization.
 """
 
@@ -19,7 +20,7 @@ from __future__ import annotations
 
 import math
 import re
-from collections.abc import Callable, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from fractions import Fraction
 from typing import Any
@@ -50,6 +51,7 @@ __all__ = [
     "check_css",
     "check_layout",
     "header_text",
+    "layout_object",
     "preset_cells",
     "viewport",
 ]
@@ -275,12 +277,15 @@ class LayoutResult:
         cell: Cell size in CSS pixels.
         pages: One plan per page, in page order.
         records: Problems found.
+        grid: ``{columns, rows, gap, padding}``, gap and padding in CSS
+            pixels, as the ``grid`` of the layout object (CORE-274).
     """
 
     viewport: Viewport
     cell: tuple[float, float]
     pages: list[PagePlan]
     records: list[ValidationRecord]
+    grid: dict[str, float] = field(default_factory=dict)
 
 
 _URL = re.compile(r"url\(\s*(['\"]?)(.*?)\1\s*\)", re.I | re.S)
@@ -470,7 +475,13 @@ def check_layout(
     plans: list[PagePlan] = []
     for page in page_ids:
         plans.append(_plan_page(ctx, page, shown, layout, cols, rows, cell))
-    return LayoutResult(view, cell, plans, ctx.records)
+    grid = {
+        "columns": cols,
+        "rows": rows,
+        "gap": float(layout.gap),
+        "padding": float(layout.padding),
+    }
+    return LayoutResult(view, cell, plans, ctx.records, grid)
 
 
 def _plan_page(
@@ -561,3 +572,42 @@ def _plan_page(
                 page,
             )
     return plan
+
+
+def layout_object(layout: LayoutResult, grid: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    """Convert the engine's layout to the ``layout`` object of CORE-274.
+
+    Args:
+        layout: The layout computed from a valid configuration.
+        grid: ``{columns, rows, gap, padding}`` in CSS pixels; by default
+            the layout's own ``grid``.
+
+    Returns:
+        ``{viewport, cell, grid, pages: {<page id>: [placement, …]}}``.
+
+    Implements:
+        CORE-274: Core spec 0.14, §5.6 WebSocket protocol.
+    """
+    return {
+        "viewport": [layout.viewport.width, layout.viewport.height],
+        "cell": [layout.cell[0], layout.cell[1]],
+        "grid": dict(layout.grid if grid is None else grid),
+        "pages": {
+            plan.page: [
+                {
+                    "instance": p.instance,
+                    "col": p.cells.col,
+                    "row": p.cells.row,
+                    "width": p.cells.width,
+                    "height": p.cells.height,
+                    "z": p.cells.z,
+                    "preset": p.preset,
+                    "stack_index": p.stack_index,
+                    "stack_size": p.stack_size,
+                    "area": [p.area.width, p.area.height],
+                }
+                for p in plan.placements
+            ]
+            for plan in layout.pages
+        },
+    }

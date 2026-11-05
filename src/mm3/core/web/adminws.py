@@ -15,9 +15,13 @@ then new ones; the inspector captures while a ``bus`` subscription is open
 (CORE-115). A ``subscribe`` with an unknown topic, filter key or level is
 ignored and logged as a warning (CORE-316).
 
+The channel also tells which admin sessions have one open: Show on mirror
+reverts when the session that pushed a draft has none left (CORE-307).
+
 Implements:
     CORE-304, CORE-115: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-316, CORE-317: Core spec 0.24, §10.5 Diagnostics and debugging.
+    CORE-307: Core spec 0.28, §6.6 Live layout preview.
 """
 
 from __future__ import annotations
@@ -36,6 +40,7 @@ from mm3.core.diag.inspector import BusFilter, BusInspector
 from mm3.core.diag.logfilter import LogFilter
 from mm3.core.logging import get_logger, numbered_records, observe
 from mm3.core.web.auth import WebAuth, origin_matches
+from mm3.core.web.sessions import ADMIN_COOKIE
 from mm3.core.web.ws import MAX_FRAME_BYTES
 
 __all__ = ["CLOSE_FORBIDDEN", "INITIAL_LOGS", "QUEUE_FRAMES", "TOPICS", "AdminChannel"]
@@ -70,9 +75,12 @@ class _Topic:
 class _Admin:
     """One open admin channel."""
 
-    def __init__(self, ws: WebSocket, loop: asyncio.AbstractEventLoop) -> None:
+    def __init__(
+        self, ws: WebSocket, loop: asyncio.AbstractEventLoop, sid: str | None = None
+    ) -> None:
         self.ws = ws
         self.loop = loop
+        self.sid = sid
         self.topics: dict[str, _Topic] = {}
         self.ready = asyncio.Event()
 
@@ -133,11 +141,16 @@ class AdminChannel:
         self.inspector = inspector
         self.interval = interval
         self._open: set[_Admin] = set()
+        self.session_closed: list[Callable[[str], None]] = []
 
     @property
     def connections(self) -> int:
         """Open admin channels."""
         return len(self._open)
+
+    def has_session(self, sid: str) -> bool:
+        """Whether the admin session ``sid`` has an open channel (CORE-307)."""
+        return any(a.sid == sid for a in self._open)
 
     async def serve(self, ws: WebSocket) -> None:
         """Run one admin channel until it closes.
@@ -151,7 +164,7 @@ class AdminChannel:
         if not allowed:
             await ws.close(CLOSE_FORBIDDEN)
             return
-        admin = _Admin(ws, asyncio.get_running_loop())
+        admin = _Admin(ws, asyncio.get_running_loop(), ws.cookies.get(ADMIN_COOKIE))
         self._open.add(admin)
         sender = asyncio.create_task(admin.sender(), name="mm3-admin-ws-sender")
         try:
@@ -170,6 +183,9 @@ class AdminChannel:
             for topic in list(admin.topics):
                 admin.close_topic(topic)
             self._open.discard(admin)
+            if admin.sid is not None and not self.has_session(admin.sid):
+                for listener in list(self.session_closed):
+                    listener(admin.sid)
 
     def _handle(self, admin: _Admin, text: str) -> None:
         try:

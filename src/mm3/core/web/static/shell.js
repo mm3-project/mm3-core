@@ -9,6 +9,8 @@
 // Implements CORE-268 (Core spec 0.20, §6.7 Display output)
 // Implements CORE-235 (Core spec 0.15, §6.9 Pages and visibility)
 // Implements CORE-264, CORE-267 (Core spec 0.15, §8.5 Catalogs at run time)
+// Implements CORE-325 (Core spec 0.28, §6.6 Live layout preview): in preview mode the
+// admin page sends the draft layout and the selected page with postMessage.
 import { bind } from "/core/mm3.js";
 
 const mode = document.documentElement.dataset.mode === "preview" ? "preview" : "mirror";
@@ -42,6 +44,9 @@ let customLink = null;
 let nextRid = 1;
 let inbox = Promise.resolve();
 const pendingRequests = new Map();
+let draftLayout = null; // preview: the admin's draft layout (CORE-325)
+let pinnedPage = null; // preview: the page of the admin's selector (CORE-242)
+const placeholders = new Map(); // preview: draft instances without an element
 
 function clientId() {
   try {
@@ -215,7 +220,7 @@ async function onWelcome(data) {
   // Pointer events reach elements only with engine.input.touch (CORE-103).
   document.documentElement.dataset.touch = data.touch ? "true" : "false";
   applyCustomCss(data.custom_css);
-  applyLayout(data.layout);
+  applyLayout(draftLayout || data.layout);
   const wanted = new Set(data.instances.map((i) => i.id));
   for (const [id, cell] of cells) {
     const info = data.instances.find((i) => i.id === id);
@@ -228,8 +233,33 @@ async function onWelcome(data) {
   }
   for (const id of [...cells.keys()]) if (!wanted.has(id)) removeCell(id);
   current = { page: data.page, visible: new Set(data.instances.map((i) => i.id)), transition: "none" };
+  if (pinnedPage !== null) current = { page: pinnedPage, visible: pinnedVisible(), transition: "none" };
   place();
 }
+
+// --- preview messages from the admin page (CORE-325) ----------------------------------
+
+function pinnedVisible() {
+  return new Set((welcome.layout.pages[pinnedPage] || []).map((p) => p.instance));
+}
+
+function onPreviewMessage(ev) {
+  if (ev.source !== window.parent || ev.origin !== location.origin) return;
+  const d = ev.data;
+  if (!d || d.kind !== "control") return;
+  if (d.action === "layout" && d.layout && d.layout.grid && d.layout.pages) {
+    draftLayout = d.layout;
+    if (!welcome) return;
+    applyLayout(d.layout);
+    if (pinnedPage !== null) current = { ...current, page: pinnedPage, visible: pinnedVisible() };
+    place();
+  } else if (d.action === "page" && typeof d.page === "string") {
+    pinnedPage = d.page;
+    if (welcome) changePage({ page: d.page, visible: [...pinnedVisible()], transition: "none" });
+  }
+}
+
+if (mode === "preview") window.addEventListener("message", onPreviewMessage);
 
 const keyOf = (info) => `${info.module}|${info.element}|${info.scripts.join(",")}`;
 
@@ -403,6 +433,33 @@ function place() {
     setShown(cell, shown, FADE_MS);
     if (cell.el) cell.el.page = current.page;
   }
+  if (mode === "preview") placeHolders(placements);
+}
+
+function placeHolders(placements) {
+  // A draft instance without a running element shows as an empty cell (CORE-325).
+  const wanted = new Set();
+  for (const p of placements) {
+    if (cells.has(p.instance)) continue;
+    wanted.add(p.instance);
+    let n = placeholders.get(p.instance);
+    if (!n) {
+      n = document.createElement("div");
+      n.className = "mm3-placeholder";
+      n.dataset.instance = p.instance;
+      n.textContent = p.instance;
+      grid.append(n);
+      placeholders.set(p.instance, n);
+    }
+    n.style.gridArea = `${p.row} / ${p.col} / span ${p.height} / span ${p.width}`;
+    n.style.zIndex = String(p.z);
+  }
+  for (const [id, n] of placeholders) {
+    if (!wanted.has(id)) {
+      n.remove();
+      placeholders.delete(id);
+    }
+  }
 }
 
 function setShown(cell, shown, fade) {
@@ -430,6 +487,8 @@ function setShown(cell, shown, fade) {
 function onControl(instance, data) {
   switch (data.action) {
     case "page":
+      // Once the admin picked a page, the preview stays on it (CORE-325).
+      if (mode === "preview" && pinnedPage !== null) return undefined;
       return changePage(data);
     case "show":
     case "hide": {

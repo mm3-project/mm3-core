@@ -218,6 +218,8 @@ def source_files() -> list[Path]:
         [
             *src.rglob("static/*.js"),
             *src.rglob("static/*.css"),
+            *src.rglob("adminui/*.js"),
+            *src.rglob("adminui/*.css"),
             *modules_dir.glob("*/src/**/static/*.js"),
             *modules_dir.glob("*/src/**/static/*.css"),
         ]

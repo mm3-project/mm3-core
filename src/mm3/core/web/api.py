@@ -20,11 +20,12 @@ Implements:
     CORE-299: Core spec 0.22, §9.1 Remote-control API.
     CORE-311, CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-316, CORE-318: Core spec 0.24, §10.5 Diagnostics and debugging.
-    CORE-300, CORE-302, CORE-303, CORE-35: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-300, CORE-303, CORE-35: Core spec 0.22, §6.4 Web configuration editor.
     CORE-321: Core spec 0.25, §6.8 Configuration history, undo and redo.
     CORE-324: Core spec 0.26, §6.8 Configuration history, undo and redo.
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
-    CORE-301: Core spec 0.27, §6.4 Web configuration editor.
+    CORE-301, CORE-302: Core spec 0.28, §6.4 Web configuration editor.
+    CORE-307: Core spec 0.28, §6.6 Live layout preview.
 """
 
 from __future__ import annotations
@@ -62,6 +63,7 @@ if TYPE_CHECKING:
     from mm3.core.pages import PageService
     from mm3.core.supervisor import ManagedInstance
     from mm3.core.web.kiosk import KioskAgents
+    from mm3.core.web.mirrorpreview import MirrorPreview
     from mm3.core.web.ws import ClientHub
 
 __all__ = ["ApiServices", "api_router", "check_api_auth", "openapi_schema", "status_object"]
@@ -85,6 +87,7 @@ class ApiServices:
         masker: Returns the masker for the running configuration's secrets
             (CORE-116, CORE-319).
         editor: The configuration editor and history (CORE-301, CORE-321).
+        mirror: Show on mirror (CORE-307).
     """
 
     engine: Engine
@@ -95,6 +98,7 @@ class ApiServices:
     build: str = ""
     masker: Callable[[], Masker] = field(default=Masker)
     editor: ConfigEditor | None = None
+    mirror: MirrorPreview | None = None
 
 
 # --- request bodies ---------------------------------------------------------------------
@@ -165,6 +169,39 @@ class RestoreBody(_Body):
 
     version: StrictInt = Field(ge=1)
     section: str | None = None
+
+
+class GridBody(_Body):
+    """The ``grid`` of a layout object (CORE-274)."""
+
+    columns: StrictInt = Field(ge=1, le=48)
+    rows: StrictInt = Field(ge=1, le=48)
+    gap: float = Field(ge=0, le=500)
+    padding: float = Field(ge=0, le=500)
+
+
+class PlacementBody(_Body):
+    """One instance on one page of a layout object (CORE-274)."""
+
+    instance: str = Field(min_length=1, max_length=64)
+    col: StrictInt = Field(ge=1, le=48)
+    row: StrictInt = Field(ge=1, le=48)
+    width: StrictInt = Field(ge=1, le=48)
+    height: StrictInt = Field(ge=1, le=48)
+    z: StrictInt = Field(ge=-1000, le=1000)
+    preset: str | None = Field(default=None, max_length=32)
+    stack_index: StrictInt = Field(default=0, ge=0)
+    stack_size: StrictInt = Field(default=1, ge=1)
+    area: tuple[float, float]
+
+
+class LayoutBody(_Body):
+    """``POST /api/v1/preview/mirror``: a draft layout object (CORE-274, CORE-307)."""
+
+    viewport: tuple[StrictInt, StrictInt]
+    cell: tuple[float, float]
+    grid: GridBody
+    pages: dict[str, list[PlacementBody]] = Field(max_length=32)
 
 
 class RequestBody(NotifyBody):
@@ -394,6 +431,32 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
             raise ApiError("CORE_API_NO_KIOSK", "The kiosk agent did not take the values")
         _log.info("api_kiosk_audio", volume=body.volume, mute=body.mute)
         return kiosk()
+
+    # --- Show on mirror (CORE-307) -----------------------------------------------------
+
+    @router.post("/preview/mirror", status_code=204)
+    async def push_mirror(body: LayoutBody, request: Request) -> Response:
+        """Show a draft layout on the kiosk shell only, for 60 s after the last push."""
+        from mm3.core.web.mirrorpreview import NoKioskError
+        from mm3.core.web.sessions import ADMIN_COOKIE
+
+        mirror = services.mirror
+        if mirror is None:
+            raise ApiError("CORE_API_NO_KIOSK", "No kiosk shell is connected")
+        bearer = request.headers.get("authorization", "").lower().startswith("bearer ")
+        session = None if bearer else request.cookies.get(ADMIN_COOKIE)
+        try:
+            mirror.push(body.model_dump(mode="json"), session)
+        except NoKioskError:
+            raise ApiError("CORE_API_NO_KIOSK", "No kiosk shell is connected") from None
+        return Response(status_code=204)
+
+    @router.delete("/preview/mirror", status_code=204)
+    async def end_mirror() -> Response:
+        """Send the running layout to the kiosk again."""
+        if services.mirror is not None:
+            services.mirror.clear("delete")
+        return Response(status_code=204)
 
     # --- notify and request ---------------------------------------------------------
 

@@ -1,5 +1,7 @@
 /* Admin pages (core spec 9.1, 10.5): served on the admin listener only.
    No inline styles anywhere (CORE-63): every look is a class here. */
+/* Implements CORE-63 (Core spec 0.28, §10.1 Security): no inline styles */
+/* Implements CORE-326 (Core spec 0.28, §6.6 Live layout preview): the Layout view */
 
 :root {
   --bg: #f6f7f9;
@@ -172,3 +174,34 @@ button.link { border: none; background: none; color: var(--accent); padding: 2px
 .yaml .cm-host { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); min-height: 300px; margin-bottom: 12px; }
 .yaml .cm-host .cm-editor { min-height: 300px; max-height: 70vh; }
 nav.tabs.files button { font-family: var(--mono); font-size: 12px; }
+
+/* Layout view (core spec 6.6, CORE-326): the preview iframe scaled into the stage, the
+   editing overlay above it at the same scale. Sizes are set from script (CSSOM). */
+.layout-view .toolbar label { display: inline-flex; align-items: center; gap: 6px; }
+.layout-view .stage { width: 100%; margin: 12px 0; }
+.layout-view .frame { position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: #000; }
+.layout-view iframe, .layout-view .overlay { position: absolute; top: 0; left: 0; border: 0; transform-origin: 0 0; }
+.layout-view iframe { pointer-events: none; }
+.layout-view .overlay { touch-action: none; user-select: none; }
+.layout-view .overlay .strip { position: absolute; pointer-events: none; outline: 1px dashed rgba(122, 162, 255, 0.25); }
+.layout-view .overlay .box {
+  position: absolute; box-sizing: border-box; cursor: move;
+  border: 2px solid rgba(122, 162, 255, 0.8); background: rgba(122, 162, 255, 0.12);
+}
+.layout-view .overlay .box.preset { border-style: dashed; }
+.layout-view .overlay .box.selected { border-color: #7aa2ff; background: rgba(122, 162, 255, 0.22); z-index: 1; }
+.layout-view .overlay .box.invalid { border-color: #ff5a4f; background: rgba(255, 90, 79, 0.3); }
+.layout-view .overlay .box .label {
+  position: absolute; top: 4px; left: 6px; padding: 1px 6px; border-radius: 4px;
+  background: rgba(0, 0, 0, 0.6); color: #fff; font: 14px var(--mono); pointer-events: none;
+}
+.layout-view .overlay .handle { position: absolute; width: 18px; height: 18px; background: #7aa2ff; border-radius: 3px; }
+.layout-view .overlay .handle.nw { top: -9px; left: -9px; cursor: nwse-resize; }
+.layout-view .overlay .handle.ne { top: -9px; right: -9px; cursor: nesw-resize; }
+.layout-view .overlay .handle.sw { bottom: -9px; left: -9px; cursor: nesw-resize; }
+.layout-view .overlay .handle.se { bottom: -9px; right: -9px; cursor: nwse-resize; }
+.layout-view .inst-toolbar .fields { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+.layout-view .inst-toolbar .fields label { display: inline-flex; align-items: center; gap: 6px; }
+.layout-view .inst-toolbar input[type="number"] { width: 6em; }
+.layout-view .disabled-list ul { list-style: none; padding: 0; margin: 0; }
+.layout-view .disabled-list li { display: flex; align-items: center; gap: 10px; padding: 4px 0; }

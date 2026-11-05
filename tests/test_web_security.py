@@ -25,7 +25,7 @@ from mm3.core.web.apps import admin_app, mirror_app, protect
 from mm3.core.web.auth import WebAuth
 from mm3.core.web.gateway import ListenerError, WebGateway
 from mm3.core.web.pages import TEXT, admin_home_page, login_page, message_page, pair_page
-from mm3.core.web.security import CSP, CSP_PREVIEW, AllowList, Network, is_loopback
+from mm3.core.web.security import CSP, CSP_CONFIG, CSP_PREVIEW, AllowList, Network, is_loopback
 from mm3.core.web.sessions import (
     ADMIN_COOKIE,
     DISPLAY_COOKIE,
@@ -335,8 +335,14 @@ async def test_core_63_headers_on_every_response(auth: WebAuth) -> None:
             assert "payment=()" in policy
         preview = await c.get("/admin/preview")
         assert preview.headers["content-security-policy"] == CSP_PREVIEW
+        config = await c.get("/admin/config")
+        assert config.headers["content-security-policy"] == CSP_CONFIG
     assert "frame-ancestors 'none'" in CSP
+    assert "frame-src" not in CSP
     assert "frame-ancestors 'self'" in CSP_PREVIEW
+    # /admin/config frames the preview, and is itself never framed (6.6).
+    assert "frame-src 'self'" in CSP_CONFIG
+    assert "frame-ancestors 'none'" in CSP_CONFIG
 
 
 async def test_core_63_static_files_and_route_cache_control(auth: WebAuth) -> None:

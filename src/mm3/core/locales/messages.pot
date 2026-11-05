@@ -613,3 +613,81 @@ msgstr ""
 
 msgid "CORE_ADMIN_MODULE_SETTINGS"
 msgstr ""
+
+msgid "CORE_ADMIN_TAB_LAYOUT"
+msgstr ""
+
+msgid "CORE_ADMIN_SHOW_ON_MIRROR"
+msgstr ""
+
+msgid "CORE_ADMIN_RESCALE"
+msgstr ""
+
+msgid "CORE_ADMIN_RESCALE_HELP"
+msgstr ""
+
+msgid "CORE_ADMIN_NO_LAYOUT"
+msgstr ""
+
+msgid "CORE_ADMIN_PREVIEW"
+msgstr ""
+
+msgid "CORE_ADMIN_SELECT_INSTANCE"
+msgstr ""
+
+msgid "CORE_ADMIN_LAYOUT_SIZE"
+msgstr ""
+
+msgid "CORE_ADMIN_EDIT_IN_FORM"
+msgstr ""
+
+msgid "CORE_ADMIN_DISABLE"
+msgstr ""
+
+msgid "CORE_ADMIN_ENABLE"
+msgstr ""
+
+msgid "CORE_ADMIN_DISABLED_LIST"
+msgstr ""
+
+msgid "CORE_ADMIN_PRESET_NONE"
+msgstr ""
+
+msgid "CORE_ADMIN_LAYER"
+msgstr ""
+
+msgid "CORE_ADMIN_APPEARANCE_SCALE"
+msgstr ""
+
+msgid "CORE_ADMIN_APPEARANCE_ALIGN"
+msgstr ""
+
+msgid "CORE_ADMIN_APPEARANCE_VALIGN"
+msgstr ""
+
+msgid "CORE_ADMIN_APPEARANCE_OPACITY"
+msgstr ""
+
+msgid "CORE_ADMIN_APPEARANCE_OVERFLOW"
+msgstr ""
+
+msgid "CORE_ADMIN_APPEARANCE_HEADER"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_MOVED"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_RESIZED"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_CHANGED"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_ENABLED"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_DISABLED"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_RESCALED"
+msgstr ""

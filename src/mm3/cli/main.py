@@ -24,6 +24,7 @@ Implements:
     CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
     CORE-290, CORE-291: Core spec 0.20, §7.1 Engine startup and shutdown.
     CORE-292: Core spec 0.20, §10.2 Packaging and deployment.
+    CORE-307: Core spec 0.28, §6.6 Live layout preview.
 """
 
 from __future__ import annotations
@@ -214,6 +215,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.web.auth import WebAuth
     from mm3.core.web.gateway import WebGateway
     from mm3.core.web.kiosk import runtime_dir
+    from mm3.core.web.mirrorpreview import MirrorPreview
     from mm3.core.web.shell import STATIC_DIR, ShellSources
     from mm3.core.web.view import cached_view
     from mm3.core.web.ws import ClientHub, engine_build
@@ -263,8 +265,14 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     inspector = BusInspector(masker)
     engine.bus.add_endpoint(inspector)
     hub.frame_observer = inspector.frame
+    editor = ConfigEditor(history, masker, lambda: manager.applied)
+    channel = AdminChannel(hub.auth, lambda: status_object(api), inspector)
+    # CORE-307: Show on mirror ends on DELETE, a reload, 60 s, or the session's last channel.
+    mirror = MirrorPreview(hub, lambda: hub.view().layout, channel.has_session)
+    channel.session_closed.append(mirror.session_closed)
+    manager.layout_listeners.append(mirror.reloaded)
     api = ApiServices(
-        engine, manager, pages, hub, agents, build, masker, editor=ConfigEditor(history, masker)
+        engine, manager, pages, hub, agents, build, masker, editor=editor, mirror=mirror
     )
     gateway = WebGateway(
         result.config.engine,
@@ -274,7 +282,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         sources=ShellSources(view, lambda: manager.current, engine.i18n),
         agents=agents,
         api=api,
-        channel=AdminChannel(hub.auth, lambda: status_object(api), inspector),
+        channel=channel,
         socket_path=runtime_dir() / "admin.sock",
         locale=lambda: manager.current.config.engine.locale if manager.current.config else "en",
     )

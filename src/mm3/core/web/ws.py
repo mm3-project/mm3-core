@@ -22,6 +22,8 @@ Implements:
     CORE-305: Core spec 0.22, §9.1 Remote-control API.
     CORE-304: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-114: Core spec 0.22, §10.5 Diagnostics and debugging.
+    CORE-307: Core spec 0.28, §6.6 Live layout preview.
+    CORE-99: Core spec 0.1, §6.6 Live layout preview.
 """
 
 from __future__ import annotations
@@ -295,6 +297,31 @@ class ClientHub:
         for c in self._clients.values():
             if instance is None or instance in c.instances:
                 self._push(c, frame)
+
+    def kiosk_connected(self) -> bool:
+        """Whether a kiosk shell is connected (CORE-307)."""
+        return any(c.role == "kiosk" for c in self._clients.values())
+
+    def control_kiosk(self, action: str, data: Mapping[str, Any]) -> int:
+        """Send a ``control`` frame to the kiosk shell only, never to browsers.
+
+        Args:
+            action: The action (CORE-275).
+            data: The action's fields.
+
+        Returns:
+            How many kiosk shells it was queued for.
+
+        Implements:
+            CORE-307: Core spec 0.28, §6.6 Live layout preview.
+        """
+        frame = _frame("control", {"action": action, **data})
+        sent = 0
+        for c in self._clients.values():
+            if c.role == "kiosk":
+                self._push(c, frame)
+                sent += 1
+        return sent
 
     def _page_data(self) -> dict[str, Any]:
         pages = self.pages

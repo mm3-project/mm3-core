@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from mm3.core.config.layout import IMPLICIT_PAGE, LayoutResult, header_text
+from mm3.core.config.layout import IMPLICIT_PAGE, header_text, layout_object
 from mm3.core.config.validate import ConfigResult
 from mm3.core.i18n.catalogs import I18n, locale_chain
 from mm3.core.publicconfig import public_config
@@ -193,44 +193,6 @@ class ShellView:
         return None
 
 
-def layout_object(layout: LayoutResult, grid: Mapping[str, Any]) -> dict[str, Any]:
-    """Convert the engine's layout to the ``layout`` object of CORE-274.
-
-    Args:
-        layout: The layout computed from a valid configuration.
-        grid: ``{columns, rows, gap, padding}`` in CSS pixels.
-
-    Returns:
-        ``{viewport, cell, grid, pages: {<page id>: [placement, …]}}``.
-
-    Implements:
-        CORE-274: Core spec 0.14, §5.6 WebSocket protocol.
-    """
-    return {
-        "viewport": [layout.viewport.width, layout.viewport.height],
-        "cell": [layout.cell[0], layout.cell[1]],
-        "grid": dict(grid),
-        "pages": {
-            plan.page: [
-                {
-                    "instance": p.instance,
-                    "col": p.cells.col,
-                    "row": p.cells.row,
-                    "width": p.cells.width,
-                    "height": p.cells.height,
-                    "z": p.cells.z,
-                    "preset": p.preset,
-                    "stack_index": p.stack_index,
-                    "stack_size": p.stack_size,
-                    "area": [p.area.width, p.area.height],
-                }
-                for p in plan.placements
-            ]
-            for plan in layout.pages
-        },
-    }
-
-
 def shell_view(
     result: ConfigResult,
     registry: Registry,
@@ -316,16 +278,9 @@ def shell_view(
                 touch=touch and "input.touch" in cls.capabilities,
             )
         )
-    lc = config.layout
-    grid = {
-        "columns": lc.grid.columns,
-        "rows": lc.grid.rows,
-        "gap": float(lc.gap),
-        "padding": float(lc.padding),
-    }
     custom = result.assets.custom_css
     return ShellView(
-        layout_object(result.layout, grid),
+        layout_object(result.layout, result.layout.grid),
         default,
         pages,
         locale,

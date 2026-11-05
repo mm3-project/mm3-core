@@ -1,15 +1,16 @@
 // The editing draft of the admin config page: files, data, records and one
 // undo history shared by the Form and YAML views (and the Layout view).
-// Implements CORE-301 (Core spec 0.27, §6.4 Web configuration editor): the draft
+// Implements CORE-301 (Core spec 0.28, §6.4 Web configuration editor): the draft
 // lives in the browser; every edit goes through POST /config/patch, which returns
-// the changed files, the records and the documents.
+// the changed files, the records, the documents and the draft's layout object.
 // Implements CORE-151 (Core spec 0.10, §6.8 Configuration history, undo and redo):
 // one undo/redo history for the draft, each step a JSON Patch with a readable
 // label, at least 200 steps; YAML typing is grouped per pause of 1 s.
 // Implements CORE-152 (Core spec 0.22, §6.8 Configuration history, undo and redo):
 // section undo reverts only the latest step touching a section of CORE-216.
-// Implements CORE-302, CORE-300 (Core spec 0.22, §6.4 Web configuration editor):
-// validate with the diff preview, save with If-Match.
+// Implements CORE-300 (Core spec 0.22, §6.4 Web configuration editor): save with If-Match.
+// Implements CORE-302 (Core spec 0.28, §6.4 Web configuration editor): validate with the
+// diff preview.
 
 import { ApiError } from "/admin/static/admin.js";
 
@@ -165,6 +166,8 @@ export class Draft extends EventTarget {
     this.files = new Map(); // path -> {role, saved, text}
     this.documents = {};
     this.records = [];
+    this.layout = null; // the draft's layout object (CORE-274, CORE-301)
+    this.baseGrid = null; // the saved configuration's grid, for Rescale (CORE-328)
     this.undoStack = [];
     this.redoStack = [];
     this.pending = new Map(); // YAML typing not yet a step: path -> {before, timer}
@@ -191,7 +194,13 @@ export class Draft extends EventTarget {
       this.files.set(f.path, { role: f.role, saved: f.content, text: f.content });
     }
     const stored = this.restore();
-    if (stored && stored.base === this.base) {
+    const keep = stored && stored.base === this.base;
+    if (keep) {
+      // The saved grid first, then the stored draft on top of it.
+      await this.refresh([]);
+      this.baseGrid = this.layout ? { ...this.layout.grid } : null;
+    }
+    if (keep) {
       for (const [path, text] of Object.entries(stored.texts)) {
         const f = this.files.get(path);
         if (f) f.text = text;
@@ -201,6 +210,7 @@ export class Draft extends EventTarget {
     this.undoStack = [];
     this.redoStack = [];
     await this.refresh([...this.changedTexts().keys()]);
+    if (!keep) this.baseGrid = this.layout ? { ...this.layout.grid } : null;
   }
 
   restore() {
@@ -259,6 +269,7 @@ export class Draft extends EventTarget {
     }
     this.records = out.records;
     this.documents = out.documents;
+    this.layout = out.layout ?? null;
     this.persist();
     this.changed();
     return out;
@@ -273,14 +284,19 @@ export class Draft extends EventTarget {
   }
 
   /** A Form or Layout edit: JSON Patch ops on one file, as one labelled step. */
-  async apply(file, patch, label) {
+  apply(file, patch, label) {
+    return this.applyOps([{ file, patch }], label);
+  }
+
+  /** JSON Patch ops on several files, as one labelled step (Rescale, CORE-328). */
+  async applyOps(ops, label) {
     await this.flushTyping();
     const before = this.texts();
     const docsBefore = clone(this.documents);
-    await this.refresh([...this.changedTexts().keys()], [{ file, patch }]);
+    await this.refresh([...this.changedTexts().keys()], ops);
     this.push({
       label,
-      forward: [{ file, patch }],
+      forward: ops,
       before,
       after: this.texts(),
       sections: changedSections(docsBefore, this.documents, this.main),

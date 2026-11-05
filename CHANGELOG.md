@@ -7,6 +7,35 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 6, part D2: Layout view)
+
+- Layout tab of `/admin/config` (CORE-97, CORE-322): the real shell in preview
+  mode in an iframe at the engine's viewport, scaled to the window, with an
+  in-house editing overlay: drag, corner resize, snapping to cells, red and
+  refused on overlap or outside the grid, presets and stacks (CORE-326).
+  Every edit is one draft step shared with the Form and YAML views
+  (CORE-34, CORE-151, CORE-152).
+- Page selector (CORE-242); edits write `positions.<page>`, `position` or a
+  new override by the rule of CORE-327. Instance toolbar with the size in
+  cells and pixels (CORE-142), z, preset, appearance fields, Enable/Disable
+  (CORE-240), Edit in Form, and Rescale proportionally (CORE-94, CORE-328).
+- `/config/patch` and `/config/validate` return `layout`, the CORE-274 object
+  of the draft at the kiosk's applied mode, also when the draft has errors
+  (CORE-301, CORE-302). `layout_object` moved to `mm3.core.config.layout`.
+- The preview shell takes the draft layout and the selected page from its
+  parent page with `postMessage`, keeps that page, and shows draft instances
+  without an element as empty cells (CORE-325); `MirrorElement.preview` is
+  true there (CORE-98).
+- Show on mirror (CORE-307): `POST /api/v1/preview/mirror` (204) sends the
+  draft to the kiosk shell only; `DELETE`, a reload, 60 s after the last push
+  or the pushing session's last `/admin/ws` channel closing bring the running
+  layout back; 409 `CORE_API_NO_KIOSK` without a kiosk. New
+  `mm3.core.web.mirrorpreview`.
+- `/admin/config` sends `frame-src 'self'` so it can frame the preview
+  (CORE-63).
+- `tools/check_spec_refs.py` and `tools/trace_report.py` now also read the
+  admin UI files (`adminui/*.js`, `adminui/*.css`).
+
 ### Changed (core spec 0.28)
 
 - Spec sync for core spec 0.28, the Layout view of milestone 6:
