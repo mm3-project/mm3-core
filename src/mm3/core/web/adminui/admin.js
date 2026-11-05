@@ -140,6 +140,7 @@ export class AdminChannel {
     });
     ws.addEventListener("close", (ev) => {
       this.onState(false);
+      if (this.closed) return;
       if (ev.code === 4403) {
         window.location.assign("/admin/login");
         return;
@@ -147,6 +148,12 @@ export class AdminChannel {
       setTimeout(() => this.open(), this.delay);
       this.delay = Math.min(this.delay * 2, 10000);
     });
+  }
+
+  /** Close for good: no reconnect. */
+  close() {
+    this.closed = true;
+    this.ws?.close();
   }
 
   _send(kind, data) {

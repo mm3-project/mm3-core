@@ -1,13 +1,16 @@
-// The admin config page /admin/config: Form, YAML and History tabs over one draft.
+// The admin config page /admin/config: Layout, Form, YAML and History tabs over one draft.
 // Implements CORE-322 (Core spec 0.25, §6.4 Web configuration editor): one page with
-// the editor views and the History tab (the Layout tab joins in part D2).
+// the Layout, Form and YAML views and the History tab.
+// Implements CORE-34 (Core spec 0.1, §6.4 Web configuration editor): three synchronized
+// views of one draft, on the admin listener only.
 // Implements CORE-151 (Core spec 0.10, §6.8 Configuration history, undo and redo):
 // toolbar Undo/Redo with the step label, Ctrl+Z, Ctrl+Shift+Z and Ctrl+Y.
 // Implements CORE-152 (Core spec 0.22, §6.8 Configuration history, undo and redo):
 // "Undo last change here" on each section of the Form view.
-// Implements CORE-302, CORE-35, CORE-300 (Core spec 0.22, §6.4 Web configuration editor):
-// Save validates and shows the diff first; Save is disabled while an error remains;
-// a conflict offers to reload.
+// Implements CORE-35, CORE-300 (Core spec 0.22, §6.4 Web configuration editor): Save is
+// disabled while an error remains; a conflict offers to reload.
+// Implements CORE-302 (Core spec 0.28, §6.4 Web configuration editor): Save validates and
+// shows the diff first.
 // Implements CORE-324 (Core spec 0.26, §6.8 Configuration history, undo and redo):
 // Open in editor loads a version as the draft.
 
@@ -26,6 +29,7 @@ import {
 import "/admin/static/schemaform.js";
 import "/admin/static/history.js";
 import { YamlView } from "/admin/static/yamlview.js";
+import "/admin/static/layout.js";
 
 function unescapePart(p) {
   return p.replace(/~1/g, "/").replace(/~0/g, "~");
@@ -374,6 +378,13 @@ class AdminConfig extends HTMLElement {
   update() {
     render(this.view(), this);
     if (this.tab === "yaml") this.mountYaml();
+    if (this.tab === "layout") this.querySelector("mm3-layout-view")?.draftChanged();
+  }
+
+  /** "Edit in Form" from the Layout view (CORE-328). */
+  openForm(section) {
+    this.section = section;
+    this.setTab("form");
   }
 
   view() {
@@ -385,7 +396,8 @@ class AdminConfig extends HTMLElement {
       html`<button class=${this.tab === id ? "active" : ""} @click=${() => this.setTab(id)}>${t(key)}</button>`;
     return html`
       <nav class="tabs">
-        ${tab("form", "CORE_ADMIN_TAB_FORM")} ${tab("yaml", "CORE_ADMIN_TAB_YAML")} ${tab("history", "CORE_ADMIN_TAB_HISTORY")}
+        ${tab("layout", "CORE_ADMIN_TAB_LAYOUT")} ${tab("form", "CORE_ADMIN_TAB_FORM")}
+        ${tab("yaml", "CORE_ADMIN_TAB_YAML")} ${tab("history", "CORE_ADMIN_TAB_HISTORY")}
         <span class="spacer"></span>
         ${this.tab !== "history"
           ? html`
@@ -408,6 +420,7 @@ class AdminConfig extends HTMLElement {
             <button class="primary" ?disabled=${errors > 0 || this.busy} @click=${() => this.askSave()}>${t("CORE_ADMIN_SAVE")}</button>
           </div>`
         : nothing}
+      ${this.tab === "layout" ? html`<mm3-layout-view .host=${this}></mm3-layout-view>` : nothing}
       ${this.tab === "form" ? this.formView() : nothing}
       ${this.tab === "yaml" ? this.yamlView() : nothing}
       ${this.tab === "history"

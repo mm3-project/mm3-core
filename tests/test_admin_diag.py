@@ -415,6 +415,31 @@ async def test_core_304_needs_session_and_origin(rig: Rig) -> None:
     assert await close_code(nothing) == CLOSE_FORBIDDEN
 
 
+async def test_core_307_channel_knows_open_sessions(rig: Rig) -> None:
+    closed: list[str] = []
+    rig.channel.session_closed.append(closed.append)
+    sid = rig.session()
+    headers = {"Origin": rig.origin, "Cookie": f"{ADMIN_COOKIE}={sid}"}
+    first = await websockets.connect(rig.ws_url, additional_headers=headers)
+    second = await websockets.connect(rig.ws_url, additional_headers=headers)
+    for _ in range(100):
+        if rig.channel.connections == 2:
+            break
+        await asyncio.sleep(0.02)
+    assert rig.channel.has_session(sid)
+    assert not rig.channel.has_session("other")
+    await first.close()
+    await asyncio.sleep(0.2)
+    assert closed == []  # the session still has a channel open
+    await second.close()
+    for _ in range(100):
+        if closed:
+            break
+        await asyncio.sleep(0.02)
+    assert closed == [sid]
+    assert not rig.channel.has_session(sid)
+
+
 async def test_core_317_status_at_subscribe_and_on_change(rig: Rig) -> None:
     ws = await rig.admin()
     await send(ws, "subscribe", {"topic": "status"})

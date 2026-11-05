@@ -13,7 +13,8 @@ Implements:
     CORE-153: Core spec 0.11, §6.8 Configuration history, undo and redo.
     CORE-155, CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
     CORE-217, CORE-218: Core spec 0.10, §6.8 Configuration history, undo and redo.
-    CORE-300, CORE-302: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-300: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-302: Core spec 0.28, §6.4 Web configuration editor.
 """
 
 from __future__ import annotations
@@ -508,12 +509,18 @@ class ConfigHistory:
 
     # --- loading ----------------------------------------------------------------------
 
-    def _validate_set(self, config_set: ConfigSet) -> ConfigResult:
+    def _validate_set(
+        self, config_set: ConfigSet, applied: tuple[int, int] | None = None
+    ) -> ConfigResult:
         """Validate a config set in a scratch copy of the config directory."""
         with tempfile.TemporaryDirectory(prefix="mm3-config-") as tmp:
             main = config_set.materialize(Path(tmp))
             result = load_config(
-                main, registry=self.registry, env_file=self.env_file, environ=self.environ
+                main,
+                registry=self.registry,
+                env_file=self.env_file,
+                environ=self.environ,
+                applied=applied,
             )
             prefix = str(Path(tmp))
             result.records = [
@@ -645,7 +652,7 @@ class ConfigHistory:
             The outcome; the version is the new or the current one.
 
         Implements:
-            CORE-302: Core spec 0.22, §6.4 Web configuration editor.
+            CORE-302: Core spec 0.28, §6.4 Web configuration editor.
             CORE-300: Core spec 0.22, §6.4 Web configuration editor.
             CORE-217: Core spec 0.10, §6.8 Configuration history, undo and redo.
         """
@@ -668,16 +675,19 @@ class ConfigHistory:
                 restores=None,
             )
 
-    def validate_set(self, config_set: ConfigSet) -> ConfigResult:
+    def validate_set(
+        self, config_set: ConfigSet, applied: tuple[int, int] | None = None
+    ) -> ConfigResult:
         """Validate a config set in a scratch copy, as the engine would load it (CORE-36).
 
         Args:
             config_set: The set.
+            applied: The mode the kiosk applied, for the layout (CORE-145).
 
         Returns:
             The result, with file names of the real config directory.
         """
-        return self._validate_set(config_set)
+        return self._validate_set(config_set, applied)
 
     def disk(self) -> tuple[ConfigSet, ConfigResult]:
         """Return the config set on disk and its validation."""

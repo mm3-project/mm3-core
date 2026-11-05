@@ -391,6 +391,37 @@ async def test_core_273_preview_endpoint_needs_session_and_origin(mirror: Mirror
         assert (welcome["data"]["role"], welcome["data"]["interactive"]) == ("preview", True)
 
 
+async def test_core_307_layout_control_reaches_the_kiosk_only(mirror: Mirror) -> None:
+    token = mirror.auth.tokens.new("me")
+    rec = mirror.auth.tokens.verify(token, "admin")
+    assert rec is not None
+    cookie = {"Cookie": f"{ADMIN_COOKIE}={mirror.auth.sessions.create(rec)}"}
+    assert not mirror.hub.kiosk_connected()
+    assert mirror.hub.control_kiosk("layout", {"layout": {}}) == 0
+    kiosk, _, _ = await connect(mirror.ws_url, "kiosk", key=mirror.hub.kiosk_keys.issue())
+    browser, _, _ = await connect(mirror.ws_url)
+    preview, _, _ = await connect(
+        mirror.admin_ws_url, "preview", headers={**cookie, "Origin": mirror.admin_origin}
+    )
+    async with kiosk, browser, preview:
+        await eventually(mirror.hub.kiosk_connected)
+        draft = {"viewport": [1, 1], "cell": [1, 1], "grid": {}, "pages": {}}
+        assert mirror.hub.control_kiosk("layout", {"layout": draft}) == 1
+        assert (await layout_frame(kiosk))["data"] == {"action": "layout", "layout": draft}
+        for other in (browser, preview):
+            with pytest.raises(TimeoutError):
+                await layout_frame(other, wait=0.3)
+
+
+async def layout_frame(ws: ClientConnection, wait: float = 2.0) -> dict[str, Any]:
+    """The next ``control`` ``layout`` frame (``page`` frames come first after welcome)."""
+    async with asyncio.timeout(wait):
+        while True:
+            frame = await until(ws, "control", wait)
+            if frame["data"]["action"] == "layout":
+                return frame
+
+
 async def test_core_273_hello_timeout(mirror: Mirror) -> None:
     async with websockets.connect(mirror.ws_url) as ws:
         assert await closed_with(ws) == CLOSE_PROTOCOL  # hello_timeout is 0.5 s here

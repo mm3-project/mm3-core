@@ -615,3 +615,81 @@ msgstr "Numero"
 
 msgid "CORE_ADMIN_MODULE_SETTINGS"
 msgstr "Impostazioni del modulo"
+
+msgid "CORE_ADMIN_TAB_LAYOUT"
+msgstr "Layout"
+
+msgid "CORE_ADMIN_SHOW_ON_MIRROR"
+msgstr "Mostra sullo specchio"
+
+msgid "CORE_ADMIN_RESCALE"
+msgstr "Riscala in proporzione"
+
+msgid "CORE_ADMIN_RESCALE_HELP"
+msgstr "Adatta ogni rettangolo alla nuova griglia, in un solo passo"
+
+msgid "CORE_ADMIN_NO_LAYOUT"
+msgstr "Il layout non si può mostrare finché il livello principale della configurazione non è valido."
+
+msgid "CORE_ADMIN_PREVIEW"
+msgstr "Anteprima dello specchio"
+
+msgid "CORE_ADMIN_SELECT_INSTANCE"
+msgstr "Seleziona un modulo nell'anteprima per spostarlo, ridimensionarlo o modificarlo."
+
+msgid "CORE_ADMIN_LAYOUT_SIZE"
+msgstr "{columns} × {rows} celle · {width} × {height} px"
+
+msgid "CORE_ADMIN_EDIT_IN_FORM"
+msgstr "Modifica nel modulo"
+
+msgid "CORE_ADMIN_DISABLE"
+msgstr "Disattiva"
+
+msgid "CORE_ADMIN_ENABLE"
+msgstr "Attiva"
+
+msgid "CORE_ADMIN_DISABLED_LIST"
+msgstr "Moduli disattivati"
+
+msgid "CORE_ADMIN_PRESET_NONE"
+msgstr "Nessuna (celle)"
+
+msgid "CORE_ADMIN_LAYER"
+msgstr "Livello"
+
+msgid "CORE_ADMIN_APPEARANCE_SCALE"
+msgstr "Scala"
+
+msgid "CORE_ADMIN_APPEARANCE_ALIGN"
+msgstr "Allineamento"
+
+msgid "CORE_ADMIN_APPEARANCE_VALIGN"
+msgstr "Allineamento verticale"
+
+msgid "CORE_ADMIN_APPEARANCE_OPACITY"
+msgstr "Opacità"
+
+msgid "CORE_ADMIN_APPEARANCE_OVERFLOW"
+msgstr "Eccedenza"
+
+msgid "CORE_ADMIN_APPEARANCE_HEADER"
+msgstr "Intestazione"
+
+msgid "CORE_ADMIN_STEP_MOVED"
+msgstr "{id}: spostato"
+
+msgid "CORE_ADMIN_STEP_RESIZED"
+msgstr "{id}: ridimensionato"
+
+msgid "CORE_ADMIN_STEP_CHANGED"
+msgstr "{id}: {field}"
+
+msgid "CORE_ADMIN_STEP_ENABLED"
+msgstr "{id}: attivato"
+
+msgid "CORE_ADMIN_STEP_DISABLED"
+msgstr "{id}: disattivato"
+
+msgid "CORE_ADMIN_STEP_RESCALED"
+msgstr "Riscalato a {columns} × {rows}"

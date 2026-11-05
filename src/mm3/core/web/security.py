@@ -8,7 +8,7 @@ headers of CORE-63.
 
 Implements:
     CORE-61: Core spec 0.12, §10.1 Security.
-    CORE-63: Core spec 0.21, §10.1 Security.
+    CORE-63: Core spec 0.28, §10.1 Security.
     CORE-12: Core spec 0.15, §4.4 Contract rules.
 """
 
@@ -25,6 +25,7 @@ from mm3.core.logging import get_logger
 
 __all__ = [
     "CSP",
+    "CSP_CONFIG",
     "CSP_PREVIEW",
     "PERMISSIONS_POLICY",
     "AllowList",
@@ -45,6 +46,9 @@ CSP = _CSP_BASE + "frame-ancestors 'none'"
 
 CSP_PREVIEW = _CSP_BASE + "frame-ancestors 'self'"
 """Content-Security-Policy of ``/admin/preview``, which the admin frames (CORE-63)."""
+
+CSP_CONFIG = _CSP_BASE + "frame-src 'self'; frame-ancestors 'none'"
+"""Content-Security-Policy of ``/admin/config``, which frames the preview (CORE-63, 6.6)."""
 
 PERMISSIONS_POLICY = (
     "camera=(), microphone=(), geolocation=(), usb=(), serial=(), bluetooth=(), payment=()"
@@ -165,8 +169,9 @@ def security_headers(path: str) -> list[tuple[bytes, bytes]]:
         Header pairs, without ``Cache-Control``.
     """
     preview = path == "/admin/preview" or path.startswith("/admin/preview/")
+    csp = CSP_PREVIEW if preview else CSP_CONFIG if path == "/admin/config" else CSP
     return [
-        (b"content-security-policy", (CSP_PREVIEW if preview else CSP).encode()),
+        (b"content-security-policy", csp.encode()),
         (b"x-content-type-options", b"nosniff"),
         (b"referrer-policy", b"no-referrer"),
         (b"permissions-policy", PERMISSIONS_POLICY.encode()),
@@ -183,7 +188,7 @@ class SecurityHeaders:
         app: The application.
 
     Implements:
-        CORE-63: Core spec 0.21, §10.1 Security.
+        CORE-63: Core spec 0.28, §10.1 Security.
     """
 
     def __init__(self, app: ASGIApp) -> None:

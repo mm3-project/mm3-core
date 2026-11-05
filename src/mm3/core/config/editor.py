@@ -10,10 +10,10 @@ copy of the config directory, so the admin can never write a file that fails
 
 Implements:
     CORE-35, CORE-36: Core spec 0.22, §6.4 Web configuration editor.
-    CORE-300, CORE-302, CORE-303: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-300, CORE-303: Core spec 0.22, §6.4 Web configuration editor.
     CORE-320: Core spec 0.25, §6.4 Web configuration editor.
     CORE-321: Core spec 0.25, §6.8 Configuration history, undo and redo.
-    CORE-301: Core spec 0.27, §6.4 Web configuration editor.
+    CORE-301, CORE-302: Core spec 0.28, §6.4 Web configuration editor.
     CORE-324: Core spec 0.26, §6.8 Configuration history, undo and redo.
 """
 
@@ -38,6 +38,7 @@ from mm3.core.config.history import (
 from mm3.core.config.history import (
     MASK as HISTORY_MASK,
 )
+from mm3.core.config.layout import layout_object
 from mm3.core.config.loader import (
     PatchError,
     node_to_json,
@@ -101,6 +102,12 @@ def _records(result: ConfigResult) -> list[dict[str, Any]]:
     return [r.as_dict() for r in result.records]
 
 
+def _layout(result: ConfigResult) -> dict[str, Any] | None:
+    """The draft's ``layout`` object, or ``None`` when it cannot be computed (CORE-301)."""
+    geometry = result.geometry
+    return layout_object(geometry) if geometry is not None else None
+
+
 def _diff_text(text: str) -> str:
     """Show the history mask as the CORE-303 tag in a diff."""
     return text.replace(f"'{HISTORY_MASK}'", MASK).replace(HISTORY_MASK, MASK)
@@ -122,12 +129,22 @@ class ConfigEditor:
         masker: Returns the masker of the running configuration's secrets.
 
     Implements:
-        CORE-301: Core spec 0.27, §6.4 Web configuration editor.
+        CORE-301, CORE-302: Core spec 0.28, §6.4 Web configuration editor.
     """
 
-    def __init__(self, history: ConfigHistory, masker: Callable[[], Masker] = Masker) -> None:
+    def __init__(
+        self,
+        history: ConfigHistory,
+        masker: Callable[[], Masker] = Masker,
+        applied: Callable[[], tuple[int, int] | None] = lambda: None,
+    ) -> None:
         self.history = history
         self.masker = masker
+        self.applied = applied
+
+    def _check_draft(self, config_set: ConfigSet) -> ConfigResult:
+        """Validate a draft at the viewport the engine uses (CORE-145, CORE-301)."""
+        return self.history.validate_set(config_set, self.applied())
 
     # --- views ------------------------------------------------------------------------
 
@@ -269,9 +286,10 @@ class ConfigEditor:
         """``POST /api/v1/config/patch``: apply edits to the draft, write nothing (CORE-301).
 
         Returns:
-            ``{files, records, documents}``: every changed file, secrets
-            masked, the validation records of the whole draft, and every YAML
-            file of the draft as data (CORE-301, 0.27).
+            ``{files, records, documents, layout}``: every changed file,
+            secrets masked, the validation records of the whole draft, every
+            YAML file of the draft as data, and the draft's layout object
+            (CORE-301, 0.28).
 
         Raises:
             EditorError: Conflict, bad masked value or a patch that fails.
@@ -313,23 +331,25 @@ class ConfigEditor:
             config_set = config_set.with_file(rel, text.encode("utf-8"))
             if rel not in changed:
                 changed.append(rel)
-        result = self.history.validate_set(config_set)
+        result = self._check_draft(config_set)
         return {
             "files": self.files_view(config_set, changed),
             "records": _records(result),
             "documents": self.documents(config_set),
+            "layout": _layout(result),
         }
 
     def validate(self, base: str | None, files: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         """``POST /api/v1/config/validate``: records and the diff preview (CORE-302).
 
         Returns:
-            ``{records, diff}`` with ``diff`` ``[{section, before, after}]``
-            against the current version, secrets masked.
+            ``{records, diff, layout}`` with ``diff`` ``[{section, before,
+            after}]`` against the current version, secrets masked, and
+            ``layout`` as for :meth:`patch` (CORE-302, 0.28).
         """
         base_set, base_result = self._check_base(base)
         draft = self._overlay(base_set, files)
-        result = self.history.validate_set(draft.config_set)
+        result = self._check_draft(draft.config_set)
         diff: list[dict[str, str]] = []
         if result.ok and base_result.ok:
             diff = [
@@ -338,7 +358,7 @@ class ConfigEditor:
                     (base_set, base_result), (draft.config_set, result)
                 )
             ]
-        return {"records": _records(result), "diff": diff}
+        return {"records": _records(result), "diff": diff, "layout": _layout(result)}
 
     def save(
         self,

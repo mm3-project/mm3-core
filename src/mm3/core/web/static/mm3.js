@@ -7,6 +7,8 @@
 // Implements CORE-265, CORE-266 (Core spec 0.15, §8.5 Catalogs at run time)
 // Implements CORE-114 (Core spec 0.22, §10.5 Diagnostics and debugging): render,
 // onMessage and onNotification are wrapped; errors go out with stack and user agent
+// Implements CORE-98 (Core spec 0.1, §6.6 Live layout preview): `preview` is true in
+// the admin's preview shell, so modules can render a placeholder instead
 import { html, svg, nothing, render as litRender } from "/core/vendor/lit-html/lit-html.js";
 
 export { html, svg, nothing };

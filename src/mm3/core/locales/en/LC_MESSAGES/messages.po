@@ -615,3 +615,81 @@ msgstr "Number"
 
 msgid "CORE_ADMIN_MODULE_SETTINGS"
 msgstr "Module settings"
+
+msgid "CORE_ADMIN_TAB_LAYOUT"
+msgstr "Layout"
+
+msgid "CORE_ADMIN_SHOW_ON_MIRROR"
+msgstr "Show on mirror"
+
+msgid "CORE_ADMIN_RESCALE"
+msgstr "Rescale proportionally"
+
+msgid "CORE_ADMIN_RESCALE_HELP"
+msgstr "Fit every rectangle to the new grid size, as one step"
+
+msgid "CORE_ADMIN_NO_LAYOUT"
+msgstr "The layout cannot be shown until the configuration's top level is valid."
+
+msgid "CORE_ADMIN_PREVIEW"
+msgstr "Mirror preview"
+
+msgid "CORE_ADMIN_SELECT_INSTANCE"
+msgstr "Select a module on the preview to move, resize or change it."
+
+msgid "CORE_ADMIN_LAYOUT_SIZE"
+msgstr "{columns} × {rows} cells · {width} × {height} px"
+
+msgid "CORE_ADMIN_EDIT_IN_FORM"
+msgstr "Edit in Form"
+
+msgid "CORE_ADMIN_DISABLE"
+msgstr "Disable"
+
+msgid "CORE_ADMIN_ENABLE"
+msgstr "Enable"
+
+msgid "CORE_ADMIN_DISABLED_LIST"
+msgstr "Disabled modules"
+
+msgid "CORE_ADMIN_PRESET_NONE"
+msgstr "None (cells)"
+
+msgid "CORE_ADMIN_LAYER"
+msgstr "Layer"
+
+msgid "CORE_ADMIN_APPEARANCE_SCALE"
+msgstr "Scale"
+
+msgid "CORE_ADMIN_APPEARANCE_ALIGN"
+msgstr "Align"
+
+msgid "CORE_ADMIN_APPEARANCE_VALIGN"
+msgstr "Vertical align"
+
+msgid "CORE_ADMIN_APPEARANCE_OPACITY"
+msgstr "Opacity"
+
+msgid "CORE_ADMIN_APPEARANCE_OVERFLOW"
+msgstr "Overflow"
+
+msgid "CORE_ADMIN_APPEARANCE_HEADER"
+msgstr "Header"
+
+msgid "CORE_ADMIN_STEP_MOVED"
+msgstr "{id}: moved"
+
+msgid "CORE_ADMIN_STEP_RESIZED"
+msgstr "{id}: resized"
+
+msgid "CORE_ADMIN_STEP_CHANGED"
+msgstr "{id}: {field}"
+
+msgid "CORE_ADMIN_STEP_ENABLED"
+msgstr "{id}: enabled"
+
+msgid "CORE_ADMIN_STEP_DISABLED"
+msgstr "{id}: disabled"
+
+msgid "CORE_ADMIN_STEP_RESCALED"
+msgstr "Rescaled to {columns} × {rows}"

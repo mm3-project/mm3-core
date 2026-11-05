@@ -617,3 +617,81 @@ msgstr "Zahl"
 
 msgid "CORE_ADMIN_MODULE_SETTINGS"
 msgstr "Moduleinstellungen"
+
+msgid "CORE_ADMIN_TAB_LAYOUT"
+msgstr "Layout"
+
+msgid "CORE_ADMIN_SHOW_ON_MIRROR"
+msgstr "Auf dem Spiegel zeigen"
+
+msgid "CORE_ADMIN_RESCALE"
+msgstr "Proportional skalieren"
+
+msgid "CORE_ADMIN_RESCALE_HELP"
+msgstr "Jedes Rechteck in einem Schritt an das neue Raster anpassen"
+
+msgid "CORE_ADMIN_NO_LAYOUT"
+msgstr "Das Layout kann erst angezeigt werden, wenn die oberste Ebene der Konfiguration gültig ist."
+
+msgid "CORE_ADMIN_PREVIEW"
+msgstr "Spiegelvorschau"
+
+msgid "CORE_ADMIN_SELECT_INSTANCE"
+msgstr "Wähle ein Modul in der Vorschau, um es zu verschieben, in der Größe zu ändern oder zu bearbeiten."
+
+msgid "CORE_ADMIN_LAYOUT_SIZE"
+msgstr "{columns} × {rows} Zellen · {width} × {height} px"
+
+msgid "CORE_ADMIN_EDIT_IN_FORM"
+msgstr "Im Formular bearbeiten"
+
+msgid "CORE_ADMIN_DISABLE"
+msgstr "Deaktivieren"
+
+msgid "CORE_ADMIN_ENABLE"
+msgstr "Aktivieren"
+
+msgid "CORE_ADMIN_DISABLED_LIST"
+msgstr "Deaktivierte Module"
+
+msgid "CORE_ADMIN_PRESET_NONE"
+msgstr "Keine (Zellen)"
+
+msgid "CORE_ADMIN_LAYER"
+msgstr "Ebene"
+
+msgid "CORE_ADMIN_APPEARANCE_SCALE"
+msgstr "Skalierung"
+
+msgid "CORE_ADMIN_APPEARANCE_ALIGN"
+msgstr "Ausrichtung"
+
+msgid "CORE_ADMIN_APPEARANCE_VALIGN"
+msgstr "Vertikale Ausrichtung"
+
+msgid "CORE_ADMIN_APPEARANCE_OPACITY"
+msgstr "Deckkraft"
+
+msgid "CORE_ADMIN_APPEARANCE_OVERFLOW"
+msgstr "Überlauf"
+
+msgid "CORE_ADMIN_APPEARANCE_HEADER"
+msgstr "Überschrift"
+
+msgid "CORE_ADMIN_STEP_MOVED"
+msgstr "{id}: verschoben"
+
+msgid "CORE_ADMIN_STEP_RESIZED"
+msgstr "{id}: Größe geändert"
+
+msgid "CORE_ADMIN_STEP_CHANGED"
+msgstr "{id}: {field}"
+
+msgid "CORE_ADMIN_STEP_ENABLED"
+msgstr "{id}: aktiviert"
+
+msgid "CORE_ADMIN_STEP_DISABLED"
+msgstr "{id}: deaktiviert"
+
+msgid "CORE_ADMIN_STEP_RESCALED"
+msgstr "Skaliert auf {columns} × {rows}"

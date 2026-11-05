@@ -89,6 +89,10 @@ class ConfigResult:
         instances: Instances with their validated configuration.
         layout: Viewport, cell size and placements per page (core spec 6.5,
             6.7, 6.9); ``None`` when there are errors.
+        geometry: The same layout computed for a draft with errors too, as
+            far as it can be: ``None`` only when the top-level model does not
+            validate; placements that cannot be resolved are left out (the
+            draft layout of CORE-301, 0.28).
         assets: custom.css and the widget templates (CORE-216, CORE-262).
     """
 
@@ -99,6 +103,7 @@ class ConfigResult:
     config: MirrorConfig | None = None
     instances: list[ResolvedInstance] = field(default_factory=list)
     layout: LayoutResult | None = None
+    geometry: LayoutResult | None = None
     assets: ConfigAssets = field(default_factory=ConfigAssets)
 
     @property
@@ -375,6 +380,7 @@ def load_config(
     if config is not None:
         layout = check_layout(config, instances, registry, loaded.sources, applied=applied)
         result.records.extend(layout.records)
+        result.geometry = layout
     if result.ok:
         result.config = config
         result.instances = instances
