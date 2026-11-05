@@ -190,6 +190,9 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added
 
+- Spec sync to core spec 0.27: `POST /api/v1/config/patch` also returns
+  `documents`, the data of every YAML file of the draft, for the Form view
+  (CORE-301).
 - Spec sync to core spec 0.26 (editor views for milestone 6 part D): YAML
   view lint through `POST /config/validate`, in-house completion from the
   schema and CodeMirror 6 bundled once with esbuild (CORE-323);
