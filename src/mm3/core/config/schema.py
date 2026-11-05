@@ -104,7 +104,7 @@ def config_schema(registry: Registry) -> dict[str, Any]:
         item = copy.deepcopy(instance)
         item["title"] = name
         item["properties"]["module"] = {"const": name}
-        item["properties"]["config"] = ref
+        item["properties"]["config"] = {"$ref": ref}
         variants.append(item)
     root = copy.deepcopy(defs["MirrorConfig"])
     modules_prop = root["properties"]["modules"]

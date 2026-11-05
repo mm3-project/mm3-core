@@ -1,5 +1,8 @@
-// Shared helpers of the admin pages: texts, the REST API and the admin channel.
-// Implements CORE-298 (Core spec 0.23, §9.1 Remote-control API): API errors are
+// Shared helpers of the admin pages: texts, the language picker, the REST API and
+// the admin channel.
+// Implements CORE-309 (Core spec 0.26, §9.1 Remote-control API): the header offers
+// the shipped languages; a choice calls PUT /api/v1/session/locale and reloads.
+// Implements CORE-298 (Core spec 0.25, §9.1 Remote-control API): API errors are
 // shown with the catalog text of their code.
 // Implements CORE-304 (Core spec 0.22, §10.5 Diagnostics and debugging): one
 // /admin/ws connection with subscribe and unsubscribe per topic, reconnecting.
@@ -7,14 +10,51 @@
 let messages = {};
 let locale = "en";
 
-export async function loadTexts() {
-  const r = await fetch("/admin/i18n.json", { credentials: "same-origin" });
-  if (r.ok) {
-    const data = await r.json();
-    messages = data.messages || {};
-    locale = data.locale || "en";
-    document.documentElement.lang = locale;
+let loading = null;
+
+export function loadTexts() {
+  if (!loading) {
+    loading = (async () => {
+      const r = await fetch("/admin/i18n.json", { credentials: "same-origin" });
+      if (!r.ok) return null;
+      const data = await r.json();
+      messages = data.messages || {};
+      locale = data.locale || "en";
+      document.documentElement.lang = locale;
+      languagePicker(data);
+      return data;
+    })();
   }
+  return loading;
+}
+
+function languagePicker(data) {
+  const bar = document.querySelector("header.bar");
+  if (!bar || bar.querySelector("select.lang") || !data.languages) return;
+  const select = document.createElement("select");
+  select.className = "lang";
+  select.setAttribute("aria-label", t("CORE_ADMIN_LANGUAGE"));
+  const follow = document.createElement("option");
+  follow.value = "";
+  follow.textContent = t("CORE_ADMIN_LANGUAGE_ENGINE");
+  select.append(follow);
+  for (const lang of data.languages) {
+    const option = document.createElement("option");
+    option.value = lang.code;
+    option.textContent = lang.name;
+    option.selected = lang.code === data.picked;
+    select.append(option);
+  }
+  select.addEventListener("change", async () => {
+    try {
+      await api("PUT", "/session/locale", { locale: select.value || null });
+      window.location.reload();
+    } catch (err) {
+      console.error(err);
+    }
+  });
+  const logout = bar.querySelector("form");
+  bar.insertBefore(select, logout);
 }
 
 export function t(key, params = {}) {

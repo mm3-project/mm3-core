@@ -202,6 +202,9 @@ status = "not_started"
 #   CORE-102, after its own defining step).
 # Core spec 0.27 (5 Nov 2026): CORE-301 changed, /config/patch also returns
 #   documents (the draft as data) for the Form view.
+# Part D1 (editor views) implements CORE-37, CORE-151, CORE-152, CORE-301,
+#   CORE-309 (session locale), CORE-323 and CORE-324; D2 and D3 remain,
+#   the milestone stays active.
 # Part A (REST base) covers the REST side of CORE-236 and CORE-240; the Home
 #   Assistant page select and "enabled" switch come with the MQTT bridge
 #   (milestone 7, CORE-120..126), the admin buttons with part D.

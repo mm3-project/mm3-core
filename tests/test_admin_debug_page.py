@@ -7,7 +7,7 @@ import io
 import json
 import os
 import re
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Awaitable, Callable
 from pathlib import Path
 from typing import Any
 
@@ -227,6 +227,23 @@ async def running(tmp_path: Path) -> AsyncIterator[tuple[WebGateway, WebAuth, En
         await engine.stop()
 
 
+async def until_shown(
+    page: Any, selector: str, emit: Callable[[], Awaitable[None] | None], limit: float = 10.0
+) -> None:
+    """Emit an event every 250 ms until ``selector`` shows, for at most ``limit`` s."""
+    deadline = asyncio.get_running_loop().time() + limit
+    while True:
+        result = emit()
+        if result is not None:
+            await result
+        try:
+            await page.wait_for_selector(selector, timeout=250)
+            return
+        except Exception:
+            if asyncio.get_running_loop().time() > deadline:
+                raise
+
+
 async def test_debug_page_renders_in_chromium(
     running: tuple[WebGateway, WebAuth, Engine],
 ) -> None:
@@ -260,18 +277,25 @@ async def test_debug_page_renders_in_chromium(
             await page.click("td >> text=one")
             await page.wait_for_selector("text=Health record")
             await page.click("text=Live logs")
-            get_logger("panel", "one").warning("seen_in_browser")
-            await page.wait_for_selector("text=seen_in_browser", timeout=5000)
+            # A subscribe on /admin/ws has no acknowledgement, so the test
+            # repeats the event until the open tab shows it.
+            await until_shown(
+                page,
+                "text=seen_in_browser",
+                lambda: get_logger("panel", "one").warning("seen_in_browser"),
+            )
             await page.click("text=Bus inspector")
-            await asyncio.sleep(0.2)
             async with httpx.AsyncClient(base_url=base, cookies={ADMIN_COOKIE: cookie}) as c:
-                r = await c.post(
-                    "/api/v1/notify",
-                    json={"name": "PAGE_TEST", "payload": {}},
-                    headers={"origin": base},
-                )
-                assert r.status_code == 200
-            await page.wait_for_selector("text=PAGE_TEST", timeout=5000)
+
+                async def notify() -> None:
+                    r = await c.post(
+                        "/api/v1/notify",
+                        json={"name": "PAGE_TEST", "payload": {}},
+                        headers={"origin": base},
+                    )
+                    assert r.status_code == 200
+
+                await until_shown(page, "text=PAGE_TEST", notify)
         finally:
             await browser.close()
     assert not problems, problems

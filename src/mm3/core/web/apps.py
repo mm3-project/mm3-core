@@ -23,6 +23,7 @@ Implements:
     CORE-298: Core spec 0.25, §9.1 Remote-control API.
     CORE-313: Core spec 0.22, §9.1 Remote-control API.
     CORE-304, CORE-311: Core spec 0.22, §10.5 Diagnostics and debugging.
+    CORE-309: Core spec 0.26, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -46,6 +47,7 @@ from fastapi.responses import (
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.types import ASGIApp
 
+from mm3.core.i18n import module_catalog_root
 from mm3.core.logging import get_logger
 from mm3.core.web.api import ApiServices, api_router, check_api_auth, openapi_schema
 from mm3.core.web.auth import WebAuth, origin_matches
@@ -54,6 +56,8 @@ from mm3.core.web.pages import (
     admin_debug_page,
     admin_home_page,
     admin_texts,
+    form_texts,
+    language_names,
     login_page,
     message_page,
     pair_page,
@@ -356,6 +360,10 @@ def admin_app(
     async def admin_static(path: str) -> Response:
         if path == "lit-html.js":  # the vendored lit-html, for the admin's own templates
             return FileResponse(VENDOR_DIR / "lit-html" / "lit-html.js")
+        if path == "codemirror.js":  # the vendored CodeMirror bundle (CORE-323)
+            return FileResponse(ADMIN_STATIC_DIR / "vendor" / "codemirror" / "codemirror.js")
+        if path.startswith("vendor/"):
+            return Response(status_code=404)
         target = inside(ADMIN_STATIC_DIR, path)
         return Response(status_code=404) if target is None else FileResponse(target)
 
@@ -364,8 +372,27 @@ def admin_app(
         check = await auth.check_admin(request, request.method)
         if check.outcome != "ok":
             return Response(status_code=401)
-        lang = locale()
-        return JSONResponse({"locale": lang, "messages": admin_texts(lang)})
+        # CORE-309: the session's language, else engine.locale; never Accept-Language.
+        picked = None
+        if check.via == "session":
+            picked = await asyncio.to_thread(
+                auth.sessions.locale, request.cookies.get(ADMIN_COOKIE)
+            )
+        lang = picked or locale()
+        roots: dict[str, Path | None] = {}
+        if api is not None:
+            for entry in api.engine.supervisor.registry.entries():
+                if entry.cls is not None:
+                    roots[entry.name] = module_catalog_root(entry.cls)
+        return JSONResponse(
+            {
+                "locale": lang,
+                "picked": picked,
+                "languages": language_names(),
+                "messages": admin_texts(lang),
+                "forms": form_texts(lang, roots),
+            }
+        )
 
     @app.get("/admin")
     async def admin_home(request: Request) -> Response:

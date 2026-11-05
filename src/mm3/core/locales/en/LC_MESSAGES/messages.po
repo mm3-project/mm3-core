@@ -507,3 +507,111 @@ msgstr "Now"
 
 msgid "CORE_ADMIN_AFTER_RESTORE"
 msgstr "After the restore"
+
+msgid "CORE_ADMIN_ADD"
+msgstr "Add"
+
+msgid "CORE_ADMIN_ADD_LANGUAGE"
+msgstr "Add language"
+
+msgid "CORE_ADMIN_BAD_FORMAT"
+msgstr "This value has the wrong format."
+
+msgid "CORE_ADMIN_CHANGE"
+msgstr "Change"
+
+msgid "CORE_ADMIN_CLEAR"
+msgstr "Clear"
+
+msgid "CORE_ADMIN_DISCARD"
+msgstr "Discard changes"
+
+msgid "CORE_ADMIN_ENV_NAME"
+msgstr "Name of the environment variable"
+
+msgid "CORE_ADMIN_ERRORS"
+msgstr "{count} errors"
+
+msgid "CORE_ADMIN_INCLUDE_HINT"
+msgstr "This part is in another file; edit it in the YAML view."
+
+msgid "CORE_ADMIN_KEY"
+msgstr "Key"
+
+msgid "CORE_ADMIN_LANGUAGE"
+msgstr "Language"
+
+msgid "CORE_ADMIN_LANGUAGE_ENGINE"
+msgstr "Mirror language"
+
+msgid "CORE_ADMIN_OPENED_VERSION"
+msgstr "Open version {version}"
+
+msgid "CORE_ADMIN_OPEN_IN_EDITOR"
+msgstr "Open in editor"
+
+msgid "CORE_ADMIN_OUT_OF_RANGE"
+msgstr "Allowed: {min} to {max}."
+
+msgid "CORE_ADMIN_PRESET"
+msgstr "Preset"
+
+msgid "CORE_ADMIN_REDO"
+msgstr "Redo"
+
+msgid "CORE_ADMIN_RELOAD"
+msgstr "Reload"
+
+msgid "CORE_ADMIN_REMOVE"
+msgstr "Remove"
+
+msgid "CORE_ADMIN_REPLACE_DRAFT"
+msgstr "Replace the unsaved changes with this version?"
+
+msgid "CORE_ADMIN_SAVE"
+msgstr "Save"
+
+msgid "CORE_ADMIN_SAVED_VERSION"
+msgstr "Saved as version {version}."
+
+msgid "CORE_ADMIN_SAVE_TITLE"
+msgstr "Save these changes?"
+
+msgid "CORE_ADMIN_SECRET_KEPT"
+msgstr "kept"
+
+msgid "CORE_ADMIN_TAB_FORM"
+msgstr "Form"
+
+msgid "CORE_ADMIN_TAB_YAML"
+msgstr "YAML"
+
+msgid "CORE_ADMIN_UNDO"
+msgstr "Undo"
+
+msgid "CORE_ADMIN_UNDO_HERE"
+msgstr "Undo last change here"
+
+msgid "CORE_ADMIN_UNDO_STEP"
+msgstr "Reverted: {label}"
+
+msgid "CORE_ADMIN_UNSAVED"
+msgstr "Unsaved changes"
+
+msgid "CORE_ADMIN_USE_ENV"
+msgstr "Use !env"
+
+msgid "CORE_ADMIN_LIST"
+msgstr "List"
+
+msgid "CORE_ADMIN_ON_OFF"
+msgstr "On or off"
+
+msgid "CORE_ADMIN_TEXT"
+msgstr "Text"
+
+msgid "CORE_ADMIN_NUMBER"
+msgstr "Number"
+
+msgid "CORE_ADMIN_MODULE_SETTINGS"
+msgstr "Module settings"

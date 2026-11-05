@@ -11,11 +11,15 @@ Implements:
     CORE-254: Core spec 0.12, §10.1 Security.
     -: Core spec 0.24, §10.5 Diagnostics and debugging.
     CORE-322: Core spec 0.25, §6.4 Web configuration editor.
+    CORE-310: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-309: Core spec 0.26, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from html import escape
+from pathlib import Path
 
 from mm3.core.i18n.catalogs import CORE_CATALOG, Table
 
@@ -26,6 +30,8 @@ __all__ = [
     "admin_debug_page",
     "admin_home_page",
     "admin_texts",
+    "form_texts",
+    "language_names",
     "login_page",
     "message_page",
     "pair_page",
@@ -77,6 +83,59 @@ def _page(
     )
 
 
+ADMIN_LANGUAGES = ("en", "it", "fr", "es", "de")
+"""The languages the admin can pick for its session (CORE-309)."""
+
+
+def language_names() -> list[dict[str, str]]:
+    """Return each admin language with its own name (``Italiano``, ``Deutsch``)."""
+    from babel import Locale
+
+    return [
+        {"code": code, "name": str(Locale.parse(code).get_display_name(code)).capitalize()}
+        for code in ADMIN_LANGUAGES
+    ]
+
+
+def _chain(locale: str) -> list[str]:
+    chain = ["en"]
+    base = locale.split("-")[0]
+    if base != "en":
+        chain.append(base)
+    if locale not in chain:
+        chain.append(locale)
+    return chain
+
+
+def form_texts(locale: str, roots: Mapping[str, Path | None]) -> dict[str, dict[str, str]]:
+    """Return the form label and help texts per module (CORE-310).
+
+    Args:
+        locale: The admin language.
+        roots: Catalog root per installed module.
+
+    Returns:
+        ``{"": core texts, module: texts}`` with only the ``CONFIG_*`` keys,
+        English first, then the language; a module with no texts is left out.
+
+    Implements:
+        CORE-310: Core spec 0.22, §6.4 Web configuration editor.
+    """
+    out: dict[str, dict[str, str]] = {}
+    for name, root in [("", CORE_CATALOG), *sorted(roots.items())]:
+        if root is None:
+            continue
+        table = Table(root)
+        texts: dict[str, str] = {}
+        for loc in _chain(locale):
+            for key, text in table.get(loc).items():
+                if key.startswith("CONFIG_") and isinstance(text, str):
+                    texts[key] = text
+        if texts:
+            out[name] = texts
+    return out
+
+
 def admin_texts(locale: str) -> dict[str, str]:
     """Return the admin page texts for a locale, falling back to English.
 
@@ -87,14 +146,8 @@ def admin_texts(locale: str) -> dict[str, str]:
         Key to text for the keys of :data:`ADMIN_PREFIXES`.
     """
     table = Table(CORE_CATALOG)
-    chain = ["en"]
-    base = locale.split("-")[0]
-    if base != "en":
-        chain.append(base)
-    if locale not in chain:
-        chain.append(locale)
     out: dict[str, str] = {}
-    for loc in chain:
+    for loc in _chain(locale):
         for key, text in table.get(loc).items():
             if key.startswith(ADMIN_PREFIXES) and isinstance(text, str):
                 out[key] = text

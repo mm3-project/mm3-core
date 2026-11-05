@@ -12,6 +12,7 @@ Implements:
     CORE-253: Core spec 0.12, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
     CORE-62: Core spec 0.12, §10.1 Security.
+    CORE-309: Core spec 0.26, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -75,12 +76,15 @@ class Session:
         kind: ``admin`` or ``display``.
         created: Creation time (UTC, ISO 8601).
         last_used: Last use (UTC, ISO 8601).
+        locale: The admin language picked for this session, or ``None`` to
+            follow ``engine.locale`` (CORE-309).
     """
 
     token_id: str
     kind: TokenKind
     created: str
     last_used: str
+    locale: str | None = None
 
 
 class SessionStore:
@@ -176,6 +180,48 @@ class SessionStore:
                 self._write()
         self.tokens.touch(token.id)
         return token
+
+    def locale(self, session_id: str | None) -> str | None:
+        """Return the admin language of a session, or ``None`` (CORE-309).
+
+        Args:
+            session_id: Value of the session cookie.
+
+        Returns:
+            The language picked for the session, if any.
+
+        Implements:
+            CORE-309: Core spec 0.26, §9.1 Remote-control API.
+        """
+        if not session_id:
+            return None
+        with self._mutex:
+            sess = self._sessions.get(_digest(session_id))
+        return sess.locale if sess is not None else None
+
+    def set_locale(self, session_id: str | None, locale: str | None) -> bool:
+        """Keep an admin language with a session; ``None`` follows the engine again.
+
+        Args:
+            session_id: Value of the session cookie.
+            locale: A shipped language or ``None``.
+
+        Returns:
+            False when there is no such session.
+
+        Implements:
+            CORE-309: Core spec 0.26, §9.1 Remote-control API.
+        """
+        if not session_id:
+            return False
+        key = _digest(session_id)
+        with self._mutex:
+            sess = self._sessions.get(key)
+            if sess is None:
+                return False
+            self._sessions[key] = replace(sess, locale=locale)
+            self._write()
+        return True
 
     def end(self, session_id: str | None) -> None:
         """End a session (logout).

@@ -509,3 +509,111 @@ msgstr "Maintenant"
 
 msgid "CORE_ADMIN_AFTER_RESTORE"
 msgstr "Après la restauration"
+
+msgid "CORE_ADMIN_ADD"
+msgstr "Ajouter"
+
+msgid "CORE_ADMIN_ADD_LANGUAGE"
+msgstr "Ajouter une langue"
+
+msgid "CORE_ADMIN_BAD_FORMAT"
+msgstr "Cette valeur n'a pas le bon format."
+
+msgid "CORE_ADMIN_CHANGE"
+msgstr "Modifier"
+
+msgid "CORE_ADMIN_CLEAR"
+msgstr "Effacer"
+
+msgid "CORE_ADMIN_DISCARD"
+msgstr "Abandonner les modifications"
+
+msgid "CORE_ADMIN_ENV_NAME"
+msgstr "Nom de la variable d'environnement"
+
+msgid "CORE_ADMIN_ERRORS"
+msgstr "{count} erreurs"
+
+msgid "CORE_ADMIN_INCLUDE_HINT"
+msgstr "Cette partie est dans un autre fichier ; modifiez-la dans la vue YAML."
+
+msgid "CORE_ADMIN_KEY"
+msgstr "Clé"
+
+msgid "CORE_ADMIN_LANGUAGE"
+msgstr "Langue"
+
+msgid "CORE_ADMIN_LANGUAGE_ENGINE"
+msgstr "Langue du miroir"
+
+msgid "CORE_ADMIN_OPENED_VERSION"
+msgstr "Ouvrir la version {version}"
+
+msgid "CORE_ADMIN_OPEN_IN_EDITOR"
+msgstr "Ouvrir dans l'éditeur"
+
+msgid "CORE_ADMIN_OUT_OF_RANGE"
+msgstr "Autorisé : de {min} à {max}."
+
+msgid "CORE_ADMIN_PRESET"
+msgstr "Préréglage"
+
+msgid "CORE_ADMIN_REDO"
+msgstr "Rétablir"
+
+msgid "CORE_ADMIN_RELOAD"
+msgstr "Recharger"
+
+msgid "CORE_ADMIN_REMOVE"
+msgstr "Supprimer"
+
+msgid "CORE_ADMIN_REPLACE_DRAFT"
+msgstr "Remplacer les modifications non enregistrées par cette version ?"
+
+msgid "CORE_ADMIN_SAVE"
+msgstr "Enregistrer"
+
+msgid "CORE_ADMIN_SAVED_VERSION"
+msgstr "Enregistré comme version {version}."
+
+msgid "CORE_ADMIN_SAVE_TITLE"
+msgstr "Enregistrer ces modifications ?"
+
+msgid "CORE_ADMIN_SECRET_KEPT"
+msgstr "conservé"
+
+msgid "CORE_ADMIN_TAB_FORM"
+msgstr "Formulaire"
+
+msgid "CORE_ADMIN_TAB_YAML"
+msgstr "YAML"
+
+msgid "CORE_ADMIN_UNDO"
+msgstr "Annuler"
+
+msgid "CORE_ADMIN_UNDO_HERE"
+msgstr "Annuler la dernière modification ici"
+
+msgid "CORE_ADMIN_UNDO_STEP"
+msgstr "Rétabli : {label}"
+
+msgid "CORE_ADMIN_UNSAVED"
+msgstr "Modifications non enregistrées"
+
+msgid "CORE_ADMIN_USE_ENV"
+msgstr "Utiliser !env"
+
+msgid "CORE_ADMIN_LIST"
+msgstr "Liste"
+
+msgid "CORE_ADMIN_ON_OFF"
+msgstr "Oui ou non"
+
+msgid "CORE_ADMIN_TEXT"
+msgstr "Texte"
+
+msgid "CORE_ADMIN_NUMBER"
+msgstr "Nombre"
+
+msgid "CORE_ADMIN_MODULE_SETTINGS"
+msgstr "Réglages du module"
