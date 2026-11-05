@@ -14,6 +14,8 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -49,6 +51,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 25
     strategy:
       fail-fast: false
       matrix:
@@ -72,6 +76,8 @@ jobs:
   modules:
     name: Reference module ${{ matrix.module }} (CORE-289)
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
@@ -96,6 +102,8 @@ jobs:
   audit:
     name: pip-audit (CORE-174)
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -108,6 +116,8 @@ jobs:
 
   build:
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 20
     needs: [lint, test, audit]
     steps:
       - uses: actions/checkout@v4
@@ -133,6 +143,8 @@ jobs:
   # installer runs on clean Debian 12 and 13 images with the wheels built above.
   install:
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 30
     needs: [build]
     strategy:
       fail-fast: false

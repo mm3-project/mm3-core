@@ -17,6 +17,8 @@ permissions:
 jobs:
   report:
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6

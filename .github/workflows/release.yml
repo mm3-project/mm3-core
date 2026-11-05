@@ -22,6 +22,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -46,6 +48,8 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 20
     environment: pypi
     permissions:
       id-token: write   # Trusted Publishing + PEP 740 attestations
@@ -62,6 +66,8 @@ jobs:
   constraints:
     needs: publish
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 30
     permissions:
       contents: write
     steps:
