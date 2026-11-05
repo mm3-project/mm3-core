@@ -427,9 +427,9 @@ id = "CORE-63"
 spec = "Core spec"
 section = "10.1"
 title = "Security"
-hash = "4394454d05e8"
+hash = "fb269740a997"
 introduced_in = "0.1"
-changed_in = "0.21"
+changed_in = "0.28"
 status = "active"
 
 [[requirement]]

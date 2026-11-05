@@ -209,7 +209,9 @@ status = "not_started"
 #   messages, pinned page), CORE-326 (in-house editing overlay), CORE-327
 #   (page write rule) and CORE-328 (overlay toolbar, Rescale proportionally)
 #   added; CORE-301 and CORE-302 (draft layout object) and CORE-307 (204,
-#   toggle off after 60 s) changed; gridstack.js removed from 1.2.
+#   toggle off after 60 s) changed, and CORE-63 (frame-src 'self' on
+#   /admin/config for the preview iframe, milestone 3) changed; gridstack.js
+#   removed from 1.2.
 # Part A (REST base) covers the REST side of CORE-236 and CORE-240; the Home
 #   Assistant page select and "enabled" switch come with the MQTT bridge
 #   (milestone 7, CORE-120..126), the admin buttons with part D.
