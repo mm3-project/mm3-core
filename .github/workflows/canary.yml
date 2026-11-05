@@ -53,9 +53,10 @@ jobs:
           for extra in data["project"]["optional-dependencies"].values():
               reqs += extra
           names = {re.split(r"[\[<>=!~ ;]", r, maxsplit=1)[0] for r in reqs}
+          names.discard("mm3-build")  # our own workspace member, not on the index
           open("overrides.txt", "w").write("\n".join(sorted(names)) + "\n")
           EOF
-          uv pip install --override overrides.txt -e ".[dev,migrate]"
+          uv pip install --override overrides.txt -e ./mm3-build -e ".[dev,migrate]"
 
       - name: Test suite
         id: tests
