@@ -37,7 +37,15 @@ class DriveError(RuntimeError):
 
 
 class CountingExecutor(concurrent.futures.ThreadPoolExecutor):
-    """A thread pool that knows which of its jobs are still running."""
+    """A thread pool that knows which of its jobs are still running.
+
+    A job counts as pending until its result has been handed on to whoever
+    waits for it. ``submit()`` returns a relay future: the thread's result is
+    copied to it, which runs the waiter's callbacks (for ``run_in_executor``
+    the wake-up queued on the loop), and only then is the job dropped. So
+    ``LoopClock.settle()`` never sees a quiet loop between a finished thread
+    and the coroutine it wakes.
+    """
 
     def __init__(self, max_workers: int | None = None) -> None:
         super().__init__(max_workers=max_workers, thread_name_prefix="mm3-kit-blocking")
@@ -46,15 +54,36 @@ class CountingExecutor(concurrent.futures.ThreadPoolExecutor):
     def submit(
         self, fn: Callable[..., T], /, *args: Any, **kwargs: Any
     ) -> concurrent.futures.Future[T]:
-        """Run ``fn`` in a thread and track it until it finishes."""
-        future = super().submit(fn, *args, **kwargs)
-        self._pending.add(future)
-        future.add_done_callback(self._pending.discard)
-        return future
+        """Run ``fn`` in a thread and track it until its result is delivered."""
+        inner = super().submit(fn, *args, **kwargs)
+        outer: concurrent.futures.Future[T] = concurrent.futures.Future()
+        self._pending.add(outer)
+
+        def relay(done: concurrent.futures.Future[T]) -> None:
+            try:
+                if outer.cancelled():
+                    return
+                if done.cancelled():
+                    outer.cancel()
+                elif (error := done.exception()) is not None:
+                    outer.set_exception(error)
+                else:
+                    outer.set_result(done.result())
+            finally:
+                self._pending.discard(outer)
+
+        def cancel(done: concurrent.futures.Future[T]) -> None:
+            if done.cancelled():
+                inner.cancel()
+                self._pending.discard(outer)
+
+        outer.add_done_callback(cancel)
+        inner.add_done_callback(relay)
+        return outer
 
     def pending(self) -> list[concurrent.futures.Future[Any]]:
-        """Jobs not finished yet."""
-        return [f for f in list(self._pending) if not f.done()]
+        """Jobs whose result has not been delivered yet."""
+        return list(self._pending)
 
 
 class LoopClock:

@@ -207,6 +207,10 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Fixed
 
+- Test kit (CORE-278): a thread-pool job of `mm3.testing` now stays pending
+  until its result has reached the waiting coroutine, so `settle()` and
+  `h.advance()` no longer return early between a finished thread and the
+  wake-up it queues (the flaky WTH-11 refresh count in CI).
 - `mm3-weather` browser tests (WTH-10, WTH-12): the list counts wait for the
   render that follows `onResize`, so they no longer race the default cell
   size and see 3 hours instead of 6.
