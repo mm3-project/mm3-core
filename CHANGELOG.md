@@ -112,6 +112,9 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Fixed
 
+- Milestone 3 closed again at core 0.29 (issue #76): the CORE-63 change of
+  core 0.28 (`frame-src 'self'` on `/admin/config`) was implemented in #74;
+  the remaining citations were reviewed and updated.
 - Test `test_core_62_tokens_are_hashed_named_and_private` (CORE-62) took the
   token secret as the text after the last `_`, which the base64url secret
   may contain; it now takes everything after the second `_` (random flake).

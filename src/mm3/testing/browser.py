@@ -15,7 +15,7 @@ Implements:
     MOD-51, MOD-54: Module Contract 1.0 rev 11, §6.3 Layout and preview.
     MOD-84: Module Contract 1.0 rev 11, §9 Logging, health and errors.
     -: Module Contract 1.0 rev 11, §12.2 mm3.testing kit.
-    CORE-63: Core spec 0.21, §10.1 Security.
+    CORE-63: Core spec 0.28, §10.1 Security.
     CORE-279: Core spec 0.18, §10.2 Packaging and deployment.
     CORE-288: Core spec 0.19, §6.2 Rules.
 """
