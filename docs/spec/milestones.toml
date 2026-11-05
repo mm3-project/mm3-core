@@ -200,6 +200,8 @@ status = "not_started"
 #   Open in editor, editor undo, form texts, admin language), D2 (Layout view,
 #   preview, page selector, Show on mirror) and D3 (admin extensions,
 #   CORE-102, after its own defining step).
+# Core spec 0.27 (5 Nov 2026): CORE-301 changed, /config/patch also returns
+#   documents (the draft as data) for the Form view.
 # Part A (REST base) covers the REST side of CORE-236 and CORE-240; the Home
 #   Assistant page select and "enabled" switch come with the MQTT bridge
 #   (milestone 7, CORE-120..126), the admin buttons with part D.
