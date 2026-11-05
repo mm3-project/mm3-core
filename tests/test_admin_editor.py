@@ -414,6 +414,99 @@ async def test_core_323_yaml_view_lints_and_completes(
     assert not problems, problems
 
 
+async def yaml_line(page: Any, text: str) -> None:
+    """Type ``text`` as a new line after ``locale: en`` in the YAML view."""
+    await page.click(".cm-line >> text=locale: en")
+    await page.keyboard.press("End")
+    await page.keyboard.press("Enter")
+    await page.keyboard.type(text)
+
+
+async def test_core_151_ctrl_z_in_the_yaml_view_undoes_one_step(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    # The page's own shortcut handler must leave keys in the editor (inside a
+    # shadow root) to the editor's keymap, or one Ctrl+Z undoes two steps.
+    base, sid, _, _ = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.click("nav.tabs >> text=YAML")
+        await page.wait_for_selector(".cm-editor .cm-content")
+        content = page.locator(".cm-content")
+        undo = "button:has-text('Undo') >> text=config.yaml: YAML"
+        await yaml_line(page, "theme: one")
+        await page.wait_for_selector(undo, timeout=5000)
+        await yaml_line(page, "timezone: UTC")
+        await page.wait_for_function(
+            "() => document.querySelector('mm3-admin-config').draft.undoStack.length === 2",
+            timeout=5000,
+        )
+        await page.keyboard.press("Control+z")
+        for _ in range(50):
+            if "timezone: UTC" not in await content.inner_text():
+                break
+            await asyncio.sleep(0.1)
+        await page.wait_for_function(
+            "() => !document.querySelector('mm3-admin-config').busy", timeout=5000
+        )
+        text = await content.inner_text()
+        assert "timezone: UTC" not in text
+        assert "theme: one" in text
+        steps = await page.evaluate(
+            "() => document.querySelector('mm3-admin-config').draft.undoStack.length"
+        )
+        assert steps == 1
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert not problems, problems
+
+
+async def test_core_151_typing_during_a_refresh_is_kept(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    # The answer of /config/patch must not replace text typed while it was out.
+    base, sid, _, _ = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.click("nav.tabs >> text=YAML")
+        await page.wait_for_selector(".cm-editor .cm-content")
+        content = page.locator(".cm-content")
+        sent: list[str] = []
+
+        async def slow(route: Any) -> None:
+            sent.append(route.request.post_data or "")
+            await asyncio.sleep(1.5)
+            await route.continue_()
+
+        await page.route("**/api/v1/config/patch", slow)
+        await yaml_line(page, "theme: one")
+        for _ in range(50):  # the typing step is flushed 1 s after the last key
+            if sent:
+                break
+            await asyncio.sleep(0.1)
+        assert sent
+        assert "theme: one" in sent[0]
+        await page.keyboard.type("  # more")
+        await page.unroute("**/api/v1/config/patch")
+        await page.wait_for_selector(
+            "button:has-text('Undo') >> text=config.yaml: YAML", timeout=10000
+        )
+        await asyncio.sleep(0.5)
+        assert "theme: one  # more" in await content.inner_text()
+        await page.wait_for_function(
+            "() => [...document.querySelector('mm3-admin-config').draft.files.values()]"
+            ".some((f) => f.text.includes('theme: one  # more'))",
+            timeout=5000,
+        )
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert not problems, problems
+
+
 async def test_core_324_open_in_editor_and_language(
     page_world: tuple[str, str, Path, ConfigHistory],
 ) -> None:

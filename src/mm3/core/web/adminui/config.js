@@ -73,7 +73,10 @@ class AdminConfig extends HTMLElement {
 
   keys(e) {
     if (!(e.ctrlKey || e.metaKey) || this.tab === "history") return;
-    if (e.target && e.target.closest && e.target.closest(".cm-editor")) return; // the editor's own keymap
+    // The editor's own keymap handles its keys; it sits in a shadow root, so
+    // e.target here is the host and only the composed path shows the editor.
+    if (e.defaultPrevented) return;
+    if (e.composedPath().some((n) => n.classList && n.classList.contains("cm-editor"))) return;
     const k = e.key.toLowerCase();
     if (k === "z" && !e.shiftKey) {
       e.preventDefault();

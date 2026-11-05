@@ -238,15 +238,24 @@ export class Draft extends EventTarget {
     return list.map((path) => ({ path, content: this.files.get(path).text }));
   }
 
-  /** Send the draft (and ops) to POST /config/patch; take files, records, documents. */
+  /**
+   * Send the draft (and ops) to POST /config/patch; take files, records, documents.
+   *
+   * Text typed while the request is out is kept: a file without ops whose text
+   * changed since it was sent keeps the newer text, and its own typing step
+   * refreshes it again (CORE-151).
+   */
   async refresh(paths = [], ops = []) {
-    const out = await call("POST", "/config/patch", {
-      body: { base: this.base, files: this.draftFiles(paths), ops },
-    });
+    const files = this.draftFiles(paths);
+    const sent = new Map(files.map((f) => [f.path, f.content]));
+    const patched = new Set(ops.map((o) => o.file));
+    const out = await call("POST", "/config/patch", { body: { base: this.base, files, ops } });
     for (const f of out.files) {
       const entry = this.files.get(f.path);
-      if (entry) entry.text = f.content;
-      else this.files.set(f.path, { role: f.role, saved: "", text: f.content });
+      if (!entry) this.files.set(f.path, { role: f.role, saved: "", text: f.content });
+      else if (patched.has(f.path) || !sent.has(f.path) || entry.text === sent.get(f.path)) {
+        entry.text = f.content;
+      }
     }
     this.records = out.records;
     this.documents = out.documents;
