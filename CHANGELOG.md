@@ -7,6 +7,15 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (weekly canary, issues #54, #55, #56)
+
+- The test configuration sets `asyncio_default_fixture_loop_scope`
+  (`function`): pytest-asyncio 1.4 warns when it is unset, and the suite
+  turns deprecation warnings into errors (newest-allowed, next-python).
+  Modules made by `mm3 new-module` get the same setting (CORE-281).
+- The newest-available canary installs `mm3-build` from the repository
+  instead of looking it up on the index (CORE-176, CORE-280).
+
 ### Added (milestone 4 coverage, issue #39)
 
 - `mm3 module check` warns about client message types that are not lower
