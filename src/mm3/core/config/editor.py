@@ -10,9 +10,11 @@ copy of the config directory, so the admin can never write a file that fails
 
 Implements:
     CORE-35, CORE-36: Core spec 0.22, §6.4 Web configuration editor.
-    CORE-300, CORE-301, CORE-302, CORE-303: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-300, CORE-302, CORE-303: Core spec 0.22, §6.4 Web configuration editor.
     CORE-320: Core spec 0.25, §6.4 Web configuration editor.
     CORE-321: Core spec 0.25, §6.8 Configuration history, undo and redo.
+    CORE-301: Core spec 0.27, §6.4 Web configuration editor.
+    CORE-324: Core spec 0.26, §6.8 Configuration history, undo and redo.
 """
 
 from __future__ import annotations
@@ -36,7 +38,14 @@ from mm3.core.config.history import (
 from mm3.core.config.history import (
     MASK as HISTORY_MASK,
 )
-from mm3.core.config.loader import PatchError, rt_mask_strings, rt_patch, rt_unmask
+from mm3.core.config.loader import (
+    PatchError,
+    node_to_json,
+    rt_load,
+    rt_mask_strings,
+    rt_patch,
+    rt_unmask,
+)
 from mm3.core.config.validate import ConfigResult
 from mm3.core.diag.secrets import MASK, Masker
 
@@ -113,7 +122,7 @@ class ConfigEditor:
         masker: Returns the masker of the running configuration's secrets.
 
     Implements:
-        CORE-301: Core spec 0.22, §6.4 Web configuration editor.
+        CORE-301: Core spec 0.27, §6.4 Web configuration editor.
     """
 
     def __init__(self, history: ConfigHistory, masker: Callable[[], Masker] = Masker) -> None:
@@ -150,6 +159,34 @@ class ConfigEditor:
             for rel in main_first
             if rel in config_set.files
         ]
+
+    def documents(self, config_set: ConfigSet) -> dict[str, Any]:
+        """Return every YAML file of a set as data, secrets as ``{"!masked": null}`` (CORE-301).
+
+        Values are before ``!env`` substitution, tagged nodes as in CORE-320;
+        a file that does not parse maps to ``None``.
+        """
+        out: dict[str, Any] = {}
+        for item in self.files_view(config_set):
+            if not _is_yaml(item["path"]):
+                continue
+            try:
+                out[item["path"]] = node_to_json(rt_load(item["content"]))
+            except Exception:
+                out[item["path"]] = None
+        return out
+
+    def version_files(self, version: int) -> dict[str, Any]:
+        """``GET /api/v1/config/history/{version}``: ``{version, files}`` (CORE-324).
+
+        Raises:
+            EditorError: Unknown version (404).
+        """
+        try:
+            config_set = self.history.store.read_set(version)
+        except (KeyError, FileNotFoundError):
+            raise EditorError("CORE_API_NOT_FOUND", f"Unknown version {version}") from None
+        return {"version": version, "files": self.files_view(config_set)}
 
     def current_version(self) -> int | None:
         """The latest version in the history."""
@@ -232,8 +269,9 @@ class ConfigEditor:
         """``POST /api/v1/config/patch``: apply edits to the draft, write nothing (CORE-301).
 
         Returns:
-            ``{files, records}``: every changed file, secrets masked, and the
-            validation records of the whole draft.
+            ``{files, records, documents}``: every changed file, secrets
+            masked, the validation records of the whole draft, and every YAML
+            file of the draft as data (CORE-301, 0.27).
 
         Raises:
             EditorError: Conflict, bad masked value or a patch that fails.
@@ -276,7 +314,11 @@ class ConfigEditor:
             if rel not in changed:
                 changed.append(rel)
         result = self.history.validate_set(config_set)
-        return {"files": self.files_view(config_set, changed), "records": _records(result)}
+        return {
+            "files": self.files_view(config_set, changed),
+            "records": _records(result),
+            "documents": self.documents(config_set),
+        }
 
     def validate(self, base: str | None, files: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         """``POST /api/v1/config/validate``: records and the diff preview (CORE-302).

@@ -505,3 +505,111 @@ msgstr ""
 
 msgid "CORE_ADMIN_AFTER_RESTORE"
 msgstr ""
+
+msgid "CORE_ADMIN_ADD"
+msgstr ""
+
+msgid "CORE_ADMIN_ADD_LANGUAGE"
+msgstr ""
+
+msgid "CORE_ADMIN_BAD_FORMAT"
+msgstr ""
+
+msgid "CORE_ADMIN_CHANGE"
+msgstr ""
+
+msgid "CORE_ADMIN_CLEAR"
+msgstr ""
+
+msgid "CORE_ADMIN_DISCARD"
+msgstr ""
+
+msgid "CORE_ADMIN_ENV_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_ERRORS"
+msgstr ""
+
+msgid "CORE_ADMIN_INCLUDE_HINT"
+msgstr ""
+
+msgid "CORE_ADMIN_KEY"
+msgstr ""
+
+msgid "CORE_ADMIN_LANGUAGE"
+msgstr ""
+
+msgid "CORE_ADMIN_LANGUAGE_ENGINE"
+msgstr ""
+
+msgid "CORE_ADMIN_OPENED_VERSION"
+msgstr ""
+
+msgid "CORE_ADMIN_OPEN_IN_EDITOR"
+msgstr ""
+
+msgid "CORE_ADMIN_OUT_OF_RANGE"
+msgstr ""
+
+msgid "CORE_ADMIN_PRESET"
+msgstr ""
+
+msgid "CORE_ADMIN_REDO"
+msgstr ""
+
+msgid "CORE_ADMIN_RELOAD"
+msgstr ""
+
+msgid "CORE_ADMIN_REMOVE"
+msgstr ""
+
+msgid "CORE_ADMIN_REPLACE_DRAFT"
+msgstr ""
+
+msgid "CORE_ADMIN_SAVE"
+msgstr ""
+
+msgid "CORE_ADMIN_SAVED_VERSION"
+msgstr ""
+
+msgid "CORE_ADMIN_SAVE_TITLE"
+msgstr ""
+
+msgid "CORE_ADMIN_SECRET_KEPT"
+msgstr ""
+
+msgid "CORE_ADMIN_TAB_FORM"
+msgstr ""
+
+msgid "CORE_ADMIN_TAB_YAML"
+msgstr ""
+
+msgid "CORE_ADMIN_UNDO"
+msgstr ""
+
+msgid "CORE_ADMIN_UNDO_HERE"
+msgstr ""
+
+msgid "CORE_ADMIN_UNDO_STEP"
+msgstr ""
+
+msgid "CORE_ADMIN_UNSAVED"
+msgstr ""
+
+msgid "CORE_ADMIN_USE_ENV"
+msgstr ""
+
+msgid "CORE_ADMIN_LIST"
+msgstr ""
+
+msgid "CORE_ADMIN_ON_OFF"
+msgstr ""
+
+msgid "CORE_ADMIN_TEXT"
+msgstr ""
+
+msgid "CORE_ADMIN_NUMBER"
+msgstr ""
+
+msgid "CORE_ADMIN_MODULE_SETTINGS"
+msgstr ""

@@ -146,3 +146,29 @@ dialog::backdrop { background: rgb(0 0 0 / 35%); }
 .diff h3 { grid-column: 1 / -1; margin: 10px 0 0; font-size: 13px; }
 .diff pre { max-height: 240px; }
 tr.current td:first-child::after { content: " ●"; color: var(--ok); }
+
+header.bar select.lang { margin-right: 8px; }
+.savebar { display: flex; gap: 10px; align-items: center; padding: 8px 12px; margin-bottom: 12px;
+  border: 1px solid var(--accent); border-radius: 8px; background: var(--panel); position: sticky; top: 0; z-index: 2; }
+.savebar .spacer, .toolbar .spacer { flex: 1; }
+.toolbar h2 { margin: 0; font-size: 15px; }
+.editor { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 12px; }
+@media (max-width: 800px) { .editor { grid-template-columns: 1fr; } }
+nav.sections { display: flex; flex-direction: column; gap: 2px; }
+nav.sections button { text-align: left; border: none; background: none; border-radius: 6px; padding: 6px 10px; }
+nav.sections button.active { background: var(--panel); border: 1px solid var(--line); font-weight: 600; }
+nav.sections button.has-error { color: var(--bad); }
+.schema-form .field { margin: 8px 0; }
+.schema-form .field label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.schema-form .field .label { min-width: 180px; font-weight: 500; }
+.schema-form .field small { display: block; margin-left: 188px; }
+.schema-form .field-error { color: var(--bad); margin-left: 188px; font-size: 12px; }
+.schema-form fieldset.nested { border: 1px solid var(--line); border-radius: 8px; margin: 10px 0; padding: 6px 12px; }
+.schema-form .row { display: flex; gap: 6px; align-items: center; margin: 3px 0; }
+.schema-form .list-item { display: flex; gap: 6px; align-items: flex-start; }
+.schema-form .tag { padding: 2px 6px; border-radius: 4px; background: var(--bg); border: 1px solid var(--line); }
+.schema-form h4.group { margin: 14px 0 4px; font-size: 12px; text-transform: uppercase; color: var(--muted); }
+button.link { border: none; background: none; color: var(--accent); padding: 2px 4px; }
+.yaml .cm-host { border: 1px solid var(--line); border-radius: 8px; background: var(--panel); min-height: 300px; margin-bottom: 12px; }
+.yaml .cm-host .cm-editor { min-height: 300px; max-height: 70vh; }
+nav.tabs.files button { font-family: var(--mono); font-size: 12px; }

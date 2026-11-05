@@ -7,6 +7,34 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 6, part D1: editor views)
+
+- `/admin/config` now has Form, YAML and History tabs over one draft kept in
+  the browser (`mm3.admin.draft`, keyed by the base ETag), with Undo/Redo
+  named after the step, section undo as a minimal JSON Patch, a save bar and a
+  save dialog showing the records and the diff (CORE-151, CORE-152, CORE-301).
+- Form view `<mm3-schema-form>` generated from the config schema: enums,
+  choices, objects in `ui` order and groups, lists, mappings, LocalizedText,
+  secrets (kept, change, or `!env`) and tagged nodes; texts from each
+  module's `CONFIG_*` catalog (CORE-37).
+- YAML view on CodeMirror 6, bundled once with esbuild
+  (`tools/vendor_codemirror.mjs`, pinned versions and hashes in
+  `vendor/vendor.json`), served only on the admin listener at
+  `/admin/static/codemirror.js` and mounted in a shadow root for the CSP;
+  syntax errors at once, server records through `validate` 300 ms after the
+  last key, in-house schema completion (CORE-323).
+- `GET /api/v1/config/history/{version}` returns that version's files for
+  "Open in editor" (CORE-324); `/config/patch` also returns `documents`, the
+  draft as data (CORE-301).
+- `PUT /api/v1/session/locale` sets the admin language for the session, and
+  `/admin/i18n.json` answers in it with the language list and form texts; a
+  language picker in the admin header (CORE-309).
+
+### Fixed
+
+- Config schema: a module's `config` is now `{"$ref": ...}` instead of a bare
+  string (CORE-37).
+
 ### Added (milestone 6, part C: config API and history)
 
 - `GET /api/v1/config` (CORE-301): the config set as `{etag, version, files}`

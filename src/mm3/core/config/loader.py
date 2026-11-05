@@ -11,7 +11,8 @@ Implements:
     CORE-206: Core spec 0.8, §6.2 Rules.
     -: Core spec 0.8, §10.9 Dependency management.
     CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
-    CORE-301, CORE-303: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-303: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-301: Core spec 0.27, §6.4 Web configuration editor.
     CORE-320: Core spec 0.25, §6.4 Web configuration editor.
 """
 
@@ -596,7 +597,7 @@ def rt_patch(text: str, ops: Sequence[Mapping[str, Any]]) -> str:
         YAMLError: The text does not parse.
 
     Implements:
-        CORE-301: Core spec 0.22, §6.4 Web configuration editor.
+        CORE-301: Core spec 0.27, §6.4 Web configuration editor.
         CORE-320: Core spec 0.25, §6.4 Web configuration editor.
     """
     doc = rt_load(text)

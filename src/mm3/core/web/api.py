@@ -20,8 +20,11 @@ Implements:
     CORE-299: Core spec 0.22, §9.1 Remote-control API.
     CORE-311, CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-316, CORE-318: Core spec 0.24, §10.5 Diagnostics and debugging.
-    CORE-300, CORE-301, CORE-302, CORE-303, CORE-35: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-300, CORE-302, CORE-303, CORE-35: Core spec 0.22, §6.4 Web configuration editor.
     CORE-321: Core spec 0.25, §6.8 Configuration history, undo and redo.
+    CORE-324: Core spec 0.26, §6.8 Configuration history, undo and redo.
+    CORE-309: Core spec 0.26, §9.1 Remote-control API.
+    CORE-301: Core spec 0.27, §6.4 Web configuration editor.
 """
 
 from __future__ import annotations
@@ -149,6 +152,12 @@ class DraftBody(_Body):
 
     base: str | None = None
     files: list[FileBody] = Field(default_factory=list)
+
+
+class LocaleBody(_Body):
+    """``PUT /api/v1/session/locale``: a shipped language or null (CORE-309)."""
+
+    locale: Literal["en", "it", "fr", "es", "de"] | None
 
 
 class RestoreBody(_Body):
@@ -571,6 +580,12 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
         page: dict[str, Any] = await run(lambda: editor().history_page(limit, before))
         return page
 
+    @router.get("/config/history/{version}")
+    async def get_version(version: int) -> dict[str, Any]:
+        """The files of one version, secrets masked, for Open in editor (CORE-324)."""
+        files: dict[str, Any] = await run(lambda: editor().version_files(version))
+        return files
+
     @router.get("/config/history/{a}/diff/{b}")
     async def get_history_diff(a: int, b: int, section: str | None = None) -> list[dict[str, str]]:
         """The diff between two versions, whole or per section (CORE-321)."""
@@ -605,6 +620,22 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
             lambda: editor().restore(if_match, body.version, body.section, who)
         )
         return result
+
+    # --- admin language (CORE-309) ---------------------------------------------------
+
+    @router.put("/session/locale")
+    async def put_locale(body: LocaleBody, request: Request) -> dict[str, Any]:
+        """Keep the admin language with the admin session (CORE-309)."""
+        from mm3.core.web.sessions import ADMIN_COOKIE
+
+        sid = request.cookies.get(ADMIN_COOKIE)
+        bearer = request.headers.get("authorization", "").lower().startswith("bearer ")
+        if auth is None or bearer or not sid:
+            raise ApiError("CORE_API_INVALID_REQUEST", "The language is kept with an admin session")
+        if not await asyncio.to_thread(auth.sessions.set_locale, sid, body.locale):
+            raise ApiError("CORE_API_INVALID_REQUEST", "No admin session")
+        engine_locale = sup.settings.locale
+        return {"locale": body.locale, "effective": body.locale or engine_locale}
 
     # --- diagnostics ----------------------------------------------------------------
 

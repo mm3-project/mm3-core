@@ -507,3 +507,111 @@ msgstr "Ora"
 
 msgid "CORE_ADMIN_AFTER_RESTORE"
 msgstr "Dopo il ripristino"
+
+msgid "CORE_ADMIN_ADD"
+msgstr "Aggiungi"
+
+msgid "CORE_ADMIN_ADD_LANGUAGE"
+msgstr "Aggiungi lingua"
+
+msgid "CORE_ADMIN_BAD_FORMAT"
+msgstr "Il valore non ha il formato giusto."
+
+msgid "CORE_ADMIN_CHANGE"
+msgstr "Modifica"
+
+msgid "CORE_ADMIN_CLEAR"
+msgstr "Cancella"
+
+msgid "CORE_ADMIN_DISCARD"
+msgstr "Scarta le modifiche"
+
+msgid "CORE_ADMIN_ENV_NAME"
+msgstr "Nome della variabile d'ambiente"
+
+msgid "CORE_ADMIN_ERRORS"
+msgstr "{count} errori"
+
+msgid "CORE_ADMIN_INCLUDE_HINT"
+msgstr "Questa parte è in un altro file: modificala nella vista YAML."
+
+msgid "CORE_ADMIN_KEY"
+msgstr "Chiave"
+
+msgid "CORE_ADMIN_LANGUAGE"
+msgstr "Lingua"
+
+msgid "CORE_ADMIN_LANGUAGE_ENGINE"
+msgstr "Lingua del mirror"
+
+msgid "CORE_ADMIN_OPENED_VERSION"
+msgstr "Apri la versione {version}"
+
+msgid "CORE_ADMIN_OPEN_IN_EDITOR"
+msgstr "Apri nell'editor"
+
+msgid "CORE_ADMIN_OUT_OF_RANGE"
+msgstr "Consentito: da {min} a {max}."
+
+msgid "CORE_ADMIN_PRESET"
+msgstr "Predefinito"
+
+msgid "CORE_ADMIN_REDO"
+msgstr "Ripeti"
+
+msgid "CORE_ADMIN_RELOAD"
+msgstr "Ricarica"
+
+msgid "CORE_ADMIN_REMOVE"
+msgstr "Rimuovi"
+
+msgid "CORE_ADMIN_REPLACE_DRAFT"
+msgstr "Sostituire le modifiche non salvate con questa versione?"
+
+msgid "CORE_ADMIN_SAVE"
+msgstr "Salva"
+
+msgid "CORE_ADMIN_SAVED_VERSION"
+msgstr "Salvato come versione {version}."
+
+msgid "CORE_ADMIN_SAVE_TITLE"
+msgstr "Salvare queste modifiche?"
+
+msgid "CORE_ADMIN_SECRET_KEPT"
+msgstr "mantenuto"
+
+msgid "CORE_ADMIN_TAB_FORM"
+msgstr "Modulo"
+
+msgid "CORE_ADMIN_TAB_YAML"
+msgstr "YAML"
+
+msgid "CORE_ADMIN_UNDO"
+msgstr "Annulla"
+
+msgid "CORE_ADMIN_UNDO_HERE"
+msgstr "Annulla l'ultima modifica qui"
+
+msgid "CORE_ADMIN_UNDO_STEP"
+msgstr "Ripristinato: {label}"
+
+msgid "CORE_ADMIN_UNSAVED"
+msgstr "Modifiche non salvate"
+
+msgid "CORE_ADMIN_USE_ENV"
+msgstr "Usa !env"
+
+msgid "CORE_ADMIN_LIST"
+msgstr "Elenco"
+
+msgid "CORE_ADMIN_ON_OFF"
+msgstr "Sì o no"
+
+msgid "CORE_ADMIN_TEXT"
+msgstr "Testo"
+
+msgid "CORE_ADMIN_NUMBER"
+msgstr "Numero"
+
+msgid "CORE_ADMIN_MODULE_SETTINGS"
+msgstr "Impostazioni del modulo"
