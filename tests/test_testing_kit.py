@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import threading
 from datetime import UTC, datetime, timedelta
 from typing import Any, ClassVar
 
@@ -15,7 +16,7 @@ from mm3.core.supervisor import State
 from mm3.errors import HttpConnectionError, HttpTimeoutError, RequestTimeoutError
 from mm3.testing import ContractError, ModuleHarness, sample_payload
 from mm3.testing.contract import KIT_CHECKS, run_kit_checks
-from mm3.testing.loop import DriveError, LoopClock
+from mm3.testing.loop import CountingExecutor, DriveError, LoopClock
 
 
 def weather(**kw: Any) -> ModuleHarness:
@@ -202,6 +203,41 @@ async def test_core_278_storage_and_run_blocking_in_real_threads() -> None:
     async with ModuleHarness(Saver) as h:
         assert h.state["n"] == 1
         assert h.storage_dir.exists()
+
+
+def test_core_278_thread_job_pending_until_its_result_is_delivered() -> None:
+    # settle() must not see a quiet loop between a finished thread and the
+    # waiter it wakes: the job leaves pending() only after the waiter's
+    # callbacks ran (the flaky WTH-11 refresh count under CI load).
+    executor = CountingExecutor(1)
+    try:
+        release = threading.Event()
+        job = executor.submit(release.wait)
+        seen: list[bool] = []
+        job.add_done_callback(lambda done: seen.append(done in executor.pending()))
+        release.set()
+        assert job.result(timeout=5) is True
+        executor.shutdown(wait=True)
+        assert seen == [True]
+        assert executor.pending() == []
+    finally:
+        executor.shutdown(wait=True)
+
+
+def test_core_278_cancelled_thread_job_is_not_pending() -> None:
+    executor = CountingExecutor(1)
+    release = threading.Event()
+    try:
+        busy = executor.submit(release.wait)
+        queued = executor.submit(release.wait)
+        assert queued.cancel()
+        assert executor.pending() == [busy]
+        release.set()
+        busy.result(timeout=5)
+    finally:
+        release.set()
+        executor.shutdown(wait=True)
+    assert executor.pending() == []
 
 
 async def test_mod_10_harness_rejects_bad_config_and_unusable_module() -> None:
