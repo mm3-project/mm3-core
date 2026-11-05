@@ -21,6 +21,8 @@ jobs:
   restack:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 15
     env:
       RESTACK_TOKEN: ${{ secrets.RESTACK_TOKEN }}
     steps:

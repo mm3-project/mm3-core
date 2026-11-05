@@ -17,6 +17,8 @@ permissions:
 jobs:
   canary:
     runs-on: ubuntu-latest
+    # A hung step fails the job after this long (GitHub's default is 6 h).
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:

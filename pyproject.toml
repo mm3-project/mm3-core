@@ -138,6 +138,10 @@ testpaths = ["tests"]
 # in [tool.coverage.report].
 addopts = "--strict-markers --cov=mm3 --cov=mm3_build --cov-report=term-missing"
 markers = ["browser: needs Chromium (Playwright); skipped when it cannot start"]
+# A test still running after 120 s prints the stack of every thread (faulthandler,
+# standard library), so a hang in CI shows where it is; the job's timeout-minutes
+# then fails the run instead of letting it hang for hours.
+faulthandler_timeout = 120
 # Implements CORE-175 (Core spec 0.6, §10.9 Dependency management)
 filterwarnings = ["error::DeprecationWarning", "error::PendingDeprecationWarning"]
 

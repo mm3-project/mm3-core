@@ -9,6 +9,10 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ### Added (repository tooling)
 
+- Every workflow job has `timeout-minutes` (10 to 30 minutes instead of
+  GitHub's 6 h), and pytest prints the stack of every thread for a test still
+  running after 120 s (`faulthandler_timeout`), so a hung test fails CI quickly
+  and shows where it stopped (seen once on `test_hot_reload.py`, CORE-208).
 - **Restack** workflow and `tools/restack.py` (CORE-75): after a pull request
   is merged with squash, the open PRs stacked on it are rebased onto main
   with `git rebase --onto`, `docs/spec/coverage.md` conflicts are resolved by
