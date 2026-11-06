@@ -17,6 +17,9 @@ separately under **Module API** in each release (Module Contract, section 10).
   CORE-337 (`previous` and the reasons `after` and `idle` in
   `CORE_PAGE_CHANGED`), assigned to milestone 7. They extend CORE-230..237
   without changing them, so no closed milestone is reopened.
+- `PAGE_PAUSE` (`{for?}`, 1 to 3600 s) and `PAGE_RESUME` (`{}`) are in the
+  notification registry, as in the 5.5 table (CORE-224); the engine handles
+  pause holds in milestone 7 (CORE-336).
 
 ### Fixed (weekly canary, issues #54, #55, #56)
 

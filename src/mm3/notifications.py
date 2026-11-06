@@ -9,7 +9,7 @@ them (MOD-43).
 
 Implements:
     CORE-224, CORE-225, CORE-226: Core spec 0.19, §5.5 Shared notification registry.
-    -: Core spec 0.9, §5.5 Shared notification registry.
+    -: Core spec 0.30, §5.5 Shared notification registry.
     CORE-245: Core spec 0.9, §6.3 Hot reload.
     MOD-40: Module Contract 1.0 rev 6, §6.1 Messaging.
     MOD-24, MOD-29: Module Contract 1.0 rev 8, §6.1 Messaging.
@@ -37,6 +37,7 @@ __all__ = [
     "LocalizedTextValue",
     "NoPayload",
     "PageInfoPayload",
+    "PagePause",
     "PageSet",
     "PresenceEvent",
     "RegisteredName",
@@ -97,7 +98,7 @@ class HideAlert(_Payload):
 
 
 class NoPayload(_Payload):
-    """Empty payload (``PAGE_NEXT``, ``PAGE_PREV``)."""
+    """Empty payload (``PAGE_NEXT``, ``PAGE_PREV``, ``PAGE_RESUME``)."""
 
 
 class PageSet(_Payload):
@@ -108,6 +109,20 @@ class PageSet(_Payload):
     """
 
     page: str
+
+
+class PagePause(_Payload):
+    """Payload of ``PAGE_PAUSE``.
+
+    The engine's handling of pause holds comes with milestone 7; the name is
+    registered here because it is in the §5.5 table.
+
+    Attributes:
+        for_: Seconds the hold lasts (1 to 3600), sent as ``for``; without
+            it the hold lasts until ``PAGE_RESUME`` or the holder stops.
+    """
+
+    for_: int | None = Field(default=None, alias="for", ge=1, le=3600)
 
 
 class PageInfoPayload(_Payload):
@@ -273,6 +288,8 @@ REGISTRY: Mapping[str, RegisteredName] = _rows(
     RegisteredName("PAGE_NEXT", "command", NoPayload),
     RegisteredName("PAGE_PREV", "command", NoPayload),
     RegisteredName("PAGE_SET", "command", PageSet),
+    RegisteredName("PAGE_PAUSE", "command", PagePause),
+    RegisteredName("PAGE_RESUME", "command", NoPayload),
     RegisteredName("CORE_PAGE_CHANGED", "event", CorePageChanged, engine_only=True),
     RegisteredName("CORE_CONFIG_CHANGED", "event", ConfigChanged, engine_only=True),
     RegisteredName("CORE_CONFIG_ERROR", "event", ConfigError, engine_only=True),
