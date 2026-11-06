@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.34"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32", "0.33", "0.34"]
+version = "0.35"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32", "0.33", "0.34", "0.35"]
 
 [[spec]]
 name = "Module Contract"
@@ -2917,9 +2917,9 @@ id = "CORE-351"
 spec = "Core spec"
 section = "10.6"
 title = "Module catalog"
-hash = "93e670391cb7"
+hash = "e1a211d9b03b"
 introduced_in = "0.33"
-changed_in = "0.33"
+changed_in = "0.35"
 status = "active"
 
 [[requirement]]
@@ -2957,9 +2957,9 @@ id = "CORE-355"
 spec = "Core spec"
 section = "10.7"
 title = "Installer service"
-hash = "93b9e7715901"
+hash = "3a00d9c1509f"
 introduced_in = "0.33"
-changed_in = "0.33"
+changed_in = "0.35"
 status = "active"
 
 [[requirement]]
@@ -2997,9 +2997,9 @@ id = "CORE-359"
 spec = "Core spec"
 section = "10.8"
 title = "Backup and restore"
-hash = "434348a3c8fc"
+hash = "d23d1c98a6b1"
 introduced_in = "0.34"
-changed_in = "0.34"
+changed_in = "0.35"
 status = "active"
 
 [[requirement]]
@@ -3070,6 +3070,46 @@ title = "Backup and restore"
 hash = "518aa9a91ba4"
 introduced_in = "0.34"
 changed_in = "0.34"
+status = "active"
+
+[[requirement]]
+id = "CORE-367"
+spec = "Core spec"
+section = "10.7"
+title = "Installer service"
+hash = "0951b94a2d93"
+introduced_in = "0.35"
+changed_in = "0.35"
+status = "active"
+
+[[requirement]]
+id = "CORE-368"
+spec = "Core spec"
+section = "10.7"
+title = "Installer service"
+hash = "cab4428afdbe"
+introduced_in = "0.35"
+changed_in = "0.35"
+status = "active"
+
+[[requirement]]
+id = "CORE-369"
+spec = "Core spec"
+section = "10.7"
+title = "Installer service"
+hash = "558374b9334b"
+introduced_in = "0.35"
+changed_in = "0.35"
+status = "active"
+
+[[requirement]]
+id = "CORE-370"
+spec = "Core spec"
+section = "10.7"
+title = "Installer service"
+hash = "b7d552593057"
+introduced_in = "0.35"
+changed_in = "0.35"
 status = "active"
 
 [[requirement]]
