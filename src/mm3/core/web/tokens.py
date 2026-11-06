@@ -9,7 +9,8 @@ shown once, when it is created; it has the form ``mm3_<id>_<secret>``, where
 The engine and ``mm3 token`` change the file under one lock
 (``<state>/tokens.lock``, flock) and the engine re-reads it when it changes,
 so ``mm3 token revoke`` takes effect at once for a running engine. This is
-the single adapter for argon2-cffi (core spec 10.9).
+the single adapter for argon2-cffi (core spec 10.9); the installer hashes its
+passphrase with :func:`hash_secret` (CORE-369).
 
 Implements:
     CORE-62: Core spec 0.12, §10.1 Security.
@@ -43,6 +44,8 @@ __all__ = [
     "TokenKind",
     "TokenRecord",
     "TokenStore",
+    "hash_secret",
+    "verify_secret",
 ]
 
 TOKENS_FILE = "tokens.json"
@@ -56,6 +59,30 @@ TokenKind = Literal["admin", "display"]
 _NAME_RE = re.compile(NAME_PATTERN)
 _TOKEN_RE = re.compile(r"^mm3_([0-9a-f]{12})_([A-Za-z0-9_-]{43})$")
 _hasher = PasswordHasher()
+
+
+def hash_secret(secret: str) -> str:
+    """Hash a secret with argon2 (the installer passphrase uses it, CORE-369).
+
+    Args:
+        secret: The secret.
+
+    Returns:
+        The encoded argon2 hash.
+    """
+    return _hasher.hash(secret)
+
+
+def verify_secret(encoded: str, secret: str) -> bool:
+    """Check ``secret`` against an argon2 hash from :func:`hash_secret`.
+
+    Returns:
+        True when it matches; False on a mismatch or a malformed hash.
+    """
+    try:
+        return bool(_hasher.verify(encoded, secret))
+    except (VerifyMismatchError, VerificationError, InvalidHashError):
+        return False
 
 
 class TokenError(ValueError):
