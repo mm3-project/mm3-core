@@ -40,7 +40,13 @@ SPEC_KEYS = {
     "PRS": "core",
     "MOD": "contract",
 }
-COMMENT_GLOBS = [".github/workflows/*.yml", "pyproject.toml", "*.toml", "mm3-build/pyproject.toml"]
+COMMENT_GLOBS = [
+    ".github/workflows/*.yml",
+    "install/*.sh",
+    "pyproject.toml",
+    "*.toml",
+    "mm3-build/pyproject.toml",
+]
 TEST_RE = re.compile(r"def (test_(core|wgt|clk|wth|prs|mod)_(\d+)\w*)\(", re.I)
 
 

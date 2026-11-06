@@ -167,6 +167,7 @@ def _kiosk_agents(hub: ClientHub, manager: ConfigManager, engine: Engine) -> Kio
     Implements:
         CORE-268: Core spec 0.21, §6.7 Display output.
         CORE-296: Core spec 0.21, §6.7 Display output.
+        CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
     """
     from mm3.core.logging import get_logger
     from mm3.core.web.kiosk import AgentKey, KioskAgents, runtime_dir
@@ -190,7 +191,15 @@ def _kiosk_agents(hub: ClientHub, manager: ConfigManager, engine: Engine) -> Kio
             return None
         return config.audio.model_dump(mode="json")
 
-    agents = KioskAgents(key, hub, display, manager.set_applied, engine.clock, audio=audio)
+    agents = KioskAgents(
+        key,
+        hub,
+        display,
+        manager.set_applied,
+        engine.clock,
+        audio=audio,
+        power_changed=manager.set_display_power,
+    )
 
     async def on_reload(new: ConfigResult, plan: ReloadPlan) -> None:
         if plan.display:
@@ -211,6 +220,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.engine import Engine
     from mm3.core.pages import PageService
     from mm3.core.services.hass import HaControls
+    from mm3.core.services.power import PowerService
     from mm3.core.services.storage import resolve_state_dir
     from mm3.core.web.adminws import AdminChannel
     from mm3.core.web.api import ApiServices, status_object
@@ -254,6 +264,9 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     hub.attach_pages(pages, engine.supervisor)
     manager.layout_listeners.append(hub.reloaded)
     agents = _kiosk_agents(hub, manager, engine)
+    engine.supervisor.power = PowerService(
+        engine.supervisor, agents.set_display_power if agents is not None else None
+    )  # CORE-52, CORE-53, CORE-346
     engine.mqtt.ha.attach_controls(
         HaControls(
             pages=pages,

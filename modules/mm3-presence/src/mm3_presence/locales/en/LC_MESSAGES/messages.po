@@ -1,0 +1,129 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HA_DISPLAY"
+msgstr "Display"
+
+msgid "HA_PRESENCE"
+msgstr "Presence"
+
+msgid "HA_STATE"
+msgstr "Presence state"
+
+msgid "HA_BRIGHTNESS"
+msgstr "Brightness"
+
+msgid "CFG_MQTT"
+msgstr "MQTT sensors"
+
+msgid "CFG_MQTT_HELP"
+msgstr "Topics that say someone is in front of the mirror"
+
+msgid "CFG_MQTT_TOPIC"
+msgstr "Topic"
+
+msgid "CFG_MQTT_TOPIC_HELP"
+msgstr "Topic filter; needs a subscribe grant"
+
+msgid "CFG_MQTT_FIELD"
+msgstr "JSON field"
+
+msgid "CFG_MQTT_FIELD_HELP"
+msgstr "Dotted path into a JSON payload; empty compares the payload text"
+
+msgid "CFG_MQTT_VALUE"
+msgstr "Value"
+
+msgid "CFG_MQTT_VALUE_HELP"
+msgstr "What a matching message carries; default true with a field, ON without"
+
+msgid "CFG_TOUCH"
+msgstr "Touch"
+
+msgid "CFG_TOUCH_HELP"
+msgstr "A touch on the screen counts as presence"
+
+msgid "CFG_IDLE_AFTER"
+msgstr "Dim after"
+
+msgid "CFG_IDLE_AFTER_HELP"
+msgstr "Time without presence before the display dims, e.g. 5m; 0 never dims"
+
+msgid "CFG_IDLE_BRIGHTNESS"
+msgstr "Dimmed brightness"
+
+msgid "CFG_IDLE_BRIGHTNESS_HELP"
+msgstr "Brightness in percent while dimmed"
+
+msgid "CFG_BRIGHTNESS"
+msgstr "Brightness"
+
+msgid "CFG_BRIGHTNESS_HELP"
+msgstr "Brightness in percent when the display is on; empty keeps the current one"
+
+msgid "CFG_OFF_AFTER"
+msgstr "Turn off after"
+
+msgid "CFG_OFF_AFTER_HELP"
+msgstr "Time without presence before the display turns off, e.g. 15m"
+
+msgid "CFG_SCHEDULE"
+msgstr "Schedule"
+
+msgid "CFG_SCHEDULE_HELP"
+msgstr "Windows in which the display is off"
+
+msgid "CFG_WINDOW_OFF"
+msgstr "Off at"
+
+msgid "CFG_WINDOW_OFF_HELP"
+msgstr "Local time the window starts, HH:MM"
+
+msgid "CFG_WINDOW_ON"
+msgstr "On at"
+
+msgid "CFG_WINDOW_ON_HELP"
+msgstr "Local time the window ends; not after the start means the next day"
+
+msgid "CFG_WINDOW_DAYS"
+msgstr "Days"
+
+msgid "CFG_WINDOW_DAYS_HELP"
+msgstr "Days the window starts; empty means every day"
+
+msgid "CFG_WAKE_IN_SCHEDULE"
+msgstr "Presence wakes in schedule"
+
+msgid "CFG_WAKE_IN_SCHEDULE_HELP"
+msgstr "Let presence turn the display on inside a window"
+
+msgid "CFG_DISPLAY"
+msgstr "Display driver"
+
+msgid "CFG_DISPLAY_HELP"
+msgstr "kiosk, ddcutil, cec or a plug-in name"
+
+msgid "CFG_DISPLAY_OPTIONS"
+msgstr "Driver options"
+
+msgid "CFG_DISPLAY_OPTIONS_HELP"
+msgstr "Options of the display driver"
+
+msgid "CFG_DISPLAY_OPTIONS_INVALID"
+msgstr "The display driver options are not valid"
+
+msgid "CFG_DISPLAY_UNKNOWN"
+msgstr "Unknown display driver"
+
+msgid "CFG_MQTT_GRANT_MISSING"
+msgstr "No grant for this MQTT topic: add it to the grants of this module"
+
+msgid "CFG_SINGLE_INSTANCE"
+msgstr "Only one presence instance can run"
+
+msgid "CFG_DAY_REPEATED"
+msgstr "A day is listed twice in the window"
+
+msgid "CFG_IDLE_BELOW_OFF"
+msgstr "idle_after must be below off_after"

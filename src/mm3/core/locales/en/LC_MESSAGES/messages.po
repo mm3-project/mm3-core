@@ -729,3 +729,12 @@ msgstr "The MQTT broker is not connected"
 
 msgid "CORE_MQTT_PUBLISH_FAILED"
 msgstr "The MQTT message could not be published"
+
+msgid "CORE_DISPLAY_NO_KIOSK"
+msgstr "The display cannot be switched: no kiosk is connected"
+
+msgid "CORE_DISPLAY_TIMEOUT"
+msgstr "The kiosk did not confirm the display change in time"
+
+msgid "CORE_DISPLAY_UNAVAILABLE"
+msgstr "The display cannot be switched on this system"

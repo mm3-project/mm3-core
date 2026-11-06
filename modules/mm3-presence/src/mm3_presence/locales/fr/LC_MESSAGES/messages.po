@@ -1,0 +1,129 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HA_DISPLAY"
+msgstr "Écran"
+
+msgid "HA_PRESENCE"
+msgstr "Présence"
+
+msgid "HA_STATE"
+msgstr "État de présence"
+
+msgid "HA_BRIGHTNESS"
+msgstr "Luminosité"
+
+msgid "CFG_MQTT"
+msgstr "Capteurs MQTT"
+
+msgid "CFG_MQTT_HELP"
+msgstr "Topics indiquant que quelqu'un est devant le miroir"
+
+msgid "CFG_MQTT_TOPIC"
+msgstr "Topic"
+
+msgid "CFG_MQTT_TOPIC_HELP"
+msgstr "Filtre de topic ; nécessite une autorisation d'abonnement"
+
+msgid "CFG_MQTT_FIELD"
+msgstr "Champ JSON"
+
+msgid "CFG_MQTT_FIELD_HELP"
+msgstr "Chemin pointé dans la charge JSON ; vide compare le texte de la charge"
+
+msgid "CFG_MQTT_VALUE"
+msgstr "Valeur"
+
+msgid "CFG_MQTT_VALUE_HELP"
+msgstr "Contenu d'un message valide ; true par défaut avec un champ, ON sans"
+
+msgid "CFG_TOUCH"
+msgstr "Toucher"
+
+msgid "CFG_TOUCH_HELP"
+msgstr "Un toucher sur l'écran compte comme présence"
+
+msgid "CFG_IDLE_AFTER"
+msgstr "Atténuer après"
+
+msgid "CFG_IDLE_AFTER_HELP"
+msgstr "Durée sans présence avant d'atténuer l'écran, p. ex. 5m ; 0 n'atténue jamais"
+
+msgid "CFG_IDLE_BRIGHTNESS"
+msgstr "Luminosité atténuée"
+
+msgid "CFG_IDLE_BRIGHTNESS_HELP"
+msgstr "Luminosité en pourcentage pendant l'atténuation"
+
+msgid "CFG_BRIGHTNESS"
+msgstr "Luminosité"
+
+msgid "CFG_BRIGHTNESS_HELP"
+msgstr "Luminosité en pourcentage écran allumé ; vide garde l'actuelle"
+
+msgid "CFG_OFF_AFTER"
+msgstr "Éteindre après"
+
+msgid "CFG_OFF_AFTER_HELP"
+msgstr "Durée sans présence avant d'éteindre l'écran, p. ex. 15m"
+
+msgid "CFG_SCHEDULE"
+msgstr "Horaire"
+
+msgid "CFG_SCHEDULE_HELP"
+msgstr "Plages pendant lesquelles l'écran est éteint"
+
+msgid "CFG_WINDOW_OFF"
+msgstr "Éteindre à"
+
+msgid "CFG_WINDOW_OFF_HELP"
+msgstr "Heure locale de début de la plage, HH:MM"
+
+msgid "CFG_WINDOW_ON"
+msgstr "Allumer à"
+
+msgid "CFG_WINDOW_ON_HELP"
+msgstr "Heure locale de fin ; si elle n'est pas après le début, le lendemain"
+
+msgid "CFG_WINDOW_DAYS"
+msgstr "Jours"
+
+msgid "CFG_WINDOW_DAYS_HELP"
+msgstr "Jours où la plage commence ; vide signifie tous les jours"
+
+msgid "CFG_WAKE_IN_SCHEDULE"
+msgstr "La présence allume dans l'horaire"
+
+msgid "CFG_WAKE_IN_SCHEDULE_HELP"
+msgstr "Laisse la présence allumer l'écran dans une plage"
+
+msgid "CFG_DISPLAY"
+msgstr "Pilote d'écran"
+
+msgid "CFG_DISPLAY_HELP"
+msgstr "kiosk, ddcutil, cec ou le nom d'un plug-in"
+
+msgid "CFG_DISPLAY_OPTIONS"
+msgstr "Options du pilote"
+
+msgid "CFG_DISPLAY_OPTIONS_HELP"
+msgstr "Options du pilote d'écran"
+
+msgid "CFG_DISPLAY_OPTIONS_INVALID"
+msgstr "Les options du pilote d'écran ne sont pas valides"
+
+msgid "CFG_DISPLAY_UNKNOWN"
+msgstr "Pilote d'écran inconnu"
+
+msgid "CFG_MQTT_GRANT_MISSING"
+msgstr "Aucune autorisation pour ce topic MQTT : ajoutez-le aux autorisations de ce module"
+
+msgid "CFG_SINGLE_INSTANCE"
+msgstr "Une seule instance de présence peut tourner"
+
+msgid "CFG_DAY_REPEATED"
+msgstr "Un jour est répété dans la plage"
+
+msgid "CFG_IDLE_BELOW_OFF"
+msgstr "idle_after doit être inférieur à off_after"

@@ -81,7 +81,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        module: [mm3-greeting, mm3-clock, mm3-weather]
+        module: [mm3-greeting, mm3-clock, mm3-weather, mm3-presence]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
@@ -131,7 +131,7 @@ jobs:
       # engine; their build resolves mm3-build from dist/.
       - name: Default modules and mm3-modules-default (CORE-294)
         run: |
-          for m in mm3-clock mm3-weather mm3-modules-default; do
+          for m in mm3-clock mm3-weather mm3-presence mm3-modules-default; do
             uv build "modules/$m" --out-dir dist --find-links dist
           done
       - uses: actions/upload-artifact@v4

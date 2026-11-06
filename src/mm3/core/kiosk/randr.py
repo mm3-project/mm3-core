@@ -1,10 +1,12 @@
-"""Outputs and modes through ``wlr-randr`` (CORE-144, CORE-145).
+"""Outputs and modes through ``wlr-randr`` (CORE-144, CORE-145, CORE-346).
 
 The agent reads ``wlr-randr --json``, picks the mode to apply and builds the
-``wlr-randr`` command that sets output, mode, refresh, rotation and scale.
+``wlr-randr`` command that sets output, mode, refresh, rotation and scale, or
+turns an output off.
 
 Implements:
     CORE-144, CORE-145: Core spec 0.16, §6.7 Display output.
+    CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
 """
 
 from __future__ import annotations
@@ -22,6 +24,7 @@ __all__ = [
     "choose_mode",
     "parse_outputs",
     "pick_output",
+    "power_command",
 ]
 
 TRANSFORMS = {0: "normal", 90: "90", 180: "180", 270: "270"}
@@ -188,6 +191,25 @@ def apply_command(
         "--scale",
         f"{scale:g}",
     ]
+
+
+def power_command(output_name: str, binary: str = "wlr-randr") -> list[str]:
+    """Return the ``wlr-randr`` command that turns an output off (CORE-346).
+
+    Turning it on again is :func:`apply_command`, which restores the mode,
+    rotation and scale.
+
+    Args:
+        output_name: The connector name.
+        binary: The wlr-randr executable.
+
+    Returns:
+        The argument list.
+
+    Implements:
+        CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
+    """
+    return [binary, "--output", output_name, "--off"]
 
 
 def pick_output(outputs: Sequence[Output], name: str | None) -> Output | None:

@@ -11,8 +11,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 MODULES = ROOT / "modules"
 LANGS = {"en", "it", "fr", "es", "de"}
-EXPECTED = {"mm3-greeting", "mm3-clock", "mm3-weather"}
-PUBLISHED = {"mm3-clock", "mm3-weather"}
+EXPECTED = {"mm3-greeting", "mm3-clock", "mm3-weather", "mm3-presence"}
+PUBLISHED = {"mm3-clock", "mm3-weather", "mm3-presence"}
 META = "mm3-modules-default"  # a distribution without code (CORE-294), not a module
 
 

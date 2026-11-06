@@ -11,6 +11,7 @@ Implements:
     -: Module Contract 1.0 rev 9, §12.2 mm3.testing kit.
     CORE-278: Core spec 0.17, §3.3 Scheduler.
     MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
+    CORE-52, CORE-53, CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
 """
 
 from __future__ import annotations
@@ -37,13 +38,14 @@ from mm3.core.engine import Engine
 from mm3.core.logging import configure_logging, is_configured, observe
 from mm3.core.registry import Registry
 from mm3.core.services.grants import GrantSet
+from mm3.core.services.power import PowerService
 from mm3.core.settings import EngineSettings
 from mm3.core.supervisor import InstanceSpec, ManagedInstance, State
 from mm3.errors import ConfigurationError, RemoteError, RequestTimeoutError, TransientError
 from mm3.messages import ClientMessage, Notification
 from mm3.module import MirrorModule
 from mm3.notifications import validate_payload
-from mm3.testing.fakes import FakeHttp, FakeMqtt
+from mm3.testing.fakes import FakeHttp, FakeMqtt, FakeSystem
 from mm3.testing.loop import CountingExecutor, LoopClock
 from mm3.testing.recorders import ClientRecord, LogRecords, NotificationLog
 
@@ -131,6 +133,7 @@ class ModuleHarness:
     Attributes:
         http: Fake behind ``ctx.http``.
         mqtt: Fake behind ``ctx.mqtt``.
+        system: Fake display behind ``ctx.system.set_display_power`` (CORE-346).
         notifications: Notifications the instance sent.
         client_messages: Messages the backend sent to its front-end.
         state_history: Full state after every ``set_state``/``patch_state``.
@@ -171,6 +174,7 @@ class ModuleHarness:
         self._pages = _Pages(page_list, page or self._first(page_list))
         self.http = FakeHttp()
         self.mqtt = FakeMqtt()
+        self.system = FakeSystem()
         self.notifications = NotificationLog()
         self.received = NotificationLog()
         self.client_messages: list[ClientRecord] = []
@@ -232,6 +236,7 @@ class ModuleHarness:
         sup = engine.supervisor
         sup.http_transport = self.http
         sup.mqtt_broker = self.mqtt
+        sup.power = PowerService(sup, self.system.set_display_power)
         sup.on_denied = self._on_denied
         sup.pages = self._pages
         engine.bus.add_endpoint(self._recorder)
@@ -291,6 +296,11 @@ class ModuleHarness:
         if self._clock is None:
             raise RuntimeError("the harness is not open")
         return self._clock
+
+    @property
+    def suspended(self) -> bool:
+        """Whether the engine is suspended by a power request (CORE-53)."""
+        return self.engine.supervisor.suspended
 
     @property
     def managed(self) -> ManagedInstance:

@@ -4,11 +4,11 @@
 # Implements CORE-280 (Core spec 0.17, §10.2 Packaging and deployment):
 # mm3-build is released with mm3-core from this repository.
 # Implements CORE-294 (Core spec 0.20, §10.2 Packaging and deployment): the
-# published default modules (mm3-clock, mm3-weather) and mm3-modules-default are
+# published default modules (mm3-clock, mm3-weather, mm3-presence) and mm3-modules-default are
 # released from this repository with the engine. A module whose version did not
 # change is already on PyPI and is skipped.
 # One-time setup on PyPI: add a trusted publisher for the projects "mm3-core",
-# "mm3-build", "mm3-clock", "mm3-weather" and "mm3-modules-default", owner
+# "mm3-build", "mm3-clock", "mm3-weather", "mm3-presence" and "mm3-modules-default", owner
 # "mm3-project", repository "mm3-core", workflow "release.yml", environment "pypi".
 name: Release
 
@@ -31,7 +31,7 @@ jobs:
       - run: uv build --all-packages
       - name: Default modules and mm3-modules-default (CORE-294)
         run: |
-          for m in mm3-clock mm3-weather mm3-modules-default; do
+          for m in mm3-clock mm3-weather mm3-presence mm3-modules-default; do
             uv build "modules/$m" --out-dir dist --find-links dist
           done
       - name: Constraints file from the lock, with hashes

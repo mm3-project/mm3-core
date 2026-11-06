@@ -1,4 +1,4 @@
-"""Fakes behind ``ctx.http`` and ``ctx.mqtt`` in the module harness.
+"""Fakes behind ``ctx.http``, ``ctx.mqtt`` and ``ctx.system`` in the module harness.
 
 They replace only the network: the capability and grant checks of the
 engine run in front of them, so a URL or topic outside the grants raises
@@ -6,6 +6,7 @@ engine run in front of them, so a URL or topic outside the grants raises
 
 Implements:
     -: Module Contract 1.0 rev 9, §12.2 mm3.testing kit.
+    CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
 """
 
 from __future__ import annotations
@@ -21,7 +22,15 @@ from mm3.errors import HttpConnectionError, TransientError
 from mm3.http import Response
 from mm3.mqtt import MqttMessage, Qos, encode_payload
 
-__all__ = ["FakeHaEntity", "FakeHttp", "FakeMqtt", "HttpCall", "Published", "fake_mqtt"]
+__all__ = [
+    "FakeHaEntity",
+    "FakeHttp",
+    "FakeMqtt",
+    "FakeSystem",
+    "HttpCall",
+    "Published",
+    "fake_mqtt",
+]
 
 
 @dataclass(frozen=True)
@@ -350,3 +359,32 @@ class FakeMqtt:
 
 fake_mqtt = FakeMqtt
 """The type of ``h.mqtt`` (Contract 12.2)."""
+
+
+@dataclass
+class FakeSystem:
+    """``h.system``: the kiosk agent behind ``ctx.system.set_display_power`` (CORE-346).
+
+    Suspend and resume run through the engine's real power service, so the
+    instance's ``suspend()`` and ``resume()`` hooks are called and ``h.suspended``
+    follows; only the display is faked.
+
+    Attributes:
+        display_calls: The values of ``set_display_power``, in order.
+        error: When set, ``set_display_power`` raises it instead of recording
+            (for example ``TransientError("CORE_DISPLAY_NO_KIOSK")``).
+    """
+
+    display_calls: list[bool] = field(default_factory=list)
+    error: Exception | None = None
+
+    @property
+    def display_on(self) -> bool:
+        """The last display power (True before any call, as at connect)."""
+        return self.display_calls[-1] if self.display_calls else True
+
+    async def set_display_power(self, on: bool) -> None:
+        """Record the call, or raise ``error``."""
+        if self.error is not None:
+            raise self.error
+        self.display_calls.append(on)

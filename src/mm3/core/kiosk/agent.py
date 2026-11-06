@@ -11,11 +11,17 @@ The agent also owns the kiosk's sound: it applies every ``audio`` block with
 outputs and what it applied in ``sinks`` frames, again whenever an output
 appears, disappears or changes availability.
 
+A ``power`` frame turns the output off with ``wlr-randr --off`` or on again with
+the mode, rotation and scale of the ``display`` block, and the agent reports
+the outputs afterwards; a ``display`` block that arrives while the output is
+off is applied when it is turned on (CORE-346).
+
 Implements:
     CORE-143, CORE-144, CORE-145: Core spec 0.21, §6.7 Display output.
     CORE-268, CORE-269, CORE-270: Core spec 0.21, §6.7 Display output.
     CORE-295, CORE-296: Core spec 0.21, §6.7 Display output.
     CORE-277: Core spec 0.21, §5.6 WebSocket protocol.
+    CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
 """
 
 from __future__ import annotations
@@ -44,7 +50,14 @@ from mm3.core.kiosk.audio import (
     volume_command,
 )
 from mm3.core.kiosk.chromium import chromium_command
-from mm3.core.kiosk.randr import Output, apply_command, choose_mode, parse_outputs, pick_output
+from mm3.core.kiosk.randr import (
+    Output,
+    apply_command,
+    choose_mode,
+    parse_outputs,
+    pick_output,
+    power_command,
+)
 from mm3.core.logging import get_logger
 
 __all__ = [
@@ -190,6 +203,8 @@ class KioskSession:
         self.link: AgentLink | None = None
         self.display: dict[str, Any] = {}
         self.audio: dict[str, Any] | None = None
+        self.powered = True
+        self.applied: dict[str, Any] | None = None
         self.launch_key: str | None = None
         self.restarts = 0
         self.failed = False
@@ -286,6 +301,8 @@ class KioskSession:
         elif kind == "audio":
             self.audio = dict(data)
             await self.apply_audio()
+        elif kind == "power":
+            await self.apply_power(bool(data.get("on", True)))
         elif kind == "launch" and isinstance(data.get("key"), str):
             self.launch_key = data["key"]
             proc = self._chromium.process
@@ -310,13 +327,60 @@ class KioskSession:
             raise RuntimeError(err.strip() or f"wlr-randr exited with {code}")
         return parse_outputs(out)
 
+    async def apply_power(self, on: bool) -> None:
+        """Turn the output on or off and report the outputs (CORE-346).
+
+        Off runs ``wlr-randr --off`` on the output the display block was applied
+        to; on applies the display block again (mode, rotation, scale), unless
+        the output is already on, and then only reports.
+
+        Args:
+            on: True to turn the output on.
+        """
+        self.powered = on
+        try:
+            outputs = await self._list()
+        except (RuntimeError, ValueError, OSError) as exc:
+            await self.send("failure", {"reason": f"cannot list outputs: {exc}"})
+            return
+        name = (self.applied or {}).get("output")
+        output = (
+            next((o for o in outputs if o.name == name), None)
+            if isinstance(name, str)
+            else pick_output(outputs, self.display.get("output"))
+        )
+        if output is None:
+            await self.send("failure", {"reason": f"output {name or '?'} not found"})
+            await self.report(outputs, self.applied)
+            return
+        if on:
+            if output.current is None or self.applied is None:
+                await self.apply_display()
+                return
+        else:
+            code, _, err = await self.runner.run(power_command(output.name, self.wlr_randr))
+            if code != 0:
+                await self.send(
+                    "failure", {"reason": err.strip() or f"wlr-randr exited with {code}"}
+                )
+            with contextlib.suppress(RuntimeError, ValueError, OSError):
+                outputs = await self._list()
+        await self.report(outputs, self.applied)
+
     async def apply_display(self) -> None:
-        """Apply the ``display`` block and report the result (CORE-143..145)."""
+        """Apply the ``display`` block and report the result (CORE-143..145).
+
+        While the output is off the block is only kept: it is applied when the
+        output is turned on (CORE-346).
+        """
         d = self.display
         try:
             outputs = await self._list()
         except (RuntimeError, ValueError, OSError) as exc:
             await self.send("failure", {"reason": f"cannot list outputs: {exc}"})
+            return
+        if not self.powered:
+            await self.report(outputs, self.applied)
             return
         output = pick_output(outputs, d.get("output"))
         if output is None:
@@ -347,6 +411,7 @@ class KioskSession:
             "rotation": rotation,
             "scale": scale,
         }
+        self.applied = applied
         await self.report(outputs, applied)
 
     async def report(self, outputs: Sequence[Output], applied: Mapping[str, Any] | None) -> None:
@@ -377,7 +442,7 @@ class KioskSession:
 
     async def _poll_display(self) -> None:
         """Apply the display again when the outputs change, e.g. a monitor is plugged in."""
-        if not self.display and self._last_outputs is None:
+        if not self.powered or (not self.display and self._last_outputs is None):
             return
         try:
             outputs = await self._list()

@@ -21,6 +21,7 @@ Implements:
     MOD-85: Module Contract 1.0 rev 9, §9 Logging, health and errors.
     CORE-332: Core spec 0.29, §9.1 Remote-control API.
     MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
+    CORE-52, CORE-53, CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
 """
 
 from __future__ import annotations
@@ -50,6 +51,7 @@ from mm3.core.logging import Logger, get_logger
 from mm3.core.services.grants import GrantSet
 from mm3.core.services.http import HttpTransport, InstanceHttp, UnavailableTransport
 from mm3.core.services.mqtt import InstanceMqtt, MqttBroker, NoBroker
+from mm3.core.services.power import PowerService
 from mm3.core.services.scheduler import InstanceScheduler
 from mm3.core.services.storage import InstanceStorage
 from mm3.core.settings import LocationSettings, Timeouts
@@ -236,6 +238,72 @@ class InstanceCounters:
     health_fields: dict[str, Any] = field(default_factory=dict)
 
 
+class InstanceSystem:
+    """``ctx.system``: suspend, resume and the display (CORE-52, CORE-53, CORE-346).
+
+    Args:
+        instance_id: The owning instance.
+        power: The engine's power service, or ``None`` when it is not running.
+        capabilities: The module's declared capabilities.
+        guard: Raises ``ContextClosedError`` once the context is closed.
+        on_denied: Called with a capability used but not declared (MOD-70).
+
+    Implements:
+        CORE-52: Core spec 0.34, §9.2 Presence and power: module boundary.
+        CORE-53: Core spec 0.34, §9.2 Presence and power: module boundary.
+        CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
+    """
+
+    def __init__(
+        self,
+        instance_id: str,
+        power: PowerService | None,
+        capabilities: frozenset[str],
+        guard: Callable[[], None],
+        on_denied: Callable[[str], None] | None,
+    ) -> None:
+        self._instance_id = instance_id
+        self._power = power
+        self._capabilities = capabilities
+        self._guard = guard
+        self._on_denied = on_denied
+
+    def _allowed(self) -> PowerService:
+        self._guard()
+        if "system.power" not in self._capabilities:
+            if self._on_denied is not None:
+                self._on_denied("system.power")
+            raise PermissionError("capability system.power is not declared")
+        if self._power is None:
+            raise RuntimeError("the power service is not running")
+        return self._power
+
+    def request_suspend(self, reason: str) -> None:
+        """Ask the engine to suspend; it does when no other instance holds power (CORE-53).
+
+        Raises:
+            PermissionError: The module does not declare ``system.power`` (CORE-52).
+        """
+        self._allowed().request_suspend(self._instance_id, reason)
+
+    def request_resume(self, reason: str) -> None:
+        """Hold power: the engine stays resumed while any instance does (CORE-53).
+
+        Raises:
+            PermissionError: The module does not declare ``system.power`` (CORE-52).
+        """
+        self._allowed().request_resume(self._instance_id, reason)
+
+    async def set_display_power(self, on: bool) -> None:
+        """Turn the kiosk display on or off through the kiosk agent (CORE-346).
+
+        Raises:
+            PermissionError: The module does not declare ``system.power`` (CORE-52).
+            TransientError: No kiosk agent is connected, or none reported in 5 s.
+        """
+        await self._allowed().set_display_power(on)
+
+
 class EngineContext:
     """The context handed to one instance incarnation.
 
@@ -292,6 +360,7 @@ class EngineContext:
         counters: InstanceCounters,
         spawn: Callable[[Coroutine[Any, Any, Any], str], asyncio.Task[Any]],
         pages: PageControl | None = None,
+        power: PowerService | None = None,
         capabilities: frozenset[str] = frozenset(),
         i18n: I18n | None = None,
         engine_locale: Callable[[], str] | None = None,
@@ -354,6 +423,7 @@ class EngineContext:
         )
         self._health = InstanceHealth(counters, self._guard)
         self._on_denied = on_denied
+        self._system = InstanceSystem(instance_id, power, capabilities, self._guard, on_denied)
         self._router: APIRouter | None = None
 
     # --- engine side ----------------------------------------------------------
@@ -594,6 +664,20 @@ class EngineContext:
         """Publish and subscribe on granted topics (CORE-100, Contract 4.4)."""
         self._guard()
         return self._mqtt
+
+    @property
+    def system(self) -> InstanceSystem:
+        """Suspend, resume and display power (CORE-52, CORE-346).
+
+        Raises:
+            PermissionError: The module does not declare ``system.power`` (CORE-52).
+        """
+        self._guard()
+        if "system.power" not in self._capabilities:
+            if self._on_denied is not None:
+                self._on_denied("system.power")
+            raise PermissionError("capability system.power is not declared")
+        return self._system
 
     @property
     def router(self) -> APIRouter:

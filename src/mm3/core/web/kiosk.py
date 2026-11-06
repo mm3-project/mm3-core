@@ -18,6 +18,7 @@ Implements:
     CORE-277: Core spec 0.21, §5.6 WebSocket protocol.
     CORE-305, CORE-306: Core spec 0.22, §9.1 Remote-control API.
     CORE-343: Core spec 0.34, §9.3 MQTT bridge.
+    CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
 """
 
 from __future__ import annotations
@@ -41,6 +42,7 @@ from mm3.core.clock import Clock
 from mm3.core.logging import get_logger
 from mm3.core.web.security import is_loopback
 from mm3.core.web.ws import CLOSE_PROTOCOL, CLOSE_ROLE, MAX_FRAME_BYTES, ClientHub
+from mm3.errors import TransientError
 
 __all__ = [
     "AGENT_KEY_FILE",
@@ -58,6 +60,8 @@ KIOSK_GROUP = "mm3-kiosk"
 """Group that may read the agent key (the kiosk user's group)."""
 SHELL_SILENCE_S = 60.0
 """A kiosk shell missing this long makes the engine ask for a restart (CORE-269)."""
+POWER_TIMEOUT_S = 5.0
+"""How long ``set_display_power`` waits for the agent's ``outputs`` report (CORE-346)."""
 PROTOCOL = 1
 
 _log = get_logger(subsystem="kiosk")
@@ -240,6 +244,8 @@ class KioskAgents:
         silence: Seconds without a kiosk shell before ``restart`` (CORE-269).
         audio: Returns the running ``audio`` block as JSON data, or ``None``
             when the configuration has no such block (CORE-296).
+        power_changed: Called with the new display power after the agent
+            reported it (CORE-346).
     """
 
     def __init__(
@@ -253,6 +259,7 @@ class KioskAgents:
         hello_timeout: float = 10.0,
         silence: float = SHELL_SILENCE_S,
         audio: Callable[[], Mapping[str, Any] | None] = lambda: None,
+        power_changed: Callable[[bool], Any] = lambda _on: None,
     ) -> None:
         self.key = key
         self.hub = hub
@@ -264,6 +271,11 @@ class KioskAgents:
         self.audio = audio
         self._runtime_audio: dict[str, Any] = {}
         self.audio_listeners: list[Callable[[], None]] = []
+        self.power = True
+        """The last display power asked for; sent again at every connect (CORE-346)."""
+        self.power_timeout = POWER_TIMEOUT_S
+        self._power_changed = power_changed
+        self._power_waiters: list[asyncio.Future[None]] = []
         self.status = KioskStatus()
         self._ws: WebSocket | None = None
         self._send_lock = asyncio.Lock()
@@ -279,7 +291,7 @@ class KioskAgents:
         """Send a frame to the connected agent.
 
         Args:
-            kind: ``display``, ``audio``, ``launch`` or ``restart``.
+            kind: ``display``, ``audio``, ``power``, ``launch`` or ``restart``.
             data: The frame's data.
 
         Returns:
@@ -294,6 +306,40 @@ class KioskAgents:
             except (WebSocketDisconnect, RuntimeError):
                 return False
         return True
+
+    async def set_display_power(self, on: bool) -> None:
+        """Turn the display on or off through the agent (CORE-346).
+
+        Sends ``power {on}`` and returns when the agent's next ``outputs``
+        report arrives. The value is run-time only: it is never saved, and
+        it is sent again when the agent connects.
+
+        Args:
+            on: True to turn the display on.
+
+        Raises:
+            TransientError: No agent is connected, or no report arrived within 5 s.
+
+        Implements:
+            CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
+        """
+        if self._ws is None:
+            raise TransientError("CORE_DISPLAY_NO_KIOSK")
+        waiter: asyncio.Future[None] = asyncio.get_running_loop().create_future()
+        self._power_waiters.append(waiter)
+        self.power = on
+        try:
+            if not await self.send("power", {"on": on}):
+                raise TransientError("CORE_DISPLAY_NO_KIOSK")
+            try:
+                async with asyncio.timeout(self.power_timeout):
+                    await waiter
+            except TimeoutError as exc:
+                raise TransientError("CORE_DISPLAY_TIMEOUT") from exc
+        finally:
+            if waiter in self._power_waiters:
+                self._power_waiters.remove(waiter)
+        self._power_changed(on)
 
     async def display_changed(self) -> None:
         """Send the new ``display`` block (on hot reload, CORE-143)."""
@@ -419,6 +465,7 @@ class KioskAgents:
         _log.info("kiosk_agent_connected", cage_version=self.status.cage_version)
         await self.display_changed()
         await self._send_audio()
+        await self.send("power", {"on": self.power})
         await self._launch()
         try:
             while True:
@@ -432,6 +479,9 @@ class KioskAgents:
             if self._ws is ws:
                 self._ws = None
                 self.status.connected = False
+                for waiter in self._power_waiters:
+                    if not waiter.done():
+                        waiter.set_exception(TransientError("CORE_DISPLAY_NO_KIOSK"))
                 _log.warning("kiosk_agent_disconnected")
                 self._audio_notify()
 
@@ -509,6 +559,9 @@ class KioskAgents:
         if self.status.mismatch:
             _log.warning("kiosk_mode_mismatch", wanted=dict(want), applied=self.status.applied)
         await self.on_applied(mode)
+        for waiter in self._power_waiters:
+            if not waiter.done():
+                waiter.set_result(None)
 
     def _sinks(self, data: Mapping[str, Any]) -> None:
         """Record the outputs and what the agent applied; note a mismatch (CORE-296)."""

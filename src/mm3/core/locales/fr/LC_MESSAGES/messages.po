@@ -731,3 +731,12 @@ msgstr "Le courtier MQTT n'est pas connecté"
 
 msgid "CORE_MQTT_PUBLISH_FAILED"
 msgstr "Le message MQTT n'a pas pu être publié"
+
+msgid "CORE_DISPLAY_NO_KIOSK"
+msgstr "Impossible de commuter l'écran : aucun kiosque n'est connecté"
+
+msgid "CORE_DISPLAY_TIMEOUT"
+msgstr "Le kiosque n'a pas confirmé à temps le changement d'écran"
+
+msgid "CORE_DISPLAY_UNAVAILABLE"
+msgstr "L'écran ne peut pas être commuté sur ce système"

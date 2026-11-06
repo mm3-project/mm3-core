@@ -729,3 +729,12 @@ msgstr "El broker MQTT no está conectado"
 
 msgid "CORE_MQTT_PUBLISH_FAILED"
 msgstr "No se pudo publicar el mensaje MQTT"
+
+msgid "CORE_DISPLAY_NO_KIOSK"
+msgstr "No se puede cambiar la pantalla: no hay ningún kiosco conectado"
+
+msgid "CORE_DISPLAY_TIMEOUT"
+msgstr "El kiosco no confirmó a tiempo el cambio de pantalla"
+
+msgid "CORE_DISPLAY_UNAVAILABLE"
+msgstr "La pantalla no se puede cambiar en este sistema"

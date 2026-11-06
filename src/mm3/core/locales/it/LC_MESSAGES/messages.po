@@ -729,3 +729,12 @@ msgstr "Il broker MQTT non è connesso"
 
 msgid "CORE_MQTT_PUBLISH_FAILED"
 msgstr "Impossibile pubblicare il messaggio MQTT"
+
+msgid "CORE_DISPLAY_NO_KIOSK"
+msgstr "Impossibile accendere o spegnere lo schermo: nessun kiosk è connesso"
+
+msgid "CORE_DISPLAY_TIMEOUT"
+msgstr "Il kiosk non ha confermato in tempo il cambio dello schermo"
+
+msgid "CORE_DISPLAY_UNAVAILABLE"
+msgstr "Lo schermo non può essere acceso o spento su questo sistema"

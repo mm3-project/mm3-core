@@ -5,8 +5,8 @@ Provided so far: identity, ``now()``, messaging, state, tasks,
 ``format_date``, ``format_number``, the current page and pages, ``http``
 and ``mqtt`` (checked against capabilities and grants; their transports
 arrive in milestones 5 and 7, the test kit fakes them) and ``layout``
-(capability ``layout.control``) and ``router`` (capability ``api.routes``,
-CORE-332). ``system`` is added with its milestone (implementation plan 7).
+(capability ``layout.control``), ``router`` (capability ``api.routes``,
+CORE-332) and ``system`` (capability ``system.power``, CORE-52, CORE-346).
 
 Implements:
     -: Module Contract 1.0 rev 6, §4 ModuleContext reference.
@@ -19,6 +19,7 @@ Implements:
     -: Module Contract 1.0 rev 9, §4.4 Mqtt.
     MOD-85: Module Contract 1.0 rev 9, §9 Logging, health and errors.
     MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
+    CORE-52, CORE-53, CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
 """
 
 from __future__ import annotations
@@ -132,6 +133,35 @@ class Layout(Protocol):
 
     def show(self, instance_id: str) -> None:
         """Clear this module's hide reason on an instance."""
+        ...
+
+
+class System(Protocol):
+    """Power hooks of the engine (capability ``system.power``, CORE-52, CORE-346).
+
+    Implements:
+        CORE-52, CORE-53, CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
+    """
+
+    def request_suspend(self, reason: str) -> None:
+        """Ask the engine to suspend every instance; returns at once.
+
+        The engine suspends when no other instance holds power (CORE-53). The
+        transition runs in the background; ``reason`` is logged.
+        """
+        ...
+
+    def request_resume(self, reason: str) -> None:
+        """Ask the engine to resume and hold power for this instance (CORE-53)."""
+        ...
+
+    async def set_display_power(self, on: bool) -> None:
+        """Turn the kiosk display on or off through the kiosk agent (CORE-346).
+
+        Raises:
+            TransientError: No kiosk agent is connected, or its report did not
+                arrive within 5 s.
+        """
         ...
 
 
@@ -295,6 +325,11 @@ class ModuleContext(Protocol):
     @property
     def layout(self) -> Layout:
         """Hide or show other instances; needs ``layout.control`` (CORE-241)."""
+        ...
+
+    @property
+    def system(self) -> System:
+        """Suspend, resume and display power; needs ``system.power`` (CORE-52, CORE-346)."""
         ...
 
     @property

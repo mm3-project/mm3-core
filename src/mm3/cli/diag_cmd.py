@@ -321,6 +321,50 @@ def catalog_problems(roots: dict[str, Path | None]) -> list[str]:
     return problems
 
 
+def _display_driver_check(
+    result: ConfigResult | None, client: SocketClient, status: dict[str, Any] | None
+) -> Check:
+    """Report the display driver of the presence module (CORE-312, PRS-06).
+
+    The module runs the driver's ``check()`` at start and after a failed call
+    and keeps the answer in its health fields: ``driver`` is the driver's name
+    and ``driver_error`` the reason it cannot work, absent when it can.
+
+    Args:
+        result: The loaded configuration, or ``None``.
+        client: The admin socket.
+        status: The engine status, or ``None`` when the engine is not reachable.
+
+    Returns:
+        The check: skipped without a presence instance or an engine.
+    """
+    name = "display driver"
+    ids = (
+        [i.id for i in result.instances if i.module == "presence" and i.enabled]
+        if result is not None
+        else []
+    )
+    if not ids:
+        return Check(name, "skip", "no presence module is configured")
+    if status is None:
+        return Check(name, "skip", "engine not reachable")
+    try:
+        health = client.json(f"/api/v1/modules/{ids[0]}/health")
+    except (OSError, ValueError) as exc:
+        return Check(name, "skip", f"the health of {ids[0]} is not available: {exc}")
+    state = str(health.get("state", "")) if isinstance(health, dict) else ""
+    fields = health.get("fields") if isinstance(health, dict) else None
+    fields = fields if isinstance(fields, dict) else {}
+    if state == "FAILED":
+        return Check(name, "fail", f"{ids[0]} failed to start; see the debug page")
+    if state not in ("RUNNING", "SUSPENDED"):
+        return Check(name, "skip", f"{ids[0]} is {state.lower() or 'not running'}")
+    driver = fields.get("driver")
+    if fields.get("driver_error"):
+        return Check(name, "fail", f"{driver or 'driver'}: {fields['driver_error']}")
+    return Check(name, "pass", str(driver) if driver else "")
+
+
 def run_checks(
     result: ConfigResult | None,
     client: SocketClient,
@@ -342,6 +386,7 @@ def run_checks(
     Implements:
         CORE-312: Core spec 0.22, §10.5 Diagnostics and debugging.
         CORE-339: Core spec 0.34, §9.3 MQTT bridge.
+        PRS-06: Core spec 0.34, §9.2 Presence and power: module boundary.
     """
     checks: list[Check] = []
     config = result.config if result is not None and result.ok else None
@@ -426,11 +471,7 @@ def run_checks(
             reason = mqtt.get("error") or "not connected yet"
             checks.append(Check("MQTT broker", "fail", f"not connected: {reason}"))
 
-    presence = result is not None and any(
-        i.module == "presence" and i.enabled for i in result.instances
-    )
-    reason = "presence is not checked by this version" if presence else None
-    checks.append(Check("display driver", "skip", reason or "no presence module is configured"))
+    checks.append(_display_driver_check(result, client, status))
 
     roots: dict[str, Path | None] = {"mm3": CORE_CATALOG}
     if result is not None:

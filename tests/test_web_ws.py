@@ -743,3 +743,33 @@ async def test_core_254_display_cookie_renewed_on_connect(mirror: Mirror) -> Non
     async with plain:
         assert plain.response is not None
         assert "set-cookie" not in plain.response.headers
+
+
+# --- CORE-347: CORE_INTERACTION -----------------------------------------------------------------
+
+
+def interactions() -> list[tuple[str, Any]]:
+    return [r for r in RECEIVED if r[0] == "notify" and r[1][1] == "CORE_INTERACTION"]
+
+
+async def test_core_347_a_kiosk_touch_is_broadcast_once_a_second(mirror: Mirror) -> None:
+    mirror.hub._supervisor = mirror.engine.supervisor  # set by attach_pages in the real wiring
+    kiosk, _, _ = await connect(mirror.ws_url, "kiosk", key=mirror.hub.kiosk_keys.issue())
+    async with kiosk:
+        touch = json.dumps({"v": 1, "kind": "touch", "data": {"gesture": "tap"}})
+        for _ in range(5):
+            await kiosk.send(touch)
+        await eventually(lambda: bool(interactions()))
+        await asyncio.sleep(0.1)
+        # Weather's two instances each got the one broadcast; the burst made no more.
+        assert len(interactions()) == 2
+        assert {r[1][2] for r in interactions()} == {"core"}
+
+
+async def test_core_347_other_roles_do_not_count(mirror: Mirror) -> None:
+    mirror.hub._supervisor = mirror.engine.supervisor
+    ws, _, _ = await connect(mirror.ws_url, headers={"Cookie": display_cookie(mirror)})
+    async with ws:
+        await ws.send(json.dumps({"v": 1, "kind": "touch", "data": {"gesture": "tap"}}))
+        await asyncio.sleep(0.2)
+        assert not interactions()

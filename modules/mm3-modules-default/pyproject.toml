@@ -10,13 +10,14 @@ build-backend = "hatchling.build"
 [project]
 name = "mm3-modules-default"
 version = "1.0.0"
-description = "The default MM3 modules (clock and weather), installed in one step"
+description = "The default MM3 modules (clock, weather and presence), installed in one step"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
 dependencies = [
     "mm3-clock>=1.0,<2",
     "mm3-weather>=1.0,<2",
+    "mm3-presence>=1.0,<2",
 ]
 
 # No code: the wheel carries only the metadata that lists the modules.

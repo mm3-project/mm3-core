@@ -7,6 +7,42 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 7, PR 3: presence and power)
+
+- Power hooks (core spec 0.34, section 9.2, CORE-52, CORE-53): `ctx.system` with
+  `request_suspend(reason)`, `request_resume(reason)` and `set_display_power(on)`,
+  for modules that declare the capability `system.power`; without it the
+  property raises `PermissionError` and the use is listed in `h.denied`. The
+  engine is suspended only while at least one instance asked to suspend and none
+  holds power; the last request of an instance wins, a stopped or failed
+  instance drops its request, and transitions run in the order they were asked
+  for.
+- Display power (CORE-346): the kiosk agent gets a `power {on}` frame (and the
+  last value at every connect), runs `wlr-randr --off` or applies the display
+  block again, and reports `outputs`; `set_display_power` returns when that
+  report arrives and raises `TransientError` (`CORE_DISPLAY_NO_KIOSK`,
+  `CORE_DISPLAY_TIMEOUT`, `CORE_DISPLAY_UNAVAILABLE`) when it cannot. The state
+  is never saved. `CORE_DISPLAY_CHANGED` carries `power` (`on` or `off`) and is
+  emitted on every change. Core catalog keys for the three errors in EN, IT, FR,
+  ES and DE.
+- `CORE_INTERACTION {kind: "touch"}` (CORE-347): broadcast at most once a second
+  for a touch on the kiosk shell; other roles do not count.
+- Installer (CORE-348): `ddcutil` and `cec-utils`, and the mirror user in the
+  groups `i2c` and `dialout`.
+- `mm3 diag check` reports the display driver of the presence module from its
+  health fields `driver` and `driver_error` (CORE-312, PRS-06).
+- `tools/trace_report.py` also reads the `Implements` comments of `install/*.sh`,
+  so CORE-348 counts as implemented.
+- Test kit: `h.system` (`FakeSystem`: display calls and an `error` to raise) and
+  `h.suspended`; the harness runs the engine's real power service.
+- `mm3-presence` 1.0.0 (PRS-01..08), a backend-only reference module in
+  `modules/mm3-presence`: sensors by MQTT topic or `PRESENCE_DETECTED` and
+  `PRESENCE_CLEARED`, touches, the states `on`, `idle` and `off`, schedule
+  windows with days and clock changes, display drivers `kiosk`, `ddcutil` and
+  `cec` plus plug-ins on `mm3_presence.display`, `PRESENCE_STATE`, the routes
+  `GET state` and `POST display/on|off`, and Home Assistant entities. It joins
+  `mm3-modules-default`, the `modules` CI matrix and the release build.
+
 ### Added (milestone 7, PR 2: pages)
 
 - Pages out of the cycle (core spec 0.34, section 6.9, CORE-333): `cycle: false`

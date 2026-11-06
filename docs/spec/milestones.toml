@@ -276,6 +276,9 @@ requirements = [
 #   CORE-260 (CORE_INTERACTION; CORE_PRESENCE is never emitted); CORE-348
 #   extends CORE-293 (milestone 10) with ddcutil, cec-utils and the groups i2c
 #   and dialout. PRS-xx is the reference module mm3-presence in modules/presence.
+#   PR 3 (presence) implements CORE-52, CORE-53 and CORE-346..348 and the
+#   reference module mm3-presence (PRS-01..08), in modules/mm3-presence like the
+#   other reference modules (CORE-289); the tests are test_prs_* there.
 # CORE-349..358 (core 0.33): catalog and installer. They extend CORE-125, 126,
 #   131, 134, 135, 203 (milestone 2), 293 (milestone 10), 298 and 304
 #   (milestone 6) without changing them; sigstore and pypi-attestations come
