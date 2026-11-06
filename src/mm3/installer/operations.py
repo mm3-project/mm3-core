@@ -26,7 +26,7 @@ Implements:
     CORE-126, CORE-124, CORE-352, CORE-353: Core spec 0.33, §10.6 Module catalog.
     CORE-354: Core spec 0.33, §10.7 Installer service.
     CORE-355: Core spec 0.35, §10.7 Installer service.
-    CORE-367: Core spec 0.35, §10.7 Installer service.
+    CORE-367: Core spec 0.37, §10.7 Installer service.
     CORE-371, CORE-372: Core spec 0.36, §10.7 Installer service.
 """
 

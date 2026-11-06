@@ -12,6 +12,7 @@ Implements:
     CORE-350: Core spec 0.33, §10.6 Module catalog.
     CORE-351: Core spec 0.35, §10.6 Module catalog.
     CORE-131: Core spec 0.33, §10.7 Installer service.
+    CORE-373: Core spec 0.37, §10.7 Installer service.
 """
 
 from __future__ import annotations
@@ -34,14 +35,16 @@ from mm3.core.catalog import (
     parse_index,
     validate_lifetime,
 )
+from mm3.core.logging import get_logger
 from mm3.installer.fetch import LIMIT_BUNDLE, LIMIT_INDEX, Fetcher, FetchError
-from mm3.installer.files import Owner, atomic_write, read_json, write_json
+from mm3.installer.files import Owner, atomic_write, ensure_dir, read_json, write_json
 from mm3.installer.paths import Layout
 from mm3.installer.verify import Verification, VerifyError
 
 __all__ = ["ACCEPTED_FILE", "CatalogStore"]
 
 ACCEPTED_FILE = "accepted.json"
+_log = get_logger("installer")
 """The highest accepted serial and when the index was fetched."""
 
 
@@ -140,12 +143,20 @@ class CatalogStore:
                 },
             )
             meta = CatalogMeta(index.serial, now, index.expires)
-            self._publish(raw, bundle, meta)
+            try:
+                self._publish(raw, bundle, meta)
+            except OSError as exc:
+                # The installer's own copy is kept; only search, info and list
+                # in the engine miss the update.
+                _log.warning("catalog_engine_copy_failed", reason=str(exc))
         return meta
 
     def _publish(self, raw: bytes, bundle: bytes, meta: CatalogMeta) -> None:
         root = self._layout.engine_catalog
-        root.mkdir(mode=0o755, parents=True, exist_ok=True)
+        # The engine's user owns its state directory and may have replaced
+        # catalog/ with a symlink: refused, never followed (CORE-373).
+        self._layout.engine_state.mkdir(mode=0o755, parents=True, exist_ok=True)
+        ensure_dir(root, 0o755)
         owner = self._engine_owner
         atomic_write(root / INDEX_FILE, raw, mode=0o644, owner=owner)
         atomic_write(root / BUNDLE_FILE, bundle, mode=0o644, owner=owner)

@@ -13,7 +13,7 @@ are not either.
 Implements:
     CORE-355: Core spec 0.35, §10.7 Installer service.
     CORE-353: Core spec 0.33, §10.6 Module catalog.
-    CORE-369: Core spec 0.35, §10.7 Installer service.
+    CORE-369: Core spec 0.37, §10.7 Installer service.
     CORE-132: Core spec 0.33, §10.7 Installer service.
     CORE-351: Core spec 0.35, §10.6 Module catalog.
 """
@@ -52,6 +52,9 @@ _ACTIONS = {"install", "update", "remove", "restore_previous"}
 _SOURCES = {"catalog", "pypi", "local"}
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")
 _VERSION = re.compile(r"^[A-Za-z0-9.+!_-]{1,64}$")
+_LENGTH = re.compile(r"[0-9]{1,6}")
+MAX_CLIENTS = 32
+"""Connections served at once; more are closed at once (event streams count)."""
 _OP_PATH = re.compile(r"^/v1/operations/([0-9a-f]{16})(/events)?$")
 
 _log = get_logger("installer")
@@ -126,6 +129,7 @@ class InstallerServer:
         self._changed = asyncio.Condition()
         self._loop: asyncio.AbstractEventLoop | None = None
         self._tasks: set[asyncio.Future[Any]] = set()
+        self._clients = 0
         installer.listeners.append(self._on_change)
 
     # --- change notification -------------------------------------------------------
@@ -171,6 +175,10 @@ class InstallerServer:
             await asyncio.sleep(REFRESH_CHECK_S)
 
     async def _client(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        if self._clients >= MAX_CLIENTS:
+            writer.close()
+            return
+        self._clients += 1
         sock = writer.get_extra_info("socket")
         try:
             uid = self._peer(sock)
@@ -185,6 +193,7 @@ class InstallerServer:
             with contextlib.suppress(ConnectionError):
                 await self._send(writer, 500, {"error": "internal error"})
         finally:
+            self._clients -= 1
             with contextlib.suppress(ConnectionError, OSError):
                 writer.close()
                 await writer.wait_closed()
@@ -210,7 +219,7 @@ class InstallerServer:
         if "transfer-encoding" in headers:
             raise HttpError(411, "send a Content-Length body")
         length = headers.get("content-length", "0")
-        if not length.isdigit():
+        if not _LENGTH.fullmatch(length):
             raise HttpError(400, "bad Content-Length")
         if int(length) > MAX_BODY:
             raise HttpError(413, "body too large")

@@ -7,7 +7,9 @@ Implements:
 - CORE-352 (Core spec 0.33, §10.6 Module catalog): PEP 740 provenance, real
   attestation from PyPI verified offline.
 - CORE-370 (Core spec 0.35, §10.7 Installer service): HTTPS, hosts, redirects, sizes.
-- CORE-132, CORE-369 (Core spec 0.35, §10.7 Installer service): passphrase, TOTP, lock.
+- CORE-132, CORE-369 (Core spec 0.37, §10.7 Installer service): passphrase, TOTP, lock.
+- CORE-373 (Core spec 0.37, §10.7 Installer service): no symlinks followed in the
+  engine's directories.
 """
 
 from __future__ import annotations
@@ -387,7 +389,7 @@ def test_core_369_passphrase_is_stored_as_argon2_hash(tmp_path: Path) -> None:
 
 def test_core_132_no_passphrase_means_every_operation_is_refused(tmp_path: Path) -> None:
     (tmp_path / "state").mkdir()
-    with pytest.raises(AuthError, match="sudo mm3 installer passphrase"):
+    with pytest.raises(AuthError, match="sudo /opt/mm3/installer/bin/mm3 installer passphrase"):
         Auth(Layout.under(tmp_path)).check("anything", None)
 
 
@@ -411,17 +413,69 @@ def test_core_132_five_failures_lock_for_15_minutes(tmp_path: Path) -> None:
 
 def test_core_369_totp_needs_a_code_to_enable_and_then_for_every_check(tmp_path: Path) -> None:
     (tmp_path / "state").mkdir()
-    auth = Auth(Layout.under(tmp_path))
+    clock = Clock()
+    auth = Auth(Layout.under(tmp_path), now=clock)
     auth.set_passphrase("correct horse battery")
     setup = auth.begin_totp()
+    totp = pyotp.TOTP(setup.secret)
     assert setup.uri.startswith("otpauth://totp/")
     assert not auth.totp_enabled
+    right = totp.at(clock.now)
     with pytest.raises(AuthError, match="wrong"):
-        auth.confirm_totp("000000" if pyotp.TOTP(setup.secret).now() != "000000" else "111111")
-    auth.confirm_totp(pyotp.TOTP(setup.secret).now())
+        auth.confirm_totp("000000" if right != "000000" else "111111")
+    auth.confirm_totp(right)
     assert auth.totp_enabled
+    clock.now = NOW + timedelta(seconds=30)
     with pytest.raises(AuthError):
         auth.check("correct horse battery", None)
-    auth.check("correct horse battery", pyotp.TOTP(setup.secret).now())
+    auth.check("correct horse battery", totp.at(clock.now))
     auth.disable_totp()
     auth.check("correct horse battery", None)
+
+
+def test_core_373_engine_copy_never_follows_a_symlink(tmp_path: Path) -> None:
+    s, fetcher, _, layout = store(tmp_path)
+    secret = tmp_path / "auth.json"
+    secret.write_text("secret")
+    secret.chmod(0o600)
+    layout.engine_state.mkdir(parents=True)
+    (layout.engine_state / "catalog").symlink_to(tmp_path)  # the engine plants a link
+    fetcher.serve_index(sample_index(serial=12))
+    assert s.refresh().serial == 12  # the installer's own copy is kept
+    assert secret.read_text() == "secret"
+    assert secret.stat().st_mode & 0o777 == 0o600
+    assert not (tmp_path / "index.json").exists()
+
+
+def test_core_373_atomic_write_refuses_a_symlinked_directory(tmp_path: Path) -> None:
+    from mm3.installer.files import atomic_write
+
+    (tmp_path / "real").mkdir()
+    (tmp_path / "link").symlink_to(tmp_path / "real")
+    with pytest.raises(OSError, match=r"Too many levels|symbolic|Not a directory"):
+        atomic_write(tmp_path / "link" / "f", b"x")
+    atomic_write(tmp_path / "real" / "f", b"x", mode=0o644)
+    assert (tmp_path / "real" / "f").stat().st_mode & 0o777 == 0o644
+    (tmp_path / "real" / "g").symlink_to(tmp_path / "victim")
+    atomic_write(tmp_path / "real" / "g", b"y")  # replaces the link, never writes through it
+    assert not (tmp_path / "victim").exists()
+    assert (tmp_path / "real" / "g").read_bytes() == b"y"
+
+
+def test_core_369_a_totp_code_is_accepted_once(tmp_path: Path) -> None:
+    (tmp_path / "state").mkdir()
+    clock = Clock()
+    auth = Auth(Layout.under(tmp_path), now=clock)
+    auth.set_passphrase("correct horse battery")
+    setup = auth.begin_totp()
+    totp = pyotp.TOTP(setup.secret)
+    auth.confirm_totp(totp.at(clock.now))
+    clock.now = NOW + timedelta(seconds=30)
+    code = totp.at(clock.now)
+    auth.check("correct horse battery", code)
+    with pytest.raises(AuthError):
+        auth.check("correct horse battery", code)  # replayed
+    with pytest.raises(AuthError):
+        auth.check("correct horse battery", totp.at(NOW))  # older step
+    clock.now = NOW + timedelta(seconds=60)
+    auth.check("correct horse battery", totp.at(clock.now))

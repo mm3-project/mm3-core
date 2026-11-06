@@ -3,17 +3,18 @@
 The passphrase's argon2 hash and the TOTP secret live in
 ``/var/lib/mm3-install/auth.json`` (mode 0600) and are set only from a root
 peer (CORE-369). Every listed operation needs the passphrase, and the TOTP code
-when enabled (CORE-132); five failures lock the installer for 15 minutes. The
-failures and the lock are kept in ``lock.json`` so a restart does not reset
-them. This is the single adapter for pyotp (core spec 10.9).
+when enabled, each code good once (CORE-132, CORE-369); five failures lock the
+installer for 15 minutes. The failures and the lock are kept in ``lock.json``
+so a restart does not reset them. This is the single adapter for pyotp (core spec 10.9).
 
 Implements:
     CORE-132: Core spec 0.33, §10.7 Installer service.
-    CORE-369: Core spec 0.35, §10.7 Installer service.
+    CORE-369: Core spec 0.37, §10.7 Installer service.
 """
 
 from __future__ import annotations
 
+import hmac
 import threading
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -66,6 +67,21 @@ class TotpSetup:
 
     secret: str
     uri: str
+
+
+def totp_step(secret: str, code: str, now: datetime) -> int | None:
+    """The time step whose code is ``code`` (one step of clock drift either way).
+
+    Returns:
+        The step, or None when the code matches none of them.
+    """
+    otp = pyotp.TOTP(secret)
+    current = otp.timecode(now)
+    code = code.strip()
+    for step in (current - 1, current, current + 1):
+        if hmac.compare_digest(otp.generate_otp(step), code):
+            return step
+    return None
 
 
 def _now() -> datetime:
@@ -161,9 +177,11 @@ class Auth:
             pending = data.get("totp_pending")
             if not pending:
                 raise AuthError("no TOTP setup is pending; start with totp enable")
-            if not pyotp.TOTP(pending).verify(code.strip(), valid_window=1):
+            step = totp_step(pending, code, self._now())
+            if step is None:
                 raise AuthError("wrong TOTP code")
             data["totp"] = pending
+            data["totp_last_step"] = step
             del data["totp_pending"]
             self._write(data)
 
@@ -173,6 +191,7 @@ class Auth:
             data = self._read()
             data.pop("totp", None)
             data.pop("totp_pending", None)
+            data.pop("totp_last_step", None)
             self._write(data)
 
     # --- checks --------------------------------------------------------------------
@@ -194,12 +213,21 @@ class Auth:
             data = self._read()
             stored = data.get("passphrase")
             if not stored:
-                raise AuthError("no install passphrase is set; run: sudo mm3 installer passphrase")
+                raise AuthError(
+                    "no install passphrase is set; run: "
+                    "sudo /opt/mm3/installer/bin/mm3 installer passphrase"
+                )
             ok = bool(passphrase) and verify_secret(stored, passphrase or "")
             secret = data.get("totp")
+            step: int | None = None
             if ok and secret:
-                ok = bool(totp) and pyotp.TOTP(secret).verify((totp or "").strip(), valid_window=1)
+                step = totp_step(secret, totp or "", now)
+                # A code is good once: not for its own step again, nor an older one.
+                ok = step is not None and step > int(data.get("totp_last_step", -1))
             if ok:
+                if step is not None:
+                    data["totp_last_step"] = step
+                    self._write(data)
                 if count or until:
                     self._set_failures(0, None)
                 return

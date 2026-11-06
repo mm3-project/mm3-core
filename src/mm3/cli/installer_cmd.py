@@ -3,12 +3,14 @@
 ``serve`` runs the installer service (``mm3-installer.service`` starts it from
 ``/opt/mm3/installer/``, CORE-368). ``unit`` and ``polkit`` print the shipped
 unit and polkit rule (CORE-357). ``passphrase`` and ``totp`` talk to the
-installer socket and need root (``sudo``), which the installer checks with
-``SO_PEERCRED`` (CORE-369).
+installer socket and need root, which the installer checks with
+``SO_PEERCRED``; they are run from the installer's own venv,
+``sudo /opt/mm3/installer/bin/mm3 installer …``, so no module code runs as
+root (CORE-369).
 
 Implements:
     CORE-357: Core spec 0.33, §10.7 Installer service.
-    CORE-369: Core spec 0.35, §10.7 Installer service.
+    CORE-369: Core spec 0.37, §10.7 Installer service.
     CORE-132: Core spec 0.33, §10.7 Installer service.
 """
 

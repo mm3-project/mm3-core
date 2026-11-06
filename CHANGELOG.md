@@ -50,6 +50,16 @@ separately under **Module API** in each release (Module Contract, section 10).
 - While `mm3-core` is 0.x, staged rebuilds install pins and the module wheel with
   `--no-deps`, then the wheel's other requirements with the pins as constraints
   (CORE-372).
+- Security review fixes (core spec 0.37): writes into the engine's directories
+  never follow a symlink and set owner and mode on the open file (CORE-373);
+  build children no longer change the bounding set, which needs CAP_SETPCAP, and a
+  surviving `mm3-build` process stops the operation; venvs are listed from their
+  `.dist-info` metadata with validated names and versions instead of running their
+  interpreter, so `GET /v1/status` starts no children; module requirements with a
+  direct URL are refused (CORE-367); TOTP codes are single-use and root commands
+  name the installer venv's `mm3` (CORE-369); `Content-Length` must be ASCII
+  digits and at most 32 connections are served at once; the installer unit is
+  hardened and its own venv is read-only to it.
 
 ### Added (milestone 7, PR 3: presence and power)
 

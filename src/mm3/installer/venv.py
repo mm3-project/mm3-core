@@ -21,15 +21,16 @@ aborts the operation, listing the conflicts.
 Implements:
     CORE-134: Core spec 0.33, §10.7 Installer service.
     CORE-354: Core spec 0.33, §10.7 Installer service.
-    CORE-367: Core spec 0.35, §10.7 Installer service.
+    CORE-367: Core spec 0.37, §10.7 Installer service.
     CORE-371, CORE-372: Core spec 0.36, §10.7 Installer service.
 """
 
 from __future__ import annotations
 
+import configparser
 import email.parser
-import json
 import os
+import re
 import shutil
 import zipfile
 from collections.abc import Iterable, Mapping
@@ -40,6 +41,7 @@ from pathlib import Path
 from packaging.markers import default_environment
 from packaging.requirements import InvalidRequirement, Requirement
 from packaging.utils import canonicalize_name
+from packaging.version import InvalidVersion, Version
 
 from mm3.installer.files import Owner, make_read_only
 from mm3.installer.paths import BUILD_USER, Layout
@@ -61,17 +63,6 @@ KEEP_VENVS = 3
 """Staged venvs kept for rollback and "Restore previous version" (CORE-135)."""
 TOOLS = frozenset({"pip", "setuptools", "wheel"})
 """Packages every venv brings itself; never pinned."""
-
-# Run inside a venv's interpreter (as mm3-build): print every distribution with
-# its version and requirements as JSON. Markers are evaluated by the installer.
-_FREEZE = (
-    "import importlib.metadata as m, json, sys\n"
-    "out = [{'name': d.metadata['Name'], 'version': d.version,"
-    " 'requires': list(d.requires or []),"
-    " 'module': any(e.group == 'mm3.modules' for e in d.entry_points)}"
-    " for d in m.distributions()]\n"
-    "json.dump(out, sys.stdout)\n"
-)
 
 _IMPORT_TEST = (
     "import importlib.metadata as m, sys\n"
@@ -205,6 +196,8 @@ def wheel_requirements(wheel: Path) -> list[str]:
             continue
         if canonicalize_name(req.name) == "mm3-core":
             continue
+        if req.url:
+            raise BuildError(f"{wheel.name} requires {req.name} from a direct URL")
         if req.marker is not None and not req.marker.evaluate(env):
             continue
         req.marker = None
@@ -216,6 +209,77 @@ def core_is_interim(freeze: Freeze) -> bool:
     """Whether ``mm3-core`` in ``freeze`` is 0.x (CORE-372)."""
     core = freeze.get("mm3-core")
     return core is not None and core.version.split(".")[0] == "0"
+
+
+_NAME = re.compile(r"^([A-Za-z0-9]|[A-Za-z0-9][A-Za-z0-9._-]*[A-Za-z0-9])$")
+_META_LIMIT = 1024 * 1024
+
+
+def _read_nofollow(dir_fd: int, name: str) -> str | None:
+    try:
+        fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC, dir_fd=dir_fd)
+    except FileNotFoundError:
+        return None
+    with os.fdopen(fd, "rb") as fh:
+        data = fh.read(_META_LIMIT + 1)
+    if len(data) > _META_LIMIT:
+        raise BuildError(f"{name} is larger than {_META_LIMIT} bytes")
+    return data.decode("utf-8", "replace")
+
+
+def _has_module_entry_point(text: str | None) -> bool:
+    if not text:
+        return False
+    parser = configparser.ConfigParser(interpolation=None, delimiters=("=",))
+    try:
+        parser.read_string(text)
+    except configparser.Error:
+        return False
+    return parser.has_section("mm3.modules") and bool(parser.items("mm3.modules"))
+
+
+def read_freeze(venv: Path) -> Freeze:
+    """List a venv's distributions from its ``.dist-info`` metadata (CORE-367).
+
+    Raises:
+        BuildError: No ``site-packages``, or an invalid name or version.
+    """
+    sites = sorted(venv.glob("lib/python3*/site-packages"))
+    if not sites:
+        raise BuildError(f"{venv} has no site-packages")
+    freeze: Freeze = {}
+    for site in sites:
+        for info in sorted(site.iterdir()):
+            if not info.name.endswith(".dist-info") or info.is_symlink() or not info.is_dir():
+                continue
+            try:
+                dir_fd = os.open(info, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC)
+            except OSError:
+                continue
+            try:
+                meta = _read_nofollow(dir_fd, "METADATA")
+                entry_points = _read_nofollow(dir_fd, "entry_points.txt")
+            finally:
+                os.close(dir_fd)
+            if meta is None:
+                continue
+            headers = email.parser.Parser().parsestr(meta, headersonly=True)
+            name = (headers.get("Name") or "").strip()
+            version = (headers.get("Version") or "").strip()
+            if not _NAME.match(name):
+                raise BuildError(f"{info.name}: invalid project name in METADATA")
+            try:
+                Version(version)
+            except InvalidVersion as exc:
+                raise BuildError(f"{info.name}: invalid version in METADATA") from exc
+            dist = Dist(
+                name,
+                version,
+                tuple(headers.get_all("Requires-Dist") or ()),
+                _has_module_entry_point(entry_points),
+            )
+            freeze[dist.key] = dist
+    return freeze
 
 
 def _stamp(now: datetime) -> str:
@@ -313,26 +377,17 @@ class VenvBuilder:
         return done.output
 
     def freeze(self, venv: Path) -> Freeze:
-        """The distributions installed in ``venv`` (read as ``mm3-build``).
+        """The distributions installed in ``venv``, read from their metadata.
+
+        The venv's interpreter is never run (it would run ``.pth`` files of
+        installed packages): the ``.dist-info`` directories are read as data,
+        without following symlinks, and every name and version is validated
+        before it can reach a ``pip`` command line (CORE-367).
 
         Raises:
-            BuildError: The interpreter cannot list them.
+            BuildError: No ``site-packages``, or an invalid name or version.
         """
-        home = self._home("freeze")
-        try:
-            out = self._run("freeze", [str(venv / "bin" / "python"), "-I", "-c", _FREEZE], home)
-        finally:
-            self.runner.reap(BUILD_USER)
-            shutil.rmtree(home, ignore_errors=True)
-        try:
-            rows = json.loads(out.strip().splitlines()[-1])
-            dists = [
-                Dist(r["name"], r["version"], tuple(r["requires"]), bool(r.get("module")))
-                for r in rows
-            ]
-        except (IndexError, KeyError, TypeError, ValueError) as exc:
-            raise BuildError(f"freeze returned no list: {exc}") from exc
-        return {d.key: d for d in dists}
+        return read_freeze(venv)
 
     def pins(
         self,
@@ -433,9 +488,14 @@ class VenvBuilder:
             shutil.rmtree(target, ignore_errors=True)
             raise
         finally:
-            self.runner.reap(BUILD_USER)
+            survivors = self.runner.reap(BUILD_USER)
             shutil.rmtree(home, ignore_errors=True)
             (self.layout.tmp / f"constraints-{target.name}.txt").unlink(missing_ok=True)
+        if survivors:
+            # A process of the build user could still write into the venv after
+            # it is made read-only: stop instead (CORE-367).
+            shutil.rmtree(target, ignore_errors=True)
+            raise BuildError(f"processes of {BUILD_USER} survived the build: {survivors}")
         make_read_only(target, self.final_owner)
         return target
 
@@ -460,8 +520,10 @@ class VenvBuilder:
         try:
             self._run("import test", argv, home)
         finally:
-            self.runner.reap(BUILD_USER)
+            survivors = self.runner.reap(BUILD_USER)
             shutil.rmtree(home, ignore_errors=True)
+        if survivors:
+            raise BuildError(f"processes of {BUILD_USER} survived the import test: {survivors}")
 
     def static_check(self, venv: Path, wheel: Path) -> None:
         """Run ``mm3 module check --only static`` on the wheel, as ``mm3-build``.
@@ -482,5 +544,7 @@ class VenvBuilder:
         try:
             self._run("mm3 module check", argv, home)
         finally:
-            self.runner.reap(BUILD_USER)
+            survivors = self.runner.reap(BUILD_USER)
             shutil.rmtree(home, ignore_errors=True)
+        if survivors:
+            raise BuildError(f"processes of {BUILD_USER} survived the check: {survivors}")

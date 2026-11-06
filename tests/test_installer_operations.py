@@ -9,7 +9,7 @@ Implements:
 - CORE-355 (Core spec 0.35, §10.7): the protocol and its answers.
 - CORE-357 (Core spec 0.33, §10.7): unit and polkit rule shipped and printed.
 - CORE-359 (Core spec 0.35, §10.8): capabilities and write paths of the unit.
-- CORE-367, CORE-368, CORE-369 (Core spec 0.35, §10.7): children without rights,
+- CORE-367, CORE-369 (Core spec 0.37, §10.7), CORE-368 (Core spec 0.35): children without rights,
   installer venv and build user, root-only setup.
 """
 
@@ -402,17 +402,18 @@ def test_core_136_every_operation_is_logged(world: World, monkeypatch: pytest.Mo
 
 def test_core_367_children_run_as_mm3_build_without_rights() -> None:
     argv = drop_argv("mm3-build", ["/usr/bin/python3", "-m", "venv", "/x"])
-    assert argv[:9] == [
+    assert argv[:8] == [
         "/usr/bin/setpriv",
         "--reuid=mm3-build",
         "--regid=mm3-build",
         "--clear-groups",
         "--inh-caps=-all",
         "--ambient-caps=-all",
-        "--bounding-set=-all",
         "--no-new-privs",
         "--",
     ]
+    # Changing the bounding set needs CAP_SETPCAP, which the unit does not grant.
+    assert not any(a.startswith("--bounding-set") for a in argv)
     assert "--init-groups" in drop_argv("mm3", ["mm3", "diag", "check"])
     with pytest.raises(ValueError, match="only as"):
         SetprivRunner().run(["true"], user="root", home=Path("/"))
@@ -916,3 +917,105 @@ def test_core_372_operation_builds_interim_while_core_is_0x(world: World) -> Non
     assert world.run(action="install", name="mm3-news").state == "done"
     assert world.builder.builds[-1]["interim"] is True
     assert world.builder.builds[-1]["wheel"].name == wheel_name("mm3-news", "1.2.0")
+
+
+# --- security review fixes (core spec 0.37) ------------------------------------------
+
+
+def test_core_367_freeze_reads_metadata_without_running_python(tmp_path: Path) -> None:
+    from mm3.installer.venv import BuildError, read_freeze
+
+    site = tmp_path / "v" / "lib" / "python3.13" / "site-packages"
+    good = site / "mm3_news-1.2.0.dist-info"
+    good.mkdir(parents=True)
+    (good / "METADATA").write_text(
+        "Metadata-Version: 2.1\nName: mm3-news\nVersion: 1.2.0\nRequires-Dist: feedparser\n"
+    )
+    (good / "entry_points.txt").write_text("[mm3.modules]\nnews = mm3_news:Module\n")
+    plain = site / "pydantic-2.9.0.dist-info"
+    plain.mkdir()
+    (plain / "METADATA").write_text("Name: pydantic\nVersion: 2.9.0\n")
+    linked = site / "evil-1.dist-info"
+    linked.symlink_to(good)  # a symlinked dist-info is ignored
+    (tmp_path / "v" / "bin").mkdir()
+    (tmp_path / "v" / "bin" / "python").write_text(
+        "#!/bin/sh\necho must-not-run > /dev/null\nexit 1\n"
+    )
+    freeze = read_freeze(tmp_path / "v")
+    assert set(freeze) == {"mm3-news", "pydantic"}
+    assert freeze["mm3-news"].module
+    assert freeze["mm3-news"].requires == ("feedparser",)
+    assert not freeze["pydantic"].module
+    bad = site / "x-1.dist-info"
+    bad.mkdir()
+    (bad / "METADATA").write_text("Name: --extra-index-url=https://evil/simple\nVersion: 1\n")
+    with pytest.raises(BuildError, match="invalid project name"):
+        read_freeze(tmp_path / "v")
+    (bad / "METADATA").write_text("Name: x\nVersion: 1 --no-binary=:all:\n")
+    with pytest.raises(BuildError, match="invalid version"):
+        read_freeze(tmp_path / "v")
+
+
+def test_core_367_direct_url_requirements_are_refused(tmp_path: Path) -> None:
+    from mm3.installer.venv import BuildError, wheel_requirements
+
+    wheel = tmp_path / wheel_name("mm3-url", "1.0.0")
+    wheel.write_bytes(make_wheel("mm3-url", "1.0.0", requires=["mm3-core>=1.0", "requests>=2"]))
+    assert wheel_requirements(wheel) == ["requests>=2"]
+    wheel.write_bytes(
+        make_wheel("mm3-url", "1.0.0", requires=["evil @ https://evil.example/e.whl"])
+    )
+    with pytest.raises(BuildError, match="direct URL"):
+        wheel_requirements(wheel)
+
+
+def test_core_367_surviving_build_process_stops_the_build(tmp_path: Path) -> None:
+    from mm3.installer.venv import BuildError
+
+    class Survivor(DirectRunner):
+        def reap(self, user: str) -> list[int]:
+            return [4242]
+
+    builder = VenvBuilder(Layout.under(tmp_path), Survivor(), python=sys.executable)
+    wheel = _real_wheel(tmp_path, "mm3-demo", "1.0.0")
+    with pytest.raises(BuildError, match="survived the build"):
+        builder.build([str(wheel)], NOW)
+    assert builder.kept() == []
+
+
+def test_core_367_processes_of_reads_proc(tmp_path: Path) -> None:
+    from mm3.installer.runner import processes_of
+
+    for pid, uid in ((10, 999), (11, 1000), (12, 999)):
+        (tmp_path / str(pid)).mkdir()
+        (tmp_path / str(pid) / "status").write_text(f"Name:\tx\nUid:\t{uid}\t{uid}\t{uid}\t{uid}\n")
+    (tmp_path / "self").mkdir()
+    assert sorted(processes_of(999, tmp_path)) == [10, 12]
+
+
+def test_core_367_status_never_starts_children(world: World) -> None:
+    world.publish(("mm3-news", "1.2.0"))
+    world.run(action="install", name="mm3-news")
+    runner = DirectRunner()
+    real = VenvBuilder(world.layout, runner)
+    current = world.builder.current()
+    assert current is not None
+    site = current / "lib" / "python3.13" / "site-packages" / "mm3_news-1.2.0.dist-info"
+    site.mkdir(parents=True)
+    (site / "METADATA").write_text("Name: mm3-news\nVersion: 1.2.0\n")
+    (site / "entry_points.txt").write_text("[mm3.modules]\nn = m:M\n")
+    assert real.freeze(current)["mm3-news"].module
+    assert runner.calls == []
+
+
+async def test_core_355_non_ascii_content_length_is_400(served: Served) -> None:
+    def raw() -> bytes:
+        import socket as sk
+
+        with sk.socket(sk.AF_UNIX, sk.SOCK_STREAM) as c:
+            c.connect(str(served.path))
+            c.sendall("POST /v1/operations HTTP/1.1\r\nContent-Length: ²\r\n\r\n".encode())
+            return c.recv(200)
+
+    answer = await asyncio.to_thread(raw)
+    assert answer.startswith(b"HTTP/1.1 400")

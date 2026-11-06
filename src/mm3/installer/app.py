@@ -2,7 +2,8 @@
 
 Implements:
     CORE-130: Core spec 0.33, §10.7 Installer service.
-    CORE-367, CORE-368: Core spec 0.35, §10.7 Installer service.
+    CORE-367: Core spec 0.37, §10.7 Installer service.
+    CORE-368: Core spec 0.35, §10.7 Installer service.
 """
 
 from __future__ import annotations

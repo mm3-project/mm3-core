@@ -3,7 +3,8 @@
 Package code (``python3 -m venv``, ``pip``, the import test, ``mm3 module
 check``) never runs with the installer's rights (CORE-367): every child is
 started through ``setpriv`` as ``mm3-build`` with no supplementary groups,
-every capability set cleared and no new privileges, with a minimal environment
+empty inheritable and ambient capability sets and no new privileges (so no
+capabilities after the exec), with a minimal environment
 and a private home under the installer's private ``/tmp``. ``mm3 diag check``
 runs the engine's own code, so it runs as the engine's user ``mm3`` (the only
 user besides the installer that may open the admin socket, CORE-311, CORE-357),
@@ -11,14 +12,16 @@ also without capabilities. After each build the installer ends every process
 ``mm3-build`` may have left behind.
 
 Implements:
-    CORE-367: Core spec 0.35, §10.7 Installer service.
+    CORE-367: Core spec 0.37, §10.7 Installer service.
     CORE-357: Core spec 0.33, §10.7 Installer service.
 """
 
 from __future__ import annotations
 
 import os
+import pwd
 import subprocess
+import time
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -55,17 +58,19 @@ class Runner(Protocol):
     ) -> Completed:
         """Run ``argv`` as ``user`` and wait for it."""
 
-    def reap(self, user: str) -> None:
-        """End every process left running as ``user``."""
+    def reap(self, user: str) -> list[int]:
+        """End every process left running as ``user``; return the survivors."""
 
 
 def drop_argv(user: str, argv: Sequence[str]) -> list[str]:
     """The ``setpriv`` command line that runs ``argv`` as ``user`` without rights.
 
     ``mm3-build`` gets no groups at all; ``mm3`` keeps its own groups (``mm3``
-    gives it the admin socket). Capabilities are cleared from every set and
-    the bounding set, and ``no_new_privs`` is set, so the child can never
-    regain any.
+    gives it the admin socket). The inheritable and ambient sets are cleared
+    and ``no_new_privs`` is set, so the executed program starts with no
+    capabilities and can never gain any (file capabilities and setuid bits are
+    ignored). The bounding set is left alone: changing it needs
+    ``CAP_SETPCAP``, which the installer does not have (CORE-367).
     """
     groups = ["--clear-groups"] if user == BUILD_USER else ["--init-groups"]
     return [
@@ -75,7 +80,6 @@ def drop_argv(user: str, argv: Sequence[str]) -> list[str]:
         *groups,
         "--inh-caps=-all",
         "--ambient-caps=-all",
-        "--bounding-set=-all",
         "--no-new-privs",
         "--",
         *argv,
@@ -139,10 +143,14 @@ class SetprivRunner:
             return Completed(124, _tail(out + f"\ntimed out after {timeout:.0f} s"))
         return Completed(done.returncode, _tail(done.stdout or ""))
 
-    def reap(self, user: str) -> None:
-        """Kill every process of ``user`` (``kill -KILL -1`` as that user)."""
+    def reap(self, user: str) -> list[int]:
+        """Kill every process of ``user`` (``kill -KILL -1`` as that user).
+
+        Returns:
+            The pids still running as ``user`` afterwards (none, normally).
+        """
         if user != BUILD_USER:
-            return
+            return []
         subprocess.run(  # noqa: S603 - fixed argv
             drop_argv(user, ["/bin/kill", "-KILL", "-1"]),
             env={"PATH": "/usr/bin:/bin"},
@@ -153,6 +161,31 @@ class SetprivRunner:
             timeout=30,
             check=False,
         )
+        uid = pwd.getpwnam(user).pw_uid
+        for _ in range(20):
+            left = processes_of(uid)
+            if not left:
+                return []
+            time.sleep(0.05)
+        return left
+
+
+def processes_of(uid: int, proc: Path = Path("/proc")) -> list[int]:
+    """The pids whose real uid is ``uid``, from ``/proc``."""
+    out = []
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            status = (entry / "status").read_text(encoding="ascii", errors="replace")
+        except OSError:
+            continue  # the process ended meanwhile
+        for line in status.splitlines():
+            if line.startswith("Uid:"):
+                if int(line.split()[1]) == uid:
+                    out.append(int(entry.name))
+                break
+    return out
 
 
 class DirectRunner:
@@ -186,5 +219,6 @@ class DirectRunner:
         )
         return Completed(done.returncode, _tail(done.stdout or ""))
 
-    def reap(self, user: str) -> None:
+    def reap(self, user: str) -> list[int]:
         """Nothing to do."""
+        return []

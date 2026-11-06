@@ -6,7 +6,9 @@ CORE-351); they show only what is compatible with the running Module API
 (CORE-124). ``refresh``, ``install``, ``update`` and ``restore-previous`` send
 their request to the installer socket; the CLI never writes a venv (CORE-353).
 A listed package needs the passphrase, and the TOTP code when enabled; an
-unlisted one (``--from-pypi`` or a local wheel) needs root and no passphrase.
+unlisted one (``--from-pypi`` or a local wheel) needs root and no passphrase;
+root runs the installer venv's ``mm3`` (``sudo /opt/mm3/installer/bin/mm3``),
+never the engine venv's, so no module code runs as root (CORE-369).
 Before an install the requested capabilities and grant scopes are shown for
 confirmation (CORE-133).
 
@@ -14,6 +16,7 @@ Implements:
     CORE-353: Core spec 0.33, §10.6 Module catalog.
     CORE-124, CORE-125, CORE-126: Core spec 0.33, §10.6 Module catalog.
     CORE-351: Core spec 0.35, §10.6 Module catalog.
+    CORE-369: Core spec 0.37, §10.7 Installer service.
     CORE-133: Core spec 0.33, §10.7 Installer service.
 """
 
@@ -269,7 +272,10 @@ def _install(args: argparse.Namespace, out: TextIO, ask: Ask, secret: Ask) -> in
     cached = _cached(args, out)
     entry = find_entry(cached.index, name) if cached else None
     if cached is not None and entry is None:
-        out.write(f"{name} is not in the catalog index (unlisted: sudo ... --from-pypi)\n")
+        out.write(
+            f"{name} is not in the catalog index (unlisted, as root: "
+            f"sudo /opt/mm3/installer/bin/mm3 modules install {name} --from-pypi)\n"
+        )
         return EXIT_FAILED
     if entry is not None:
         release = entry.release(version) if version else newest_compatible(entry)
