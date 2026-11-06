@@ -262,7 +262,7 @@ name = "Services: MQTT/HA, presence, installer, catalog, backup"
 status = "in_progress"
 requirements = [
   "CORE-50..53", "CORE-66", "CORE-100", "CORE-120..126", "CORE-130..136",
-  "CORE-160..165", "CORE-333..337", "CORE-338..372", "PRS-01..08", "MOD-96..99",
+  "CORE-160..165", "CORE-333..337", "CORE-338..373", "PRS-01..08", "MOD-96..99",
 ]
 # CORE-338..345 (core 0.31): MQTT bridge and Home Assistant. CORE-339 extends
 #   CORE-305 (status, milestone 6) and CORE-342 extends CORE-100 without
@@ -300,6 +300,8 @@ requirements = [
 # CORE-371, CORE-372 (core 0.36): mm3 module check --wheel (extends CORE-281,
 #   milestone 4, without changing it) and --no-deps rebuilds while mm3-core is
 #   0.x (extends CORE-293, milestone 10).
+# CORE-373 (core 0.37, installer security review): writes into the engine's
+#   directories without following symlinks; CORE-367 and 369 changed.
 # CORE-333..337 (core 0.30): pages out of the cycle, timed jumps, idle
 #   return, pause holds and the previous page (MMM-pages and
 #   MMM-ProfileSwitcher). They extend CORE-230..237 of milestones 2, 3 and 6
