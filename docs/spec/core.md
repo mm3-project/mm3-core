@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.35 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.36 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -1258,6 +1258,8 @@ Installs, updates and removals started from the admin UI run in a separate privi
 * CORE-368: Installer venv and build user (extends CORE-293, CORE-353 and CORE-357). The installer runs `mm3 installer serve` from its own venv `/opt/mm3/installer/`, which holds `mm3-core[installer]` and its dependencies and never a module, so no module code (including `.pth` files) runs in the installer. `mm3-install.sh` builds that venv as root and upgrades it together with the engine's, creates the system user `mm3-build` (no login shell, no home, no supplementary groups), and installs the installer unit and its polkit rule. Unlisted wheels and local paths remain root-only (CORE-353).
 * CORE-369: Passphrase and TOTP setup (extends CORE-132). `mm3 installer passphrase`, `mm3 installer totp enable` and `mm3 installer totp disable` talk to the installer socket (`POST /v1/auth/passphrase`, `POST /v1/auth/totp`, `DELETE /v1/auth/totp`) and are accepted only from a root peer (`SO_PEERCRED`), so they need `sudo`. The installer keeps the passphrase's argon2 hash and the TOTP secret in `/var/lib/mm3-install/auth.json` (mode 0600). `totp enable` returns the secret and its `otpauth://` URI once and turns TOTP on only after a valid code for that secret is sent back. Without a passphrase every listed operation answers 403 with the reason.
 * CORE-370: Installer downloads (extends CORE-350 and CORE-352). The installer fetches the index, its bundle, wheels and provenance with the standard library in one place, `mm3.installer.fetch`: HTTPS only, TLS always verified against the system CA store, only the hosts `mm3-project.github.io`, `pypi.org` and `files.pythonhosted.org`, redirects only to those hosts, 30 s per read, and at most 16 MiB for the index, 1 MiB for a bundle or provenance and 256 MiB for a wheel. The module's dependencies are downloaded by `pip` (CORE-354, CORE-367).
+* CORE-371: Check of a wheel (extends CORE-281 and CORE-134). `mm3 module check --wheel <file> --only static` checks a built wheel without its source tree and without `uv`: it reads the wheel's metadata, entry points and files, runs every static check that needs only those, and reports the checks that need the project files (`pyproject.toml`, the build configuration) as skipped. Exit codes are those of CORE-281. The installer runs it on the verified wheel in the read-only staged venv (CORE-367).
+* CORE-372: Rebuilds before 1.0 (extends CORE-293 and CORE-354). While the current venv's `mm3-core` is 0.x, the installer installs the frozen pins and the module's wheel with `--no-deps`, then installs the wheel's other `Requires-Dist` entries (all but `mm3-core`, markers evaluated, extras left out) in the same venv with the same pins as constraints. The conflict check of CORE-354 applies unchanged. From `mm3-core` 1.0.0 on the installer resolves normally.
 
 ### 10.8 Backup and restore
 
@@ -1505,6 +1507,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.36 | 2026-11-06 | Catalog and installer, milestone 7 development: check of a wheel (CORE-371) and rebuilds before 1.0 (CORE-372) added |
 | 0.35 | 2026-11-06 | Catalog and installer, milestone 7 development: cache verified only by the installer (CORE-351), socket in the installer's runtime directory, refresh route, installed modules and unlisted sources (CORE-355) and capabilities and write paths (CORE-359) changed; untrusted code as mm3-build (CORE-367), installer venv and build user (CORE-368), passphrase and TOTP setup (CORE-369) and installer downloads (CORE-370) added; 9.1 table and 10.7 Separation updated |
 | 0.34 | 2026-11-06 | Backup and restore, milestone 7: installer rights (CORE-359), scheduled backups by the installer (CORE-360), requests and routes (CORE-361), archive layout and sidecar (CORE-362), restore order (CORE-363), keys (CORE-364), remotes (CORE-365) and pre-operation backups (CORE-366) added; mm3-backup.timer removed from the unit table, 10.8 scheduled backups and 1.1 updated |
 | 0.33 | 2026-11-06 | Catalog and installer, milestone 7: verification libraries (CORE-349), index format (CORE-350), cache and freshness (CORE-351), release verification (CORE-352), CLI through the installer (CORE-353), staged venv (CORE-354), installer protocol (CORE-355), engine catalog and installer API (CORE-356), restart and checks (CORE-357) and removal (CORE-358) added; 10.6 CLI table and 1.2 (supply-chain verification) updated |
