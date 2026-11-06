@@ -1,22 +1,26 @@
 """Load a module's source tree for the checks.
 
 Reads ``pyproject.toml``, the package's Python and static files, the README
-and, once built, the wheel; it never imports the module.
+and, once built, the wheel; it never imports the module. :func:`load_wheel`
+reads a built wheel alone, without its source tree (CORE-371).
 
 Implements:
     CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
+    CORE-371: Core spec 0.36, §10.7 Installer service.
 """
 
 from __future__ import annotations
 
 import ast
+import configparser
+import email.parser
 import tomllib
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-__all__ = ["ModuleProject", "ToolError", "load_project"]
+__all__ = ["ModuleProject", "ToolError", "load_project", "load_wheel"]
 
 GROUP = "mm3.modules"
 
@@ -48,6 +52,7 @@ class ModuleProject:
         wheel_names: Files in the wheel.
         wheel_dir: The wheel extracted for catalog checks.
         metadata: The wheel's ``METADATA`` headers.
+        from_wheel: Loaded from a wheel alone (CORE-371): no project files.
     """
 
     root: Path
@@ -68,6 +73,7 @@ class ModuleProject:
     wheel_names: list[str] = field(default_factory=list)
     wheel_dir: Path | None = None
     metadata: dict[str, list[str]] = field(default_factory=dict)
+    from_wheel: bool = False
 
     @property
     def check_options(self) -> dict[str, Any]:
@@ -135,6 +141,69 @@ def load_project(path: Path) -> ModuleProject:
         pkg_dir=_find_package(root, pkg),
     )
     _read_sources(mod)
+    return mod
+
+
+def load_wheel(wheel: Path, extract_to: Path) -> ModuleProject:
+    """Read a built wheel without its source tree (CORE-371).
+
+    The name, version and dependencies come from ``METADATA``, the entry
+    points from ``entry_points.txt`` and the sources from the extracted
+    package; there is no ``pyproject.toml``.
+
+    Args:
+        wheel: The wheel file.
+        extract_to: Empty directory to extract into.
+
+    Returns:
+        The loaded project, with the wheel attached.
+
+    Raises:
+        ToolError: Not a readable wheel, or no ``.dist-info``.
+    """
+    try:
+        with zipfile.ZipFile(wheel) as z:
+            names = z.namelist()
+            info = next((n.split("/")[0] for n in names if n.endswith(".dist-info/METADATA")), None)
+            if info is None:
+                raise ToolError(f"{wheel.name} has no .dist-info/METADATA")
+            headers = email.parser.Parser().parsestr(
+                z.read(f"{info}/METADATA").decode("utf-8", "replace")
+            )
+            entry_text = (
+                z.read(f"{info}/entry_points.txt").decode("utf-8", "replace")
+                if f"{info}/entry_points.txt" in names
+                else ""
+            )
+    except (OSError, zipfile.BadZipFile, KeyError) as exc:
+        raise ToolError(f"cannot read the wheel {wheel}: {exc}") from exc
+    parser = configparser.ConfigParser(interpolation=None, delimiters=("=",))
+    parser.optionxform = str  # type: ignore[assignment,method-assign]
+    try:
+        parser.read_string(entry_text)
+    except configparser.Error as exc:
+        raise ToolError(f"{wheel.name}: invalid entry_points.txt: {exc}") from exc
+    entries = dict(parser.items(GROUP)) if parser.has_section(GROUP) else {}
+    pkg = next((v.split(":")[0].split(".")[0].strip() for v in entries.values()), "")
+    root = extract_to.resolve()
+    mod = ModuleProject(
+        root=root,
+        meta={},
+        dist=headers.get("Name", ""),
+        version=headers.get("Version"),
+        deps=list(headers.get_all("Requires-Dist") or []),
+        entry_points={k: v.strip() for k, v in entries.items()},
+        pkg=pkg,
+        pkg_dir=None,
+        from_wheel=True,
+    )
+    mod.attach_wheel(wheel, extract_to)
+    if pkg and (root / pkg).is_dir():
+        mod.pkg_dir = root / pkg
+    _read_sources(mod)
+    body = headers.get_payload()
+    if isinstance(body, str) and body.strip():
+        mod.readme = ("METADATA", body)
     return mod
 
 

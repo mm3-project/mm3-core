@@ -1,0 +1,14 @@
+// MM3: lets the installer user stop, start and restart the engine, nothing else.
+// Implements CORE-357 (Core spec 0.33, §10.7 Installer service)
+// Implements CORE-359 (Core spec 0.35, §10.8 Backup and restore): stop, start and restart
+polkit.addRule(function (action, subject) {
+    if (action.id === "org.freedesktop.systemd1.manage-units" &&
+            subject.user === "mm3-install" &&
+            action.lookup("unit") === "mm3.service") {
+        var verb = action.lookup("verb");
+        if (verb === "start" || verb === "stop" || verb === "restart") {
+            return polkit.Result.YES;
+        }
+    }
+    return polkit.Result.NOT_HANDLED;
+});

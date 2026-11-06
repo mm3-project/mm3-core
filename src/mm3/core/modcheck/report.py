@@ -32,7 +32,8 @@ __all__ = [
     "to_junit",
 ]
 
-Status = Literal["pass", "fail", "warn", "review", "suppressed"]
+Status = Literal["pass", "fail", "warn", "review", "suppressed", "skipped"]
+"""``skipped``: a static check that needs the project files, in a wheel check (CORE-371)."""
 
 _ALLOW = re.compile(r"(?:#|//)\s*mm3:\s*allow\s+(MOD-\d+)(?:\s+(\S.*?))?\s*(?:\*/)?$")
 
@@ -262,6 +263,9 @@ def summary(report: Report) -> str:
         text = f"{passed} passed, {failed} failed"
         if cat == "static" or warned:
             text += f", {warned} warnings"
+        skipped = sum(c.status == "skipped" for c in items)
+        if skipped:
+            text += f", {skipped} skipped (need the project files)"
         lines.append(f"{label:<11} {text}")
     reviews = len(report.in_category("review"))
     lines.append(f"{'Review':<11} {reviews} items to confirm (see report)")
@@ -288,7 +292,7 @@ def to_junit(report: Report) -> str:
         name=f"mm3 module check {report.module}",
         tests=str(len(report.checks)),
         failures=str(sum(c.level == "MUST" and c.status == "fail" for c in report.checks)),
-        skipped=str(sum(c.status == "review" for c in report.checks)),
+        skipped=str(sum(c.status in ("review", "skipped") for c in report.checks)),
     )
     for c in report.checks:
         case = ET.SubElement(suite, "testcase", classname=c.category, name=c.id)
@@ -298,8 +302,8 @@ def to_junit(report: Report) -> str:
         )
         if c.status == "fail":
             ET.SubElement(case, "failure", message=c.id).text = text
-        elif c.status == "review":
-            ET.SubElement(case, "skipped", message=text or "review")
+        elif c.status in ("review", "skipped"):
+            ET.SubElement(case, "skipped", message=text or c.status)
         elif text:
             ET.SubElement(case, "system-out").text = text
     ET.indent(root)

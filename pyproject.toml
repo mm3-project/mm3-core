@@ -52,6 +52,14 @@ dependencies = [
 
 [project.optional-dependencies]
 migrate = ["esprima>=4.0,<5"]
+# Implements CORE-349 (Core spec 0.33, §10.6 Module catalog): the verification
+# libraries of the installer service only, behind mm3.installer.verify; the
+# engine never imports them. pypi-attestations is pre-1.0: bounded to its
+# current release, every update reviewed like a needs-spec-review major.
+installer = [
+    "sigstore>=4.5,<5",
+    "pypi-attestations>=0.0.31,<0.0.32",
+]
 # Implements CORE-279 (Core spec 0.17, §10.2 Packaging and deployment): the
 # test kit and mm3 module check for module developers; never on mirrors.
 testing = [

@@ -7,6 +7,60 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 7, PR 4a: installer service and catalog client)
+
+- Installer service `mm3 installer serve` (core spec 0.35, sections 10.6 and 10.7):
+  HTTP/JSON on `/run/mm3-install/installer.sock` (mode 0660, group `mm3`) with
+  `GET /v1/status`, `POST /v1/catalog/refresh`, `POST|GET /v1/operations`,
+  `GET /v1/operations/{id}[/events]` and the root-only `/v1/auth/*` routes;
+  peers are identified with `SO_PEERCRED`; 403 on failed re-authentication,
+  423 when locked, 409 while an operation runs (CORE-355, CORE-353, CORE-369).
+- Catalog index (CORE-350, CORE-351): `mm3.core.catalog` (schema 1, compatibility
+  with the running Module API, search, the engine's copy); only the installer
+  verifies the Sigstore signature, keeps the highest accepted `serial` in its own
+  state, refuses expired or rolled-back indexes, refreshes daily and on demand,
+  and writes the engine's copy with `meta.json`.
+- Verification adapter `mm3.installer.verify` (CORE-349, CORE-352): the index
+  bundle with the fixed module-index identity, and PEP 740 provenance from PyPI's
+  Integrity API against the entry's Trusted Publisher; the wheel's SHA-256 is
+  checked against the index first. New extra `mm3-core[installer]` with
+  `sigstore` 4.x and `pypi-attestations` 0.0.31.
+- Downloads `mm3.installer.fetch` on the standard library: HTTPS only, three
+  hosts, redirects checked, size caps (CORE-370).
+- Operations (CORE-130..136, CORE-354, CORE-367): install, update, remove and
+  restore previous, one at a time, kept with their steps; staged venvs built with
+  `python3 -m venv` and `pip --only-binary=:all:` as `mm3-build` through `setpriv`
+  without capabilities, frozen pins, conflicts listed, packages only the module
+  used removed, venv made read-only before the import test; restart through
+  systemd, READY within 60 s and `mm3 diag check` (as `mm3`) or rollback; the last
+  3 venvs kept; every operation logged with client, package, versions and outcome.
+- Passphrase (argon2) and TOTP (pyotp) re-authentication with a 15-minute lock
+  after 5 failures; `sudo mm3 installer passphrase` and `totp enable|disable`
+  (CORE-132, CORE-369).
+- CLI `mm3 modules search|info|list|refresh|install|update|restore-previous` and
+  `mm3 installer serve|unit|polkit|passphrase|totp|status` (CORE-353, CORE-124,
+  CORE-125, CORE-133).
+- `mm3-installer.service` and its polkit rule ship in the package (CORE-357,
+  CORE-359, CORE-368); `mm3-install.sh` creates `mm3-install` and `mm3-build`,
+  builds the installer venv `/opt/mm3/installer`, installs `polkitd`, the unit
+  and the rule, and gives `/opt/mm3/venvs` to the installer.
+- `mm3 module check --wheel <file> --only static` checks a built wheel without
+  its source tree or `uv`, reporting project-file checks as skipped; the
+  installer runs it on the verified wheel in the read-only staged venv (CORE-371).
+- While `mm3-core` is 0.x, staged rebuilds install pins and the module wheel with
+  `--no-deps`, then the wheel's other requirements with the pins as constraints
+  (CORE-372).
+- Security review fixes (core spec 0.37): writes into the engine's directories
+  never follow a symlink and set owner and mode on the open file (CORE-373);
+  build children no longer change the bounding set, which needs CAP_SETPCAP, and a
+  surviving `mm3-build` process stops the operation; venvs are listed from their
+  `.dist-info` metadata with validated names and versions instead of running their
+  interpreter, so `GET /v1/status` starts no children; module requirements with a
+  direct URL are refused (CORE-367); TOTP codes are single-use and root commands
+  name the installer venv's `mm3` (CORE-369); `Content-Length` must be ASCII
+  digits and at most 32 connections are served at once; the installer unit is
+  hardened and its own venv is read-only to it.
+
 ### Added (milestone 7, PR 3: presence and power)
 
 - Power hooks (core spec 0.34, section 9.2, CORE-52, CORE-53): `ctx.system` with

@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # mm3-install.sh: install or update MM3 on Debian 12 or 13 (x86-64).
 #
-# Run as root; safe to run again. It creates the users and groups mm3 and
-# mm3-kiosk (mm3 is a member of mm3-kiosk), installs the Debian packages the
+# Run as root; safe to run again. It creates the users and groups mm3,
+# mm3-kiosk (mm3 is a member of mm3-kiosk), mm3-install (a member of mm3) and
+# mm3-build (no groups), installs the Debian packages the
 # engine and the kiosk need, builds a venv in /opt/mm3/venvs/<timestamp>
-# behind the symlink /opt/mm3/venv, writes /etc/mm3/config.yaml and
-# /etc/mm3/mm3.env when they are absent, installs mm3.service and
-# mm3-kiosk.service, and enables and starts them. It never overwrites a
+# behind the symlink /opt/mm3/venv and the installer's own venv
+# /opt/mm3/installer (mm3-core[installer], never a module), writes
+# /etc/mm3/config.yaml and /etc/mm3/mm3.env when they are absent, installs
+# mm3.service, mm3-kiosk.service, mm3-installer.service and its polkit rule,
+# and enables and starts them. It never overwrites a
 # configuration, env file, state directory or token store, and it creates no
 # token. A new run builds a new venv, moves the symlink, restarts the units and
 # keeps the previous venv for rollback.
@@ -22,6 +25,12 @@
 # Debian 13 or later and cage 0.1.5 or later.
 # Implements CORE-348 (Core spec 0.34, §9.2 Presence and power: module boundary):
 # on kiosk systems ddcutil and cec-utils, and mm3 in the groups i2c and dialout.
+# Implements CORE-353 (Core spec 0.33, §10.6 Module catalog): the user
+# mm3-install, a member of mm3, owns /opt/mm3/venvs.
+# Implements CORE-357 (Core spec 0.33, §10.7 Installer service): the installer
+# unit and its polkit rule.
+# Implements CORE-368 (Core spec 0.35, §10.7 Installer service): the installer's
+# own venv and the user mm3-build.
 set -Eeuo pipefail
 
 readonly EXIT_UNSUPPORTED=1
@@ -43,6 +52,9 @@ ETC=${MM3_ETC:-/etc/mm3}
 UNIT_DIR=${MM3_UNIT_DIR:-/etc/systemd/system}
 SVC_USER=${MM3_USER:-mm3}
 SVC_GROUP=${MM3_GROUP:-mm3}
+INSTALLER_USER=${MM3_INSTALLER_USER:-mm3-install}
+BUILD_USER=${MM3_BUILD_USER:-mm3-build}
+POLKIT_DIR=${MM3_POLKIT_DIR:-/etc/polkit-1/rules.d}
 TIMEZONE_FILE=${MM3_TIMEZONE_FILE:-/etc/timezone}
 SKIP_PACKAGES=${MM3_SKIP_PACKAGES:-no}
 
@@ -171,6 +183,27 @@ ensure_accounts() {
     usermod --append --groups "$KIOSK_GROUP" "$SVC_USER"
     say "added $SVC_USER to the group $KIOSK_GROUP"
   fi
+  ensure_installer_accounts
+}
+
+# CORE-353, CORE-368: the installer user, a member of mm3 (installer and admin
+# sockets), and the build user, with no supplementary groups, which package
+# code runs as without capabilities (CORE-367).
+ensure_installer_accounts() {
+  if ! id -u "$INSTALLER_USER" >/dev/null 2>&1; then
+    useradd --system --user-group --home-dir /var/lib/mm3-install \
+      --shell /usr/sbin/nologin "$INSTALLER_USER"
+    say "created the user $INSTALLER_USER"
+  fi
+  if ! in_group "$INSTALLER_USER" "$SVC_GROUP"; then
+    usermod --append --groups "$SVC_GROUP" "$INSTALLER_USER"
+    say "added $INSTALLER_USER to the group $SVC_GROUP"
+  fi
+  if ! id -u "$BUILD_USER" >/dev/null 2>&1; then
+    useradd --system --user-group --no-create-home --home-dir /nonexistent \
+      --shell /usr/sbin/nologin "$BUILD_USER"
+    say "created the user $BUILD_USER"
+  fi
 }
 
 # CORE-143: the kiosk user reaches the display and the input devices through
@@ -234,7 +267,7 @@ decide_kiosk() {
 }
 
 install_packages() {
-  local packages=(python3 python3-venv ca-certificates)
+  local packages=(python3 python3-venv ca-certificates polkitd)
   if [[ $WANT_KIOSK == yes ]]; then
     packages+=(cage chromium wlr-randr ddcutil cec-utils)
   fi
@@ -296,6 +329,38 @@ for requirement in requires("mm3-modules-default") or []:
     "${pip[@]}" mm3-modules-default
   fi
   "$STAGED_VENV/bin/mm3" --version >/dev/null
+  # CORE-353: the installer service is the only writer of the venvs from now on.
+  chown "$INSTALLER_USER:" "$OPT/venvs"
+}
+
+# CORE-368: the installer runs from its own venv, with the same mm3-core and its
+# extra [installer], and never a module. A venv is not relocatable (its scripts
+# name their interpreter by absolute path), so each run builds a new one under
+# /opt/mm3/installers/<timestamp> and moves the symlink /opt/mm3/installer to
+# it, keeping the previous one.
+build_installer_venv() {
+  local version stamp new link=$OPT/installer root=$OPT/installers
+  local -a pip
+  version=$("$STAGED_VENV/bin/python" -c \
+    'from importlib.metadata import version; print(version("mm3-core"))')
+  stamp=$(date -u +%Y%m%dT%H%M%SZ)
+  new=$root/$stamp
+  install -d -m 0755 "$root"
+  rm -rf "$new"
+  say "building the installer venv $new (mm3-core $version)"
+  python3 -m venv "$new"
+  pip=("$new/bin/pip" install --disable-pip-version-check --no-input)
+  if [[ -n $FIND_LINKS ]]; then
+    pip+=(--find-links "$FIND_LINKS")
+  fi
+  "${pip[@]}" "mm3-core[installer]==$version"
+  "$new/bin/mm3" --version >/dev/null
+  # An installer venv from an older script may be a plain directory.
+  if [[ -d $link && ! -L $link ]]; then rm -rf "$link"; fi
+  ln -sfn "$new" "$link.new"
+  mv -T "$link.new" "$link"
+  # Keep the new venv and the one before it.
+  find "$root" -mindepth 1 -maxdepth 1 -type d | sort -r | tail -n +3 | xargs -r rm -rf
 }
 
 detect_timezone() {
@@ -405,10 +470,25 @@ install_units() {
   if [[ $WANT_KIOSK == yes ]]; then
     install_unit mm3-kiosk.service kiosk
   fi
+  install_installer_unit
+}
+
+# CORE-357: the installer unit and the polkit rule that lets it stop, start and
+# restart mm3.service and nothing else (CORE-359).
+install_installer_unit() {
+  local tmp
+  install -d -m 0755 "$UNIT_DIR" "$POLKIT_DIR"
+  tmp=$(mktemp)
+  "$OPT/installer/bin/mm3" installer unit >"$tmp"
+  install -m 0644 "$tmp" "$UNIT_DIR/mm3-installer.service"
+  "$OPT/installer/bin/mm3" installer polkit >"$tmp"
+  install -m 0644 "$tmp" "$POLKIT_DIR/50-mm3-installer.rules"
+  rm -f "$tmp"
+  say "installed $UNIT_DIR/mm3-installer.service and $POLKIT_DIR/50-mm3-installer.rules"
 }
 
 start_units() {
-  local -a units=(mm3.service)
+  local -a units=(mm3.service mm3-installer.service)
   local unit action
   if [[ $WANT_KIOSK == yes ]]; then
     units+=(mm3-kiosk.service)
@@ -434,6 +514,8 @@ summary() {
   say "Create an admin token (it is shown once; this script creates none):"
   say "  sudo -u $SVC_USER env STATE_DIRECTORY=/var/lib/mm3 $OPT/venv/bin/mm3 token new admin"
   say "The admin UI listens on 127.0.0.1:8081; edit $ETC/config.yaml to open it to your LAN."
+  say "Set the install passphrase for module installs (once, as root):"
+  say "  sudo $OPT/installer/bin/mm3 installer passphrase"
   if [[ -n $PREVIOUS_VENV ]]; then
     say "To roll back: ln -sfn $PREVIOUS_VENV $OPT/venv && systemctl restart mm3 mm3-kiosk"
   fi
@@ -451,6 +533,7 @@ main() {
   ensure_display_control_groups
   verify_cage
   build_venv
+  build_installer_venv
   write_config
   validate_config
   activate_venv

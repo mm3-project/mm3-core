@@ -1,0 +1,54 @@
+# MM3 installer service: installs, updates and removals for the engine.
+# Implements CORE-130 (Core spec 0.33, §10.7 Installer service): separate service
+# Implements CORE-355 (Core spec 0.35, §10.7 Installer service): socket only, own runtime directory
+# Implements CORE-357 (Core spec 0.33, §10.7 Installer service): shipped in the package
+# Implements CORE-359 (Core spec 0.35, §10.8 Backup and restore): rights and write paths
+# Implements CORE-368 (Core spec 0.35, §10.7 Installer service): its own venv
+[Unit]
+Description=MM3 installer
+Documentation=https://github.com/mm3-project/mm3-core
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=mm3-install
+Group=mm3-install
+SupplementaryGroups=mm3
+ExecStart=/opt/mm3/installer/bin/mm3 installer serve
+Restart=on-failure
+RestartSec=5s
+# Only these capabilities, for files of the engine and the build children
+# (CORE-359, CORE-367); the same bounding set, so none can be regained.
+AmbientCapabilities=CAP_DAC_OVERRIDE CAP_CHOWN CAP_FOWNER CAP_SETUID CAP_SETGID
+CapabilityBoundingSet=CAP_DAC_OVERRIDE CAP_CHOWN CAP_FOWNER CAP_SETUID CAP_SETGID
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/etc/mm3 /var/lib/mm3 /opt/mm3
+# The installer never writes its own venv (CORE-368).
+ReadOnlyPaths=-/opt/mm3/installer -/opt/mm3/installers
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+RestrictNamespaces=yes
+LockPersonality=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+StateDirectory=mm3-install
+StateDirectoryMode=0700
+RuntimeDirectory=mm3-install
+RuntimeDirectoryMode=0755
+# The Sigstore trust root (TUF) is cached in the installer's own state.
+Environment=XDG_CACHE_HOME=/var/lib/mm3-install/cache
+Environment=XDG_DATA_HOME=/var/lib/mm3-install/data
+UMask=0022
+
+[Install]
+WantedBy=multi-user.target

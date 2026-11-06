@@ -3,13 +3,14 @@
 Implemented so far: ``--version``, ``mm3 check-config``, ``mm3 run``,
 ``mm3 config`` (history, diff, undo, redo, restore), ``mm3 token``
 (new, list, revoke), ``mm3 i18n`` (compile, check), ``mm3 kiosk``
-(session, unit), ``mm3 module check`` and ``mm3 new-module``.
+(session, unit), ``mm3 module check``, ``mm3 new-module``, ``mm3 modules``
+(search, info, list, refresh, install, update, restore-previous) and
+``mm3 installer`` (serve, unit, polkit, passphrase, totp, status).
 ``mm3 run`` loads and validates the configuration, refuses to start with
 exit code 2 when it has errors, runs the module instances and the web
 gateway (mirror and admin listeners) until SIGTERM or SIGINT, and reloads
 the configuration when its files change or on SIGHUP.
-The other subcommands (``modules``, ``migrate``,
-``diag``, ``installer``) are added with their milestones.
+``mm3 migrate`` is added with its milestone.
 
 Implements:
     -: Core spec 0.8, §10.2 Packaging and deployment.
@@ -44,8 +45,10 @@ from mm3.__about__ import MODULE_API_VERSION, __version__
 from mm3.cli.config_cmd import add_config_parser, run_config
 from mm3.cli.diag_cmd import add_diag_parser, run_diag
 from mm3.cli.i18n_cmd import add_i18n_parser, run_i18n
+from mm3.cli.installer_cmd import add_installer_parser, run_installer
 from mm3.cli.kiosk_cmd import add_kiosk_parser, run_kiosk
 from mm3.cli.module_cmd import add_module_parser, run_module
+from mm3.cli.modules_cmd import add_modules_parser, run_modules
 from mm3.cli.new_module_cmd import add_new_module_parser, run_new_module
 from mm3.cli.service_cmd import add_service_parser, run_service
 from mm3.cli.token_cmd import add_token_parser, run_token
@@ -96,6 +99,8 @@ def build_parser() -> argparse.ArgumentParser:
     add_module_parser(sub)
     add_new_module_parser(sub)
     add_diag_parser(sub, _config_args)
+    add_modules_parser(sub)
+    add_installer_parser(sub)
     return parser
 
 
@@ -393,6 +398,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_module(args)
     if args.command == "new-module":
         return run_new_module(args)
+    if args.command == "modules":
+        return run_modules(args)
+    if args.command == "installer":
+        return run_installer(args)
     if args.command == "diag":
         return run_diag(args)
     parser.print_help()
