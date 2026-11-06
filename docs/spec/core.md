@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.29 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.30 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -39,7 +39,7 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | Bus and supervisor | Per-instance bounded inbox handled in order; trace id in the envelope; a restart builds a new instance; handler timeouts fail an instance only when repeated (5.3, 7) |
 | Config loading and history | !include replaces a node inside the config directory; !env from /etc/mm3/mm3.env over the process environment, re-read on reload; explicit ids for modules used more than once; presets stack like MM² regions; history keeps the whole config set; CLI and engine share one lock (6.2, 6.3, 6.5, 6.8) |
 | Requests between modules | ctx.request / on\_request with replies on the bus; registry of shared notification names, validated by the engine (5.4, 5.5) |
-| Pages and visibility | Pages in the core: own layout per page, all-pages instances, rotation, notifications, swipe, HA select; one set of visibility rules; runtime stop and start (6.9) |
+| Pages and visibility | Pages in the core: own layout per page, all-pages instances, rotation, notifications, swipe, HA select; one set of visibility rules; runtime stop and start; pages out of the cycle, timed jumps, idle return and pause holds cover MMM-pages and MMM-ProfileSwitcher, a profile being a page (6.9; decided 6 Nov) |
 | Requirements traceability | Specs synced to the repository with changed\_in per requirement; review only of code citing changed requirements; coverage matrix; issues for closed milestones (10.3) |
 | Shell and WebSocket | hello/welcome handshake with client roles kiosk, browser, preview; bounded queues with coalesced state; full resync on reconnect; templates with lit-html behind /core/mm3.js (5.6, 6.5) |
 | Theme | MM²-like core theme as CSS variables, Roboto Condensed vendored; optional /etc/mm3/custom.css in the config set (6.10) |
@@ -345,7 +345,8 @@ Names used by more than one module are registered here with their payload, and t
 | `HIDE_ALERT` | event | `{id: str}` | any → alert module |
 | `PAGE_NEXT`, `PAGE_PREV` | command | `{}` | any → engine (6.9) |
 | `PAGE_SET` | command | `{page: str}` | any → engine (6.9) |
-| `CORE_PAGE_CHANGED` | event, engine only | `{page, index, count, pages: [{id, title}], reason}` | engine → any (6.9) |
+| PAGE\_PAUSE, PAGE\_RESUME | command | {for?: number} (seconds, 1–3600); {} | any → engine (6.9, CORE-336) |
+| `CORE_PAGE_CHANGED` | event, engine only | `{page, previous, index, count, pages: [{id, title}], reason}` | engine → any (6.9) |
 | `CORE_CONFIG_CHANGED` | event, engine only | `{version: int, sections: [str]}` | engine → any (6.3) |
 | `CORE_CONFIG_ERROR` | event, engine only | `{count: int, errors: [{file, line, path, code}]}` (the first 20 errors) | engine → any (6.3) |
 | `CORE_LOCALE_CHANGED` | event, engine only | `{locale: str}` | engine → any, or one instance (CORE-245) |
@@ -791,6 +792,7 @@ pages:
   rotate: 30s              # 0 = no automatic rotation
   pause_on_interaction: 2m
   reset_on_resume: true
+  return_after: 10m        # back to default when idle; 0 = off (CORE-335)
   transition: fade          # fade | none
   list:
     - id: home
@@ -798,6 +800,10 @@ pages:
     - id: energy
       title: { en: Energy, it: Energia }
       rotate: 15s           # per-page override
+    - id: guest
+      title: { en: Guest, it: Ospite }
+      cycle: false          # only PAGE_SET, REST, HA (CORE-333)
+      after: { time: 5m }   # then back to default (CORE-334)
 modules:
   - module: clock
     position: top_left      # pages: all is the default
@@ -823,6 +829,11 @@ modules:
 - CORE-260: A swipe is a single-pointer gesture whose horizontal travel is at least 25 % of the viewport width and at least twice its vertical travel, completed within 1 s. Swipes, and touches that pause rotation (CORE-234), count only from interactive clients (CORE-247); preview clients never change the page (CORE-239).
 - CORE-236: Control surfaces: REST `GET /api/v1/pages` (list and current page), `POST /api/v1/pages/{id}`, `/pages/next`, `/pages/prev`; a Home Assistant select entity "page" (options are the page titles, state is the current page) through MQTT discovery (9.3).
 - CORE-237: After each change the engine emits `CORE_PAGE_CHANGED` (5.5; `reason` is rotate, notification, touch, rest, ha, resume, reload or start) and sends a `control` frame `page` to every shell, which switches with the configured transition (fade 300 ms, or none). `ctx.page` (current page id) and `ctx.pages` (ids and resolved titles) are always current; front-ends read `this.page`.
+- CORE-333: Pages out of the cycle (extends CORE-230 and CORE-233–235). A pages.list entry may set cycle: false (default true). Such a page is never reached by rotation, PAGE\_NEXT, PAGE\_PREV or a swipe; it is shown only through PAGE\_SET, REST, Home Assistant, a timed jump (CORE-334) or as default. From a page out of the cycle, PAGE\_NEXT, PAGE\_PREV and swipes go to the next or previous page in the cycle, in list order from its position, and rotation does not run on it. When no page is in the cycle they change nothing. The Home Assistant select and GET /api/v1/pages list every page, and GET /api/v1/pages gives each page's cycle flag.
+- CORE-334: Timed jump (extends CORE-230 and CORE-234). A pages.list entry may set after: {time, page}, where time is a duration above 0 and page a listed page id other than the entry's own (default: pages.default). An unknown id is CORE\_CFG\_PAGE\_UNKNOWN; the entry's own id is CORE\_CFG\_INVALID. When that page has been current for time, the engine changes to page. A touch on the kiosk (CORE-260) restarts the count. Rotation does not run on a page with after. The count stops while the mirror is suspended or paused (CORE-336) and then starts again from zero.
+- CORE-335: Idle return (extends CORE-230). pages.return\_after is a duration (default 0, off). On a page other than default where neither rotation (CORE-234) nor a timed jump (CORE-334) is active, the engine changes to default once return\_after has passed without interaction. An interaction is a page change not made by rotation, a timed jump or idle return, or a touch on the kiosk, and restarts the count. The count stops while the mirror is suspended or paused (CORE-336).
+- CORE-336: Pause holds. PAGE\_PAUSE {for?} and PAGE\_RESUME {} (5.5), and REST POST /api/v1/pages/pause with {for?} and POST /api/v1/pages/resume, set and clear pause holds. Each holder has at most one hold: the sending instance, or rest for REST; a new pause from the same holder replaces its hold, and a resume without a hold changes nothing. While any hold is active, rotation, timed jumps and idle return make no change and their counts stop; every other page change still works. A hold ends on a resume from its holder, when for (1 to 3600 s) has passed, or when the holding instance stops. When the last hold ends, the counts start again from zero. Both routes return the body of GET /api/v1/pages, which carries paused, the list of holders. The interaction pause of CORE-234 is separate and unchanged.
+- CORE-337: Page change details (extends CORE-237). CORE\_PAGE\_CHANGED also carries previous, the page id before the change (null with reason start), and reason may also be after (CORE-334) or idle (CORE-335). The field is added, so the registered name stays.
 
 **Visibility**
 
@@ -938,7 +949,7 @@ REST under `/api/v1`, OpenAPI at `/api/openapi.json`, admin single-page UI at `/
 | GET / POST | /api/v1/config/history · /history/{v} · /history/{a}/diff/{b} · /config/undo · /config/redo · /config/restore | Version list, version files, diffs, undo/redo of saves, whole or section restore (6.8, CORE-321, CORE-324) |
 | GET / POST | /api/v1/backups · /backups/create · /backups/{id}/download · /backups/restore | List, create, download, upload and restore (restore needs installer re-authentication) (10.8) |
 | POST | /api/v1/modules/{id}/stop · /start | Runtime stop and start, not saved (CORE-240) |
-| GET / POST | /api/v1/pages · /pages/{id} · /pages/next · /pages/prev | Pages and current page; change page (CORE-236) |
+| GET / POST | /api/v1/pages · /pages/{id} · /pages/next · /pages/prev · /pages/pause · /pages/resume | Pages and current page; change page (CORE-236); pause and resume automatic changes (CORE-336) |
 | POST | /api/v1/request | Send a request on the bus and return the reply (CORE-223, CORE-314) |
 | POST | /api/v1/config/patch | Apply JSON Patch and YAML edits to the draft, nothing written (CORE-301) |
 | GET | /api/v1/modules/{id}/health | Health record of one instance (CORE-113) |
@@ -1417,6 +1428,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.30 | 2026-11-06 | Pages for MMM-pages and MMM-ProfileSwitcher, milestone 7: pages out of the cycle (CORE-333), timed jump to a page (CORE-334), idle return to default (CORE-335), pause holds with PAGE\_PAUSE, PAGE\_RESUME and REST (CORE-336), previous page and reasons after and idle in CORE\_PAGE\_CHANGED (CORE-337) added; 5.5 registry, 9.1 table and 1.1 updated |
 | 0.29 | 2026-11-05 | Admin extensions of milestone 6: one page per module at /admin/ext/\<module> (CORE-329), the admin element's properties (CORE-330), the API helper (CORE-331) and module routes on ctx.router (CORE-332) added |
 | 0.28 | 2026-11-05 | Layout view of milestone 6: patch and validate also return the draft layout object (CORE-301, CORE-302 changed); Show on mirror answers 204 and the toggle turns off after 60 s without a push (CORE-307 changed); /admin/config may frame the preview (CORE-63 changed); preview iframe messages and pinned page (CORE-325), in-house editing overlay (CORE-326), page write rule (CORE-327) and overlay toolbar with Rescale proportionally (CORE-328) added; gridstack.js removed from 1.2 |
 | 0.27 | 2026-11-05 | POST /config/patch also returns documents, the data of every YAML file of the draft, for the Form view (CORE-301 changed) |

@@ -262,8 +262,13 @@ name = "Services: MQTT/HA, presence, installer, catalog, backup"
 status = "not_started"
 requirements = [
   "CORE-50..53", "CORE-66", "CORE-100", "CORE-120..126", "CORE-130..136",
-  "CORE-160..165", "MOD-96..99",
+  "CORE-160..165", "CORE-333..337", "MOD-96..99",
 ]
+# CORE-333..337 (core 0.30): pages out of the cycle, timed jumps, idle
+#   return, pause holds and the previous page (MMM-pages and
+#   MMM-ProfileSwitcher). They extend CORE-230..237 of milestones 2, 3 and 6
+#   without changing them; the page indicator is a default module of
+#   milestone 9 and the conversion belongs to mm3 migrate (milestone 9).
 
 [[milestone]]
 number = 8
