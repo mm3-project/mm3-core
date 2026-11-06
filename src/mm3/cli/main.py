@@ -20,6 +20,7 @@ Implements:
     CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
     CORE-311: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-62: Core spec 0.12, §10.1 Security.
+    CORE-338, CORE-343: Core spec 0.34, §9.3 MQTT bridge.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
     CORE-290, CORE-291: Core spec 0.20, §7.1 Engine startup and shutdown.
@@ -209,6 +210,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.diag.secrets import Masker, config_secrets
     from mm3.core.engine import Engine
     from mm3.core.pages import PageService
+    from mm3.core.services.hass import HaControls
     from mm3.core.services.storage import resolve_state_dir
     from mm3.core.web.adminws import AdminChannel
     from mm3.core.web.api import ApiServices, status_object
@@ -223,6 +225,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     assert result.config is not None  # noqa: S101 - checked by the caller
     state_dir = resolve_state_dir()
     engine = Engine(result.config.engine, registry=registry, state_dir=state_dir)
+    engine.config_dir = result.path.parent  # CORE-338: relative ``ca`` paths
     engine.start_watchdog()  # CORE-291: lives as long as the process
     history = ConfigHistory(result.path, env_file=env_file, registry=registry, state_dir=state_dir)
     manager = ConfigManager(
@@ -251,6 +254,13 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     hub.attach_pages(pages, engine.supervisor)
     manager.layout_listeners.append(hub.reloaded)
     agents = _kiosk_agents(hub, manager, engine)
+    engine.mqtt.ha.attach_controls(
+        HaControls(
+            pages=pages,
+            kiosk=agents,
+            reload_shells=lambda: hub.control("reload", {"scope": "page"}),
+        )
+    )  # CORE-343
     masks: dict[str, Any] = {}
 
     def masker() -> Masker:

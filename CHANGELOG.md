@@ -7,6 +7,38 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 7, PR 1: MQTT bridge and Home Assistant)
+
+- MQTT bridge (core spec 0.34, section 9.3). `engine.mqtt` is validated and
+  defaulted (CORE-338: `mqtt[s]://` URL, `base_topic`, `discovery_prefix`,
+  derived `node_id`, secret `password`, unreadable `ca` reported as
+  `CORE_CFG_FILE_UNREADABLE`). One aiomqtt connection behind an adapter keeps
+  the Last Will `offline` on `<base>/state`, says `online` after every connect,
+  reconnects with an exponential backoff (1 s to 60 s, +-20 %), restores the
+  subscriptions, reports `{connected, since, error}` in `GET /api/v1/status` and
+  in `mm3 diag check`, and never logs credentials (CORE-339, CORE-312). The
+  block reloads live with the configuration (CORE-339).
+- Inbound `<base>/notify/<NAME>` messages become notifications with source
+  `mqtt` when `mqtt.import` allows the name; refused messages are counted and
+  warned about once a minute per name (CORE-340). Names in `mqtt.export` go
+  out as envelopes on `<base>/event/<NAME>`, never an echo of source `mqtt`,
+  and are dropped while the broker is away (CORE-341).
+- `ctx.mqtt` (CORE-100, CORE-342): `ConfigurationError` without a bridge,
+  `TransientError` when publishing while disconnected, `PermissionError` on
+  engine topics; subscriptions made while disconnected follow the connection.
+- Home Assistant discovery (CORE-343): the engine's entities (reload, page,
+  kiosk volume and mute, `<id>_visible`, `<id>_enabled`) as retained configs
+  with the availability of `<base>/state`, commands on `.../set`, and a full
+  republish after a reconnect, on `<prefix>/status` `online` and on a locale
+  change. Modules register their own entities with `ctx.mqtt.ha_entity()`
+  under the capability `ha.discovery` (CORE-344), and stale entities are
+  cleared by the rules of CORE-345 using `<state>/mqtt/discovery.json`.
+- `PageService.listeners` and `KioskAgents.audio_listeners` tell the bridge
+  when a page, a visibility or the audio state changes.
+- Test kit: `FakeHaEntity` and the MQTT extensions of `FakeMqtt`.
+- Not in this PR: the entity `pages_paused` and the hold `mqtt` (CORE-343,
+  CORE-336) wait for the pause service.
+
 ### Changed (core spec 0.34, Module Contract unchanged at 1.0 rev 15)
 
 - Spec sync for core spec 0.33 and 0.34, assigned to milestone 7. Catalog and

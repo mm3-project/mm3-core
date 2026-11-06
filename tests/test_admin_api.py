@@ -249,6 +249,7 @@ async def test_core_305_status_contents(api: Api) -> None:
         "page",
         "clients",
         "kiosk",
+        "mqtt",
     }
     assert s["engine_build"] == "1.0+t"
     assert s["uptime_s"] >= 12
@@ -257,6 +258,7 @@ async def test_core_305_status_contents(api: Api) -> None:
     assert s["page"] == {"id": "a", "index": 0, "count": 2}
     assert s["clients"] == []
     assert s["kiosk"] is None  # no agent has connected since start
+    assert s["mqtt"] is None  # no broker is configured
 
 
 async def test_core_305_clients_and_kiosk_object(api: Api) -> None:

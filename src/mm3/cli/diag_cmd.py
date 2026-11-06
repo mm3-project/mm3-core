@@ -341,6 +341,7 @@ def run_checks(
 
     Implements:
         CORE-312: Core spec 0.22, §10.5 Diagnostics and debugging.
+        CORE-339: Core spec 0.34, §9.3 MQTT bridge.
     """
     checks: list[Check] = []
     config = result.config if result is not None and result.ok else None
@@ -413,8 +414,17 @@ def run_checks(
 
     if config is None or config.engine.mqtt is None:
         checks.append(Check("MQTT broker", "skip", "no broker is configured"))
+    elif status is None:
+        checks.append(Check("MQTT broker", "skip", "engine not reachable"))
     else:
-        checks.append(Check("MQTT broker", "skip", "the MQTT bridge is not part of this version"))
+        mqtt = status.get("mqtt")
+        if not isinstance(mqtt, dict):
+            checks.append(Check("MQTT broker", "skip", "the bridge is not running"))
+        elif mqtt.get("connected"):
+            checks.append(Check("MQTT broker", "pass", f"connected since {mqtt.get('since')}"))
+        else:
+            reason = mqtt.get("error") or "not connected yet"
+            checks.append(Check("MQTT broker", "fail", f"not connected: {reason}"))
 
     presence = result is not None and any(
         i.module == "presence" and i.enabled for i in result.instances

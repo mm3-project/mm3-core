@@ -11,9 +11,9 @@ from conftest import EngineFactory
 from mm3 import MirrorModule
 from mm3.core.services.grants import GrantSet
 from mm3.core.services.http import HttpxTransport, url_granted
-from mm3.core.services.mqtt import NoBroker, topic_granted, topic_matches
+from mm3.core.services.mqtt import topic_granted, topic_matches
 from mm3.core.supervisor import InstanceSpec, State
-from mm3.errors import ContextClosedError, HttpStatusError
+from mm3.errors import ConfigurationError, ContextClosedError, HttpStatusError
 from mm3.http import Response
 from mm3.mqtt import MqttMessage, encode_payload
 from mm3.testing import VirtualClock
@@ -77,12 +77,13 @@ async def test_core_100_engine_without_broker_and_with_the_httpx_transport(
     assert engine.supervisor.http_transport is engine.http
     with pytest.raises(PermissionError, match="not granted"):
         await ctx.http.post("https://bad.example/")
-    assert isinstance(engine.supervisor.mqtt_broker, NoBroker)
-    await ctx.mqtt.publish("out/x", {"a": 1})
-    sub = await ctx.mqtt.subscribe("in/#", obj(engine, "n").on_temp)
-    assert sub.filter == "in/#"
-    sub.cancel()
-    sub.cancel()
+    # CORE-342: the bridge is always the broker; without ``engine.mqtt`` it is off.
+    assert engine.supervisor.mqtt_broker is engine.mqtt
+    assert engine.mqtt.status() is None
+    with pytest.raises(ConfigurationError):
+        await ctx.mqtt.publish("out/x", {"a": 1})
+    with pytest.raises(ConfigurationError):
+        await ctx.mqtt.subscribe("in/#", obj(engine, "n").on_temp)
 
 
 async def test_core_100_messages_go_through_the_inbox_with_budget(

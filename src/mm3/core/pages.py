@@ -85,12 +85,14 @@ class PageService:
     Implements:
         CORE-233, CORE-234, CORE-237: Core spec 0.14, §6.9 Pages and visibility.
         CORE-238, CORE-239, CORE-241: Core spec 0.14, §6.9 Pages and visibility.
+        CORE-343: Core spec 0.34, §9.3 MQTT bridge.
     """
 
     def __init__(self, result: ConfigResult, supervisor: Supervisor, clock: Clock) -> None:
         self.supervisor = supervisor
         self.clock = clock
         self.shells: ShellControl | None = None
+        self.listeners: list[Callable[[], None]] = []
         self._reasons: dict[str, set[str]] = {}
         self._hidden: dict[str, bool] = {}
         self._pause_until = 0.0
@@ -257,6 +259,7 @@ class PageService:
         if self.shells is not None:
             self.shells.page_changed(page, index, len(self._pages), self.transition)
         _log.info("page_changed", page=page, reason=reason)
+        self._notify()
 
     def _step(self, delta: int) -> str:
         ids = self.ids
@@ -293,6 +296,12 @@ class PageService:
         for iid in await self._apply_visibility(fade):
             if self.shells is not None:
                 self.shells.visibility_changed(iid, not self.visible(iid), fade)
+        self._notify()
+
+    def _notify(self) -> None:
+        """Tell the listeners (the MQTT bridge) that page or visibility changed (CORE-343)."""
+        for listener in self.listeners:
+            listener()
 
     def set_self(self, instance_id: str, hidden: bool, fade: int = DEFAULT_FADE_MS) -> None:
         """``this.hide()`` / ``this.show()`` from an interactive shell (CORE-238, CORE-276)."""

@@ -259,7 +259,7 @@ requirements = [
 [[milestone]]
 number = 7
 name = "Services: MQTT/HA, presence, installer, catalog, backup"
-status = "not_started"
+status = "in_progress"
 requirements = [
   "CORE-50..53", "CORE-66", "CORE-100", "CORE-120..126", "CORE-130..136",
   "CORE-160..165", "CORE-333..337", "CORE-338..366", "PRS-01..08", "MOD-96..99",
@@ -267,6 +267,9 @@ requirements = [
 # CORE-338..345 (core 0.31): MQTT bridge and Home Assistant. CORE-339 extends
 #   CORE-305 (status, milestone 6) and CORE-342 extends CORE-100 without
 #   changing them; CORE-343 adds the holder mqtt to the pause holds of CORE-336.
+#   PR 1 (MQTT bridge and Home Assistant) implements CORE-338..345 and the
+#   MQTT check of `mm3 diag check` (CORE-312). The entity pages_paused and the
+#   hold `mqtt` of CORE-336 wait for the pause service of the pages PR.
 # CORE-346..348 and PRS-01..08 (core 0.32): presence and power. CORE-346 extends
 #   CORE-277 (agent frames, milestone 3) and CORE-146 with the power frame and
 #   the power field of CORE_DISPLAY_CHANGED; CORE-347 extends CORE-22 and

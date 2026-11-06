@@ -697,3 +697,30 @@ msgstr ""
 
 msgid "CORE_ADMIN_CAPABILITIES"
 msgstr ""
+
+msgid "CORE_HA_RELOAD"
+msgstr ""
+
+msgid "CORE_HA_PAGE"
+msgstr ""
+
+msgid "CORE_HA_KIOSK_VOLUME"
+msgstr ""
+
+msgid "CORE_HA_KIOSK_MUTE"
+msgstr ""
+
+msgid "CORE_HA_INSTANCE_VISIBLE"
+msgstr ""
+
+msgid "CORE_HA_INSTANCE_ENABLED"
+msgstr ""
+
+msgid "CORE_MQTT_NOT_CONFIGURED"
+msgstr ""
+
+msgid "CORE_MQTT_DISCONNECTED"
+msgstr ""
+
+msgid "CORE_MQTT_PUBLISH_FAILED"
+msgstr ""

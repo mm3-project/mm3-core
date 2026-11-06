@@ -701,3 +701,30 @@ msgstr "Die Admin-Seite von {module} konnte nicht geladen werden."
 
 msgid "CORE_ADMIN_CAPABILITIES"
 msgstr "Fähigkeiten"
+
+msgid "CORE_HA_RELOAD"
+msgstr "Browser neu laden"
+
+msgid "CORE_HA_PAGE"
+msgstr "Seite"
+
+msgid "CORE_HA_KIOSK_VOLUME"
+msgstr "Kiosk-Lautstärke"
+
+msgid "CORE_HA_KIOSK_MUTE"
+msgstr "Kiosk stumm"
+
+msgid "CORE_HA_INSTANCE_VISIBLE"
+msgstr "{instance} sichtbar"
+
+msgid "CORE_HA_INSTANCE_ENABLED"
+msgstr "{instance} aktiv"
+
+msgid "CORE_MQTT_NOT_CONFIGURED"
+msgstr "Kein MQTT-Broker konfiguriert (engine.mqtt)"
+
+msgid "CORE_MQTT_DISCONNECTED"
+msgstr "Der MQTT-Broker ist nicht verbunden"
+
+msgid "CORE_MQTT_PUBLISH_FAILED"
+msgstr "Die MQTT-Nachricht konnte nicht veröffentlicht werden"

@@ -17,6 +17,7 @@ Implements:
     CORE-295, CORE-296: Core spec 0.21, §6.7 Display output.
     CORE-277: Core spec 0.21, §5.6 WebSocket protocol.
     CORE-305, CORE-306: Core spec 0.22, §9.1 Remote-control API.
+    CORE-343: Core spec 0.34, §9.3 MQTT bridge.
 """
 
 from __future__ import annotations
@@ -262,6 +263,7 @@ class KioskAgents:
         self.silence = silence
         self.audio = audio
         self._runtime_audio: dict[str, Any] = {}
+        self.audio_listeners: list[Callable[[], None]] = []
         self.status = KioskStatus()
         self._ws: WebSocket | None = None
         self._send_lock = asyncio.Lock()
@@ -320,7 +322,13 @@ class KioskAgents:
         set before the change are dropped.
         """
         self._runtime_audio.clear()
+        self._audio_notify()
         await self._send_audio()
+
+    def _audio_notify(self) -> None:
+        """Tell the listeners (the MQTT bridge) that volume or mute may have changed (CORE-343)."""
+        for listener in self.audio_listeners:
+            listener()
 
     async def set_runtime_audio(
         self, *, volume: int | None = None, mute: bool | None = None
@@ -347,6 +355,7 @@ class KioskAgents:
             self._runtime_audio["volume"] = volume
         if mute is not None:
             self._runtime_audio["mute"] = bool(mute)
+        self._audio_notify()
         return await self._send_audio()
 
     async def _send_audio(self) -> bool:
@@ -406,6 +415,7 @@ class KioskAgents:
         self.status.cage_version = str(hello.get("cage_version") or "") or None
         self.status.audio_failure = None
         self._runtime_audio.clear()
+        self._audio_notify()
         _log.info("kiosk_agent_connected", cage_version=self.status.cage_version)
         await self.display_changed()
         await self._send_audio()
@@ -423,6 +433,7 @@ class KioskAgents:
                 self._ws = None
                 self.status.connected = False
                 _log.warning("kiosk_agent_disconnected")
+                self._audio_notify()
 
     async def _hello(self, ws: WebSocket) -> dict[str, Any]:
         try:
@@ -513,6 +524,7 @@ class KioskAgents:
                 "kiosk_audio_mismatch", wanted=self.audio_block(), applied=self.status.audio
             )
         self.status.audio_mismatch = mismatch
+        self._audio_notify()
 
     async def _chromium(self, data: Mapping[str, Any]) -> None:
         """Chromium's state: a new key before a relaunch, failed after give-up (CORE-269)."""

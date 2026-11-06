@@ -36,7 +36,14 @@ from mm3.testing.contract import (  # noqa: E402
     run_kit_checks,
     sample_payload,
 )
-from mm3.testing.fakes import FakeHttp, FakeMqtt, HttpCall, Published, fake_mqtt  # noqa: E402
+from mm3.testing.fakes import (  # noqa: E402
+    FakeHaEntity,
+    FakeHttp,
+    FakeMqtt,
+    HttpCall,
+    Published,
+    fake_mqtt,
+)
 from mm3.testing.harness import ModuleHarness  # noqa: E402
 from mm3.testing.loop import DriveError, LoopClock  # noqa: E402
 from mm3.testing.recorders import ClientRecord, LogRecords, NotificationLog  # noqa: E402
@@ -50,6 +57,7 @@ __all__ = [
     "ClientRecord",
     "ContractError",
     "DriveError",
+    "FakeHaEntity",
     "FakeHttp",
     "FakeMqtt",
     "HttpCall",

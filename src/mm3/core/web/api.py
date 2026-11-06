@@ -854,10 +854,12 @@ def status_object(services: ApiServices) -> dict[str, Any]:
 
     Returns:
         ``{version, engine_build, started_at, uptime_s, suspended, config,
-        page, clients, kiosk}``.
+        page, clients, kiosk, mqtt}``; ``mqtt`` is ``{connected, since, error}`` or ``None``
+        without a bridge.
 
     Implements:
         CORE-305: Core spec 0.22, §9.1 Remote-control API.
+        CORE-339: Core spec 0.34, §9.3 MQTT bridge.
     """
     engine = services.engine
     started = engine.started_at
@@ -881,6 +883,7 @@ def status_object(services: ApiServices) -> dict[str, Any]:
             {k: c.get(k) for k in ("role", "address", "user_agent", "since")} for c in clients
         ],
         "kiosk": agents.status.api_object() if agents is not None else None,
+        "mqtt": engine.mqtt.status(),
     }
 
 
