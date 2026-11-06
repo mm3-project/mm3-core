@@ -8,6 +8,7 @@ that are published when a release is cut (core spec 10.2, CORE-294).
 | --- | --- |
 | Clock | `mm3-clock` |
 | Weather | `mm3-weather` |
+| Presence and power | `mm3-presence` |
 
 Each module is also installable alone. Modules published later join in a later
 release of this distribution. It declares no dependency on `mm3-core`: every

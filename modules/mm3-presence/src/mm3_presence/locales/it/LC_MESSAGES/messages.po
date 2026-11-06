@@ -1,0 +1,129 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HA_DISPLAY"
+msgstr "Schermo"
+
+msgid "HA_PRESENCE"
+msgstr "Presenza"
+
+msgid "HA_STATE"
+msgstr "Stato di presenza"
+
+msgid "HA_BRIGHTNESS"
+msgstr "Luminosità"
+
+msgid "CFG_MQTT"
+msgstr "Sensori MQTT"
+
+msgid "CFG_MQTT_HELP"
+msgstr "Topic che indicano qualcuno davanti allo specchio"
+
+msgid "CFG_MQTT_TOPIC"
+msgstr "Topic"
+
+msgid "CFG_MQTT_TOPIC_HELP"
+msgstr "Filtro del topic; richiede il permesso di sottoscrizione"
+
+msgid "CFG_MQTT_FIELD"
+msgstr "Campo JSON"
+
+msgid "CFG_MQTT_FIELD_HELP"
+msgstr "Percorso con punti nel payload JSON; vuoto confronta il testo del payload"
+
+msgid "CFG_MQTT_VALUE"
+msgstr "Valore"
+
+msgid "CFG_MQTT_VALUE_HELP"
+msgstr "Cosa contiene un messaggio valido; predefinito true con un campo, ON senza"
+
+msgid "CFG_TOUCH"
+msgstr "Tocco"
+
+msgid "CFG_TOUCH_HELP"
+msgstr "Un tocco sullo schermo conta come presenza"
+
+msgid "CFG_IDLE_AFTER"
+msgstr "Attenua dopo"
+
+msgid "CFG_IDLE_AFTER_HELP"
+msgstr "Tempo senza presenza prima di attenuare lo schermo, es. 5m; 0 non attenua mai"
+
+msgid "CFG_IDLE_BRIGHTNESS"
+msgstr "Luminosità attenuata"
+
+msgid "CFG_IDLE_BRIGHTNESS_HELP"
+msgstr "Luminosità in percentuale durante l'attenuazione"
+
+msgid "CFG_BRIGHTNESS"
+msgstr "Luminosità"
+
+msgid "CFG_BRIGHTNESS_HELP"
+msgstr "Luminosità in percentuale a schermo acceso; vuoto mantiene quella attuale"
+
+msgid "CFG_OFF_AFTER"
+msgstr "Spegni dopo"
+
+msgid "CFG_OFF_AFTER_HELP"
+msgstr "Tempo senza presenza prima di spegnere lo schermo, es. 15m"
+
+msgid "CFG_SCHEDULE"
+msgstr "Orario"
+
+msgid "CFG_SCHEDULE_HELP"
+msgstr "Finestre in cui lo schermo è spento"
+
+msgid "CFG_WINDOW_OFF"
+msgstr "Spegni alle"
+
+msgid "CFG_WINDOW_OFF_HELP"
+msgstr "Ora locale di inizio della finestra, HH:MM"
+
+msgid "CFG_WINDOW_ON"
+msgstr "Accendi alle"
+
+msgid "CFG_WINDOW_ON_HELP"
+msgstr "Ora locale di fine; se non è dopo l'inizio vale il giorno dopo"
+
+msgid "CFG_WINDOW_DAYS"
+msgstr "Giorni"
+
+msgid "CFG_WINDOW_DAYS_HELP"
+msgstr "Giorni in cui inizia la finestra; vuoto significa tutti i giorni"
+
+msgid "CFG_WAKE_IN_SCHEDULE"
+msgstr "La presenza accende nell'orario"
+
+msgid "CFG_WAKE_IN_SCHEDULE_HELP"
+msgstr "Lascia che la presenza accenda lo schermo dentro una finestra"
+
+msgid "CFG_DISPLAY"
+msgstr "Driver dello schermo"
+
+msgid "CFG_DISPLAY_HELP"
+msgstr "kiosk, ddcutil, cec o il nome di un plug-in"
+
+msgid "CFG_DISPLAY_OPTIONS"
+msgstr "Opzioni del driver"
+
+msgid "CFG_DISPLAY_OPTIONS_HELP"
+msgstr "Opzioni del driver dello schermo"
+
+msgid "CFG_DISPLAY_OPTIONS_INVALID"
+msgstr "Le opzioni del driver dello schermo non sono valide"
+
+msgid "CFG_DISPLAY_UNKNOWN"
+msgstr "Driver dello schermo sconosciuto"
+
+msgid "CFG_MQTT_GRANT_MISSING"
+msgstr "Nessun permesso per questo topic MQTT: aggiungilo ai permessi di questo modulo"
+
+msgid "CFG_SINGLE_INSTANCE"
+msgstr "Può girare una sola istanza di presenza"
+
+msgid "CFG_DAY_REPEATED"
+msgstr "Un giorno è ripetuto nella finestra"
+
+msgid "CFG_IDLE_BELOW_OFF"
+msgstr "idle_after deve essere minore di off_after"

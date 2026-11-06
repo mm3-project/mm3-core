@@ -1,0 +1,129 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HA_DISPLAY"
+msgstr "Pantalla"
+
+msgid "HA_PRESENCE"
+msgstr "Presencia"
+
+msgid "HA_STATE"
+msgstr "Estado de presencia"
+
+msgid "HA_BRIGHTNESS"
+msgstr "Brillo"
+
+msgid "CFG_MQTT"
+msgstr "Sensores MQTT"
+
+msgid "CFG_MQTT_HELP"
+msgstr "Topics que indican que alguien está frente al espejo"
+
+msgid "CFG_MQTT_TOPIC"
+msgstr "Topic"
+
+msgid "CFG_MQTT_TOPIC_HELP"
+msgstr "Filtro de topic; requiere permiso de suscripción"
+
+msgid "CFG_MQTT_FIELD"
+msgstr "Campo JSON"
+
+msgid "CFG_MQTT_FIELD_HELP"
+msgstr "Ruta con puntos en la carga JSON; vacío compara el texto de la carga"
+
+msgid "CFG_MQTT_VALUE"
+msgstr "Valor"
+
+msgid "CFG_MQTT_VALUE_HELP"
+msgstr "Contenido de un mensaje válido; true por defecto con campo, ON sin él"
+
+msgid "CFG_TOUCH"
+msgstr "Toque"
+
+msgid "CFG_TOUCH_HELP"
+msgstr "Un toque en la pantalla cuenta como presencia"
+
+msgid "CFG_IDLE_AFTER"
+msgstr "Atenuar tras"
+
+msgid "CFG_IDLE_AFTER_HELP"
+msgstr "Tiempo sin presencia antes de atenuar la pantalla, p. ej. 5m; 0 nunca atenúa"
+
+msgid "CFG_IDLE_BRIGHTNESS"
+msgstr "Brillo atenuado"
+
+msgid "CFG_IDLE_BRIGHTNESS_HELP"
+msgstr "Brillo en porcentaje mientras está atenuada"
+
+msgid "CFG_BRIGHTNESS"
+msgstr "Brillo"
+
+msgid "CFG_BRIGHTNESS_HELP"
+msgstr "Brillo en porcentaje con la pantalla encendida; vacío mantiene el actual"
+
+msgid "CFG_OFF_AFTER"
+msgstr "Apagar tras"
+
+msgid "CFG_OFF_AFTER_HELP"
+msgstr "Tiempo sin presencia antes de apagar la pantalla, p. ej. 15m"
+
+msgid "CFG_SCHEDULE"
+msgstr "Horario"
+
+msgid "CFG_SCHEDULE_HELP"
+msgstr "Franjas en las que la pantalla está apagada"
+
+msgid "CFG_WINDOW_OFF"
+msgstr "Apagar a las"
+
+msgid "CFG_WINDOW_OFF_HELP"
+msgstr "Hora local de inicio de la franja, HH:MM"
+
+msgid "CFG_WINDOW_ON"
+msgstr "Encender a las"
+
+msgid "CFG_WINDOW_ON_HELP"
+msgstr "Hora local de fin; si no es posterior al inicio, el día siguiente"
+
+msgid "CFG_WINDOW_DAYS"
+msgstr "Días"
+
+msgid "CFG_WINDOW_DAYS_HELP"
+msgstr "Días en que empieza la franja; vacío significa todos los días"
+
+msgid "CFG_WAKE_IN_SCHEDULE"
+msgstr "La presencia enciende en horario"
+
+msgid "CFG_WAKE_IN_SCHEDULE_HELP"
+msgstr "Deja que la presencia encienda la pantalla dentro de una franja"
+
+msgid "CFG_DISPLAY"
+msgstr "Controlador de pantalla"
+
+msgid "CFG_DISPLAY_HELP"
+msgstr "kiosk, ddcutil, cec o el nombre de un plug-in"
+
+msgid "CFG_DISPLAY_OPTIONS"
+msgstr "Opciones del controlador"
+
+msgid "CFG_DISPLAY_OPTIONS_HELP"
+msgstr "Opciones del controlador de pantalla"
+
+msgid "CFG_DISPLAY_OPTIONS_INVALID"
+msgstr "Las opciones del controlador de pantalla no son válidas"
+
+msgid "CFG_DISPLAY_UNKNOWN"
+msgstr "Controlador de pantalla desconocido"
+
+msgid "CFG_MQTT_GRANT_MISSING"
+msgstr "Sin permiso para este topic MQTT: añádelo a los permisos de este módulo"
+
+msgid "CFG_SINGLE_INSTANCE"
+msgstr "Solo puede ejecutarse una instancia de presencia"
+
+msgid "CFG_DAY_REPEATED"
+msgstr "Un día está repetido en la franja"
+
+msgid "CFG_IDLE_BELOW_OFF"
+msgstr "idle_after debe ser menor que off_after"

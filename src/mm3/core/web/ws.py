@@ -24,6 +24,7 @@ Implements:
     CORE-114: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-307: Core spec 0.28, §6.6 Live layout preview.
     CORE-99: Core spec 0.1, §6.6 Live layout preview.
+    CORE-347: Core spec 0.34, §9.2 Presence and power: module boundary.
 """
 
 from __future__ import annotations
@@ -113,6 +114,8 @@ _INBOUND = frozenset({"hello", "notify", "client", "request", "log", "visibility
 _GESTURES = frozenset({"swipe_left", "swipe_right", "tap"})
 _UNAVAILABLE = frozenset({"FAILED", "DISABLED"})
 _ALWAYS_ACCEPTED = frozenset({"hello", "log"})
+INTERACTION_INTERVAL_S = 1.0
+"""``CORE_INTERACTION`` is sent at most once in this time (CORE-347)."""
 
 _log = get_logger(subsystem="ws")
 
@@ -244,6 +247,8 @@ class ClientHub:
         self.hello_timeout = hello_timeout
         self.bus: Bus | None = None
         self.pages: PageService | None = None
+        self._supervisor: Supervisor | None = None
+        self._last_interaction: float | None = None
         self.status: Callable[[str], str] = lambda _iid: "ok"
         self._browser_logs: dict[str | None, deque[float]] = {}
         self._browser_limited: set[str | None] = set()
@@ -261,6 +266,7 @@ class ClientHub:
                 failure placeholder.
         """
         self.pages = pages
+        self._supervisor = supervisor
         pages.shells = self
 
         def status(iid: str) -> str:
@@ -812,8 +818,23 @@ class ClientHub:
         if gesture not in _GESTURES:
             self._error(client, "invalid_frame", ref, None)
             return
+        if client.role == "kiosk":
+            self._interaction()
         if client.role != "preview" and self.pages is not None and self.view().touch:
             self.pages.touch(gesture)
+
+    def _interaction(self) -> None:
+        """Broadcast ``CORE_INTERACTION`` for a touch on the kiosk, once a second (CORE-347)."""
+        sup = self._supervisor
+        if sup is None:
+            return
+        now = sup.clock.boottime()
+        if self._last_interaction is not None and now - self._last_interaction < (
+            INTERACTION_INTERVAL_S
+        ):
+            return
+        self._last_interaction = now
+        sup.emit("CORE_INTERACTION", {"kind": "touch"})
 
     def _source(self, instance: str) -> str:
         inst = self.view().instance(instance)

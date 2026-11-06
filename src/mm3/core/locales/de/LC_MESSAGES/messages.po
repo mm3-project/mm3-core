@@ -731,3 +731,12 @@ msgstr "Der MQTT-Broker ist nicht verbunden"
 
 msgid "CORE_MQTT_PUBLISH_FAILED"
 msgstr "Die MQTT-Nachricht konnte nicht veröffentlicht werden"
+
+msgid "CORE_DISPLAY_NO_KIOSK"
+msgstr "Der Bildschirm kann nicht geschaltet werden: kein Kiosk verbunden"
+
+msgid "CORE_DISPLAY_TIMEOUT"
+msgstr "Der Kiosk hat die Bildschirmänderung nicht rechtzeitig bestätigt"
+
+msgid "CORE_DISPLAY_UNAVAILABLE"
+msgstr "Der Bildschirm kann auf diesem System nicht geschaltet werden"

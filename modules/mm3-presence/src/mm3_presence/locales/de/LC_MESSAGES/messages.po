@@ -1,0 +1,129 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HA_DISPLAY"
+msgstr "Bildschirm"
+
+msgid "HA_PRESENCE"
+msgstr "Anwesenheit"
+
+msgid "HA_STATE"
+msgstr "Anwesenheitsstatus"
+
+msgid "HA_BRIGHTNESS"
+msgstr "Helligkeit"
+
+msgid "CFG_MQTT"
+msgstr "MQTT-Sensoren"
+
+msgid "CFG_MQTT_HELP"
+msgstr "Topics, die melden, dass jemand vor dem Spiegel steht"
+
+msgid "CFG_MQTT_TOPIC"
+msgstr "Topic"
+
+msgid "CFG_MQTT_TOPIC_HELP"
+msgstr "Topic-Filter; braucht eine Abonnement-Freigabe"
+
+msgid "CFG_MQTT_FIELD"
+msgstr "JSON-Feld"
+
+msgid "CFG_MQTT_FIELD_HELP"
+msgstr "Punktpfad in der JSON-Nutzlast; leer vergleicht den Nutzlasttext"
+
+msgid "CFG_MQTT_VALUE"
+msgstr "Wert"
+
+msgid "CFG_MQTT_VALUE_HELP"
+msgstr "Inhalt einer passenden Nachricht; Standard true mit Feld, ON ohne"
+
+msgid "CFG_TOUCH"
+msgstr "Berührung"
+
+msgid "CFG_TOUCH_HELP"
+msgstr "Eine Berührung des Bildschirms zählt als Anwesenheit"
+
+msgid "CFG_IDLE_AFTER"
+msgstr "Dimmen nach"
+
+msgid "CFG_IDLE_AFTER_HELP"
+msgstr "Zeit ohne Anwesenheit, bevor der Bildschirm dimmt, z. B. 5m; 0 dimmt nie"
+
+msgid "CFG_IDLE_BRIGHTNESS"
+msgstr "Gedimmte Helligkeit"
+
+msgid "CFG_IDLE_BRIGHTNESS_HELP"
+msgstr "Helligkeit in Prozent im gedimmten Zustand"
+
+msgid "CFG_BRIGHTNESS"
+msgstr "Helligkeit"
+
+msgid "CFG_BRIGHTNESS_HELP"
+msgstr "Helligkeit in Prozent bei eingeschaltetem Bildschirm; leer behält die aktuelle"
+
+msgid "CFG_OFF_AFTER"
+msgstr "Ausschalten nach"
+
+msgid "CFG_OFF_AFTER_HELP"
+msgstr "Zeit ohne Anwesenheit, bevor der Bildschirm ausgeht, z. B. 15m"
+
+msgid "CFG_SCHEDULE"
+msgstr "Zeitplan"
+
+msgid "CFG_SCHEDULE_HELP"
+msgstr "Zeitfenster, in denen der Bildschirm aus ist"
+
+msgid "CFG_WINDOW_OFF"
+msgstr "Aus um"
+
+msgid "CFG_WINDOW_OFF_HELP"
+msgstr "Lokale Startzeit des Fensters, HH:MM"
+
+msgid "CFG_WINDOW_ON"
+msgstr "An um"
+
+msgid "CFG_WINDOW_ON_HELP"
+msgstr "Lokale Endzeit; nicht nach dem Start bedeutet am nächsten Tag"
+
+msgid "CFG_WINDOW_DAYS"
+msgstr "Tage"
+
+msgid "CFG_WINDOW_DAYS_HELP"
+msgstr "Tage, an denen das Fenster beginnt; leer bedeutet täglich"
+
+msgid "CFG_WAKE_IN_SCHEDULE"
+msgstr "Anwesenheit weckt im Zeitplan"
+
+msgid "CFG_WAKE_IN_SCHEDULE_HELP"
+msgstr "Anwesenheit darf den Bildschirm in einem Fenster einschalten"
+
+msgid "CFG_DISPLAY"
+msgstr "Anzeigetreiber"
+
+msgid "CFG_DISPLAY_HELP"
+msgstr "kiosk, ddcutil, cec oder der Name eines Plug-ins"
+
+msgid "CFG_DISPLAY_OPTIONS"
+msgstr "Treiberoptionen"
+
+msgid "CFG_DISPLAY_OPTIONS_HELP"
+msgstr "Optionen des Anzeigetreibers"
+
+msgid "CFG_DISPLAY_OPTIONS_INVALID"
+msgstr "Die Optionen des Anzeigetreibers sind ungültig"
+
+msgid "CFG_DISPLAY_UNKNOWN"
+msgstr "Unbekannter Anzeigetreiber"
+
+msgid "CFG_MQTT_GRANT_MISSING"
+msgstr "Keine Freigabe für dieses MQTT-Topic: in die Freigaben dieses Moduls eintragen"
+
+msgid "CFG_SINGLE_INSTANCE"
+msgstr "Es kann nur eine Anwesenheitsinstanz laufen"
+
+msgid "CFG_DAY_REPEATED"
+msgstr "Ein Tag kommt im Fenster doppelt vor"
+
+msgid "CFG_IDLE_BELOW_OFF"
+msgstr "idle_after muss kleiner als off_after sein"

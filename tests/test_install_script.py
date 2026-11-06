@@ -6,6 +6,8 @@ Implements:
   exit code 2 otherwise, never overwrites the configuration, keeps the previous
   venv and writes nothing it was not asked to.
 - CORE-143 (Core spec 0.20, §6.5 Kiosk): the kiosk needs cage 0.1.5 or later.
+- CORE-348 (Core spec 0.34, §9.2 Presence and power: module boundary): ddcutil,
+  cec-utils and the groups i2c and dialout on kiosk systems.
 
 The full run on clean Debian 12 and 13 images is the CI job ``install``
 (install/ci-check.sh); here the functions are sourced and run on temporary paths.
@@ -251,3 +253,65 @@ def test_core_293_cleanup_removes_only_a_never_activated_venv(tmp_path: Path) ->
     call(f'STAGED_VENV="{kept}"; ACTIVATED=yes; cleanup', env)
     assert not staged.exists()
     assert kept.exists()
+
+
+def fake_group_tools(tmp_path: Path, *, existing: str, usermod_status: int = 0) -> dict[str, str]:
+    """Put fake ``getent``, ``id`` and ``usermod`` first on the PATH; ``usermod`` logs its calls."""
+    bin_dir = tmp_path / "gbin"
+    bin_dir.mkdir(exist_ok=True)
+    log = tmp_path / "usermod.log"
+    tools = {
+        "getent": (
+            f'#!/bin/sh\ncase " {existing} " in *" $2 "*) echo "$2:x:1:";; *) exit 2;; esac\n'
+        ),
+        "id": "#!/bin/sh\necho nogroup\n",
+        "usermod": f'#!/bin/sh\necho "$@" >> "{log}"\nexit {usermod_status}\n',
+    }
+    for name, body in tools.items():
+        tool = bin_dir / name
+        tool.write_text(body)
+        tool.chmod(0o755)
+    return {"PATH": f"{bin_dir}:{os.environ['PATH']}", "USERMOD_LOG": str(log)}
+
+
+def test_core_348_kiosk_installs_ddcutil_and_cec_utils(tmp_path: Path) -> None:
+    result = call("WANT_KIOSK=yes; install_packages", {"MM3_SKIP_PACKAGES": "yes"})
+    assert result.returncode == 0
+    packages = (result.stdout + result.stderr).split("(")[1].split(")")[0].split()
+    assert {"ddcutil", "cec-utils", "wlr-randr"} <= set(packages)
+
+
+def test_core_348_engine_only_installs_no_display_control_packages(tmp_path: Path) -> None:
+    result = call("WANT_KIOSK=no; install_packages", {"MM3_SKIP_PACKAGES": "yes"})
+    assert "ddcutil" not in result.stdout + result.stderr
+    assert "cec-utils" not in result.stdout + result.stderr
+
+
+def test_core_348_mm3_joins_the_groups_that_exist(tmp_path: Path) -> None:
+    env = fake_group_tools(tmp_path, existing="i2c")
+    result = call("WANT_KIOSK=yes; ensure_display_control_groups", env)
+    assert result.returncode == 0
+    assert (tmp_path / "usermod.log").read_text().splitlines() == ["--append --groups i2c mm3"]
+
+
+def test_core_348_both_groups_are_added_when_present(tmp_path: Path) -> None:
+    env = fake_group_tools(tmp_path, existing="i2c dialout")
+    result = call("WANT_KIOSK=yes; ensure_display_control_groups", env)
+    assert result.returncode == 0
+    lines = (tmp_path / "usermod.log").read_text().splitlines()
+    assert lines == ["--append --groups i2c mm3", "--append --groups dialout mm3"]
+
+
+def test_core_348_no_groups_on_an_engine_only_system(tmp_path: Path) -> None:
+    env = fake_group_tools(tmp_path, existing="i2c dialout")
+    result = call("WANT_KIOSK=no; ensure_display_control_groups", env)
+    assert result.returncode == 0
+    assert not (tmp_path / "usermod.log").exists()
+
+
+def test_core_348_a_failed_group_change_is_logged_not_fatal(tmp_path: Path) -> None:
+    env = fake_group_tools(tmp_path, existing="i2c", usermod_status=1)
+    result = call("WANT_KIOSK=yes; ensure_display_control_groups; echo done", env)
+    assert result.returncode == 0
+    assert "done" in result.stdout
+    assert "could not add mm3 to the group i2c" in result.stderr

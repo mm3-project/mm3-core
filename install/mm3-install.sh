@@ -20,6 +20,8 @@
 # the group mm3-kiosk.
 # Implements CORE-143 (Core spec 0.20, §6.7 Display output): the kiosk needs
 # Debian 13 or later and cage 0.1.5 or later.
+# Implements CORE-348 (Core spec 0.34, §9.2 Presence and power: module boundary):
+# on kiosk systems ddcutil and cec-utils, and mm3 in the groups i2c and dialout.
 set -Eeuo pipefail
 
 readonly EXIT_UNSUPPORTED=1
@@ -28,6 +30,9 @@ readonly KIOSK_USER=mm3-kiosk
 readonly KIOSK_GROUP=mm3-kiosk
 readonly MIN_CAGE=0.1.5
 readonly KIOSK_DEVICE_GROUPS=(video input render)
+# CORE-348: the engine user reaches the I2C bus (ddcutil) and the CEC adapter
+# (cec-client) through these groups, where they exist.
+readonly DISPLAY_CONTROL_GROUPS=(i2c dialout)
 
 # Locations and names. The environment overrides them for the tests of this
 # script only; a real installation uses the defaults.
@@ -186,6 +191,29 @@ ensure_kiosk_groups() {
   fi
 }
 
+# CORE-348: the engine runs the display drivers of mm3-presence, so mm3 joins the
+# groups of the I2C bus and the serial CEC adapter that exist. A failed change
+# is logged, not fatal; the groups apply at the next start of mm3.service.
+ensure_display_control_groups() {
+  local group
+  if [[ $WANT_KIOSK != yes ]]; then
+    return 0
+  fi
+  for group in "${DISPLAY_CONTROL_GROUPS[@]}"; do
+    if ! getent group "$group" >/dev/null; then
+      continue
+    fi
+    if in_group "$SVC_USER" "$group"; then
+      continue
+    fi
+    if usermod --append --groups "$group" "$SVC_USER"; then
+      say "added $SVC_USER to the group $group"
+    else
+      warn "could not add $SVC_USER to the group $group; the display drivers may not reach the monitor"
+    fi
+  done
+}
+
 display_manager_enabled() {
   [[ -d /run/systemd/system ]] && systemctl is-enabled --quiet display-manager.service 2>/dev/null
 }
@@ -208,7 +236,7 @@ decide_kiosk() {
 install_packages() {
   local packages=(python3 python3-venv ca-certificates)
   if [[ $WANT_KIOSK == yes ]]; then
-    packages+=(cage chromium wlr-randr)
+    packages+=(cage chromium wlr-randr ddcutil cec-utils)
   fi
   if [[ $SKIP_PACKAGES == yes ]]; then
     say "skipping the Debian packages (${packages[*]})"
@@ -420,6 +448,7 @@ main() {
   decide_kiosk
   install_packages
   ensure_kiosk_groups
+  ensure_display_control_groups
   verify_cage
   build_venv
   write_config

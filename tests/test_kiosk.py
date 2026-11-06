@@ -33,7 +33,7 @@ from mm3.core.kiosk import (
     parse_outputs,
 )
 from mm3.core.kiosk.agent import KioskSession
-from mm3.core.kiosk.randr import pick_output
+from mm3.core.kiosk.randr import pick_output, power_command
 from mm3.core.logging import recent_records
 from mm3.core.registry import Registry
 from mm3.core.settings import AdminSettings, EngineSettings, ServerSettings
@@ -42,6 +42,7 @@ from mm3.core.web.gateway import WebGateway
 from mm3.core.web.kiosk import AgentKey, KioskAgents
 from mm3.core.web.view import cached_view
 from mm3.core.web.ws import ClientHub
+from mm3.errors import TransientError
 from mm3.messages import Notification
 from mm3.testing import VirtualClock
 from pactl_fake import FakePactl
@@ -329,6 +330,10 @@ class FakeRunner:
             return 0, json.dumps(self.randr), ""
         if self.fail_apply:
             return 1, "", "cannot set mode"
+        if "--off" in cmd:
+            for m in self.randr[0]["modes"]:
+                m["current"] = False
+            return 0, "", ""
         mode = cmd[cmd.index("--mode") + 1]
         size, refresh = mode.removesuffix("Hz").split("@")
         width, height = (int(x) for x in size.split("x"))
@@ -597,10 +602,18 @@ async def test_core_146_applied_mode_relayouts_and_emits(tmp_path: Path) -> None
         await asyncio.sleep(0.05)
         changed = [n for n in seen if n.name == "CORE_DISPLAY_CHANGED"]
         assert [dict(n.payload) for n in changed] == [
-            {"viewport": [1280, 720], "scale": 1.0, "rotation": 0}
+            {"viewport": [1280, 720], "scale": 1.0, "rotation": 0, "power": "on"}
         ]
         assert [p.display for p in plans] == [True]
         assert await manager.set_applied((1280, 720)) is False
+        # CORE-346: a power change emits the same name with the new power, once.
+        manager.set_display_power(False)
+        manager.set_display_power(False)
+        await asyncio.sleep(0.05)
+        changed = [dict(n.payload) for n in seen if n.name == "CORE_DISPLAY_CHANGED"]
+        assert changed[1:] == [
+            {"viewport": [1280, 720], "scale": 1.0, "rotation": 0, "power": "off"}
+        ]
     finally:
         await engine.stop()
 
@@ -903,3 +916,73 @@ async def test_core_296_hot_reload_sends_the_audio_block(
     sent.clear()
     await listener(result, ReloadPlan())  # nothing about audio changed
     assert sent == []
+
+
+# --- CORE-346: the display power --------------------------------------------------------------
+
+
+def test_core_346_power_command() -> None:
+    assert power_command("HDMI-A-1") == ["wlr-randr", "--output", "HDMI-A-1", "--off"]
+
+
+async def test_core_346_power_off_and_on_through_the_agent(rig: Rig, tmp_path: Path) -> None:
+    seen: list[bool] = []
+    rig.agents._power_changed = seen.append
+    runner = FakeRunner()
+    task = await run_agent(rig, runner, tmp_path)
+    try:
+        await rig.agents.set_display_power(False)
+        assert ["wlr-randr", "--output", "HDMI-A-1", "--off"] in runner.commands
+        assert rig.agents.status.applied is not None
+        before = len([c for c in runner.commands if "--mode" in c])
+        await rig.agents.set_display_power(True)
+        after = len([c for c in runner.commands if "--mode" in c])
+        assert after == before + 1  # the display block is applied again
+        assert seen == [False, True]
+        assert rig.agents.power is True
+    finally:
+        await stop(task)
+
+
+async def test_core_346_power_without_an_agent_is_transient(rig: Rig) -> None:
+    with pytest.raises(TransientError) as info:
+        await rig.agents.set_display_power(False)
+    assert info.value.message_key == "CORE_DISPLAY_NO_KIOSK"
+
+
+async def test_core_346_the_last_power_is_sent_again_at_connect(rig: Rig, tmp_path: Path) -> None:
+    rig.agents.power = False  # asked for while no agent was connected
+    runner = FakeRunner()
+    task = await run_agent(rig, runner, tmp_path)
+    try:
+        await eventually(lambda: ["wlr-randr", "--output", "HDMI-A-1", "--off"] in runner.commands)
+    finally:
+        await stop(task)
+
+
+async def test_core_346_no_report_in_time_is_a_timeout(rig: Rig) -> None:
+    rig.agents.power_timeout = 0.05
+    url = rig.base.replace("http", "ws") + "/ws/kiosk-agent"
+    headers = {"Authorization": f"Bearer {rig.agents.key.value}"}
+    async with websockets.connect(url, additional_headers=headers) as ws:
+        await ws.send(json.dumps({"v": 1, "kind": "hello", "data": {"protocol": 1}}))
+        await eventually(lambda: rig.agents.status.connected)
+        with pytest.raises(TransientError) as info:
+            await rig.agents.set_display_power(False)
+        assert info.value.message_key == "CORE_DISPLAY_TIMEOUT"
+        frames = [json.loads(await asyncio.wait_for(ws.recv(), 1)) for _ in range(4)]
+        assert {"v": 1, "kind": "power", "data": {"on": False}} in frames
+
+
+async def test_core_346_a_disconnect_fails_a_waiting_request(rig: Rig) -> None:
+    url = rig.base.replace("http", "ws") + "/ws/kiosk-agent"
+    headers = {"Authorization": f"Bearer {rig.agents.key.value}"}
+    async with websockets.connect(url, additional_headers=headers) as ws:
+        await ws.send(json.dumps({"v": 1, "kind": "hello", "data": {"protocol": 1}}))
+        await eventually(lambda: rig.agents.status.connected)
+        request = asyncio.create_task(rig.agents.set_display_power(False))
+        await eventually(lambda: len(rig.agents._power_waiters) == 1)
+        await ws.close()
+        with pytest.raises(TransientError) as info:
+            await request
+        assert info.value.message_key == "CORE_DISPLAY_NO_KIOSK"

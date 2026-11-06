@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling", "mm3-build>=1.0,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mm3-presence"
+version = "1.0.0"
+description = "Presence and display power for MM3: sensors, idle dimming, schedule, DDC/CI and HDMI-CEC"
+requires-python = ">=3.11"
+dependencies = ["mm3-core>=1.0,<2"]
+readme = "README.md"
+
+[project.entry-points."mm3.modules"]
+presence = "mm3_presence:PresenceModule"
+
+# Display drivers are plug-ins on the group mm3_presence.display (PRS-06); the
+# three built-in ones (kiosk, ddcutil, cec) are found before the group is read.
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mm3_presence"]
+
+[tool.hatch.build.hooks.mm3-i18n]
+
+[tool.mm3]
+category = "system"
+
+# One topic, so that the kit's run without grants has something to be refused (MOD-72).
+[tool.mm3.check]
+config = { mqtt = [{ topic = "home/presence/check" }] }

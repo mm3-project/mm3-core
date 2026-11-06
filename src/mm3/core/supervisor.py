@@ -62,6 +62,7 @@ from mm3.core.registry import Registry
 from mm3.core.services.grants import GrantSet
 from mm3.core.services.http import HttpTransport, UnavailableTransport
 from mm3.core.services.mqtt import MqttBroker, NoBroker
+from mm3.core.services.power import PowerService
 from mm3.core.settings import EngineSettings
 from mm3.core.trace import current_trace, trace_scope
 from mm3.errors import ConfigurationError, TransientError
@@ -780,6 +781,7 @@ class Supervisor:
         self._background: set[asyncio.Task[Any]] = set()
         self.state_listeners: list[Callable[[str, State, State], None]] = []
         self.pages: PageControl | None = None
+        self.power: PowerService | None = None
         self.http_transport: HttpTransport = UnavailableTransport()
         self.mqtt_broker: MqttBroker = NoBroker()
         self.on_denied: Callable[[str, str], None] | None = None
@@ -817,6 +819,7 @@ class Supervisor:
             counters=inst.counters,
             spawn=spawn,
             pages=self.pages,
+            power=self.power,
             capabilities=frozenset(cls.capabilities) if cls is not None else frozenset(),
             i18n=self.i18n,
             engine_locale=lambda: self.settings.locale,

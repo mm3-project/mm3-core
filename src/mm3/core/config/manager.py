@@ -139,6 +139,7 @@ class ConfigManager:
         self.last_records: list[Any] = []
         self.layout_listeners: list[LayoutListener] = []
         self.applied: tuple[int, int] | None = None
+        self.display_power = True  # run-time, never saved (CORE-346)
         self._attempted_files: set[Path] = set(current.loaded.files)
         self._timer: asyncio.TimerHandle | None = None
         self._task: asyncio.Task[None] | None = None
@@ -360,10 +361,41 @@ class ConfigManager:
                 "viewport": [view.width, view.height],
                 "scale": display.scale,
                 "rotation": display.rotation,
+                "power": "on" if self.display_power else "off",
             },
         )
         _log.info("display_applied", width=view.width, height=view.height)
         return True
+
+    def set_display_power(self, on: bool) -> None:
+        """Record the display power and emit ``CORE_DISPLAY_CHANGED`` on a change (CORE-346).
+
+        The power state is a run-time value, never saved (CORE-346).
+
+        Args:
+            on: Whether the display is on.
+
+        Implements:
+            CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
+        """
+        if on == self.display_power:
+            return
+        self.display_power = on
+        layout = self.current.layout
+        config = self.current.config
+        if layout is None or config is None:
+            return
+        view = layout.viewport
+        self.engine.supervisor.emit(
+            "CORE_DISPLAY_CHANGED",
+            {
+                "viewport": [view.width, view.height],
+                "scale": config.display.scale,
+                "rotation": config.display.rotation,
+                "power": "on" if on else "off",
+            },
+        )
+        _log.info("display_power", on=on)
 
     def _reject(self, new: ConfigResult) -> None:
         """Keep the running configuration and report the errors (CORE-209)."""

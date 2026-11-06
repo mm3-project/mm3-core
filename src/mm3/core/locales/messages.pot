@@ -724,3 +724,12 @@ msgstr ""
 
 msgid "CORE_MQTT_PUBLISH_FAILED"
 msgstr ""
+
+msgid "CORE_DISPLAY_NO_KIOSK"
+msgstr ""
+
+msgid "CORE_DISPLAY_TIMEOUT"
+msgstr ""
+
+msgid "CORE_DISPLAY_UNAVAILABLE"
+msgstr ""
