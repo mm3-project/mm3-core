@@ -358,6 +358,58 @@ def test_core_230_pages_block(tmp_path: Path, registry: Registry) -> None:
     assert errs(load(tmp_path, many, registry)) == [("CORE_CFG_LENGTH", "/pages/list")]
 
 
+def test_core_333_cycle_and_core_334_after_are_read(tmp_path: Path, registry: Registry) -> None:
+    text = (
+        "pages:\n  default: home\n  return_after: 10m\n  list:\n    - id: home\n"
+        "    - id: guest\n      cycle: false\n      after: {time: 5m}\n"
+        "    - id: tv\n      after: {time: 30s, page: home}\n"
+    )
+    result = load(tmp_path, text, registry)
+    assert result.ok, result.records
+    assert result.config is not None
+    pages = result.config.pages
+    assert pages is not None
+    assert pages.return_after.total_seconds() == 600
+    home, guest, tv = pages.pages
+    assert (home.cycle, guest.cycle, tv.cycle) == (True, False, True)
+    assert home.after is None
+    assert guest.after is not None
+    assert guest.after.page is None
+    assert guest.after.time.total_seconds() == 300
+    assert tv.after is not None
+    assert tv.after.page == "home"
+
+
+def test_core_334_after_page_is_checked(tmp_path: Path, registry: Registry) -> None:
+    unknown = load(
+        tmp_path,
+        "pages:\n  list:\n    - id: a\n    - id: b\n      after: {time: 1m, page: zz}\n",
+        registry,
+    )
+    assert errs(unknown) == [("CORE_CFG_PAGE_UNKNOWN", "/pages/list/1/after/page")]
+    own = load(
+        tmp_path,
+        "pages:\n  list:\n    - id: a\n    - id: b\n      after: {time: 1m, page: b}\n",
+        registry,
+    )
+    assert errs(own) == [("CORE_CFG_INVALID", "/pages/list/1/after/page")]
+    # without page the jump goes to pages.default, which cannot be the entry itself
+    implicit = load(
+        tmp_path,
+        "pages:\n  default: a\n  list:\n    - id: a\n      after: {time: 1m}\n    - id: b\n",
+        registry,
+    )
+    assert errs(implicit) == [("CORE_CFG_INVALID", "/pages/list/0/after/page")]
+    zero = load(
+        tmp_path,
+        "pages:\n  list:\n    - id: a\n    - id: b\n      after: {time: 0s}\n",
+        registry,
+    )
+    assert [e[1] for e in errs(zero)] == ["/pages/list/1/after/time"]
+    negative = load(tmp_path, "pages:\n  return_after: -5s\n  list:\n    - id: a\n", registry)
+    assert [e[1] for e in errs(negative)] == ["/pages/return_after"]
+
+
 def test_core_230_implicit_main_page(tmp_path: Path, registry: Registry) -> None:
     result = load(tmp_path, modules(clock("a", "top_left", "    pages: [main]\n")), registry)
     assert result.ok, result.records

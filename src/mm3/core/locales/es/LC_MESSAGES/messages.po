@@ -706,6 +706,9 @@ msgstr "Recargar los navegadores"
 msgid "CORE_HA_PAGE"
 msgstr "Página"
 
+msgid "CORE_HA_PAGES_PAUSED"
+msgstr "Pausar el cambio de página"
+
 msgid "CORE_HA_KIOSK_VOLUME"
 msgstr "Volumen del quiosco"
 

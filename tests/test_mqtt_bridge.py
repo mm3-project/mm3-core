@@ -540,10 +540,25 @@ class Pages:
         self.listeners: list[Callable[[], None]] = []
         self.calls: list[tuple[str, str]] = []
         self.hidden: dict[str, bool] = {}
+        self.holds: set[str] = set()
 
     def set_page(self, page: str, reason: str) -> None:
         self.calls.append((page, reason))
         self.page = page
+        for cb in self.listeners:
+            cb()
+
+    @property
+    def paused(self) -> list[str]:
+        return sorted(self.holds)
+
+    def pause_hold(self, holder: str, seconds: float | None = None) -> None:
+        self.holds.add(holder)
+        for cb in self.listeners:
+            cb()
+
+    def resume(self, holder: str) -> None:
+        self.holds.discard(holder)
         for cb in self.listeners:
             cb()
 
@@ -653,6 +668,23 @@ async def test_core_343_state_follows_page_changes(
         cb()
     await settle()
     assert broker.last(f"{BASE}/ha/{ENGINE}/page/state") == "news"
+
+
+async def test_core_336_pages_paused_switch_is_the_mqtt_hold(
+    ha_start: Callable[..., Awaitable[Any]], broker: FakeBroker
+) -> None:
+    _, pages, _ = await ha_start()
+    assert config(broker, "switch", f"{ENGINE}-pages_paused")["name"]
+    assert broker.last(f"{BASE}/ha/{ENGINE}/pages_paused/state") == "OFF"
+    broker.inject(f"{BASE}/ha/{ENGINE}/pages_paused/set", "ON")
+    await settle()
+    assert pages.holds == {"mqtt"}
+    assert broker.last(f"{BASE}/ha/{ENGINE}/pages_paused/state") == "ON"
+    pages.holds.add("rest")  # another holder does not turn the switch off
+    broker.inject(f"{BASE}/ha/{ENGINE}/pages_paused/set", "OFF")
+    await settle()
+    assert pages.holds == {"rest"}
+    assert broker.last(f"{BASE}/ha/{ENGINE}/pages_paused/state") == "OFF"
 
 
 async def test_core_343_everything_is_published_again_after_a_reconnect(

@@ -211,6 +211,7 @@
  "CORE_HA_KIOSK_MUTE": "Kiosk stumm",
  "CORE_HA_KIOSK_VOLUME": "Kiosk-Lautstärke",
  "CORE_HA_PAGE": "Seite",
+ "CORE_HA_PAGES_PAUSED": "Seitenwechsel pausieren",
  "CORE_HA_RELOAD": "Browser neu laden",
  "CORE_MQTT_DISCONNECTED": "Der MQTT-Broker ist nicht verbunden",
  "CORE_MQTT_NOT_CONFIGURED": "Kein MQTT-Broker konfiguriert (engine.mqtt)",

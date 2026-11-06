@@ -7,6 +7,32 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 7, PR 2: pages)
+
+- Pages out of the cycle (core spec 0.34, section 6.9, CORE-333): `cycle: false`
+  on a `pages.list` entry. Rotation, `PAGE_NEXT`, `PAGE_PREV` and swipes skip
+  such a page; from it they go to the next or previous page of the cycle in
+  list order; rotation does not run on it; with no page in the cycle they
+  change nothing. `GET /api/v1/pages` gives every page's `cycle` flag.
+- Timed jump (CORE-334): `after: {time, page?}` changes to `page` (default
+  `pages.default`) once the page has been current for `time`. An unknown target
+  is `CORE_CFG_PAGE_UNKNOWN`, the entry's own page (also through the default)
+  is `CORE_CFG_INVALID`. A kiosk touch restarts the count; rotation does not
+  run on a page with `after`.
+- Idle return (CORE-335): `pages.return_after` returns to the default page
+  after that long without interaction, on pages where neither rotation nor a
+  timed jump runs. Rotation, timed jumps and idle returns are not interactions.
+- Pause holds (CORE-336): `PAGE_PAUSE {for?}` and `PAGE_RESUME`, `POST
+  /api/v1/pages/pause` (`{for?}`) and `/pages/resume`, and the Home Assistant
+  switch `pages_paused` (holder `mqtt`, CORE-343). One hold per holder (the
+  sending instance, `rest` or `mqtt`); a hold ends on a resume, after `for`, or
+  when the holding instance stops. While one is active rotation, timed jumps and
+  idle return make no change; the last one ending, and `CORE_RESUME`, restart
+  their counts from zero. `GET /api/v1/pages` carries `paused`.
+- `CORE_PAGE_CHANGED` carries `previous` (null with reason `start`) and the
+  reasons `after` and `idle` (CORE-337).
+- Core catalog key `CORE_HA_PAGES_PAUSED` in EN, IT, FR, ES and DE.
+
 ### Added (milestone 7, PR 1: MQTT bridge and Home Assistant)
 
 - MQTT bridge (core spec 0.34, section 9.3). `engine.mqtt` is validated and

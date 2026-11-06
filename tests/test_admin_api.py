@@ -584,7 +584,11 @@ async def test_core_236_pages(api: Api) -> None:
     r = await api.get("/api/v1/pages")
     assert r.json() == {
         "current": "a",
-        "pages": [{"id": "a", "title": "a"}, {"id": "b", "title": "Bravo"}],
+        "pages": [
+            {"id": "a", "title": "a", "cycle": True},
+            {"id": "b", "title": "Bravo", "cycle": True},
+        ],
+        "paused": [],
     }
     assert (await api.post("/api/v1/pages/next")).json()["current"] == "b"
     assert (await api.post("/api/v1/pages/next")).json()["current"] == "a"
@@ -593,6 +597,19 @@ async def test_core_236_pages(api: Api) -> None:
     is_problem(await api.post("/api/v1/pages/zz"), 404, "CORE_API_NOT_FOUND")
     status = (await api.get("/api/v1/status")).json()
     assert status["page"] == {"id": "a", "index": 0, "count": 2}
+
+
+async def test_core_336_pause_and_resume(api: Api) -> None:
+    held = await api.post("/api/v1/pages/pause", {"for": 30})
+    assert held.status_code == 200
+    assert held.json()["paused"] == ["rest"]
+    assert (await api.get("/api/v1/pages")).json()["paused"] == ["rest"]
+    assert (await api.post("/api/v1/pages/resume")).json()["paused"] == []
+    assert (await api.post("/api/v1/pages/resume")).json()["paused"] == []  # no hold: no change
+    assert (await api.post("/api/v1/pages/pause")).json()["paused"] == ["rest"]
+    assert (await api.post("/api/v1/pages/resume")).json()["paused"] == []
+    for bad in ({"for": 0}, {"for": 3601}, {"for": "x"}, {"until": 5}):
+        is_problem(await api.post("/api/v1/pages/pause", bad), 422, "CORE_API_INVALID_REQUEST")
 
 
 async def test_shell_reload(api: Api) -> None:

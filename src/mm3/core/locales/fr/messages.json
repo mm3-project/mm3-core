@@ -211,6 +211,7 @@
  "CORE_HA_KIOSK_MUTE": "Sourdine du kiosque",
  "CORE_HA_KIOSK_VOLUME": "Volume du kiosque",
  "CORE_HA_PAGE": "Page",
+ "CORE_HA_PAGES_PAUSED": "Suspendre le changement de page",
  "CORE_HA_RELOAD": "Recharger les navigateurs",
  "CORE_MQTT_DISCONNECTED": "Le courtier MQTT n'est pas connecté",
  "CORE_MQTT_NOT_CONFIGURED": "Aucun courtier MQTT n'est configuré (engine.mqtt)",

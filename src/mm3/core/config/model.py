@@ -15,6 +15,7 @@ Implements:
     -: Core spec 0.8, §6.9 Pages and visibility.
     CORE-213: Core spec 0.9, §6.5 Screen layout.
     CORE-230: Core spec 0.9, §6.9 Pages and visibility.
+    CORE-333, CORE-334, CORE-335: Core spec 0.34, §6.9 Pages and visibility.
 """
 
 from __future__ import annotations
@@ -265,12 +266,38 @@ class AudioConfig(_Model):
     mute: bool = False
 
 
+class PageAfter(_Model):
+    """The ``after`` key of a page: a timed jump (CORE-334).
+
+    Attributes:
+        time: How long the page stays current before the jump; above 0.
+        page: The page to jump to; ``None`` means ``pages.default``. It must
+            be a listed page other than the entry's own (checked with the
+            layout rules, because it relates two fields).
+    """
+
+    time: timedelta = Field(gt=timedelta(0))
+    page: str | None = Field(default=None, pattern=PAGE_ID_PATTERN)
+
+
 class PageConfig(_Model):
-    """One entry of ``pages.list`` (CORE-230)."""
+    """One entry of ``pages.list`` (CORE-230, CORE-333, CORE-334).
+
+    Attributes:
+        id: Page id.
+        title: Title shown in the admin and in Home Assistant.
+        rotate: Rotation time of this page, overriding ``pages.rotate``.
+        cycle: ``False`` takes the page out of the cycle: rotation,
+            ``PAGE_NEXT``, ``PAGE_PREV`` and swipes never reach it (CORE-333).
+        after: Jump to another page once this one has been current for a
+            time (CORE-334).
+    """
 
     id: str = Field(pattern=PAGE_ID_PATTERN)
     title: LocalizedText | None = None
     rotate: timedelta | None = None
+    cycle: bool = True
+    after: PageAfter | None = None
 
     def resolved_title(self, locale: str) -> str:
         """Return the page title for a locale; the id when no title is set (CORE-230).
@@ -293,6 +320,7 @@ class PagesConfig(_Model):
     rotate: timedelta = timedelta(0)
     pause_on_interaction: timedelta = timedelta(minutes=2)
     reset_on_resume: bool = True
+    return_after: timedelta = Field(default=timedelta(0), ge=timedelta(0))
     transition: Literal["fade", "none"] = "fade"
     pages: list[PageConfig] = Field(alias="list", min_length=1, max_length=32)
 

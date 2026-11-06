@@ -708,6 +708,9 @@ msgstr "Browser neu laden"
 msgid "CORE_HA_PAGE"
 msgstr "Seite"
 
+msgid "CORE_HA_PAGES_PAUSED"
+msgstr "Seitenwechsel pausieren"
+
 msgid "CORE_HA_KIOSK_VOLUME"
 msgstr "Kiosk-Lautstärke"
 

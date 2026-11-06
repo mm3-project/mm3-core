@@ -706,6 +706,9 @@ msgstr "Reload browsers"
 msgid "CORE_HA_PAGE"
 msgstr "Page"
 
+msgid "CORE_HA_PAGES_PAUSED"
+msgstr "Pause page changes"
+
 msgid "CORE_HA_KIOSK_VOLUME"
 msgstr "Kiosk volume"
 
