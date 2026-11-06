@@ -16,6 +16,9 @@ Implements:
     CORE-369: Core spec 0.37, §10.7 Installer service.
     CORE-132: Core spec 0.33, §10.7 Installer service.
     CORE-351: Core spec 0.35, §10.6 Module catalog.
+    CORE-361: Core spec 0.37, §10.8 Backup and restore (installer side).
+    CORE-364: Core spec 0.37, §10.8 Backup and restore.
+    CORE-365: Core spec 0.37, §10.8 Backup and restore.
 """
 
 from __future__ import annotations
@@ -36,8 +39,12 @@ from typing import Any
 
 from mm3.core.catalog import CatalogError
 from mm3.core.logging import get_logger
+from mm3.installer.age import valid_recipient
 from mm3.installer.auth import Auth, AuthError, LockedError
+from mm3.installer.backup import BackupError
 from mm3.installer.operations import FINAL, BusyError, Installer, Operation, Request
+from mm3.installer.remotes import REMOTE_NAME, RemoteError
+from mm3.installer.schedule import BackupScheduler
 from mm3.installer.venv import BuildError
 
 __all__ = ["MAX_BODY", "REFRESH_CHECK_S", "InstallerServer", "peer_uid"]
@@ -56,6 +63,10 @@ _LENGTH = re.compile(r"[0-9]{1,6}")
 MAX_CLIENTS = 32
 """Connections served at once; more are closed at once (event streams count)."""
 _OP_PATH = re.compile(r"^/v1/operations/([0-9a-f]{16})(/events)?$")
+_BACKUP_PATH = re.compile(r"^/v1/backups/([A-Za-z0-9][A-Za-z0-9._-]{0,200}\.mm3backup)$")
+_REMOTE_PATH = re.compile(r"^/v1/backups/remotes/([^/]+)(/test)?$")
+_PARTS = ("config", "data", "modules", "secrets")
+MAX_SECRET = 16 * 1024
 
 _log = get_logger("installer")
 
@@ -121,7 +132,9 @@ class InstallerServer:
         *,
         socket_gid: int | None = None,
         peer: Callable[[socket.socket], int] = peer_uid,
+        scheduler: BackupScheduler | None = None,
     ) -> None:
+        self.scheduler = scheduler
         self.installer = installer
         self.auth = auth
         self.socket_gid = socket_gid
@@ -154,6 +167,11 @@ class InstallerServer:
         if self.socket_gid is not None:
             os.chown(path, -1, self.socket_gid)
         refresher = asyncio.create_task(self._refresh_loop()) if refresh else None
+        scheduled = (
+            asyncio.create_task(self.scheduler.run())
+            if refresh and self.scheduler is not None
+            else None
+        )
         _log.info("installer_listening", socket=str(path))
         try:
             async with server:
@@ -161,6 +179,8 @@ class InstallerServer:
         finally:
             if refresher is not None:
                 refresher.cancel()
+            if scheduled is not None:
+                scheduled.cancel()
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(path)
 
@@ -263,6 +283,8 @@ class InstallerServer:
         elif route == ("GET", "/v1/operations"):
             ops = [o.public() for o in self.installer.recent()]
             await self._send(writer, 200, {"operations": ops})
+        elif req.path == "/v1/backups" or req.path.startswith("/v1/backups/"):
+            await self._backups(req, writer)
         elif req.path.startswith("/v1/auth/"):
             await self._auth_route(req, writer)
         elif (m := _OP_PATH.match(req.path)) and req.method == "GET":
@@ -293,6 +315,7 @@ class InstallerServer:
             "previous": [p.name for p in self.installer.builder.kept() if p != current],
             "installed": installed,
             "catalog": meta.to_json() if meta else None,
+            "backup": self.installer.backups.status.read() if self.installer.backups else {},
         }
 
     async def _submit(self, req: HttpRequest) -> Operation:
@@ -302,6 +325,9 @@ class InstallerServer:
         # ones are root-only and need no passphrase (CORE-353).
         if request.source == "catalog":
             await self._check_auth(body)
+        return self._start(request)
+
+    def _start(self, request: Request) -> Operation:
         if self.installer.busy:
             raise HttpError(409, "another operation is running")
         try:
@@ -374,6 +400,227 @@ class InstallerServer:
             client=client or ("root" if uid == 0 else f"uid {uid}"),
             peer_uid=uid,
         )
+
+    # --- backups (CORE-361, CORE-364, CORE-365) --------------------------------------
+
+    def _runner(self) -> Any:
+        runner = self.installer.backups
+        if runner is None:
+            raise HttpError(404, "backups are not set up")
+        return runner
+
+    @staticmethod
+    def _text(body: dict[str, Any], key: str, limit: int = MAX_SECRET) -> str | None:
+        value = body.get(key)
+        if value is None:
+            return None
+        if not isinstance(value, str) or not value or len(value) > limit:
+            raise HttpError(400, f"{key} must be a non-empty string")
+        return value
+
+    @staticmethod
+    def _parts(body: dict[str, Any]) -> list[str] | None:
+        parts = body.get("parts")
+        if parts is None:
+            return None
+        if (
+            not isinstance(parts, list)
+            or not parts
+            or any(p not in _PARTS for p in parts)
+            or len(set(parts)) != len(parts)
+        ):
+            raise HttpError(400, f"parts must be a non-empty list of {', '.join(_PARTS)}")
+        return list(parts)
+
+    def _source(self, body: dict[str, Any], uid: int) -> dict[str, Any]:
+        name = self._text(body, "name", 256)
+        path = self._text(body, "path", 1024)
+        if path is not None:
+            if uid != 0:
+                raise HttpError(403, "a backup file by path needs root (sudo)")
+            if not Path(path).is_absolute():
+                raise HttpError(400, "path must be absolute")
+            return {"path": path}
+        if name is None:
+            raise HttpError(400, "name (or path, for root) is required")
+        remote = body.get("remote", False)
+        if not isinstance(remote, bool):
+            raise HttpError(400, "remote must be true or false")
+        return {"name": name, "remote": remote}
+
+    async def _backups(self, req: HttpRequest, writer: asyncio.StreamWriter) -> None:
+        runner = self._runner()
+        route = (req.method, req.path)
+        try:
+            if route == ("GET", "/v1/backups"):
+                entries = await asyncio.to_thread(runner.service.listing)
+                await self._send(
+                    writer,
+                    200,
+                    {"backups": [e.public() for e in entries], "status": runner.status.read()},
+                )
+            elif route == ("POST", "/v1/backups"):
+                await self._create_backup(req, writer)
+            elif route == ("GET", "/v1/backups/remote"):
+                listing = await asyncio.to_thread(runner.remote_listing)
+                await self._send(writer, 200, {"backups": listing})
+            elif route == ("POST", "/v1/backups/keygen"):
+                keep = req.json().get("keep", False)
+                if not isinstance(keep, bool):
+                    raise HttpError(400, "keep must be true or false")
+                made = await asyncio.to_thread(runner.keygen, keep=keep)
+                await self._send(writer, 200, {**made, "kept": keep})
+            elif route in (("POST", "/v1/backups/verify"), ("POST", "/v1/backups/preview")):
+                await self._inspect(req, writer, preview=req.path.endswith("preview"))
+            elif route == ("POST", "/v1/backups/restore"):
+                await self._restore(req, writer)
+            elif req.path == "/v1/backups/remotes" and req.method == "GET":
+                await self._send(
+                    writer, 200, {"remotes": await asyncio.to_thread(runner.remotes.listing)}
+                )
+            elif (m := _REMOTE_PATH.match(req.path)) is not None:
+                await self._remote(req, writer, m.group(1), bool(m.group(2)))
+            elif (m := _BACKUP_PATH.match(req.path)) is not None and req.method == "GET":
+                await self._download(m.group(1), writer)
+            else:
+                raise HttpError(404, f"no route {req.method} {req.path}")
+        except RemoteError as exc:
+            raise HttpError(502 if "rclone" in str(exc) else 400, str(exc)) from exc
+        except BackupError as exc:
+            raise HttpError(400, str(exc)) from exc
+
+    async def _create_backup(self, req: HttpRequest, writer: asyncio.StreamWriter) -> None:
+        body = req.json()
+        recipient = self._text(body, "recipient", 100)
+        if recipient is not None and not valid_recipient(recipient):
+            raise HttpError(400, "recipient must be an age public key (age1...)")
+        passphrase = self._text(body, "archive_passphrase", 1024)
+        if recipient and passphrase:
+            raise HttpError(400, "encrypt to a key or with a passphrase, not both")
+        configured = body.get("use_configured_key", False)
+        if not isinstance(configured, bool):
+            raise HttpError(400, "use_configured_key must be true or false")
+        pre = body.get("pre", False)
+        if not isinstance(pre, bool):
+            raise HttpError(400, "pre must be true or false")
+        if pre and req.uid != 0:
+            raise HttpError(403, "a pre-operation backup on request needs root (sudo)")
+        options = {
+            "pre": pre,
+            "parts": self._parts(body),
+            "recipient": recipient,
+            "archive_passphrase": passphrase,
+            "use_configured_key": configured,
+        }
+        request = Request(
+            action="backup",
+            client=str(body.get("client") or ("root" if req.uid == 0 else f"uid {req.uid}"))[:200],
+            peer_uid=req.uid,
+            options=options,
+        )
+        op = self._start(request)
+        await self._send(writer, 202, {"id": op.id})
+
+    async def _inspect(
+        self, req: HttpRequest, writer: asyncio.StreamWriter, *, preview: bool
+    ) -> None:
+        body = req.json()
+        source = self._source(body, req.uid)
+        instance = self._text(body, "instance", 64)
+        installed: list[dict[str, str]] = []
+        if preview:
+            try:
+                installed = await asyncio.to_thread(
+                    self.installer.installed, self.installer.store.kept()
+                )
+            except BuildError:
+                installed = []
+        result = await asyncio.to_thread(
+            lambda: self._runner().inspect(
+                source,
+                self._text(body, "key"),
+                parts=self._parts(body),
+                instance=instance,
+                installed=installed,
+                preview=preview,
+            )
+        )
+        await self._send(writer, 200, result)
+
+    async def _restore(self, req: HttpRequest, writer: asyncio.StreamWriter) -> None:
+        body = req.json()
+        source = self._source(body, req.uid)
+        # A restore always re-authenticates, except from a root peer (CORE-361).
+        if req.uid != 0:
+            await self._check_auth(body)
+        options = {
+            "source": source,
+            "parts": self._parts(body),
+            "instance": self._text(body, "instance", 64),
+            "key": self._text(body, "key"),
+        }
+        request = Request(
+            action="restore",
+            client=str(body.get("client") or ("root" if req.uid == 0 else f"uid {req.uid}"))[:200],
+            peer_uid=req.uid,
+            options=options,
+        )
+        op = self._start(request)
+        await self._send(writer, 202, {"id": op.id})
+
+    async def _remote(
+        self, req: HttpRequest, writer: asyncio.StreamWriter, name: str, test: bool
+    ) -> None:
+        remotes = self._runner().remotes
+        if not REMOTE_NAME.match(name):
+            raise HttpError(400, "not a remote name")
+        if test and req.method == "POST":
+            path = self._text(req.json(), "path", 1024) or ""
+            await asyncio.to_thread(remotes.test, name, path)
+            await self._send(writer, 204, None)
+        elif not test and req.method == "GET":
+            try:
+                found = await asyncio.to_thread(remotes.get, name)
+            except RemoteError as exc:
+                raise HttpError(404, str(exc)) from exc
+            await self._send(writer, 200, found)
+        elif not test and req.method == "PUT":
+            body = req.json()
+            await self._check_auth(body)
+            kind, params = body.get("type"), body.get("params")
+            if not isinstance(kind, str) or not isinstance(params, dict):
+                raise HttpError(400, "type (string) and params (object) are required")
+            await asyncio.to_thread(remotes.put, name, kind, params)
+            await self._send(writer, 204, None)
+        elif not test and req.method == "DELETE":
+            await self._check_auth(req.json())
+            try:
+                await asyncio.to_thread(remotes.delete, name)
+            except RemoteError as exc:
+                raise HttpError(404, str(exc)) from exc
+            await self._send(writer, 204, None)
+        else:
+            raise HttpError(404, f"no route {req.method} {req.path}")
+
+    async def _download(self, name: str, writer: asyncio.StreamWriter) -> None:
+        """Stream an archive; a download needs no re-authentication (CORE-361)."""
+        try:
+            _entry, path = await asyncio.to_thread(self._runner().service.find, name)
+        except BackupError as exc:
+            raise HttpError(404, str(exc)) from exc
+        size = path.stat().st_size
+        writer.write(
+            (
+                "HTTP/1.1 200 OK\r\nContent-Type: application/octet-stream\r\n"
+                f"Content-Length: {size}\r\n"
+                f'Content-Disposition: attachment; filename="{name}"\r\n'
+                "Connection: close\r\n\r\n"
+            ).encode()
+        )
+        with path.open("rb") as fh:
+            while chunk := await asyncio.to_thread(fh.read, 1 << 20):
+                writer.write(chunk)
+                await writer.drain()
 
     async def _auth_route(self, req: HttpRequest, writer: asyncio.StreamWriter) -> None:
         if req.uid != 0:

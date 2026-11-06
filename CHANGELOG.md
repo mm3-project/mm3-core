@@ -7,6 +7,55 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 7, PR 5: backup and restore, installer side and CLI)
+
+- Backups (core spec 0.37, section 10.8; CORE-160, CORE-161, CORE-362): archives
+  `<hostname>-<YYYYmmdd-HHMMSS>-<kind>.mm3backup` (gzip tar with `manifest.json`,
+  `config/`, `data/<instance>/`, `modules.json`, `secrets/`) and an unencrypted
+  sidecar `.mm3backup.json`, in `/var/lib/mm3/backups/` (0600); caches are
+  excluded and links are never followed. `secrets` go only into an encrypted
+  archive, otherwise the part is left out and the manifest says so.
+- Encryption with age (CORE-161, CORE-364), the Debian package `age`: a public key
+  for scheduled backups, a passphrase (through a pseudo-terminal, never on a command
+  line) for manual ones; `mm3 backup keygen` shows the identity once and keeps it
+  as `backup.key` (0600) only with `--keep`. A restore takes the kept identity or
+  the key sent with the request; it exists only in the operation's private directory.
+- Scheduler (CORE-360, CORE-244): the installer reads the `backup` block and
+  `engine.timezone` over the admin socket at start and every hour (the files in
+  `/etc/mm3` when the engine does not answer), runs at `backup.schedule`, catches up
+  within minutes of its start when the last scheduled backup is over 24 h old,
+  applies `keep` (daily, weekly and monthly, scheduled backups only) and keeps the
+  last result for `GET /v1/status`.
+- Remotes (CORE-365), the Debian package `rclone`: `sftp`, `smb`, `webdav` and `s3`
+  in `/var/lib/mm3-install/rclone.conf` (0600), secrets returned as `!masked` and
+  kept when sent back, passwords obscured through stdin; after a scheduled backup the
+  archive and then its sidecar are copied and `keep` is applied there; a failure is
+  recorded and does not fail the local backup.
+- Restore (CORE-162, CORE-163, CORE-164, CORE-165, CORE-363): decrypt, verify the
+  manifest checksums, check compatibility (a newer engine or another Module API
+  major is refused, another host warns), preview part by part, take the pre-restore
+  backup, build the new venv when `modules` is selected, stop `mm3.service`, write
+  `secrets`, `data` and `config` through descriptor-relative writes that never follow
+  a link (CORE-373), switch the venv, start the engine and check it; when it is not
+  READY within 60 s or `mm3 diag check` fails the plain pre-restore copy is put back.
+  One module instance can be restored from `config` (its section only) and `data`.
+  The engine records the restored files as a history version with origin `restore`
+  (marker `restore.json` in its state directory).
+- Pre-operation backups (CORE-366): a backup of kind `pre` before every install,
+  update, removal, restore previous and restore, the last 3 kept; when it fails the
+  operation does not start. `mm3-install.sh` asks the installer for one before an
+  upgrade (`mm3 backup create --pre`, root) and installs `age` and `rclone`.
+- Installer routes (CORE-361, CORE-364, CORE-365): `GET|POST /v1/backups`,
+  `GET /v1/backups/{name}` (download), `GET /v1/backups/remote`, `POST
+  /v1/backups/verify|preview|restore|keygen`, and `GET /v1/backups/remotes`,
+  `GET|PUT|DELETE /v1/backups/remotes/{name}` and `POST .../test`. A restore and
+  changes to a remote re-authenticate, except a restore from a root peer; a backup by
+  file path and `pre` are root-only.
+- CLI `mm3 backup create|list|verify|restore|keygen` (CORE-361); `mm3 backup restore`
+  shows the preview and asks before it starts. The engine's `/api/v1/backups*` routes
+  (with the 2 GiB upload limit) and the Backups admin page follow with the
+  forwarding of CORE-356.
+
 ### Added (milestone 7, PR 4a: installer service and catalog client)
 
 - Installer service `mm3 installer serve` (core spec 0.35, sections 10.6 and 10.7):

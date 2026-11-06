@@ -539,3 +539,40 @@ def test_core_155_restore_audio_into_an_included_file(s: Setup) -> None:
     res = s.history.restore(no_audio, "cli:t", section="audio")
     assert (res.code, "audio is not in that version" in res.message) == (2, True)
     assert s.text("audio.yaml") == "sink: auto\n"
+
+
+async def test_core_363_restore_marker_makes_the_next_version_a_restore(
+    make_engine: EngineFactory, tmp_path: Path
+) -> None:
+    """The installer's marker turns the next recorded version into a ``restore`` (CORE-363)."""
+    s = Setup(tmp_path, registry(Clock, Weather))
+    s.config.write_text(cfg("it"))
+    engine = make_engine(Clock, Weather)
+    result = load_config(s.config, registry=engine.registry, env_file=s.env, environ={})
+    history = s.make(engine.registry)
+    manager = ConfigManager(
+        engine,
+        result,
+        registry=engine.registry,
+        env_file=s.env,
+        recorder=HistoryRecorder(history),
+        environ={},
+    )
+    await engine.start(result.instance_specs())
+    await manager.start(watch=False)
+    marker = s.state / "restore.json"
+    marker.write_text(json.dumps({"at": datetime.now(UTC).isoformat(), "operation": "ab"}))
+    s.config.write_text(cfg("de"))
+    assert await manager.reload("file")
+    assert history.store.meta(2).origin == "restore"
+    assert not marker.exists()
+    s.config.write_text(cfg("fr"))  # a later edit is an ordinary file edit again
+    assert await manager.reload("file")
+    assert history.store.meta(3).origin == "file"
+    stale = {"at": (datetime.now(UTC) - timedelta(hours=3)).isoformat(), "operation": "ab"}
+    marker.write_text(json.dumps(stale))
+    s.config.write_text(cfg("es"))
+    assert await manager.reload("file")
+    assert history.store.meta(4).origin == "file"
+    assert not marker.exists()
+    await manager.close()

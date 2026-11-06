@@ -9,6 +9,7 @@ exit means rollback (CORE-135).
 
 Implements:
     CORE-357: Core spec 0.33, §10.7 Installer service.
+    CORE-359, CORE-363: Core spec 0.37, §10.8 Backup and restore.
     CORE-135: Core spec 0.33, §10.7 Installer service.
 """
 
@@ -35,6 +36,12 @@ class Engine(Protocol):
 
     def restart(self) -> bool:
         """Restart the engine; whether it is READY within 60 s of the restart."""
+
+    def stop(self) -> bool:
+        """Stop the engine; whether it is stopped."""
+
+    def start(self) -> bool:
+        """Start the engine; whether it is READY within 60 s."""
 
     def diag_check(self, venv: Path) -> Completed:
         """Run ``mm3 diag check`` from ``venv`` over the admin socket."""
@@ -81,9 +88,32 @@ class SystemdEngine:
         Returns:
             Whether the engine is READY.
         """
+        return self._activate("restart")
+
+    def stop(self) -> bool:
+        """``systemctl stop mm3.service`` (CORE-363).
+
+        Returns:
+            Whether the unit is no longer active.
+        """
+        try:
+            done = self._systemctl("stop")
+        except subprocess.TimeoutExpired:
+            return False
+        return done.returncode == 0
+
+    def start(self) -> bool:
+        """``systemctl start mm3.service``, then wait for READY (CORE-363).
+
+        Returns:
+            Whether the engine is READY.
+        """
+        return self._activate("start")
+
+    def _activate(self, verb: str) -> bool:
         started = time.monotonic()
         try:
-            done = self._systemctl("restart")
+            done = self._systemctl(verb)
         except subprocess.TimeoutExpired:
             return False
         if done.returncode != 0:
