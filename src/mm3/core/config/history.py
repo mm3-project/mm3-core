@@ -15,6 +15,7 @@ Implements:
     CORE-217, CORE-218: Core spec 0.10, §6.8 Configuration history, undo and redo.
     CORE-300: Core spec 0.22, §6.4 Web configuration editor.
     CORE-302: Core spec 0.28, §6.4 Web configuration editor.
+    CORE-363: Core spec 0.37, §10.8 Backup and restore.
 """
 
 from __future__ import annotations
@@ -46,6 +47,7 @@ from mm3.core.registry import Registry
 __all__ = [
     "HISTORY_DIR",
     "MASK",
+    "RESTORE_MARKER",
     "TEMPLATE_DIR",
     "ConfigHistory",
     "ConfigSet",
@@ -1058,6 +1060,9 @@ def _restore_section(current: _Loaded, source: _Loaded, section: str) -> ConfigS
     raise ValueError(f"unknown section {section!r}")
 
 
+RESTORE_MARKER = "restore.json"
+RESTORE_MARKER_TTL = timedelta(hours=1)
+
 # --- the engine's recorder -------------------------------------------------------------
 
 
@@ -1078,8 +1083,27 @@ class HistoryRecorder:
     def __init__(self, history: ConfigHistory) -> None:
         self.history = history
 
+    def _take_marker(self) -> bool:
+        """Consume the installer's restore marker (``<state>/restore.json``, CORE-363).
+
+        The installer writes it after it has put the restored files in place and
+        before it starts the engine, so the next version is a restore, not a
+        file edit. A marker older than an hour is stale and only removed.
+        """
+        path = self.history.store.root.parent / RESTORE_MARKER
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            at = datetime.fromisoformat(str(data["at"]))
+            fresh = datetime.now(UTC) - at < RESTORE_MARKER_TTL
+        except (OSError, ValueError, KeyError, TypeError):
+            fresh = False
+        with contextlib.suppress(OSError):
+            path.unlink()
+        return fresh
+
     def _record(self, result: ConfigResult, sections: list[str], origin: str) -> int:
         store = self.history.store
+        restored = self._take_marker()
         with store.lock():
             config_set = ConfigSet.collect(result.path, result.loaded.files)
             latest = store.latest()
@@ -1092,8 +1116,8 @@ class HistoryRecorder:
             else:
                 meta = store.add(
                     config_set,
-                    origin="file",
-                    author="file",
+                    origin="restore" if restored else "file",
+                    author="restore" if restored else "file",
                     parent=latest.version,
                     sections=sections,
                 )

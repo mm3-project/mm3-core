@@ -168,9 +168,23 @@ class FakeEngine:
         self.diag: list[int] = []
         self.restarts = 0
         self.checked: list[str] = []
+        self.stops = 0
+        self.starts = 0
+        self.events: list[str] = []
 
     def restart(self) -> bool:
         self.restarts += 1
+        self.events.append("restart")
+        return self.ready.pop(0) if self.ready else True
+
+    def stop(self) -> bool:
+        self.stops += 1
+        self.events.append("stop")
+        return True
+
+    def start(self) -> bool:
+        self.starts += 1
+        self.events.append("start")
         return self.ready.pop(0) if self.ready else True
 
     def diag_check(self, venv: Path) -> Completed:

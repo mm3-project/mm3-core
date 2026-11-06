@@ -302,6 +302,11 @@ requirements = [
 #   0.x (extends CORE-293, milestone 10).
 # CORE-373 (core 0.37, installer security review): writes into the engine's
 #   directories without following symlinks; CORE-367 and 369 changed.
+# PR 5 (backup and restore, installer side and CLI) implements CORE-160..165,
+#   CORE-244 (the block as settings), CORE-359..366 and the CORE-373 writes of a
+#   restore. The engine's /api/v1/backups* routes (CORE-361, 413
+#   CORE_API_UPLOAD_TOO_LARGE, CORE-365 forwarding) and the Backups admin page
+#   come with the CORE-356 forwarding layer; the milestone stays in_progress.
 # CORE-333..337 (core 0.30): pages out of the cycle, timed jumps, idle
 #   return, pause holds and the previous page (MMM-pages and
 #   MMM-ProfileSwitcher). They extend CORE-230..237 of milestones 2, 3 and 6

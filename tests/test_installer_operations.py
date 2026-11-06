@@ -528,7 +528,7 @@ async def test_core_355_status_and_socket_mode(served: Served) -> None:
     assert stat.S_IMODE(served.path.stat().st_mode) == 0o660
     reply = await served.call("GET", "/v1/status")
     assert reply.status == 200
-    assert set(reply.body) == {"busy", "locked_until", "previous", "installed", "catalog"}
+    assert set(reply.body) == {"busy", "locked_until", "previous", "installed", "catalog", "backup"}
     assert reply.body["catalog"] is None
     assert reply.body["previous"] == []
 

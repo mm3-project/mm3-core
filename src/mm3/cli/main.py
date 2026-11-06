@@ -5,7 +5,8 @@ Implemented so far: ``--version``, ``mm3 check-config``, ``mm3 run``,
 (new, list, revoke), ``mm3 i18n`` (compile, check), ``mm3 kiosk``
 (session, unit), ``mm3 module check``, ``mm3 new-module``, ``mm3 modules``
 (search, info, list, refresh, install, update, restore-previous) and
-``mm3 installer`` (serve, unit, polkit, passphrase, totp, status).
+``mm3 installer`` (serve, unit, polkit, passphrase, totp, status),
+``mm3 backup`` (create, list, verify, restore, keygen).
 ``mm3 run`` loads and validates the configuration, refuses to start with
 exit code 2 when it has errors, runs the module instances and the web
 gateway (mirror and admin listeners) until SIGTERM or SIGINT, and reloads
@@ -15,6 +16,7 @@ the configuration when its files change or on SIGHUP.
 Implements:
     -: Core spec 0.8, §10.2 Packaging and deployment.
     CORE-30: Core spec 0.8, §6 Configuration.
+    CORE-361: Core spec 0.37, §10.8 Backup and restore.
     CORE-207: Core spec 0.8, §6.2 Rules.
     -: Core spec 0.8, §7.2 Error reporting.
     CORE-208: Core spec 0.11, §6.3 Hot reload.
@@ -42,6 +44,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, TextIO
 
 from mm3.__about__ import MODULE_API_VERSION, __version__
+from mm3.cli.backup_cmd import add_backup_parser, run_backup
 from mm3.cli.config_cmd import add_config_parser, run_config
 from mm3.cli.diag_cmd import add_diag_parser, run_diag
 from mm3.cli.i18n_cmd import add_i18n_parser, run_i18n
@@ -101,6 +104,7 @@ def build_parser() -> argparse.ArgumentParser:
     add_diag_parser(sub, _config_args)
     add_modules_parser(sub)
     add_installer_parser(sub)
+    add_backup_parser(sub)
     return parser
 
 
@@ -402,6 +406,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return run_modules(args)
     if args.command == "installer":
         return run_installer(args)
+    if args.command == "backup":
+        return run_backup(args)
     if args.command == "diag":
         return run_diag(args)
     parser.print_help()

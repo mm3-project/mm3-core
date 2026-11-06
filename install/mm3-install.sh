@@ -31,6 +31,8 @@
 # unit and its polkit rule.
 # Implements CORE-368 (Core spec 0.35, §10.7 Installer service): the installer's
 # own venv and the user mm3-build.
+# Implements CORE-366 (Core spec 0.37, §10.8 Backup and restore): the backup
+# of kind pre before an upgrade, and the packages age and rclone.
 set -Eeuo pipefail
 
 readonly EXIT_UNSUPPORTED=1
@@ -267,7 +269,7 @@ decide_kiosk() {
 }
 
 install_packages() {
-  local packages=(python3 python3-venv ca-certificates polkitd)
+  local packages=(python3 python3-venv ca-certificates polkitd age rclone)
   if [[ $WANT_KIOSK == yes ]]; then
     packages+=(cage chromium wlr-randr ddcutil cec-utils)
   fi
@@ -438,6 +440,19 @@ validate_config() {
   fi
 }
 
+# CORE-366: before an engine upgrade the installer takes a backup of kind pre,
+# asked for as a root peer. A new install has no installer yet and is skipped;
+# when the backup fails the upgrade does not start.
+pre_upgrade_backup() {
+  local tool=$OPT/installer/bin/mm3 sock=/run/mm3-install/installer.sock
+  if [[ ! -L $OPT/venv || ! -x $tool || ! -S $sock ]]; then
+    say "no running installer: no pre-upgrade backup (first install)"
+    return 0
+  fi
+  say "taking the pre-upgrade backup (CORE-366)"
+  "$tool" backup create --pre || die "the pre-upgrade backup failed; nothing was changed"
+}
+
 # Point /opt/mm3/venv at the new venv and keep the previous one (CORE-293).
 activate_venv() {
   local link=$OPT/venv
@@ -532,6 +547,7 @@ main() {
   ensure_kiosk_groups
   ensure_display_control_groups
   verify_cage
+  pre_upgrade_backup
   build_venv
   build_installer_venv
   write_config

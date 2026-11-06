@@ -1,4 +1,4 @@
-"""Install, update, remove and restore previous: one operation at a time.
+"""Install, update, remove, restore previous, backup and restore: one operation at a time.
 
 An operation passes the states ``queued``, ``verifying``, ``building``,
 ``switching``, ``restarting``, ``checking`` and ends ``done``,
@@ -28,6 +28,7 @@ Implements:
     CORE-355: Core spec 0.35, §10.7 Installer service.
     CORE-367: Core spec 0.37, §10.7 Installer service.
     CORE-371, CORE-372: Core spec 0.36, §10.7 Installer service.
+    CORE-363, CORE-366: Core spec 0.37, §10.8 Backup and restore.
 """
 
 from __future__ import annotations
@@ -41,7 +42,7 @@ from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from packaging.tags import sys_tags
 from packaging.utils import InvalidWheelFilename, canonicalize_name, parse_wheel_filename
@@ -72,6 +73,9 @@ from mm3.installer.venv import (
 )
 from mm3.installer.verify import Verification, VerifyError
 
+if TYPE_CHECKING:
+    from mm3.installer.backupops import BackupRunner
+
 __all__ = [
     "KEPT_OPERATIONS",
     "Action",
@@ -86,12 +90,14 @@ __all__ = [
     "State",
 ]
 
-Action = Literal["install", "update", "remove", "restore_previous"]
+Action = Literal["install", "update", "remove", "restore_previous", "backup", "restore"]
 Source = Literal["catalog", "pypi", "local"]
 Origin = Literal["catalog", "pypi", "local"]
 State = Literal[
     "queued",
     "verifying",
+    "backing_up",
+    "restoring",
     "building",
     "switching",
     "restarting",
@@ -127,6 +133,8 @@ class Request:
         path: The wheel file for ``local``.
         client: Who asked: the admin client address or ``cli``.
         peer_uid: The socket peer's uid (``SO_PEERCRED``).
+        options: What a ``backup`` or ``restore`` asks for (CORE-361): parts,
+            recipient, source, key, instance and the like.
     """
 
     action: Action
@@ -136,6 +144,7 @@ class Request:
     path: str | None = None
     client: str = ""
     peer_uid: int = -1
+    options: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -243,6 +252,8 @@ class Installer:
         self._mutex = threading.Lock()
         self._running: Operation | None = None
         self.listeners: list[Callable[[Operation, dict[str, Any] | None], None]] = []
+        self.backups: BackupRunner | None = None
+        """Set by the assembly; None disables pre-operation backups (tests of venvs)."""
         layout.operations.mkdir(mode=0o700, parents=True, exist_ok=True)
         layout.wheels.mkdir(mode=0o700, parents=True, exist_ok=True)
         self._fail_interrupted()
@@ -391,6 +402,10 @@ class Installer:
         self._step(op, "queued", "accepted")
         return op
 
+    def step(self, op: Operation, state: State, detail: str) -> None:
+        """Record a step of ``op`` (also streamed to listeners)."""
+        self._step(op, state, detail)
+
     def _step(self, op: Operation, state: State, detail: str) -> None:
         op.state = state
         step = {"at": self._now().isoformat(), "state": state, "detail": detail}
@@ -404,9 +419,15 @@ class Installer:
     def run(self, op: Operation, request: Request) -> Operation:
         """Run an accepted operation to its end (blocking; call off the loop)."""
         try:
-            if request.action == "restore_previous":
+            if request.action == "backup":
+                self._runner().backup(self, op, request)
+            elif request.action == "restore":
+                self._runner().restore(self, op, request)
+            elif request.action == "restore_previous":
+                self._pre(op)
                 self._restore_previous(op)
             else:
+                self._pre(op)
                 self._change(op, request)
         except (OperationError, BuildError, CatalogError, FetchError, VerifyError) as exc:
             self._fail(op, str(exc))
@@ -437,6 +458,16 @@ class Installer:
                 listener(op, None)
         return op
 
+    def _runner(self) -> BackupRunner:
+        if self.backups is None:
+            raise OperationError("backups are not set up on this installer")
+        return self.backups
+
+    def _pre(self, op: Operation) -> None:
+        """The backup before a risky operation (CORE-366)."""
+        if self.backups is not None:
+            self.backups.pre_operation(self, op)
+
     def _fail(self, op: Operation, error: str) -> None:
         op.error = error
         self._step(op, "failed", error)
@@ -447,14 +478,59 @@ class Installer:
         current = self.builder.current()
         if current is None:
             raise OperationError(f"{self.layout.venv_link} is not a symlink to a venv")
+        new_venv = self._stage(op, current, request)
+        self._switch_and_check(op, current, new_venv)
+
+    def stage_exact(self, op: Operation, wanted: list[tuple[str, str]]) -> Path:
+        """Build a staged venv with the given catalog modules at exactly these versions.
+
+        Used by a restore with ``modules`` (CORE-363): the signed catalog's
+        releases are verified as for any install (CORE-352). Nothing is
+        switched; the caller does that once the files are written.
+
+        Args:
+            op: The running operation.
+            wanted: ``(PyPI name, version)`` pairs.
+
+        Returns:
+            The new venv.
+
+        Raises:
+            OperationError: A release is not in the index, not compatible, or the build fails.
+        """
+        base = self.builder.current()
+        if base is None:
+            raise OperationError(f"{self.layout.venv_link} is not a symlink to a venv")
+        staged: Path | None = None
+        try:
+            for name, version in wanted:
+                request = Request(
+                    action="update", name=name, version=version, options={"exact": True}
+                )
+                nxt = self._stage(op, staged or base, request)
+                if staged is not None:
+                    self.builder.discard(staged)
+                staged = nxt
+        except BaseException:
+            if staged is not None:
+                self.builder.discard(staged)
+            raise
+        if staged is None:
+            raise OperationError("no module to rebuild")
+        return staged
+
+    def _stage(self, op: Operation, current: Path, request: Request) -> Path:
+        """Build the staged venv for ``request`` on top of ``current`` (CORE-354)."""
+        exact = bool(request.options.get("exact"))
         name = request.name or ""
         key = canonicalize_name(name)
         self._step(op, "verifying", f"checking {name}")
         old = self.builder.freeze(current)
         installed = old.get(key)
+        installed_for_release = None if exact or installed is None else installed.version
         if request.action == "install" and installed is not None:
             raise OperationError(f"{name} {installed.version} is installed; use update")
-        if request.action in ("update", "remove") and installed is None:
+        if request.action in ("update", "remove") and installed is None and not exact:
             raise OperationError(f"{name} is not installed")
         op.from_ = installed.version if installed else None
         records = self.records(current)
@@ -478,9 +554,7 @@ class Installer:
                 op, "verifying", f"removing {name} and {len(drop) - 1} packages only it used"
             )
         else:
-            wheel_file, record = self._obtain(
-                op, request, installed.version if installed else None, work
-            )
+            wheel_file, record = self._obtain(op, request, installed_for_release, work)
             new_req = [str(wheel_file)]
         self._step(op, "building", "building the staged venv")
         pins = self.builder.pins(old, drop=drop, local_wheels=local_wheels)
@@ -506,7 +580,7 @@ class Installer:
         if record is not None:
             new_records[canonicalize_name(record.name)] = record
         self._set_records(new_venv, new_records)
-        self._switch_and_check(op, current, new_venv)
+        return new_venv
 
     def _work(self, op: Operation) -> Path:
         self.layout.tmp.mkdir(mode=0o755, parents=True, exist_ok=True)
