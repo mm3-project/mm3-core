@@ -682,6 +682,9 @@ def test_core_357_cli_prints_unit_and_rule() -> None:
 def test_core_368_install_script_builds_the_installer_venv_and_users() -> None:
     script = SCRIPT.read_text()
     assert '"${pip[@]}" "mm3-core[installer]==$version"' in script
+    # Built in place and switched by symlink: a venv cannot be moved.
+    assert 'new=$root/$stamp' in script and 'mv -T "$link.new" "$link"' in script
+    assert "installer.new" not in script
     assert "--no-create-home --home-dir /nonexistent" in script
     assert 'usermod --append --groups "$SVC_GROUP" "$INSTALLER_USER"' in script
     assert 'chown "$INSTALLER_USER:" "$OPT/venvs"' in script

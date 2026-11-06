@@ -334,14 +334,20 @@ for requirement in requires("mm3-modules-default") or []:
 }
 
 # CORE-368: the installer runs from its own venv, with the same mm3-core and its
-# extra [installer], and never a module. It is rebuilt with every run.
+# extra [installer], and never a module. A venv is not relocatable (its scripts
+# name their interpreter by absolute path), so each run builds a new one under
+# /opt/mm3/installers/<timestamp> and moves the symlink /opt/mm3/installer to
+# it, keeping the previous one.
 build_installer_venv() {
-  local version target=$OPT/installer new=$OPT/installer.new old=$OPT/installer.old
+  local version stamp new link=$OPT/installer root=$OPT/installers
   local -a pip
   version=$("$STAGED_VENV/bin/python" -c \
     'from importlib.metadata import version; print(version("mm3-core"))')
-  rm -rf "$new" "$old"
-  say "building the installer venv $target (mm3-core $version)"
+  stamp=$(date -u +%Y%m%dT%H%M%SZ)
+  new=$root/$stamp
+  install -d -m 0755 "$root"
+  rm -rf "$new"
+  say "building the installer venv $new (mm3-core $version)"
   python3 -m venv "$new"
   pip=("$new/bin/pip" install --disable-pip-version-check --no-input)
   if [[ -n $FIND_LINKS ]]; then
@@ -349,9 +355,12 @@ build_installer_venv() {
   fi
   "${pip[@]}" "mm3-core[installer]==$version"
   "$new/bin/mm3" --version >/dev/null
-  if [[ -e $target ]]; then mv -T "$target" "$old"; fi
-  mv -T "$new" "$target"
-  rm -rf "$old"
+  # An installer venv from an older script may be a plain directory.
+  if [[ -d $link && ! -L $link ]]; then rm -rf "$link"; fi
+  ln -sfn "$new" "$link.new"
+  mv -T "$link.new" "$link"
+  # Keep the new venv and the one before it.
+  find "$root" -mindepth 1 -maxdepth 1 -type d | sort -r | tail -n +3 | xargs -r rm -rf
 }
 
 detect_timezone() {
