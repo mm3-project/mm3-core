@@ -1,6 +1,6 @@
 # MM3 Module Contract v1.0
 
-Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 13 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 15 (draft)
 
 ## 1. Scope and conformance
 
@@ -155,8 +155,9 @@ class ModuleContext(Protocol):
     def format_number(self, value: float, *, unit: str | None = None) -> str: ...
 
     # --- capability-gated (section 8) ---
-    mqtt: Mqtt                        # publish(), subscribe() (section 4.4); ha_entity() in a later revision
-    system: System                    # request_suspend(reason), request_resume(reason)
+    mqtt: Mqtt                        # publish(), subscribe() and ha_entity() (section 4.4)
+    system: System                    # request_suspend(reason), request_resume(reason),
+                                      # async set_display_power(on) (core CORE-346)
     router: fastapi.APIRouter         # mounted at /api/v1/modules/{instance_id}/
     layout: Layout                    # hide(instance_id), show(instance_id); layout.control
 ```
@@ -218,7 +219,19 @@ class Mqtt(Protocol):
                       qos: Literal[0, 1, 2] = 0, retain: bool = False) -> None: ...
     async def subscribe(self, filter: str, handler: Callable[[MqttMessage], Awaitable[None]], *,
                         qos: Literal[0, 1, 2] = 0) -> Subscription: ...
-    # ha_entity(): capability ha.discovery, defined in a later revision with the MQTT bridge
+    async def ha_entity(self, object_id: str, component: Literal[
+            "sensor", "binary_sensor", "switch", "number", "select", "button"], *,
+            name: str,                       # key of the module's catalog, resolved in engine.locale
+            device_class: str | None = None, unit: str | None = None, icon: str | None = None,
+            options: Sequence[str] | None = None,                                   # select
+            min: float | None = None, max: float | None = None, step: float | None = None,  # number
+            on_command: Callable[[str], Awaitable[None]] | None = None,
+    ) -> HaEntity: ...                       # capability ha.discovery, no grant (core CORE-344)
+
+class HaEntity(Protocol):
+    object_id: str
+    async def set_state(self, value: str | float | bool | None) -> None: ...
+    async def remove(self) -> None: ...     # idempotent; clears the entity in Home Assistant (core CORE-345)
 
 class MqttMessage(Protocol):
     topic: str
@@ -232,6 +245,8 @@ class Subscription(Protocol):
     filter: str
     def cancel(self) -> None: ...   # idempotent; done automatically when the instance stops (MOD-22)
 ```
+
+Without an MQTT bridge in the configuration every call raises `ConfigurationError`. `publish` while the broker is disconnected raises `TransientError` and nothing is queued; `subscribe` then takes effect on connect. Publishing to the engine's own topics under `<base>/` raises `PermissionError` even when a grant matches (core CORE-342). `ha_entity()` registers a Home Assistant entity on the mirror's device: the engine builds its topics, publishes its discovery config and delivers commands to `on_command`, with the payload as text, through the instance inbox like other messages. `set_state` publishes a bool as `ON` or `OFF` and `None` as unknown. With `ha_discovery` off it returns an entity that publishes nothing, so the module needs no special case. Entities that a running instance has not registered again by the end of `start()` are removed from Home Assistant, so a module registers its entities in `start()` (core CORE-343 to CORE-345).
 
 - A mapping payload is published as JSON, a string as UTF-8, bytes as they are.
 - Messages for a subscription are queued in the instance inbox and handled like notifications: one at a time, in arrival order, under the handler budget (3.2, core CORE-28). An exception in the handler has the same effect as one in `on_notification`.
@@ -704,6 +719,8 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
+| 1.0 rev 15 | 2026-11-06 | Aligned with core spec 0.32: ctx.system.set\_display\_power(on) under the capability system.power (§4; core CORE-346). No MOD ids added, changed or removed |
+| 1.0 rev 14 | 2026-11-06 | Aligned with core spec 0.31: ctx.mqtt.ha\_entity() and HaEntity defined, errors without a bridge or connection, engine-owned topics (§4, §4.4; core CORE-342 to CORE-345). No MOD ids added, changed or removed |
 | 1.0 rev 13 | 2026-11-05 | Aligned with core spec 0.29: the admin element and its rules (MOD-38, MOD-39 added, §5.3, §11) and module routes on ctx.router (MOD-74 added, §8, §11); /core/mm3.js also exports render |
 | 1.0 rev 12 | 2026-10-30 | Aligned with core spec 0.19: ctx.location and this.location (§4, §5.2; core CORE-288); transport rules for ctx.http: TLS verification, User-Agent, address rule, redirects, 60 s timeout cap (§4.3; core CORE-282–287); grant entries {prefix, ca} (§8; core CORE-284). No MOD ids added, changed or removed |
 | 1.0 rev 11 | 2026-10-30 | §12.1 check options: the test kit's configuration and grants come from config\_model and the module's capabilities, and the optional \[tool.mm3.check\] table of pyproject.toml replaces them. No MOD ids added, changed or removed |

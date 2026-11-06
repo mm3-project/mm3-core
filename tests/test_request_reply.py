@@ -429,3 +429,16 @@ def test_core_225_weather_current_schema_is_published() -> None:
         schema["required"]
     )
     assert "thunderstorm" in schema["properties"]["condition"]["enum"]
+
+
+def test_core_224_presence_state_registered() -> None:
+    from mm3.notifications import REGISTRY, validate_payload
+
+    assert not REGISTRY["PRESENCE_STATE"].engine_only
+    validate_payload("PRESENCE_STATE", {"state": "idle", "reason": "timeout"})
+
+
+def test_core_224_core_interaction_engine_only() -> None:
+    from mm3.notifications import REGISTRY
+
+    assert REGISTRY["CORE_INTERACTION"].engine_only

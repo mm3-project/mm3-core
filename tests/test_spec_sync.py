@@ -91,6 +91,10 @@ def test_core_75_ranges_and_continuations() -> None:
     assert expand_ids("(CORE-213, CORE-214, 10.4)") == ["CORE-213", "CORE-214"]
 
 
+def test_core_75_presence_prefix() -> None:
+    assert expand_ids("PRS-01..03, WTH-12") == ["PRS-01", "PRS-02", "PRS-03", "WTH-12"]
+
+
 def test_core_75_versions_sort() -> None:
     assert version_key("0.10") > version_key("0.9")
     assert version_key("1.0 rev 10") > version_key("1.0 rev 9")
