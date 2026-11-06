@@ -5,24 +5,41 @@ topic matching the instance's grant globs; otherwise it raises
 ``PermissionError`` (Contract section 8). Messages for a subscription are
 queued in the instance inbox and handled like notifications: one at a time,
 in arrival order, under the handler budget (core CORE-100, CORE-28).
-``ha_entity()`` is specified with the MQTT bridge in a later revision.
+``ha_entity()`` registers a Home Assistant entity on the mirror's device
+(capability ``ha.discovery``, no grant). Without an MQTT bridge every call
+raises ``ConfigurationError``; ``publish`` while the broker is disconnected
+raises ``TransientError`` (CORE-342).
 
 Implements:
-    CORE-100: Core spec 0.18, §11.1 Engine additions.
-    -: Module Contract 1.0 rev 9, §4.4 Mqtt.
+    CORE-100: Core spec 0.34, §11.1 Engine additions.
+    CORE-342: Core spec 0.34, §9.3 MQTT bridge.
+    CORE-344: Core spec 0.34, §9.3 MQTT bridge.
+    -: Module Contract 1.0 rev 15, §4.4 Mqtt.
 """
 
 from __future__ import annotations
 
 import json as _json
-from collections.abc import Awaitable, Callable, Mapping
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any, Literal, Protocol
 
-__all__ = ["Mqtt", "MqttHandler", "MqttMessage", "Qos", "Subscription", "encode_payload"]
+__all__ = [
+    "HaComponent",
+    "HaEntity",
+    "Mqtt",
+    "MqttHandler",
+    "MqttMessage",
+    "Qos",
+    "Subscription",
+    "encode_payload",
+]
 
 Qos = Literal[0, 1, 2]
 """MQTT quality of service."""
+
+HaComponent = Literal["sensor", "binary_sensor", "switch", "number", "select", "button"]
+"""Home Assistant components a module can register (Contract 4.4)."""
 
 
 @dataclass(frozen=True)
@@ -67,6 +84,20 @@ class Subscription(Protocol):
         ...
 
 
+class HaEntity(Protocol):
+    """A Home Assistant entity of a module (Contract 4.4, CORE-344)."""
+
+    object_id: str
+
+    async def set_state(self, value: str | float | bool | None) -> None:
+        """Publish the state: a bool as ``ON`` or ``OFF``, ``None`` as unknown."""
+        ...
+
+    async def remove(self) -> None:
+        """Clear the entity in Home Assistant; idempotent (CORE-345)."""
+        ...
+
+
 class Mqtt(Protocol):
     """``ctx.mqtt`` (Contract 4.4)."""
 
@@ -90,6 +121,31 @@ class Mqtt(Protocol):
 
         Raises:
             PermissionError: ``mqtt.subscribe`` not declared or filter not granted.
+        """
+        ...
+
+    async def ha_entity(
+        self,
+        object_id: str,
+        component: HaComponent,
+        *,
+        name: str,
+        device_class: str | None = None,
+        unit: str | None = None,
+        icon: str | None = None,
+        options: Sequence[str] | None = None,
+        min: float | None = None,
+        max: float | None = None,
+        step: float | None = None,
+        on_command: Callable[[str], Awaitable[None]] | None = None,
+    ) -> HaEntity:
+        """Register a Home Assistant entity; call it in ``start()`` (CORE-344).
+
+        Raises:
+            PermissionError: ``ha.discovery`` not declared.
+            ConfigurationError: There is no MQTT bridge.
+            ValueError: Bad or repeated ``object_id``, or arguments that do not
+                fit the component.
         """
         ...
 

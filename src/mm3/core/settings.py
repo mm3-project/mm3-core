@@ -8,6 +8,7 @@ Implements:
     CORE-61: Core spec 0.11, §10.1 Security.
     CORE-62: Core spec 0.11, §10.1 Security.
     CORE-205: Core spec 0.8, §6.2 Rules.
+    CORE-338: Core spec 0.34, §9.3 MQTT bridge.
     -: Core spec 0.8, §3.2 Concurrency rules.
     CORE-27: Core spec 0.4, §5.3 Routing rules.
     CORE-197: Core spec 0.4, §7 Lifecycle and error handling.
@@ -17,12 +18,21 @@ from __future__ import annotations
 
 import contextlib
 import os
+import re
+import socket
 from datetime import timedelta
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
-from pydantic import ConfigDict, Field, IPvAnyNetwork, field_validator
+from pydantic import (
+    ConfigDict,
+    Field,
+    IPvAnyNetwork,
+    field_validator,
+    model_validator,
+)
 from pydantic_core import PydanticCustomError
 
 from mm3.config import LocaleTag, LocalizedText, ModuleConfig
@@ -140,13 +150,114 @@ class AdminSettings(_Block):
     allow: list[IPvAnyNetwork] = Field(default_factory=list)
 
 
-class MqttSettings(_Block):
-    """MQTT bridge (``engine.mqtt``, core spec 9.3); absent means the bridge is off."""
+def _hostname() -> str:
+    """The host name, lower-cased (CORE-338)."""
+    return socket.gethostname().lower()
 
-    url: str = Field(pattern=r"^mqtts?://")
-    base_topic: str = Field(min_length=1)
-    ha_discovery: bool = False
+
+def _node_from(base_topic: str) -> str:
+    """Derive ``node_id`` from ``base_topic``: lower-cased, other characters ``_`` (CORE-338)."""
+    node = re.sub(r"[^a-z0-9_]", "_", base_topic.lower())
+    return node[:64]
+
+
+class MqttSettings(_Block):
+    """MQTT bridge (``engine.mqtt``, core spec 9.3); absent means the bridge is off.
+
+    Attributes:
+        url: ``mqtt://host[:port]`` (default port 1883) or ``mqtts://host[:port]``
+            (default 8883).
+        username: Broker user name.
+        password: Broker password, a secret field.
+        ca: PEM file, relative to the directory of the main configuration
+            file, that replaces the system CA store for this connection.
+        client_id: MQTT client id; default ``mm3-<hostname>``.
+        keepalive: Keepalive in seconds, 10 to 3600.
+        base_topic: Root of the engine's topics; default ``mm3/<hostname>``.
+        export: Globs of notification names published to ``<base>/event/``.
+        import_: Globs of notification names accepted from ``<base>/notify/``
+            (``import`` in the file).
+        ha_discovery: Publish Home Assistant discovery configs.
+        discovery_prefix: Home Assistant's discovery prefix.
+        node_id: Id of the Home Assistant device; derived from ``base_topic``.
+
+    Implements:
+        CORE-338: Core spec 0.34, §9.3 MQTT bridge.
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
+
+    url: str
+    username: str | None = None
+    password: str | None = Field(default=None, repr=False, json_schema_extra={"secret": True})
+    ca: str | None = Field(default=None, min_length=1)
+    client_id: str = Field(default_factory=lambda: f"mm3-{_hostname()}", min_length=1)
+    keepalive: int = Field(default=60, ge=10, le=3600)
+    base_topic: str = Field(default_factory=lambda: f"mm3/{_hostname()}", min_length=1)
     export: list[str] = Field(default_factory=list)
+    import_: list[str] = Field(default_factory=list, alias="import")
+    ha_discovery: bool = False
+    discovery_prefix: str = Field(default="homeassistant", min_length=1)
+    node_id: str = Field(default="", pattern=r"^([a-z0-9_]{1,64})?$")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _default_node(cls, data: Any) -> Any:
+        if isinstance(data, dict) and not data.get("node_id"):
+            base = data.get("base_topic")
+            if not isinstance(base, str) or not base:
+                base = f"mm3/{_hostname()}"
+            data = {**data, "node_id": _node_from(base)}
+        return data
+
+    @field_validator("url")
+    @classmethod
+    def _check_url(cls, value: str) -> str:
+        parts = urlsplit(value)
+        problem = None
+        if parts.scheme not in ("mqtt", "mqtts"):
+            problem = "the scheme must be mqtt or mqtts"
+        elif not parts.hostname:
+            problem = "the host is missing"
+        elif parts.path not in ("", "/") or parts.query or parts.fragment:
+            problem = "use mqtt[s]://host[:port] only"
+        elif parts.username or parts.password:
+            problem = "put the credentials in username and password"
+        else:
+            try:
+                port = parts.port
+            except ValueError:
+                port = 0
+            if port is not None and not 1 <= port <= 65535:
+                problem = "the port must be between 1 and 65535"
+        if problem:
+            raise ValueError(problem)
+        return value
+
+    @field_validator("base_topic", "discovery_prefix")
+    @classmethod
+    def _check_topic(cls, value: str) -> str:
+        if "+" in value or "#" in value:
+            raise ValueError("a topic prefix has no + or #")
+        if value.startswith("/") or value.endswith("/"):
+            raise ValueError("a topic prefix has no leading or trailing /")
+        return value
+
+    @property
+    def host(self) -> str:
+        """Broker host name."""
+        return urlsplit(self.url).hostname or ""
+
+    @property
+    def tls(self) -> bool:
+        """True for ``mqtts``."""
+        return urlsplit(self.url).scheme == "mqtts"
+
+    @property
+    def port(self) -> int:
+        """Broker port: the one in the URL, else 1883 (``mqtt``) or 8883 (``mqtts``)."""
+        port = urlsplit(self.url).port
+        return port if port is not None else (8883 if self.tls else 1883)
 
 
 class HistorySettings(_Block):

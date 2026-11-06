@@ -91,8 +91,11 @@ def config_secrets(
 
     Implements:
         CORE-319: Core spec 0.24, §10.5 Diagnostics and debugging.
+        CORE-338: Core spec 0.34, §9.3 MQTT bridge.
     """
     found: set[str] = set(extra)
+    if result.config is not None:
+        found.update(_model_secrets(result.config.engine))
     for inst in result.instances:
         if inst.config is not None:
             found.update(_model_secrets(inst.config))

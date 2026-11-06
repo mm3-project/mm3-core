@@ -699,3 +699,30 @@ msgstr "Non è stato possibile caricare la pagina admin di {module}."
 
 msgid "CORE_ADMIN_CAPABILITIES"
 msgstr "Capacità"
+
+msgid "CORE_HA_RELOAD"
+msgstr "Ricarica i browser"
+
+msgid "CORE_HA_PAGE"
+msgstr "Pagina"
+
+msgid "CORE_HA_KIOSK_VOLUME"
+msgstr "Volume del kiosk"
+
+msgid "CORE_HA_KIOSK_MUTE"
+msgstr "Muto del kiosk"
+
+msgid "CORE_HA_INSTANCE_VISIBLE"
+msgstr "{instance} visibile"
+
+msgid "CORE_HA_INSTANCE_ENABLED"
+msgstr "{instance} attivo"
+
+msgid "CORE_MQTT_NOT_CONFIGURED"
+msgstr "Nessun broker MQTT configurato (engine.mqtt)"
+
+msgid "CORE_MQTT_DISCONNECTED"
+msgstr "Il broker MQTT non è connesso"
+
+msgid "CORE_MQTT_PUBLISH_FAILED"
+msgstr "Impossibile pubblicare il messaggio MQTT"

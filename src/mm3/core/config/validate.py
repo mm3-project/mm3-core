@@ -10,6 +10,7 @@ Implements:
     CORE-32: Core spec 0.8, §6.2 Rules.
     CORE-202, CORE-203, CORE-204, CORE-206: Core spec 0.8, §6.2 Rules.
     CORE-262: Core spec 0.11, §6.10 Theme and custom CSS.
+    CORE-338: Core spec 0.34, §9.3 MQTT bridge.
     MOD-49: Module Contract 1.0 rev 6, §6.2 Configuration.
 """
 
@@ -334,6 +335,41 @@ def check_grant_ca_files(
     return records
 
 
+def check_mqtt_ca_file(
+    config: MirrorConfig | None, config_dir: Path, sources: SourceMap
+) -> list[ValidationRecord]:
+    """Check that the ``ca`` file of ``engine.mqtt`` can be read.
+
+    Args:
+        config: The validated configuration, ``None`` when it did not validate.
+        config_dir: Directory of the main configuration file.
+        sources: Source positions for the records.
+
+    Returns:
+        One ``CORE_CFG_FILE_UNREADABLE`` error at ``engine.mqtt.ca`` when the
+        file is missing or unreadable.
+
+    Implements:
+        CORE-338: Core spec 0.34, §9.3 MQTT bridge.
+    """
+    if config is None or config.engine.mqtt is None or config.engine.mqtt.ca is None:
+        return []
+    path = config_dir / config.engine.mqtt.ca
+    try:
+        path.read_bytes()
+    except OSError:
+        return [
+            make_record(
+                "CORE_CFG_FILE_UNREADABLE",
+                pointer(("engine", "mqtt", "ca")),
+                {"file": str(path)},
+                file=str(path),
+                sources=sources,
+            )
+        ]
+    return []
+
+
 def load_config(
     path: Path = DEFAULT_CONFIG,
     *,
@@ -376,6 +412,7 @@ def load_config(
     config, instances, records = validate(loaded, registry)
     result.records.extend(records)
     result.records.extend(check_grant_ca_files(instances, path.parent, loaded.sources))
+    result.records.extend(check_mqtt_ca_file(config, path.parent, loaded.sources))
     layout = None
     if config is not None:
         layout = check_layout(config, instances, registry, loaded.sources, applied=applied)

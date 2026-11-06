@@ -350,6 +350,7 @@ class EngineContext:
             enqueue or (lambda _item: None),
             self._guard,
             on_denied,
+            module_name,
         )
         self._health = InstanceHealth(counters, self._guard)
         self._on_denied = on_denied

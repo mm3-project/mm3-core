@@ -12,6 +12,7 @@ Implements:
     CORE-208: Core spec 0.11, §6.3 Hot reload.
     CORE-209, CORE-210, CORE-245: Core spec 0.9, §6.3 Hot reload.
     CORE-211: Core spec 0.19, §6.3 Hot reload.
+    CORE-339, CORE-345: Core spec 0.34, §9.3 MQTT bridge.
     MOD-50: Module Contract 1.0 rev 6, §6.2 Configuration.
 """
 
@@ -392,6 +393,7 @@ class ConfigManager:
         Implements:
             CORE-210, CORE-245: Core spec 0.9, §6.3 Hot reload.
             CORE-211: Core spec 0.19, §6.3 Hot reload.
+            CORE-339, CORE-345: Core spec 0.34, §9.3 MQTT bridge.
             MOD-50: Module Contract 1.0 rev 6, §6.2 Configuration.
         """
         assert new.config is not None  # noqa: S101 - checked by reload()
@@ -400,6 +402,9 @@ class ConfigManager:
         if plan.engine_restart:
             _log.warning("config_needs_restart", keys=sorted(plan.engine_restart))
         sup.apply_settings(settings)
+        self.engine.config_dir = new.path.parent
+        if "mqtt" in plan.engine_live:
+            await self.engine.mqtt.reconfigure(settings.mqtt, new.path.parent)  # CORE-339
         if "log_level" in plan.engine_live:
             set_log_level(settings.log_level)
 
@@ -443,3 +448,6 @@ class ConfigManager:
         # 4. Tell the browsers; each listener decides what the plan means for it.
         for listener in self.layout_listeners:
             await listener(new, plan)
+        # CORE-345: once the instances of a reload have started, the entities that are
+        # gone leave Home Assistant, and new ones, options and names are published.
+        await self.engine.mqtt.ha.sync()

@@ -15,12 +15,13 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
-from mm3.core.services.mqtt import topic_matches
-from mm3.errors import HttpConnectionError
+from mm3.core.services.hass import state_text
+from mm3.core.services.mqtt import HaEntitySpec, topic_matches, topic_reserved
+from mm3.errors import HttpConnectionError, TransientError
 from mm3.http import Response
 from mm3.mqtt import MqttMessage, Qos, encode_payload
 
-__all__ = ["FakeHttp", "FakeMqtt", "HttpCall", "Published", "fake_mqtt"]
+__all__ = ["FakeHaEntity", "FakeHttp", "FakeMqtt", "HttpCall", "Published", "fake_mqtt"]
 
 
 @dataclass(frozen=True)
@@ -178,6 +179,55 @@ class _Sub:
     active: bool = True
 
 
+class FakeHaEntity:
+    """A Home Assistant entity a module registered with ``ctx.mqtt.ha_entity()``.
+
+    Attributes:
+        instance_id: Owner instance.
+        spec: What the module asked for (component, name key, options, ...).
+        object_id: The entity's id inside the instance.
+        state: The last state as Home Assistant would receive it (``ON``,
+            ``OFF``, text, or ``None`` for unknown); ``None`` before any.
+        states: Every state set, in order.
+        removed: Whether ``remove()`` was called.
+    """
+
+    def __init__(
+        self,
+        fake: FakeMqtt,
+        instance_id: str,
+        spec: HaEntitySpec,
+        deliver: Callable[[MqttMessage], None],
+    ) -> None:
+        self._fake = fake
+        self.instance_id = instance_id
+        self.spec = spec
+        self.object_id = spec.object_id
+        self._deliver = deliver
+        self.state: str | None = None
+        self.states: list[str] = []
+        self.removed = False
+
+    async def set_state(self, value: str | float | bool | None) -> None:
+        """Record the state as the bridge would publish it (CORE-344)."""
+        text = state_text(value)
+        self.state = text
+        self.states.append(text)
+
+    async def remove(self) -> None:
+        """Record the removal; idempotent (CORE-345)."""
+        self.removed = True
+        self._fake.entities.pop((self.instance_id, self.object_id), None)
+
+    def detach(self) -> None:
+        """The instance stopped; the entity stays in Home Assistant."""
+
+    def command(self, payload: str) -> None:
+        """Deliver a Home Assistant command as the bridge would (CORE-344)."""
+        topic = f"{self._fake.base_topic}/ha/{self.instance_id}/{self.object_id}/set"
+        self._deliver(MqttMessage(topic, payload.encode("utf-8"), 1, False))
+
+
 @dataclass
 class FakeMqtt:
     """``h.mqtt``: an in-memory broker.
@@ -185,15 +235,46 @@ class FakeMqtt:
     Publishes are recorded and, like on a broker, delivered to every
     matching subscription; :meth:`inject` delivers a message as if another
     client had published it. Deliveries go through the instance inbox
-    (CORE-100).
+    (CORE-100). ``enabled`` and ``connected`` stand in for the bridge's
+    state (CORE-342) and ``entities`` holds the module's Home Assistant
+    entities (CORE-344).
 
     Attributes:
         publishes: Messages the module published, in order.
+        enabled: Whether an MQTT bridge is configured; False makes every
+            ``ctx.mqtt`` call raise ``ConfigurationError``.
+        connected: Whether the broker is connected; False makes ``publish``
+            raise ``TransientError``.
+        base_topic: The bridge's ``base_topic``; topics under it that belong
+            to the engine are refused.
+        entities: Entities by ``(instance id, object id)``.
     """
 
     publishes: list[Published] = field(default_factory=list)
     _subs: list[_Sub] = field(default_factory=list)
     settle: Callable[[], Awaitable[None]] | None = None
+    enabled: bool = True
+    connected: bool = True
+    base_topic: str = "mm3/test"
+    entities: dict[tuple[str, str], FakeHaEntity] = field(default_factory=dict)
+
+    def reserved(self, topic: str) -> bool:
+        """Whether a topic belongs to the engine (CORE-342)."""
+        return topic_reserved(self.base_topic, topic)
+
+    async def ha_entity(
+        self, instance_id: str, spec: HaEntitySpec, deliver: Callable[[MqttMessage], None]
+    ) -> FakeHaEntity:
+        """Register an entity (CORE-344)."""
+        entity = FakeHaEntity(self, instance_id, spec, deliver)
+        self.entities[(instance_id, spec.object_id)] = entity
+        return entity
+
+    async def command(self, instance_id: str, object_id: str, payload: str) -> None:
+        """Send a Home Assistant command to an entity and let the module handle it."""
+        self.entities[(instance_id, object_id)].command(payload)
+        if self.settle is not None:
+            await self.settle()
 
     @property
     def subscriptions(self) -> list[str]:
@@ -211,7 +292,13 @@ class FakeMqtt:
     async def publish(
         self, instance_id: str, topic: str, payload: bytes, qos: Qos, retain: bool
     ) -> None:
-        """Record a checked publish and deliver it to matching subscriptions."""
+        """Record a checked publish and deliver it to matching subscriptions.
+
+        Raises:
+            TransientError: ``connected`` is False; nothing is recorded or queued.
+        """
+        if not self.connected:
+            raise TransientError("CORE_MQTT_DISCONNECTED")
         self.publishes.append(Published(instance_id, topic, payload, qos, retain))
         self._deliver(MqttMessage(topic, payload, qos, retain))
 

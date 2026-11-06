@@ -802,6 +802,27 @@ async def test_core_277_failed_pactl_command_is_an_audio_failure(rig: Rig, tmp_p
         await stop(task)
 
 
+async def test_core_343_audio_changes_reach_the_listeners(rig: Rig, tmp_path: Path) -> None:
+    runner = FakeRunner()
+    rig.audio = {"sink": "auto", "volume": 60, "mute": False}
+    calls: list[int] = []
+    rig.agents.audio_listeners.append(lambda: calls.append(1))
+    task = await run_agent(rig, runner, tmp_path)
+    try:
+        await eventually(lambda: runner.pactl.volume[pa.HDA_ANALOG] == 60)
+        assert calls  # the connection
+        before = len(calls)
+        await rig.agents.set_runtime_audio(volume=20)
+        assert len(calls) > before
+        before = len(calls)
+        await rig.agents.audio_changed()
+        assert len(calls) > before
+    finally:
+        await stop(task)
+    await eventually(lambda: not rig.agents.status.connected)
+    assert len(calls) >= 4  # connect, runtime, config, disconnect
+
+
 async def test_core_296_runtime_volume_and_mute_are_never_persisted(
     rig: Rig, tmp_path: Path
 ) -> None:

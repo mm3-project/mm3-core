@@ -180,6 +180,18 @@ async def test_core_233_page_commands_on_the_bus(world: World) -> None:
     assert world.rec.pages()[-1]["reason"] == "notification"
 
 
+async def test_core_343_page_and_visibility_changes_reach_the_listeners(world: World) -> None:
+    calls: list[str] = []
+    world.pages.listeners.append(lambda: calls.append(world.pages.page))
+    world.engine.supervisor.emit("PAGE_NEXT", {})
+    await world.settle()
+    assert calls[-1] == "b"
+    before = len(calls)
+    world.pages.set_manual("one", True)
+    await world.settle()
+    assert len(calls) > before
+
+
 async def test_core_233_reload_keeps_or_resets_the_page(world: World, tmp_path: Path) -> None:
     world.pages.set_page("c", "ha")
     await world.settle()

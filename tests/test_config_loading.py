@@ -316,7 +316,7 @@ def test_core_201_admin_allow_and_mqtt(tmp_path: Path, registry: Registry) -> No
     paths = {r.path: r.code for r in result.errors}
     assert paths == {
         "/engine/admin/allow/1": "CORE_CFG_TYPE",
-        "/engine/mqtt/url": "CORE_CFG_PATTERN",
+        "/engine/mqtt/url": "CORE_CFG_INVALID",
     }
 
 
@@ -516,7 +516,11 @@ def test_core_243_codes_match_spec_table() -> None:
         ({"engine": {"locale": "not a tag"}}, "CORE_CFG_LOCALE", {"value": "not a tag"}),
         ({"engine": {"timezone": "Mars/Base"}}, "CORE_CFG_TIMEZONE", {"value": "Mars/Base"}),
         ({"engine": {"units": "k"}}, "CORE_CFG_CHOICE", {"allowed": "'metric' or 'imperial'"}),
-        ({"engine": {"mqtt": {"url": "mqtt://b"}}}, "CORE_CFG_REQUIRED", {}),
+        (
+            {"engine": {"mqtt": {"url": "http://b"}}},
+            "CORE_CFG_INVALID",
+            {"reason": "the scheme must be mqtt or mqtts"},
+        ),
         (
             {"engine": {"mqtt": {"url": "mqtt://b", "base_topic": ""}}},
             "CORE_CFG_LENGTH",
@@ -892,3 +896,32 @@ def test_core_201_an_unreported_output_name_is_not_a_configuration_error(
     assert result.config.audio is not None
     assert result.config.audio.sink == name
     assert result.warnings == []
+
+
+def test_core_338_an_unreadable_mqtt_ca_file_is_an_error(
+    tmp_path: Path, registry: Registry
+) -> None:
+    result = load(tmp_path, "engine:\n  mqtt:\n    url: mqtts://b\n    ca: missing.pem\n", registry)
+    assert {(r.path, r.code) for r in result.errors} == {
+        ("/engine/mqtt/ca", "CORE_CFG_FILE_UNREADABLE")
+    }
+
+
+def test_core_338_a_readable_mqtt_ca_file_is_fine(tmp_path: Path, registry: Registry) -> None:
+    write(tmp_path / "etc" / "ca.pem", "PEM")
+    result = load(tmp_path, "engine:\n  mqtt:\n    url: mqtts://b\n    ca: ca.pem\n", registry)
+    assert result.ok, result.records
+
+
+def test_core_338_the_mqtt_password_is_a_secret_of_the_configuration(
+    tmp_path: Path, registry: Registry
+) -> None:
+    from mm3.core.diag.secrets import config_secrets
+
+    result = load(
+        tmp_path,
+        "engine:\n  mqtt:\n    url: mqtt://b\n    username: u\n"
+        "    password: correct-horse-battery\n",
+        registry,
+    )
+    assert "correct-horse-battery" in config_secrets(result, environ={})

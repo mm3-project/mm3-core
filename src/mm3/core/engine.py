@@ -11,6 +11,8 @@ Implements:
     -: Core spec 0.4, §7.1 Engine startup and shutdown.
     CORE-197: Core spec 0.4, §7 Lifecycle and error handling.
     CORE-290, CORE-291: Core spec 0.20, §7.1 Engine startup and shutdown.
+    CORE-339: Core spec 0.34, §9.3 MQTT bridge.
+    CORE-345: Core spec 0.34, §9.3 MQTT bridge.
 """
 
 from __future__ import annotations
@@ -28,6 +30,7 @@ from mm3.core.i18n import I18n, registry_roots
 from mm3.core.logging import get_logger
 from mm3.core.registry import Registry
 from mm3.core.services.http import HttpxTransport
+from mm3.core.services.mqttbridge import MqttBridge
 from mm3.core.services.storage import resolve_state_dir
 from mm3.core.settings import EngineSettings
 from mm3.core.supervisor import InstanceSpec, State, Supervisor
@@ -94,6 +97,16 @@ class Engine:
         self.supervisor.http_transport = self.http
         self.i18n = I18n(registry_roots(registry))
         self.supervisor.i18n = self.i18n
+        self.config_dir: Path | None = None
+        self.mqtt = MqttBridge(
+            bus=self.bus,
+            supervisor=self.supervisor,
+            clock=self.clock,
+            i18n=self.i18n,
+            state_dir=self.supervisor.state_dir,
+        )
+        self.supervisor.mqtt_broker = self.mqtt
+        self.bus.add_endpoint(self.mqtt)
         self.running = False
         self.started_at: datetime | None = None
         self.notifier = notifier or ServiceNotifier.from_environ()
@@ -110,9 +123,11 @@ class Engine:
         """
         self.started_at = self.clock.wall()
         await self.http.start()
+        await self.mqtt.start(self.settings.mqtt, self.config_dir)
         for spec in instances:
             self.supervisor.add(spec)
         await self.supervisor.start_all()
+        await self.mqtt.ha.sync()  # CORE-345: stale entities go once the instances started
         self.running = True
         self.supervisor.emit("CORE_READY", {})
         _log.info("engine_ready", instances=len(self.supervisor.instances()))
@@ -123,6 +138,7 @@ class Engine:
         if self.running:
             self.supervisor.emit("CORE_SHUTDOWN", {})
         await self.supervisor.stop_all()
+        await self.mqtt.stop()  # CORE-339: ``offline`` before a clean stop
         await self.http.aclose()
         self.executor.shutdown(wait=False, cancel_futures=True)
         self.running = False
