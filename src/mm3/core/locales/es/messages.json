@@ -211,6 +211,7 @@
  "CORE_HA_KIOSK_MUTE": "Silencio del quiosco",
  "CORE_HA_KIOSK_VOLUME": "Volumen del quiosco",
  "CORE_HA_PAGE": "Página",
+ "CORE_HA_PAGES_PAUSED": "Pausar el cambio de página",
  "CORE_HA_RELOAD": "Recargar los navegadores",
  "CORE_MQTT_DISCONNECTED": "El broker MQTT no está conectado",
  "CORE_MQTT_NOT_CONFIGURED": "No hay ningún broker MQTT configurado (engine.mqtt)",

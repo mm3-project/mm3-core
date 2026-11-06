@@ -11,6 +11,7 @@ Implements:
     CORE-224, CORE-225, CORE-226: Core spec 0.19, §5.5 Shared notification registry.
     -: Core spec 0.32, §5.5 Shared notification registry.
     CORE-245: Core spec 0.9, §6.3 Hot reload.
+    CORE-336, CORE-337: Core spec 0.34, §6.9 Pages and visibility.
     MOD-40: Module Contract 1.0 rev 6, §6.1 Messaging.
     MOD-24, MOD-29: Module Contract 1.0 rev 8, §6.1 Messaging.
 """
@@ -131,8 +132,8 @@ class PageSet(_Payload):
 class PagePause(_Payload):
     """Payload of ``PAGE_PAUSE``.
 
-    The engine's handling of pause holds comes with milestone 7; the name is
-    registered here because it is in the §5.5 table.
+    The engine keeps one pause hold per holder: the sending instance, ``rest``
+    or ``mqtt`` (CORE-336).
 
     Attributes:
         for_: Seconds the hold lasts (1 to 3600), sent as ``for``; without
@@ -160,12 +161,17 @@ class CorePageChanged(_Payload):
     Attributes:
         page: Current page id.
         index: Its position, from 0.
+        previous: The page before the change; ``None`` with reason ``start``
+            (CORE-337).
         count: Number of pages.
         pages: Ids and titles of all pages.
-        reason: Why the page changed.
+        reason: Why the page changed: ``rotate``, ``notification``, ``touch``,
+            ``rest``, ``ha``, ``resume``, ``reload``, ``start``, ``after`` or
+            ``idle`` (CORE-337).
     """
 
     page: str
+    previous: str | None = None
     index: int = Field(ge=0)
     count: int = Field(ge=1)
     pages: list[PageInfoPayload]

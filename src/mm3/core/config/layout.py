@@ -12,6 +12,7 @@ Implements:
     CORE-212, CORE-213, CORE-214: Core spec 0.9, §6.5 Screen layout.
     CORE-140, CORE-141, CORE-142, CORE-215: Core spec 0.9, §6.7 Display output.
     CORE-230, CORE-231, CORE-232: Core spec 0.9, §6.9 Pages and visibility.
+    CORE-334: Core spec 0.34, §6.9 Pages and visibility.
     CORE-274: Core spec 0.14, §5.6 WebSocket protocol.
     MOD-67: Module Contract 1.0 rev 6, §7 Internationalization.
 """
@@ -383,6 +384,23 @@ def _pages(ctx: _Ctx) -> list[str]:
             ids.append(page.id)
     if pages.default is not None and pages.default not in ids:
         ctx.add("CORE_CFG_PAGE_UNKNOWN", ("pages", "default"), {"page": pages.default})
+    default = pages.default if pages.default in ids else (ids[0] if ids else None)
+    for i, page in enumerate(pages.pages):
+        if page.after is None:
+            continue
+        target = page.after.page if page.after.page is not None else default
+        if target is None:
+            continue
+        if target == page.id:
+            ctx.add(
+                "CORE_CFG_INVALID",
+                ("pages", "list", i, "after", "page"),
+                {"reason": "a timed jump cannot go to its own page"},
+            )
+        elif target not in ids:
+            ctx.add(
+                "CORE_CFG_PAGE_UNKNOWN", ("pages", "list", i, "after", "page"), {"page": target}
+            )
     return ids
 
 

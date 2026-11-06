@@ -17,6 +17,7 @@ Implements:
     CORE-113: Core spec 0.7, §10.5 Diagnostics and debugging.
     CORE-223: Core spec 0.13, §5.4 Request and reply.
     CORE-236, CORE-240: Core spec 0.14, §6.9 Pages and visibility.
+    CORE-333, CORE-336: Core spec 0.34, §6.9 Pages and visibility.
     CORE-299: Core spec 0.22, §9.1 Remote-control API.
     CORE-311, CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-316, CORE-318: Core spec 0.24, §10.5 Diagnostics and debugging.
@@ -51,6 +52,7 @@ from mm3.core.diag.bundle import Bundle, bundle_name, package_list
 from mm3.core.diag.logfilter import LogFilter
 from mm3.core.diag.secrets import Masker
 from mm3.core.logging import get_logger, log_levels, numbered_records
+from mm3.core.pages import HOLDER_REST
 from mm3.core.web.auth import WebAuth
 from mm3.core.web.kiosk import KioskStatus
 from mm3.core.web.modroutes import ModuleRoutes
@@ -122,6 +124,17 @@ class AudioBody(_Body):
 
     volume: StrictInt | None = Field(default=None, ge=0, le=100)
     mute: StrictBool | None = None
+
+
+class PauseBody(_Body):
+    """``POST /api/v1/pages/pause``: how long the hold lasts (CORE-336).
+
+    Attributes:
+        for_: Seconds (1 to 3600), sent as ``for``; without it the hold lasts
+            until ``POST /api/v1/pages/resume``.
+    """
+
+    for_: StrictInt | None = Field(default=None, alias="for", ge=1, le=3600)
 
 
 class NotifyBody(_Body):
@@ -526,10 +539,18 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
     def pages_out() -> dict[str, Any]:
         pages = services.pages
         if pages is None:
-            return {"current": "main", "pages": [{"id": "main", "title": "main"}]}
+            return {
+                "current": "main",
+                "pages": [{"id": "main", "title": "main", "cycle": True}],
+                "paused": [],
+            }
         return {
             "current": pages.page,
-            "pages": [{"id": p.id, "title": p.title} for p in pages.page_infos()],
+            "pages": [
+                {"id": p.id, "title": p.title, "cycle": pages.is_in_cycle(p.id)}
+                for p in pages.page_infos()
+            ],
+            "paused": pages.paused,
         }
 
     async def pages_after() -> dict[str, Any]:
@@ -554,6 +575,22 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
         """Move to the previous page (CORE-236)."""
         if services.pages is not None:
             services.pages.prev("rest")
+        return await pages_after()
+
+    @router.post("/pages/pause")
+    async def pause_pages(body: PauseBody | None = None) -> dict[str, Any]:
+        """Hold rotation, timed jumps and idle return; holder ``rest`` (CORE-336)."""
+        if services.pages is not None:
+            services.pages.pause_hold(
+                HOLDER_REST, float(body.for_) if body is not None and body.for_ else None
+            )
+        return await pages_after()
+
+    @router.post("/pages/resume")
+    async def resume_pages() -> dict[str, Any]:
+        """End the hold of holder ``rest``; without one nothing changes (CORE-336)."""
+        if services.pages is not None:
+            services.pages.resume(HOLDER_REST)
         return await pages_after()
 
     @router.post("/pages/{page}")

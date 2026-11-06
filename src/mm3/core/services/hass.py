@@ -10,6 +10,7 @@ cleared from Home Assistant (CORE-343 to CORE-345).
 
 Implements:
     CORE-343: Core spec 0.34, §9.3 MQTT bridge.
+    CORE-336: Core spec 0.34, §6.9 Pages and visibility.
     CORE-344: Core spec 0.34, §9.3 MQTT bridge.
     CORE-345: Core spec 0.34, §9.3 MQTT bridge.
     CORE-236: Core spec 0.34, §6.9 Pages and visibility.
@@ -30,6 +31,7 @@ from typing import TYPE_CHECKING, Any, Protocol
 from mm3.__about__ import __version__
 from mm3.core.i18n.catalogs import locale_chain
 from mm3.core.logging import get_logger
+from mm3.core.pages import HOLDER_MQTT
 from mm3.core.services.mqtt import HaEntityHandle, HaEntitySpec
 from mm3.core.settings import MqttSettings
 from mm3.errors import TransientError
@@ -73,8 +75,21 @@ class PagesControl(Protocol):
         """Whether no hide reason applies."""
         ...
 
+    @property
+    def paused(self) -> list[str]:
+        """Holders of the active pause holds (CORE-336)."""
+        ...
+
     def set_page(self, page: str, reason: Any) -> None:
         """Ask for a page change."""
+        ...
+
+    def pause_hold(self, holder: str, seconds: float | None = None) -> None:
+        """Set the pause hold of a holder (CORE-336)."""
+        ...
+
+    def resume(self, holder: str) -> None:
+        """Clear the pause hold of a holder (CORE-336)."""
         ...
 
     def set_manual(self, instance_id: str, hidden: bool) -> None:
@@ -468,6 +483,23 @@ class HaService:
                     extra={"options": list(pages.ids)},
                     state=lambda: pages.page,
                     command=set_page,
+                )
+            )
+
+            async def set_paused(text: str) -> None:
+                flag = _flag(text)
+                if flag is True:
+                    pages.pause_hold(HOLDER_MQTT)
+                elif flag is False:
+                    pages.resume(HOLDER_MQTT)
+
+            out.append(
+                _EngineEntity(
+                    "pages_paused",
+                    "switch",
+                    "CORE_HA_PAGES_PAUSED",
+                    state=lambda: state_text(HOLDER_MQTT in pages.paused),
+                    command=set_paused,
                 )
             )
         if c.kiosk is not None:

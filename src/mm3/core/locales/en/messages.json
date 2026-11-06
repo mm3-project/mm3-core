@@ -211,6 +211,7 @@
  "CORE_HA_KIOSK_MUTE": "Kiosk mute",
  "CORE_HA_KIOSK_VOLUME": "Kiosk volume",
  "CORE_HA_PAGE": "Page",
+ "CORE_HA_PAGES_PAUSED": "Pause page changes",
  "CORE_HA_RELOAD": "Reload browsers",
  "CORE_MQTT_DISCONNECTED": "The MQTT broker is not connected",
  "CORE_MQTT_NOT_CONFIGURED": "No MQTT broker is configured (engine.mqtt)",
