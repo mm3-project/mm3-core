@@ -262,7 +262,7 @@ name = "Services: MQTT/HA, presence, installer, catalog, backup"
 status = "in_progress"
 requirements = [
   "CORE-50..53", "CORE-66", "CORE-100", "CORE-120..126", "CORE-130..136",
-  "CORE-160..165", "CORE-333..337", "CORE-338..366", "PRS-01..08", "MOD-96..99",
+  "CORE-160..165", "CORE-333..337", "CORE-338..370", "PRS-01..08", "MOD-96..99",
 ]
 # CORE-338..345 (core 0.31): MQTT bridge and Home Assistant. CORE-339 extends
 #   CORE-305 (status, milestone 6) and CORE-342 extends CORE-100 without
@@ -289,6 +289,14 @@ requirements = [
 #   CORE_API_UPLOAD_TOO_LARGE and CORE-356 the installer and catalog codes to the
 #   CORE-298 list; the engine's problem codes grow with the routes in this
 #   milestone's development.
+# CORE-367..370 (core 0.35): settled at the start of PR 4 development. CORE-351,
+#   355 and 359 changed (installer-only index verification and rollback guard,
+#   socket in /run/mm3-install, refresh route, installed modules, unlisted sources,
+#   CAP_SETUID/CAP_SETGID for the build children); CORE-367 runs package code as
+#   mm3-build without capabilities, CORE-368 adds the installer venv
+#   /opt/mm3/installer and the user mm3-build (extends CORE-293, milestone 10),
+#   CORE-369 the root-only passphrase and TOTP setup, CORE-370 the installer's
+#   standard-library downloads.
 # CORE-333..337 (core 0.30): pages out of the cycle, timed jumps, idle
 #   return, pause holds and the previous page (MMM-pages and
 #   MMM-ProfileSwitcher). They extend CORE-230..237 of milestones 2, 3 and 6
