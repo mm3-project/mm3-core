@@ -7,6 +7,17 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (core spec 0.30)
+
+- Spec sync for core spec 0.30 (Module Contract unchanged at 1.0 rev 13):
+  pages cover MMM-pages and MMM-ProfileSwitcher, a profile being a page.
+  Added CORE-333 (pages out of the cycle), CORE-334 (timed jump to a page),
+  CORE-335 (idle return to default), CORE-336 (pause holds with
+  `PAGE_PAUSE`, `PAGE_RESUME` and `POST /api/v1/pages/pause|resume`) and
+  CORE-337 (`previous` and the reasons `after` and `idle` in
+  `CORE_PAGE_CHANGED`), assigned to milestone 7. They extend CORE-230..237
+  without changing them, so no closed milestone is reopened.
+
 ### Fixed (weekly canary, issues #54, #55, #56)
 
 - The test configuration sets `asyncio_default_fixture_loop_scope`
