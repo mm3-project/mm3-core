@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.32"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32"]
+version = "0.34"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32", "0.33", "0.34"]
 
 [[spec]]
 name = "Module Contract"
@@ -2890,6 +2890,186 @@ title = "Presence and power: module boundary"
 hash = "c90c80662dbe"
 introduced_in = "0.32"
 changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "CORE-349"
+spec = "Core spec"
+section = "10.6"
+title = "Module catalog"
+hash = "a031c3d11e66"
+introduced_in = "0.33"
+changed_in = "0.33"
+status = "active"
+
+[[requirement]]
+id = "CORE-350"
+spec = "Core spec"
+section = "10.6"
+title = "Module catalog"
+hash = "eb901b59a4d7"
+introduced_in = "0.33"
+changed_in = "0.33"
+status = "active"
+
+[[requirement]]
+id = "CORE-351"
+spec = "Core spec"
+section = "10.6"
+title = "Module catalog"
+hash = "93e670391cb7"
+introduced_in = "0.33"
+changed_in = "0.33"
+status = "active"
+
+[[requirement]]
+id = "CORE-352"
+spec = "Core spec"
+section = "10.6"
+title = "Module catalog"
+hash = "ee9bc2f0a0d3"
+introduced_in = "0.33"
+changed_in = "0.33"
+status = "active"
+
+[[requirement]]
+id = "CORE-353"
+spec = "Core spec"
+section = "10.6"
+title = "Module catalog"
+hash = "ae03ce9c9a3c"
+introduced_in = "0.33"
+changed_in = "0.33"
+status = "active"
+
+[[requirement]]
+id = "CORE-354"
+spec = "Core spec"
+section = "10.7"
+title = "Installer service"
+hash = "623bed5c0eab"
+introduced_in = "0.33"
+changed_in = "0.33"
+status = "active"
+
+[[requirement]]
+id = "CORE-355"
+spec = "Core spec"
+section = "10.7"
+title = "Installer service"
+hash = "93b9e7715901"
+introduced_in = "0.33"
+changed_in = "0.33"
+status = "active"
+
+[[requirement]]
+id = "CORE-356"
+spec = "Core spec"
+section = "10.7"
+title = "Installer service"
+hash = "da3d8936a478"
+introduced_in = "0.33"
+changed_in = "0.33"
+status = "active"
+
+[[requirement]]
+id = "CORE-357"
+spec = "Core spec"
+section = "10.7"
+title = "Installer service"
+hash = "addba6f76123"
+introduced_in = "0.33"
+changed_in = "0.33"
+status = "active"
+
+[[requirement]]
+id = "CORE-358"
+spec = "Core spec"
+section = "10.7"
+title = "Installer service"
+hash = "5d0d737e15f1"
+introduced_in = "0.33"
+changed_in = "0.33"
+status = "active"
+
+[[requirement]]
+id = "CORE-359"
+spec = "Core spec"
+section = "10.8"
+title = "Backup and restore"
+hash = "434348a3c8fc"
+introduced_in = "0.34"
+changed_in = "0.34"
+status = "active"
+
+[[requirement]]
+id = "CORE-360"
+spec = "Core spec"
+section = "10.8"
+title = "Backup and restore"
+hash = "2eeffc327bec"
+introduced_in = "0.34"
+changed_in = "0.34"
+status = "active"
+
+[[requirement]]
+id = "CORE-361"
+spec = "Core spec"
+section = "10.8"
+title = "Backup and restore"
+hash = "fa99b92baa0f"
+introduced_in = "0.34"
+changed_in = "0.34"
+status = "active"
+
+[[requirement]]
+id = "CORE-362"
+spec = "Core spec"
+section = "10.8"
+title = "Backup and restore"
+hash = "4402a98db52b"
+introduced_in = "0.34"
+changed_in = "0.34"
+status = "active"
+
+[[requirement]]
+id = "CORE-363"
+spec = "Core spec"
+section = "10.8"
+title = "Backup and restore"
+hash = "0b9dd35b9218"
+introduced_in = "0.34"
+changed_in = "0.34"
+status = "active"
+
+[[requirement]]
+id = "CORE-364"
+spec = "Core spec"
+section = "10.8"
+title = "Backup and restore"
+hash = "77b0a9557bd4"
+introduced_in = "0.34"
+changed_in = "0.34"
+status = "active"
+
+[[requirement]]
+id = "CORE-365"
+spec = "Core spec"
+section = "10.8"
+title = "Backup and restore"
+hash = "ee62d6cc829a"
+introduced_in = "0.34"
+changed_in = "0.34"
+status = "active"
+
+[[requirement]]
+id = "CORE-366"
+spec = "Core spec"
+section = "10.8"
+title = "Backup and restore"
+hash = "518aa9a91ba4"
+introduced_in = "0.34"
+changed_in = "0.34"
 status = "active"
 
 [[requirement]]

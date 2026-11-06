@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.32 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.34 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -46,6 +46,7 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | Kiosk | System unit as user mm3-kiosk running cage with a kiosk agent that applies the display block and the audio output and volume live and supervises Chromium; sound through PipeWire in the kiosk session; Debian 13+ (6.7) |
 | Admin and REST API | Errors as problem+json with CORE\_API\_\* codes; the draft lives in the browser, the server applies JSON Patch without storing; ETag = hash of the config set; secrets round-trip as !masked; one admin WebSocket /admin/ws with status, logs and bus topics; Show on mirror reaches the kiosk only; OpenAPI as JSON without an interactive page; the CLI reaches the engine on the Unix socket /run/mm3/admin.sock; a request without a reply in time is 504 and an error reply is an ordinary 200 reply; instance controls are idempotent; log levels are set as {level} with the fixed debug\_ttl; log filters by minimum level; status frames on change at most once a second; a diagnostic bundle with a fixed file list; secrets masked by value in the bus inspector; tagged nodes in JSON Patch as one-key objects and an in-house JSON Patch on the ruamel nodes; one /admin/config page whose History tab comes first; YAML lint through validate and CodeMirror bundled once with esbuild; the session locale only with an admin session (6.4, 6.6, 6.8, 9.1, 10.5; decided 4 and 5 Nov) |
 | MQTT bridge | One shared aiomqtt connection with username/password and optional CA, no client certificates; inbound notifications only for names in mqtt.import, none by default; envelopes out for mqtt.export; no offline queue (TransientError); Home Assistant entities for modules through ctx.mqtt.ha\_entity() with the capability ha.discovery and no grant; stale entities cleared (9.3; decided 6 Nov) |
+| Backups | Run and scheduled by the installer service, which has CAP\_DAC\_OVERRIDE, CAP\_CHOWN and CAP\_FOWNER inside ProtectSystem=strict; no mm3-backup.timer; age-encrypted tar.gz with an unencrypted sidecar; rclone remotes of four types kept by the installer; pre-operation backups kept 3 (10.8; changed 6 Nov) |
 
 ### 1.2 Approved frameworks (27 Oct 2026)
 
@@ -69,6 +70,7 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | MM² migration | esprima (Python port) | Parses config.js without executing it |
 | Package provenance | PyPI Trusted Publishing + PEP 740 attestations (Sigstore) | PyPI's own signing standard; no keys for maintainers to manage |
 | Installer re-auth | argon2-cffi, pyotp | Passphrase hashing; standard TOTP codes for authenticator apps |
+| Supply-chain verification | sigstore 4.x and pypi-attestations (bounded to the current 0.0.x release, every update reviewed), behind mm3.installer.verify in the extra mm3-core\[installer\] (CORE-349) | sigstore-python is the reference Sigstore client; pypi-attestations is PyPI's own PEP 740 library, maintained by the PyPI admins with Trail of Bits; only the installer imports them (decided 6 Nov) |
 | Backup encryption | age (Debian package age), invoked as a subprocess | Standard, audited format; passphrase and public-key modes, so scheduled backups need no secret on the mirror |
 | Remote backup copy | rclone (Debian package), invoked as a subprocess | One tool for SFTP, SMB, WebDAV, S3 and 70+ other targets |
 | Dependency management | uv (lockfile), Renovate (update bot), pip-audit (vulnerability scan) | Reproducible installs with hashes; tested update PRs incl. vendored JS; known-CVE gate |
@@ -1094,7 +1096,6 @@ The server binds to `127.0.0.1` by default, and nothing beyond the shell itself 
 | `mm3.service` | Engine (`Type=notify`, NotifyAccess=main, WatchdogSec=30s; CORE-290–292) |
 | `mm3-kiosk.service` | System unit as user `mm3-kiosk` on tty1 running `cage -- mm3 kiosk session`: applies the display block (6.7), then launches and supervises Chromium on `http://127.0.0.1:8080` (CORE-143, CORE-268–270) |
 | mm3-installer.service | Privileged installer for admin-initiated installs, Unix socket only (10.7) |
-| mm3-backup.timer | Scheduled backup and remote copy, run as the installer user (10.8) |
 
 CLI: `mm3 run`, `mm3 check-config`, `mm3 modules list`, `mm3 new-module <name> [--kind full|backend|frontend]` (scaffold with all five locales), `mm3 module check <path>`, `mm3 i18n compile|check`, `mm3 token new|list|revoke`, `mm3 kiosk session`.
 
@@ -1214,13 +1215,24 @@ Modules are discovered through a public catalog, a GitHub repository whose signe
 | --- | --- |
 | `search <text>` | Search the cached index; shows badge and compatibility |
 | `info <name>` | Description, versions, required capabilities and grants, check report |
-| `install <name>[==ver]` | Verify index signature, SHA-256 and attestation, then `pip install` into the engine venv; show requested capabilities before confirming |
+| `install <name>[==ver]` | Verify index signature, SHA-256 and attestation, then `pip install` through the installer service, which builds the staged venv (CORE-353, CORE-354); show requested capabilities before confirming |
 | `update [<name>]` | Upgrade to the newest compatible release |
-| `remove <name>` | Uninstall; instances in config are disabled, not deleted |
+| `remove <name>` | Uninstall; instances in config are disabled, not deleted (CORE-358) |
 | `list` | Installed modules, versions, available updates |
 
 - CORE-125: The index is cached locally and refreshed at most daily; `search`, `info` and `list` work offline from the cache.
 - CORE-126: `install` and `update` abort if any verification fails; nothing is installed from outside the index unless `--from-pypi` or a local path is given explicitly, and such modules are marked **unlisted** in the admin.
+
+**Index and verification**
+
+- CORE-349: Verification libraries (extends CORE-131). Signatures and attestations are verified with `sigstore` and `pypi-attestations` through one adapter, `mm3.installer.verify`. Both come with the extra `mm3-core[installer]`, which `mm3-install.sh` installs; the engine never imports them.
+- CORE-350: Index format. The index is `https://mm3-project.github.io/module-index/index.json` with its Sigstore bundle `index.json.sigstore.json`, signed keyless by the workflow `.github/workflows/publish.yml` of `mm3-project/module-index` on `refs/heads/main`, with the GitHub Actions OIDC issuer; that identity and both URLs are fixed in mm3-core. The index holds `schema` (1), `serial` (an integer that rises with every publication), `generated_at`, `expires` (at most 14 days later; the index is published at least weekly) and `modules`, each with `pypi`, `repository`, `badge` (`official`, `verified` or `community`, CORE-122), `publisher` (the Trusted Publisher repository and workflow, CORE-123), `category`, `license`, `description` (`LocalizedText`) and `releases`, each with `version`, `api` (the supported Module API range), `capabilities`, `grants` (the scopes the module asks for), `check` (`{result, report_url}`) and `files` (`[{filename, sha256}]`, wheels only).
+- CORE-351: Cache and freshness (extends CORE-125). The cache lives in `<state>/catalog/` and is refreshed at most once a day and on demand (`mm3 modules refresh`, `POST /api/v1/catalog/refresh`). A downloaded index replaces the cache only when its signature verifies, its `serial` is not lower than the cached one and it has not expired. `install` and `update` need a verified index that has not expired; `search`, `info` and `list` work from any cached index and then report it as stale.
+- CORE-352: Release verification (extends CORE-131). The installer downloads the release's wheel from PyPI, checks its SHA-256 against the index and verifies its PEP 740 provenance from PyPI's Integrity API against the entry's `publisher`. Any failure aborts the operation with the reason, before anything is built.
+
+**CLI through the installer**
+
+- CORE-353: CLI operations (extends CORE-126 and CORE-293). `mm3 modules install`, `update`, `remove` and `restore-previous` send their operation to the installer socket (10.7); the CLI never writes a venv. A listed package needs the passphrase, and the TOTP code when enabled, as from the admin (CORE-132). An unlisted package (`--from-pypi` or a local path) is accepted only when the socket peer, read with `SO_PEERCRED`, is root (`sudo mm3 modules install …`), without a passphrase; the installer records it as unlisted. `mm3-install.sh` creates the system user `mm3-install`, a member of group `mm3`, and gives it `/opt/mm3/venvs/`.
 
 **Admin UI** adds a Catalog page: search, details, badges, compatibility, required grants, and Install, Update and Remove buttons that use the installer service (10.7); the equivalent CLI command is shown as an alternative. The installed-modules list shows available updates.
 
@@ -1236,6 +1248,12 @@ Installs, updates and removals started from the admin UI run in a separate privi
 - CORE-135: Rollback: if the engine is not `READY` within 60 s of the restart, or `mm3 diag check` fails, the installer switches the symlink back and restarts again. The last 3 venvs are kept, and the admin offers "Restore previous version".
 - CORE-136: Every request is logged with time, admin client address, package, versions and outcome, and listed on the admin debug page.
 - One operation runs at a time; progress streams to the admin page.
+
+* CORE-354: Staged venv (extends CORE-134). The installer creates the new venv with `python3 -m venv` and installs with `pip`, constrained to the versions frozen in the current venv, the verified wheel by its downloaded file and the module's dependencies from PyPI. The operation aborts, listing the conflicts, when it would change the version of any package that something other than the module being changed requires. A removal uninstalls the module and the packages only it required.
+* CORE-355: Installer protocol. `mm3 installer serve` answers HTTP/JSON on `/run/mm3/installer.sock`: `GET /v1/status` (`{busy, locked_until, previous}`, the kept venvs), `POST /v1/operations` (`{action, name?, version?, passphrase?, totp?, client}`, with `action` `install`, `update`, `remove` or `restore_previous`) answering 202 `{id}`, `GET /v1/operations` (the last 100), `GET /v1/operations/{id}` (`{id, action, name, from, to, state, steps, error}`, with `state` `queued`, `verifying`, `building`, `switching`, `restarting`, `checking`, `done`, `rolled_back` or `failed`) and `GET /v1/operations/{id}/events` (NDJSON, one line per step). A failed re-authentication answers 403, a locked installer 423 and a second operation while one runs 409. Operations are kept in the installer's state directory, so they outlive the engine's restart.
+* CORE-356: Engine catalog and installer API (extends CORE-298 and CORE-304). The engine serves `GET /api/v1/catalog` (`q`, `category`; entries with badge, compatibility, installed and available versions), `GET /api/v1/catalog/{name}` (the details of CORE-133), `POST /api/v1/catalog/refresh`, `GET /api/v1/installer` and `GET`, `POST /api/v1/installer/operations[/{id}]`, forwarding operations to the installer. Problem codes added: `CORE_API_INSTALLER_UNAVAILABLE` (503), `CORE_API_REAUTH_FAILED` (403), `CORE_API_INSTALLER_LOCKED` (423), `CORE_API_INSTALLER_BUSY` (409) and `CORE_API_CATALOG_UNAVAILABLE` (503, no cached index). The passphrase and TOTP code pass through unchanged and are never logged or stored. `/admin/ws` gains the topic `installer`, whose frames carry an operation on every change; after the engine's restart the admin page subscribes again and reads the operation.
+* CORE-357: Restart and checks (extends CORE-134 and CORE-135). `mm3-installer.service` (user `mm3-install`) and a polkit rule that lets `mm3-install` restart `mm3.service` and nothing else ship in the package, are printed by `mm3 installer unit` and `mm3 installer polkit`, and are installed by `mm3-install.sh`. After a restart the engine counts as READY when the unit is active within 60 s (`Type=notify`, CORE-290); then the installer runs `mm3 diag check` over the admin socket (CORE-311), and exit 1 means rollback.
+* CORE-358: Removal (extends CORE-203). Before a removal is forwarded to the installer, the engine (for the admin) or the CLI (through the admin socket) saves a new configuration history version that sets `disabled: true` on every enabled instance of the module; with no such instance no version is written. The version stays if the removal fails and can be undone. When the engine cannot be reached, `mm3 modules remove` stops with an error.
 
 ### 10.8 Backup and restore
 
@@ -1261,7 +1279,7 @@ Every archive contains `manifest.json`: engine version, Module API version, host
 **When and where**
 
 - **Manual:** from the admin (Backups page: choose parts, encryption, download) or `mm3 backup create`.
-- **Scheduled:** `mm3-backup.timer`, daily at `backup.schedule` (default 03:30). Kept in `/var/lib/mm3/backups/` with retention of 7 daily, 4 weekly and 6 monthly by default (`backup.keep`).
+- **Scheduled:** run by the installer service itself, daily at `backup.schedule` (default 03:30; CORE-360). Kept in `/var/lib/mm3/backups/` with retention of 7 daily, 4 weekly and 6 monthly by default (`backup.keep`).
 - **Remote:** after each scheduled backup, a copy goes to `backup.remote` (SFTP, SMB, WebDAV, S3-compatible and others) through rclone. The same retention applies there, and failures appear in the admin and the debug page.
 - **Before risky operations:** a backup is taken automatically before every restore, module install or update, and engine upgrade.
 
@@ -1292,6 +1310,17 @@ backup:
 - CORE-163: If the engine is not `READY` within 60 s, or `mm3 diag check` fails, the pre-restore backup is put back automatically.
 - CORE-164: Compatibility: archives from an older engine are restored, migrating the config format if needed; archives from a newer engine or a different Module API major are refused.
 - CORE-165: Selective restore: any combination of parts, and within `config` and `data` a single module instance by id (its config section, its data, or both).
+
+**Service, archives and keys**
+
+- CORE-359: Installer rights (extends CORE-130 and CORE-357). `mm3-installer.service` runs as `mm3-install` with only the capabilities `CAP_DAC_OVERRIDE`, `CAP_CHOWN` and `CAP_FOWNER`, `NoNewPrivileges=yes`, `PrivateTmp=yes` and `ProtectSystem=strict`, writing only `/etc/mm3`, `/var/lib/mm3`, `/opt/mm3`, `/run/mm3` and its state directory `/var/lib/mm3-install`. Files it writes for the engine keep owner `mm3` and their modes. The polkit rule of CORE-357 lets `mm3-install` stop, start and restart `mm3.service` and nothing else.
+- CORE-360: Scheduled backups (extends CORE-160 and CORE-244). The installer runs them itself; there is no `mm3-backup.timer`. It reads the `backup` block of the running configuration over the admin socket (CORE-311) at start and every hour, and runs at `backup.schedule` in `engine.timezone`. When the mirror was off at that time and the last scheduled backup is older than 24 h, it runs within 10 minutes of the installer's start. Each run applies `keep`, then copies to the remote (CORE-365). Results are logged as in CORE-136 and shown in the admin and on the debug page.
+- CORE-361: Requests (extends CORE-162 and CORE-353). The admin and `mm3 backup create|list|verify|restore|keygen` reach backups only through the installer socket; the engine forwards `GET` and `POST /api/v1/backups`, `GET /api/v1/backups/{name}` (download), `POST /api/v1/backups/upload` (at most 2 GiB, else 413 `CORE_API_UPLOAD_TOO_LARGE`, added to CORE-298) and `POST /api/v1/backups/restore` (`{source, parts, instance?, key?, passphrase, totp?}`), with the codes of CORE-356. Creating, listing, verifying and downloading need no re-authentication; a restore always does, except from a root peer.
+- CORE-362: Archive layout (extends CORE-161). The tar holds `manifest.json`, `config/` (the config set and its history), `data/<instance>/`, `modules.json` (`[{name, version, origin}]`) and `secrets/`. An encrypted archive is the whole `.tar.gz` encrypted with age, recognised by its header. Archives are named `<hostname>-<YYYYmmdd-HHMMSS>-<kind>.mm3backup`, with `kind` `scheduled`, `manual` or `pre`, and each has an unencrypted sidecar `<name>.mm3backup.json` with `{created, kind, hostname, engine_version, api_version, parts, size, encrypted, sha256}` and no secrets, so local and remote lists work without the key. Restoring an archive from another hostname gives a warning, not a refusal.
+- CORE-363: Restore order (extends CORE-162 and CORE-165). After decryption, checksums, compatibility, the preview and the pre-restore backup, the installer stops `mm3.service`, writes `secrets`, `data` (each selected instance's directory replaced whole) and `config` (the whole set, or for one instance only its section, the rest of the files kept), rebuilds the venv when `modules` is selected (CORE-354) and starts `mm3.service`. The engine records the restored config set as a new history version with reason `restore`, as for an external edit; then CORE-163 applies.
+- CORE-364: Keys. `mm3 backup keygen` and the admin generate an age X25519 identity and return its public key for `encrypt_to`; the identity is shown and downloadable once and is kept on the mirror only on request, as `/var/lib/mm3-install/backup.key` (0600). A restore uses the kept identity or the `key` sent with the request (an identity or an archive passphrase), which exists only in the installer's private temporary directory for that operation.
+- CORE-365: Remotes (extends CORE-244). rclone remotes live in `/var/lib/mm3-install/rclone.conf` (0600), with the types `sftp`, `smb`, `webdav` and `s3` only, managed through the installer and forwarded by the engine as `GET`, `PUT` and `DELETE /api/v1/backups/remotes/{name}` and `POST /api/v1/backups/remotes/{name}/test`. Secret parameters are returned as `!masked` and kept when sent back so (CORE-303). After each scheduled backup the archive and its sidecar are copied to `backup.remote` and `keep` is applied there; a failure is logged, shown in the admin and on the debug page, and does not fail the local backup.
+- CORE-366: Pre-operation backups. Before every restore, install, update, removal and restore of the previous venv, and before an engine upgrade by `mm3-install.sh` (asking the installer as a root peer), the installer takes a backup of kind `pre` with `config`, `data`, `modules` and, when `encrypt_to` is set, `secrets`, in `/var/lib/mm3/backups/pre/`. The last 3 are kept, outside `keep`; when this backup fails, the operation does not start.
 
 **CLI**: `mm3 backup create [--parts …] [--encrypt]`, `mm3 backup list [--remote]`, `mm3 backup verify <file>`, `mm3 backup restore <file> [--parts …] [--instance <id>]`, `mm3 backup keygen`.
 
@@ -1472,6 +1501,8 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.34 | 2026-11-06 | Backup and restore, milestone 7: installer rights (CORE-359), scheduled backups by the installer (CORE-360), requests and routes (CORE-361), archive layout and sidecar (CORE-362), restore order (CORE-363), keys (CORE-364), remotes (CORE-365) and pre-operation backups (CORE-366) added; mm3-backup.timer removed from the unit table, 10.8 scheduled backups and 1.1 updated |
+| 0.33 | 2026-11-06 | Catalog and installer, milestone 7: verification libraries (CORE-349), index format (CORE-350), cache and freshness (CORE-351), release verification (CORE-352), CLI through the installer (CORE-353), staged venv (CORE-354), installer protocol (CORE-355), engine catalog and installer API (CORE-356), restart and checks (CORE-357) and removal (CORE-358) added; 10.6 CLI table and 1.2 (supply-chain verification) updated |
 | 0.32 | 2026-11-06 | Presence and power, milestone 7: display power through the kiosk agent (CORE-346), CORE\_INTERACTION on touch (CORE-347), ddcutil and cec-utils with the groups i2c and dialout (CORE-348) and the mm3-presence reference module (PRS-01, PRS-02, PRS-03, PRS-04, PRS-05, PRS-06, PRS-07, PRS-08) added; 9.2, 5.5 registry, 6.1 example, system packages, 1.1 (no X11 driver) and 1.2 (display control) updated |
 | 0.31 | 2026-11-06 | MQTT bridge and Home Assistant, milestone 7: bridge configuration (CORE-338), connection, Last Will and status (CORE-339), inbound notifications through mqtt.import (CORE-340), outbound envelopes (CORE-341), ctx.mqtt without a connection (CORE-342), discovery and engine entities (CORE-343), module entities through ha\_entity() (CORE-344) and stale entities (CORE-345) added; 9.3 topic table (display and presence topics moved to the presence module, ha topics added) and 1.1 updated |
 | 0.30 | 2026-11-06 | Pages for MMM-pages and MMM-ProfileSwitcher, milestone 7: pages out of the cycle (CORE-333), timed jump to a page (CORE-334), idle return to default (CORE-335), pause holds with PAGE\_PAUSE, PAGE\_RESUME and REST (CORE-336), previous page and reasons after and idle in CORE\_PAGE\_CHANGED (CORE-337) added; 5.5 registry, 9.1 table and 1.1 updated |
