@@ -5,10 +5,12 @@ engine in a temporary venv and runs the static checks, the test kit and the
 browser harness
 (Module Contract 12.1). The report goes to ``.mm3/check-report.json`` in the
 module's directory. Exit code 0 means compliant, 1 a MUST failed, 2 the tool
-could not run the check.
+could not run the check. ``--wheel <file> --only static`` checks a built wheel
+alone, without the source tree or ``uv``, and writes no report file (CORE-371).
 
 Implements:
     CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
+    CORE-371: Core spec 0.36, §10.7 Installer service.
     -: Module Contract 1.0 rev 10, §12.1 mm3 module check.
 """
 
@@ -22,7 +24,7 @@ from typing import TextIO
 
 from mm3.core.modcheck.project import ToolError
 from mm3.core.modcheck.report import details, summary, to_junit
-from mm3.core.modcheck.runner import REPORT_PATH, Stage, run_check
+from mm3.core.modcheck.runner import REPORT_PATH, Stage, run_check, run_wheel_check
 
 __all__ = ["EXIT_FAILED", "EXIT_TOOL_ERROR", "add_module_parser", "run_module"]
 
@@ -43,6 +45,9 @@ def add_module_parser(sub: argparse._SubParsersAction) -> None:  # type: ignore[
     check.add_argument("--only", choices=["static", "kit", "harness"], help="run one stage")
     check.add_argument("--format", choices=["text", "json"], default="text", dest="fmt")
     check.add_argument("--junit", type=Path, metavar="FILE", help="also write JUnit XML")
+    check.add_argument(
+        "--wheel", type=Path, metavar="FILE", help="check a built wheel (static checks only)"
+    )
 
 
 def run_module(args: argparse.Namespace, out: TextIO | None = None) -> int:
@@ -57,11 +62,16 @@ def run_module(args: argparse.Namespace, out: TextIO | None = None) -> int:
     """
     stream = out or sys.stdout
     stage: Stage | None = args.only
+    target: Path | None = None
     try:
-        report = run_check(args.path, stage)
-        target = args.path.resolve() / REPORT_PATH
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps(report.as_dict(), indent=2) + "\n", encoding="utf-8")
+        wheel: Path | None = getattr(args, "wheel", None)
+        if wheel is not None:
+            report = run_wheel_check(wheel, stage)
+        else:
+            report = run_check(args.path, stage)
+            target = args.path.resolve() / REPORT_PATH
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(json.dumps(report.as_dict(), indent=2) + "\n", encoding="utf-8")
         if args.junit is not None:
             args.junit.write_text(to_junit(report), encoding="utf-8")
     except (ToolError, OSError) as exc:
@@ -77,5 +87,6 @@ def run_module(args: argparse.Namespace, out: TextIO | None = None) -> int:
         print(summary(report), file=stream)
         for note in report.notes:
             print(f"Note        {note}", file=stream)
-        print(f"{'Report':<11} {target}", file=stream)
+        if target is not None:
+            print(f"{'Report':<11} {target}", file=stream)
     return EXIT_FAILED if report.result == "non_compliant" else 0

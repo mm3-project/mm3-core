@@ -17,7 +17,7 @@ from mm3.__about__ import MODULE_API_VERSION, __version__
 from mm3.core.extras import MissingExtraError, missing_testing_modules
 from mm3.core.modcheck.build import build_wheel, make_venv
 from mm3.core.modcheck.catalog import CATALOG
-from mm3.core.modcheck.project import ModuleProject, ToolError, load_project
+from mm3.core.modcheck.project import ModuleProject, ToolError, load_project, load_wheel
 from mm3.core.modcheck.report import (
     Check,
     Finding,
@@ -27,7 +27,11 @@ from mm3.core.modcheck.report import (
 )
 from mm3.core.modcheck.static import run_static
 
-__all__ = ["REPORT_PATH", "Stage", "run_check"]
+__all__ = ["PROJECT_FILE_CHECKS", "REPORT_PATH", "Stage", "run_check", "run_wheel_check"]
+
+PROJECT_FILE_CHECKS = frozenset({"MOD-08"})
+"""Static checks that need the project files; skipped for a wheel (CORE-371).
+MOD-08 reads the README's screenshot setting from ``pyproject.toml``."""
 
 Stage = Literal["static", "kit", "harness"]
 REPORT_PATH = Path(".mm3") / "check-report.json"
@@ -165,3 +169,44 @@ def _in_venv(
 def _all_failed(stage: str, ids: list[str], message: str) -> list[Check]:
     found = {i: [Finding(message)] for i in ids}
     return checks_from_findings(stage, found, ids)
+
+
+def run_wheel_check(wheel: Path, only: Stage | None = "static") -> Report:
+    """Check a built wheel without its source tree (CORE-371).
+
+    Runs the static checks that need only the wheel's metadata, entry points
+    and files; those that need the project files are ``skipped``. ``uv`` is
+    not needed.
+
+    Args:
+        wheel: The wheel file.
+        only: Must be ``static`` (or None, meaning static).
+
+    Returns:
+        The report with the ``static`` stage.
+
+    Raises:
+        ToolError: Another stage was asked for, or the wheel cannot be read.
+
+    Implements:
+        CORE-371: Core spec 0.36, §10.7 Installer service.
+    """
+    if only not in (None, "static"):
+        raise ToolError("a wheel check runs only the static stage (--only static)")
+    with tempfile.TemporaryDirectory(prefix="mm3-check-") as tmp_name:
+        extract = Path(tmp_name) / "wheel"
+        extract.mkdir()
+        mod = load_wheel(wheel.resolve(), extract)
+        report = Report(__version__, mod.dist, mod.version or "", MODULE_API_VERSION)
+        checks, facts = run_static(mod)
+        for check in checks:
+            if check.id in PROJECT_FILE_CHECKS:
+                check.findings = []
+                check.status = "skipped"
+        report.checks += checks
+        report.stages.append("static")
+        if facts is not None and facts.api_version:
+            report.api_version = facts.api_version
+    report.checks += review_checks()
+    report.checks.sort(key=lambda c: (list(CATALOG).index(c.id), c.category != "static"))
+    return report

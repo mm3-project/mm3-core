@@ -821,3 +821,94 @@ def test_core_357_diag_check_runs_as_the_engine_user(tmp_path: Path) -> None:
         "--socket",
         str(layout.admin_socket),
     ]
+
+
+# --- core spec 0.36: wheel check and rebuilds before 1.0 -----------------------------
+
+
+def test_core_371_installer_runs_the_wheel_check_after_the_import_test(world: World) -> None:
+    world.publish(("mm3-news", "1.2.0"))
+    op = world.run(action="install", name="mm3-news")
+    assert op.state == "done"
+    assert world.builder.checked == [wheel_name("mm3-news", "1.2.0")]
+    world.builder.fail_check = True
+    world.publish(("mm3-news", "1.2.0"), ("mm3-news", "1.3.0"), serial=11)
+    op = world.run(action="update", name="mm3-news")
+    assert op.state == "failed"
+    assert "module check" in (op.error or "")
+    assert world.builder.current().name != "x"  # type: ignore[union-attr]
+
+
+def test_core_371_wheel_check_argv(tmp_path: Path) -> None:
+    class Recorder(DirectRunner):
+        def run(self, argv, *, user, home, env=None, timeout=900.0):  # type: ignore[no-untyped-def]
+            from mm3.installer.runner import Completed
+
+            self.calls.append((user, list(argv)))
+            return Completed(0, "")
+
+    runner = Recorder()
+    builder = VenvBuilder(Layout.under(tmp_path), runner)
+    builder.static_check(Path("/opt/mm3/venvs/v"), Path("/srv/x/m.whl"))
+    user, argv = runner.calls[0]
+    assert user == "mm3-build"
+    assert argv == [
+        "/opt/mm3/venvs/v/bin/mm3",
+        "module",
+        "check",
+        "--wheel",
+        "/srv/x/m.whl",
+        "--only",
+        "static",
+    ]
+
+
+def test_core_372_interim_rebuild_uses_no_deps_then_constraints(tmp_path: Path) -> None:
+    from mm3.installer.runner import Completed
+    from mm3.installer.venv import core_is_interim, wheel_requirements
+
+    wheel = tmp_path / wheel_name("mm3-news", "1.2.0")
+    wheel.write_bytes(
+        make_wheel(
+            "mm3-news",
+            "1.2.0",
+            requires=[
+                "mm3-core>=1.0,<2",
+                "feedparser>=6",
+                "tzdata; sys_platform == 'win32'",
+                "pytest; extra == 'test'",
+            ],
+        )
+    )
+    assert wheel_requirements(wheel) == ["feedparser>=6"]
+    assert core_is_interim(BASE) is True
+    assert core_is_interim({"mm3-core": Dist("mm3-core", "1.0.0")}) is False
+
+    class Recorder(DirectRunner):
+        def run(self, argv, *, user, home, env=None, timeout=900.0):  # type: ignore[no-untyped-def]
+            self.calls.append((user, list(argv)))
+            if "-c" in argv:
+                self.constraints = Path(argv[argv.index("-c") + 1]).read_text()
+            return Completed(0, "")
+
+    runner = Recorder()
+    builder = VenvBuilder(Layout.under(tmp_path), runner)
+    pins = ["mm3-core==0.9.0", "pydantic==2.9.0", str(wheel)]
+    builder.build(pins, NOW, interim=True, wheel=wheel)
+    first, second = runner.calls[1][1], runner.calls[2][1]
+    assert "--no-deps" in first
+    assert first[-3:] == pins
+    assert "--no-deps" not in second
+    assert second[-1] == "feedparser>=6"
+    assert runner.constraints == "mm3-core==0.9.0\npydantic==2.9.0\n"
+    runner.calls.clear()
+    builder.build(pins, NOW + timedelta(seconds=1), interim=False, wheel=wheel)
+    assert len(runner.calls) == 2
+    assert "--no-deps" not in runner.calls[1][1]
+
+
+def test_core_372_operation_builds_interim_while_core_is_0x(world: World) -> None:
+    world.publish(("mm3-news", "1.2.0"))
+    assert world.run(action="install", name="mm3-news").state == "done"
+    assert world.builder.builds[-1]["interim"] is True
+    assert world.builder.builds[-1]["wheel"].name == wheel_name("mm3-news", "1.2.0")

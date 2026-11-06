@@ -44,6 +44,12 @@ separately under **Module API** in each release (Module Contract, section 10).
   CORE-359, CORE-368); `mm3-install.sh` creates `mm3-install` and `mm3-build`,
   builds the installer venv `/opt/mm3/installer`, installs `polkitd`, the unit
   and the rule, and gives `/opt/mm3/venvs` to the installer.
+- `mm3 module check --wheel <file> --only static` checks a built wheel without
+  its source tree or `uv`, reporting project-file checks as skipped; the
+  installer runs it on the verified wheel in the read-only staged venv (CORE-371).
+- While `mm3-core` is 0.x, staged rebuilds install pins and the module wheel with
+  `--no-deps`, then the wheel's other requirements with the pins as constraints
+  (CORE-372).
 
 ### Added (milestone 7, PR 3: presence and power)
 

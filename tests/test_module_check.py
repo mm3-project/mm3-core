@@ -8,6 +8,7 @@ import shutil
 import subprocess
 import sys
 import xml.etree.ElementTree as ET
+import zipfile
 from pathlib import Path
 
 import pytest
@@ -765,3 +766,37 @@ def test_mod_38_admin_scripts_must_be_in_the_wheel(proj: Path, tmp_path: Path) -
     assert checks["MOD-38"].status == "fail"
     messages = " ".join(f.message for f in checks["MOD-38"].findings)
     assert "admin.js" in messages
+
+
+@needs_uv
+@pytest.mark.usefixtures("uv_env")
+def test_core_371_wheel_check_matches_the_source_check(proj: Path, tmp_path: Path) -> None:
+    from mm3.core.modcheck.build import build_wheel
+    from mm3.core.modcheck.runner import run_wheel_check
+
+    built = build_wheel(proj, tmp_path)
+    assert built.wheel is not None, built.log
+    report = run_wheel_check(built.wheel)
+    assert report.result == "compliant"
+    assert report.stages == ["static"]
+    assert report.module == "mm3-greeting"
+    skipped = [c.id for c in report.checks if c.status == "skipped"]
+    assert skipped == ["MOD-08"]
+
+
+def test_core_371_wheel_check_runs_only_static(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    wheel = tmp_path / "mm3_x-1.0.0-py3-none-any.whl"
+    with zipfile.ZipFile(wheel, "w") as z:
+        z.writestr(
+            "mm3_x-1.0.0.dist-info/METADATA", "Metadata-Version: 2.1\nName: mm3-x\nVersion: 1.0.0\n"
+        )
+    assert main(["module", "check", "--wheel", str(wheel), "--only", "kit"]) == 2
+    assert "only the static stage" in capsys.readouterr().err
+    assert main(["module", "check", "--wheel", str(tmp_path / "none.whl")]) == 2
+    code = main(["module", "check", "--wheel", str(wheel), "--only", "static"])
+    assert code == 1  # no entry point: a MUST fails, nothing crashes
+    out = capsys.readouterr().out
+    assert "1 skipped (need the project files)" in out
+    assert "Report" not in out

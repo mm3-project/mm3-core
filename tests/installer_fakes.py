@@ -196,6 +196,9 @@ class FakeBuilder(VenvBuilder):
         self.fail_build: str | None = None
         self.fail_import = False
         self.requirements: list[list[str]] = []
+        self.builds: list[dict[str, Any]] = []
+        self.checked: list[str] = []
+        self.fail_check = False
         self.counter = 0
 
     def seed(self, name: str, freeze: Freeze) -> Path:
@@ -208,8 +211,16 @@ class FakeBuilder(VenvBuilder):
     def freeze(self, venv: Path) -> Freeze:
         return dict(self.freezes[venv.name])
 
-    def build(self, requirements: list[str], now: datetime) -> Path:
+    def build(
+        self,
+        requirements: list[str],
+        now: datetime,
+        *,
+        interim: bool = False,
+        wheel: Path | None = None,
+    ) -> Path:
         self.requirements.append(list(requirements))
+        self.builds.append({"interim": interim, "wheel": wheel})
         if self.fail_build:
             from mm3.installer.venv import BuildError
 
@@ -238,3 +249,10 @@ class FakeBuilder(VenvBuilder):
             from mm3.installer.venv import BuildError
 
             raise BuildError("import test failed (exit 1): ImportError")
+
+    def static_check(self, venv: Path, wheel: Path) -> None:
+        self.checked.append(wheel.name)
+        if self.fail_check:
+            from mm3.installer.venv import BuildError
+
+            raise BuildError("mm3 module check failed (exit 1): FAIL MOD-04")

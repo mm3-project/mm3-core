@@ -27,6 +27,7 @@ Implements:
     CORE-354: Core spec 0.33, §10.7 Installer service.
     CORE-355: Core spec 0.35, §10.7 Installer service.
     CORE-367: Core spec 0.35, §10.7 Installer service.
+    CORE-371, CORE-372: Core spec 0.36, §10.7 Installer service.
 """
 
 from __future__ import annotations
@@ -61,7 +62,14 @@ from mm3.installer.files import read_json, write_json
 from mm3.installer.paths import Layout
 from mm3.installer.service import Engine
 from mm3.installer.store import CatalogStore
-from mm3.installer.venv import BuildError, Freeze, VenvBuilder, conflicts, only_required_by
+from mm3.installer.venv import (
+    BuildError,
+    Freeze,
+    VenvBuilder,
+    conflicts,
+    core_is_interim,
+    only_required_by,
+)
 from mm3.installer.verify import Verification, VerifyError
 
 __all__ = [
@@ -476,7 +484,9 @@ class Installer:
             new_req = [str(wheel_file)]
         self._step(op, "building", "building the staged venv")
         pins = self.builder.pins(old, drop=drop, local_wheels=local_wheels)
-        new_venv = self.builder.build([*pins, *new_req], self._now())
+        new_venv = self.builder.build(
+            [*pins, *new_req], self._now(), interim=core_is_interim(old), wheel=wheel_file
+        )
         try:
             new = self.builder.freeze(new_venv)
             bad = conflicts(old, new, drop)
@@ -486,6 +496,9 @@ class Installer:
                 raise OperationError(f"{record.name} is missing from the new venv")
             self._step(op, "building", "import test")
             self.builder.import_test(new_venv, record.name if record else None)
+            if wheel_file is not None:
+                self._step(op, "building", "mm3 module check --only static")
+                self.builder.static_check(new_venv, wheel_file)
         except BaseException:
             self.builder.discard(new_venv)
             raise
