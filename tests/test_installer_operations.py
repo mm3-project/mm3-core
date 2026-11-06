@@ -1019,3 +1019,27 @@ async def test_core_355_non_ascii_content_length_is_400(served: Served) -> None:
 
     answer = await asyncio.to_thread(raw)
     assert answer.startswith(b"HTTP/1.1 400")
+
+
+@pytest.mark.skipif(
+    os.geteuid() != 0 or not Path("/usr/bin/setpriv").exists(), reason="needs root and setpriv"
+)
+def test_core_367_drop_works_with_the_units_capabilities() -> None:
+    """Start as an unprivileged user with the unit's ambient capabilities, then drop."""
+    caps = "+dac_override,+chown,+fowner,+setuid,+setgid"
+    outer = [
+        "/usr/bin/setpriv",
+        "--reuid=nobody",
+        "--regid=nogroup",
+        "--clear-groups",
+        f"--inh-caps={caps}",
+        f"--ambient-caps={caps}",
+        "--no-new-privs",
+        "--",
+    ]
+    inner = drop_argv(
+        "daemon", ["/bin/sh", "-c", "grep -E '^Cap(Inh|Prm|Eff|Amb)' /proc/self/status"]
+    )
+    done = subprocess.run([*outer, *inner], capture_output=True, text=True, check=False)  # noqa: S603
+    assert done.returncode == 0, done.stderr
+    assert all(line.endswith("0000000000000000") for line in done.stdout.splitlines()), done.stdout
