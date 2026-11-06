@@ -9,7 +9,7 @@ them (MOD-43).
 
 Implements:
     CORE-224, CORE-225, CORE-226: Core spec 0.19, §5.5 Shared notification registry.
-    -: Core spec 0.30, §5.5 Shared notification registry.
+    -: Core spec 0.32, §5.5 Shared notification registry.
     CORE-245: Core spec 0.9, §6.3 Hot reload.
     MOD-40: Module Contract 1.0 rev 6, §6.1 Messaging.
     MOD-24, MOD-29: Module Contract 1.0 rev 8, §6.1 Messaging.
@@ -31,6 +31,7 @@ __all__ = [
     "ConfigChanged",
     "ConfigError",
     "ConfigErrorItem",
+    "CoreInteraction",
     "CorePageChanged",
     "HideAlert",
     "LocaleChanged",
@@ -40,6 +41,7 @@ __all__ = [
     "PagePause",
     "PageSet",
     "PresenceEvent",
+    "PresenceState",
     "RegisteredName",
     "ShowAlert",
     "WeatherCurrent",
@@ -67,6 +69,21 @@ class PresenceEvent(_Payload):
 
     sensor: str
     zone: str | None = None
+
+
+class PresenceState(_Payload):
+    """Payload of ``PRESENCE_STATE`` (PRS-07), sent by mm3-presence.
+
+    The module itself comes with milestone 7; the name is registered here
+    because it is in the §5.5 table.
+
+    Attributes:
+        state: ``on``, ``idle`` or ``off``.
+        reason: Why the state changed.
+    """
+
+    state: Literal["on", "idle", "off"]
+    reason: Literal["start", "presence", "timeout", "schedule", "command"]
 
 
 class ShowAlert(_Payload):
@@ -280,9 +297,23 @@ class LocaleChanged(_Payload):
     locale: str
 
 
+class CoreInteraction(_Payload):
+    """Payload of ``CORE_INTERACTION`` (CORE-347).
+
+    The engine emits it from milestone 7; the name is registered here
+    because it is in the §5.5 table.
+
+    Attributes:
+        kind: What the person did on the kiosk; only ``touch`` so far.
+    """
+
+    kind: Literal["touch"]
+
+
 REGISTRY: Mapping[str, RegisteredName] = _rows(
     RegisteredName("PRESENCE_DETECTED", "event", PresenceEvent),
     RegisteredName("PRESENCE_CLEARED", "event", PresenceEvent),
+    RegisteredName("PRESENCE_STATE", "event", PresenceState),
     RegisteredName("SHOW_ALERT", "event", ShowAlert),
     RegisteredName("HIDE_ALERT", "event", HideAlert),
     RegisteredName("PAGE_NEXT", "command", NoPayload),
@@ -294,6 +325,7 @@ REGISTRY: Mapping[str, RegisteredName] = _rows(
     RegisteredName("CORE_CONFIG_CHANGED", "event", ConfigChanged, engine_only=True),
     RegisteredName("CORE_CONFIG_ERROR", "event", ConfigError, engine_only=True),
     RegisteredName("CORE_LOCALE_CHANGED", "event", LocaleChanged, engine_only=True),
+    RegisteredName("CORE_INTERACTION", "event", CoreInteraction, engine_only=True),
     RegisteredName("WEATHER_CURRENT", "event", WeatherCurrent),
 )
 """Registered names, as in the core spec §5.5 table (CORE-224)."""

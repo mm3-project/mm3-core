@@ -3,14 +3,14 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.30"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30"]
+version = "0.32"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32"]
 
 [[spec]]
 name = "Module Contract"
 file = "contract.md"
-version = "1.0 rev 13"
-versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7", "1.0 rev 8", "1.0 rev 9", "1.0 rev 10", "1.0 rev 11", "1.0 rev 12", "1.0 rev 13"]
+version = "1.0 rev 15"
+versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7", "1.0 rev 8", "1.0 rev 9", "1.0 rev 10", "1.0 rev 11", "1.0 rev 12", "1.0 rev 13", "1.0 rev 14", "1.0 rev 15"]
 
 [[requirement]]
 id = "CORE-01"
@@ -2783,6 +2783,116 @@ changed_in = "0.30"
 status = "active"
 
 [[requirement]]
+id = "CORE-338"
+spec = "Core spec"
+section = "9.3"
+title = "MQTT bridge"
+hash = "b33b84eed439"
+introduced_in = "0.31"
+changed_in = "0.31"
+status = "active"
+
+[[requirement]]
+id = "CORE-339"
+spec = "Core spec"
+section = "9.3"
+title = "MQTT bridge"
+hash = "d13154d3828a"
+introduced_in = "0.31"
+changed_in = "0.31"
+status = "active"
+
+[[requirement]]
+id = "CORE-340"
+spec = "Core spec"
+section = "9.3"
+title = "MQTT bridge"
+hash = "8687d43e91a0"
+introduced_in = "0.31"
+changed_in = "0.31"
+status = "active"
+
+[[requirement]]
+id = "CORE-341"
+spec = "Core spec"
+section = "9.3"
+title = "MQTT bridge"
+hash = "d9ebb3dccacb"
+introduced_in = "0.31"
+changed_in = "0.31"
+status = "active"
+
+[[requirement]]
+id = "CORE-342"
+spec = "Core spec"
+section = "9.3"
+title = "MQTT bridge"
+hash = "7ac5feb290cd"
+introduced_in = "0.31"
+changed_in = "0.31"
+status = "active"
+
+[[requirement]]
+id = "CORE-343"
+spec = "Core spec"
+section = "9.3"
+title = "MQTT bridge"
+hash = "51406a73568a"
+introduced_in = "0.31"
+changed_in = "0.31"
+status = "active"
+
+[[requirement]]
+id = "CORE-344"
+spec = "Core spec"
+section = "9.3"
+title = "MQTT bridge"
+hash = "b9e26873e97c"
+introduced_in = "0.31"
+changed_in = "0.31"
+status = "active"
+
+[[requirement]]
+id = "CORE-345"
+spec = "Core spec"
+section = "9.3"
+title = "MQTT bridge"
+hash = "6c1d2938aa19"
+introduced_in = "0.31"
+changed_in = "0.31"
+status = "active"
+
+[[requirement]]
+id = "CORE-346"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "f6106ccda6a8"
+introduced_in = "0.32"
+changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "CORE-347"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "77b1d093f84f"
+introduced_in = "0.32"
+changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "CORE-348"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "c90c80662dbe"
+introduced_in = "0.32"
+changed_in = "0.32"
+status = "active"
+
+[[requirement]]
 id = "WGT-01"
 spec = "Core spec"
 section = "11.2"
@@ -3140,6 +3250,86 @@ title = "Reference modules"
 hash = "9621e977cc38"
 introduced_in = "0.19"
 changed_in = "0.19"
+status = "active"
+
+[[requirement]]
+id = "PRS-01"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "f3768f06f521"
+introduced_in = "0.32"
+changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "PRS-02"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "f3a02464a437"
+introduced_in = "0.32"
+changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "PRS-03"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "0cbd267d8d66"
+introduced_in = "0.32"
+changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "PRS-04"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "ed8eb431453e"
+introduced_in = "0.32"
+changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "PRS-05"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "a7a59fadec3a"
+introduced_in = "0.32"
+changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "PRS-06"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "2e7b3b048298"
+introduced_in = "0.32"
+changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "PRS-07"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "6d95462aa448"
+introduced_in = "0.32"
+changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "PRS-08"
+spec = "Core spec"
+section = "9.2"
+title = "Presence and power: module boundary"
+hash = "04bf9422d801"
+introduced_in = "0.32"
+changed_in = "0.32"
 status = "active"
 
 [[requirement]]

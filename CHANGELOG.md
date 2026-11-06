@@ -7,6 +7,22 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (core spec 0.32, Module Contract 1.0 rev 15)
+
+- Spec sync for core spec 0.31 and 0.32 and Module Contract 1.0 rev 14 and
+  rev 15, all assigned to milestone 7. MQTT bridge and Home Assistant: added
+  CORE-338 (bridge configuration), CORE-339 (connection, Last Will, status),
+  CORE-340 (inbound notifications through `mqtt.import`), CORE-341 (outbound
+  envelopes), CORE-342 (`ctx.mqtt` without a bridge or connection), CORE-343
+  (discovery and engine entities), CORE-344 (`ctx.mqtt.ha_entity()`) and
+  CORE-345 (stale entities). Presence and power: added CORE-346
+  (`ctx.system.set_display_power()` and the kiosk agent `power` frame),
+  CORE-347 (`CORE_INTERACTION` on touch), CORE-348 (`ddcutil`, `cec-utils`,
+  groups `i2c` and `dialout`) and PRS-01..08 (the reference module
+  `mm3-presence`). The new requirements extend existing ones without changing
+  them, so no closed milestone is reopened.
+- The spec tools know the requirement prefix `PRS` (CORE-75, CORE-77, CORE-78).
+
 ### Changed (core spec 0.30)
 
 - Spec sync for core spec 0.30 (Module Contract unchanged at 1.0 rev 13):

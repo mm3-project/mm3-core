@@ -20,7 +20,7 @@ SPEC_DIR = ROOT / "docs" / "spec"
 SPECS: dict[str, dict[str, str]] = {
     "Core spec": {
         "file": "core.md",
-        "prefixes": "CORE|WGT|CLK|WTH",
+        "prefixes": "CORE|WGT|CLK|WTH|PRS",
         "history": "13. Document history",
     },
     "Module Contract": {
@@ -31,7 +31,7 @@ SPECS: dict[str, dict[str, str]] = {
 }
 """Spec name (as cited in code) -> export file, id prefixes, history heading."""
 
-ID_RE = re.compile(r"\b(CORE|WGT|CLK|WTH|MOD)-(\d+)\b")
+ID_RE = re.compile(r"\b(CORE|WGT|CLK|WTH|PRS|MOD)-(\d+)\b")
 VERSION_RE = re.compile(r"\d+\.\d+(?:\s+rev\s+\d+)?")
 DASHES = "-\u2013\u2014"  # hyphen, en dash, em dash
 
@@ -59,7 +59,7 @@ def norm_id(prefix: str, number: int) -> str:
     """Format a requirement id the way the specs write it.
 
     Args:
-        prefix: ``CORE``, ``WGT``, ``CLK``, ``WTH`` or ``MOD``.
+        prefix: ``CORE``, ``WGT``, ``CLK``, ``WTH``, ``PRS`` or ``MOD``.
         number: Requirement number.
 
     Returns:
@@ -81,9 +81,9 @@ def expand_ids(text: str) -> list[str]:
         Ids in order of appearance, without duplicates.
     """
     text = text.replace("\\", "")
-    rng = rf"\s*(?:\.\.|[{DASHES}])\s*(?:(?:CORE|WGT|CLK|WTH|MOD)-)?(\d+)"
+    rng = rf"\s*(?:\.\.|[{DASHES}])\s*(?:(?:CORE|WGT|CLK|WTH|PRS|MOD)-)?(\d+)"
     cont = rf",\s*\d+(?!\.\d)(?:{rng})?\b"
-    token = re.compile(rf"\b(CORE|WGT|CLK|WTH|MOD)-(\d+)(?:{rng})?((?:{cont})*)")
+    token = re.compile(rf"\b(CORE|WGT|CLK|WTH|PRS|MOD)-(\d+)(?:{rng})?((?:{cont})*)")
     out: list[str] = []
     for m in token.finditer(text):
         prefix = m.group(1)

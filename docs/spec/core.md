@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.30 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.32 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -27,7 +27,7 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | Deployment | systemd + virtualenv; LAN-only by default; named admin and display tokens stored as argon2 hashes, admin sessions by cookie (10.1) |
 | Layout | Configurable cell grid (default 12 × 12); position, size, layer and appearance per instance; MM² region names kept as presets (6.5) |
 | Custom widgets | No-code widget builder module mm3-widget: MQTT, HA, bus and HTTP sources; extensible elements; touch actions; templates (11) |
-| Kiosk display | Wayland with cage + Chromium by default; wlr-randr for power (X11 driver remains available in mm3-presence) |
+| Kiosk display | Wayland with cage + Chromium by default; display power through the kiosk agent with wlr-randr (CORE-346), with DDC/CI and HDMI-CEC drivers in mm3-presence; no X11 driver (changed 6 Nov) |
 | Module distribution | Public PyPI, packages named mm3-\* |
 | Module catalog | Signed index on GitHub listing PyPI packages; automatic checks, badges, API compatibility, signed packages; install via CLI or admin UI through the installer service (10.6, 10.7) |
 | Repositories | GitHub organization mm3-project: mm3-core (engine, CLI, tooling, default modules) and module-index (catalog); third-party modules in their own repos; MIT license |
@@ -45,6 +45,7 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | Theme | MM²-like core theme as CSS variables, Roboto Condensed vendored; optional /etc/mm3/custom.css in the config set (6.10) |
 | Kiosk | System unit as user mm3-kiosk running cage with a kiosk agent that applies the display block and the audio output and volume live and supervises Chromium; sound through PipeWire in the kiosk session; Debian 13+ (6.7) |
 | Admin and REST API | Errors as problem+json with CORE\_API\_\* codes; the draft lives in the browser, the server applies JSON Patch without storing; ETag = hash of the config set; secrets round-trip as !masked; one admin WebSocket /admin/ws with status, logs and bus topics; Show on mirror reaches the kiosk only; OpenAPI as JSON without an interactive page; the CLI reaches the engine on the Unix socket /run/mm3/admin.sock; a request without a reply in time is 504 and an error reply is an ordinary 200 reply; instance controls are idempotent; log levels are set as {level} with the fixed debug\_ttl; log filters by minimum level; status frames on change at most once a second; a diagnostic bundle with a fixed file list; secrets masked by value in the bus inspector; tagged nodes in JSON Patch as one-key objects and an in-house JSON Patch on the ruamel nodes; one /admin/config page whose History tab comes first; YAML lint through validate and CodeMirror bundled once with esbuild; the session locale only with an admin session (6.4, 6.6, 6.8, 9.1, 10.5; decided 4 and 5 Nov) |
+| MQTT bridge | One shared aiomqtt connection with username/password and optional CA, no client certificates; inbound notifications only for names in mqtt.import, none by default; envelopes out for mqtt.export; no offline queue (TransientError); Home Assistant entities for modules through ctx.mqtt.ha\_entity() with the capability ha.discovery and no grant; stale entities cleared (9.3; decided 6 Nov) |
 
 ### 1.2 Approved frameworks (27 Oct 2026)
 
@@ -74,6 +75,7 @@ Keywords MUST, SHOULD, MAY follow RFC 2119. Requirement ids (`CORE-xx`) are refe
 | Front-end templates | lit-html 3 (BSD-3-Clause), vendored ES module, re-exported only through /core/mm3.js | Escaping by default, in-place DOM updates keep element state, event bindings for touch; no build step (decided 28 Oct) |
 | Shell font | Roboto Condensed (SIL OFL 1.1; Apache-2.0 before 2023), vendored woff2 | The MagicMirror² look; served locally, no external fonts (CSP) |
 | Kiosk audio | PipeWire with WirePlumber and pipewire-pulse (Debian packages, user units of the kiosk session); pactl from pulseaudio-utils, invoked as a subprocess by the kiosk agent (CORE-295, CORE-296) | Debian's default sound server; mixing and live output switching; Chromium plays through its PulseAudio API; pactl gives JSON output (decided 1 Nov) |
+| Display control | ddcutil (DDC/CI) and cec-client from cec-utils (HDMI-CEC), Debian packages invoked as subprocesses by the mm3-presence drivers (PRS-06, CORE-348) | Standard tools for monitor brightness and power and TV standby; no library needed (decided 6 Nov) |
 
 ### 1.3 Non-goals for v1
 
@@ -341,6 +343,8 @@ Names used by more than one module are registered here with their payload, and t
 | Name | Kind | Payload | From → to |
 | --- | --- | --- | --- |
 | `PRESENCE_DETECTED`, `PRESENCE_CLEARED` | event | `{sensor: str, zone?: str}` | sensor modules → presence (9.2) |
+| PRESENCE\_STATE | event | {state: "on" \| "idle" \| "off", reason: "start" \| "presence" \| "timeout" \| "schedule" \| "command"} | presence → any (9.2, PRS-07) |
+| CORE\_INTERACTION | event, engine only | {kind: "touch"} | engine → any (CORE-347) |
 | `SHOW_ALERT` | event | `{id?: str, title?: LocalizedText, message: LocalizedText, level: info \| warning \| critical, timeout_s?: number}` (0 = until hidden) | any → alert module |
 | `HIDE_ALERT` | event | `{id: str}` | any → alert module |
 | `PAGE_NEXT`, `PAGE_PREV` | command | `{}` | any → engine (6.9) |
@@ -433,11 +437,12 @@ layout:                 # see 6.5
 modules:
   - module: presence      # backend-only, no position
     config:
-      sensor: mqtt
-      topic: zigbee2mqtt/hall_pir
+      mqtt:
+        - { topic: zigbee2mqtt/hall_pir, field: occupancy }
       off_after: 10m
-      schedule: { off: "23:30", on: "06:45" }
-      display: wlr-randr
+      schedule:
+        - { off: "23:30", on: "06:45" }
+      display: kiosk          # through the kiosk agent (CORE-346)
   - module: clock
     position: { col: 1, row: 1, width: 4, height: 2 }
     appearance: { scale: 1.2 }
@@ -974,11 +979,28 @@ REST under `/api/v1`, OpenAPI at `/api/openapi.json`, admin single-page UI at `/
 
 Presence and power ships as the backend-only reference module `mm3-presence`; the engine keeps only the generic suspend/resume hooks, so presence can be replaced (camera, BLE, phone) without touching core.
 
-- **In the module:** sensor inputs (MQTT topic, GPIO via extra `mm3-presence[gpio]`, `PRESENCE_DETECTED` from other modules), the timer `ON → IDLE → OFF`, schedule windows, and display drivers through its own entry point group `mm3_presence.display` (`xset dpms` or `wlr-randr`, `ddcutil` for brightness, `cec-client` for HDMI-CEC).
-- **In the engine:** `ctx.system.request_suspend()` / `request_resume()`. On a request the engine emits `CORE_SUSPEND` or `CORE_RESUME` and calls `suspend()` / `resume()` on every instance.
+- **In the module:** sensor inputs (MQTT topics, `PRESENCE_DETECTED` / `PRESENCE_CLEARED` from other modules, touch on the kiosk), the timer `ON → IDLE → OFF`, schedule windows, and display drivers through its own entry point group `mm3_presence.display` (`kiosk` through the engine hook, `ddcutil` for DDC/CI brightness and power, `cec` with `cec-client` for HDMI-CEC); requirements PRS-01 to PRS-08 below.
+- **In the engine:** `ctx.system.request_suspend()` / `request_resume()` and `ctx.system.set_display_power()` (CORE-346). On a suspend or resume request the engine emits `CORE_SUSPEND` or `CORE_RESUME` and calls `suspend()` / `resume()` on every instance.
 - CORE-52: Only modules declaring `capabilities = {"system.power"}` may call these hooks; a request from any other module raises `PermissionError` and is logged.
 - CORE-53: Several modules may hold power; the engine stays resumed while any holder requests resume (reference-counted by instance id).
-- **Control and Home Assistant:** the module adds `POST /api/v1/modules/presence/display/{on,off}` via `ctx.router` and its display switch, brightness and presence sensor via `ctx.mqtt.ha_entity()`.
+- **Control and Home Assistant:** the module adds its routes through `ctx.router` and its entities through `ctx.mqtt.ha_entity()` (PRS-08).
+
+**Engine hooks**
+
+- CORE-346: Display power (extends CORE-277 and CORE-146). `ctx.system.set_display_power(on)` needs the capability `system.power` (CORE-52). The engine sends the kiosk agent `power {on}`, and at every connect `power` with the last value (default true); the protocol stays 1. The agent runs `wlr-randr --output <output> --off`, or `--on` with the mode, rotation and scale of `applied`, and then sends `outputs`, where `current` is null while the output is off. The call returns when that `outputs` arrives and raises `TransientError` when no agent is connected or none arrives within 5 s. The power state is a run-time value, never saved; a display block change made while the output is off is applied when it is turned on. Every change emits `CORE_DISPLAY_CHANGED`, which also carries `power`, `on` or `off`; the field is added, so the name stays.
+- CORE-347: Interaction event (extends CORE-22 and CORE-260). On a touch from the kiosk shell (CORE-260) the engine broadcasts `CORE_INTERACTION {kind: "touch"}`, at most once a second; previews and LAN browsers never cause it (CORE-99). It is registered in 5.5. `CORE_PRESENCE` stays reserved and is never emitted; presence is reported by `PRESENCE_STATE` (PRS-07).
+- CORE-348: Display control packages (extends CORE-293). On kiosk systems `mm3-install.sh` also installs the Debian packages `ddcutil` and `cec-utils` and adds the user `mm3` to the groups `i2c` and `dialout` where they exist; a failed group change is logged. The groups take effect at the next start of `mm3.service`.
+
+**mm3-presence**
+
+- PRS-01: Module. `mm3-presence` (module name `presence`) is a backend-only reference module in `modules/presence` of mm3-core, published and listed in `mm3-modules-default` (CORE-289, CORE-294). It declares the capabilities `system.power`, `mqtt.subscribe`, `ha.discovery` and `api.routes`, emits `PRESENCE_STATE` and consumes `PRESENCE_DETECTED`, `PRESENCE_CLEARED` and `CORE_INTERACTION`. Only one instance may run: a second one fails its start with `ConfigurationError`. Its texts ship in EN, IT, FR, ES and DE.
+- PRS-02: Configuration. `mqtt`, a list of `{topic, field?, value?}` (default `[]`); `touch` (default true); `idle_after` (a duration, default 0: no IDLE); `idle_brightness` (0–100, default 30); `brightness` (0–100, or null to leave the display as it is; default null); `off_after` (a duration above 0, default 10m); `schedule` (windows, PRS-05; default `[]`); `wake_in_schedule` (default false); `display` (driver name, default `kiosk`) and `display_options` (a mapping passed to the driver, default `{}`). A non-zero `idle_after` not below `off_after` is an error, and so is an unknown driver. Each topic needs a `mqtt.subscribe` grant.
+- PRS-03: Presence. A message on a configured topic sets presence when it matches, and any other message on it clears it. With `field`, it matches when the value at that dotted path of the JSON payload equals `value` (default true); without `field`, when the payload text equals `value` (default `ON`), ignoring case. `PRESENCE_DETECTED` and `PRESENCE_CLEARED` set and clear presence for their sender and `sensor`. Presence is held while any topic or sensor has it set. With `touch: true`, `CORE_INTERACTION` is a moment of presence.
+- PRS-04: States. The state is `on` while presence is held. From the moment it is no longer held, or from a moment of presence, the module counts: after `idle_after`, if above 0, the state is `idle` and a driver with brightness is set to `idle_brightness`; after `off_after` the state is `off`, the display is turned off through the driver and the module calls `ctx.system.request_suspend("presence")`. Presence while `idle` or `off` makes the state `on`: the module calls `request_resume("presence")`, turns the display on and sets the brightness back to `brightness`, or to the level before `idle` when `brightness` is null. At start the state is `on`, the display is turned on and the count starts.
+- PRS-05: Schedule. A window is `{off: "HH:MM", on: "HH:MM", days?}` in `ctx.timezone`; an `on` not after `off` falls on the next day, and `days` (`mon` to `sun`, default all) are the days a window starts. Inside a window the state is `off` with reason `schedule` and presence is ignored; with `wake_in_schedule: true`, presence makes the state `on` and `off_after` brings it back to `off`. When a window ends the state is `on` with reason `schedule` and the count starts. Overlapping windows act as one; a time that does not exist on a day because of a clock change is taken as the next minute that does.
+- PRS-06: Display drivers. Drivers are plug-ins on the entry point group `mm3_presence.display`, built with the module context and `display_options`. A driver has `name`, `supports_brightness`, `async set_power(on)`, `async set_brightness(percent)` and `async check()`, which returns null when the driver can work or a reason, reported by `mm3 diag check` (CORE-312). Built in: `kiosk` (`ctx.system.set_display_power`, no brightness); `ddcutil` (VCP 0x10 for brightness and 0xD6 for power, 1 on and 4 off; option `display`, default 1); `cec` (`cec-client -s -d 1` with `on 0` and `standby 0`, no brightness; option `adapter`). Subprocess drivers run through `ctx.run_blocking` with a 10 s timeout. A failed driver call is logged, sets the health field `driver_error` and is tried again at the next change; the state changes anyway.
+- PRS-07: State notification. `PRESENCE_STATE {state, reason}` is broadcast at start and on every change, with `state` `on`, `idle` or `off` and `reason` `start`, `presence`, `timeout`, `schedule` or `command`. It is registered in 5.5.
+- PRS-08: Control. Under its instance path (CORE-332), `POST display/on` is a moment of presence with reason `command`, `POST display/off` makes the state `off` at once with reason `command` until the next presence, and `GET state` returns `{state, reason, since, held, driver}`, where `held` lists the sources holding presence. Home Assistant entities (CORE-344): switch `display`, acting as those routes; binary sensor `presence` (device class occupancy, on while presence is held); sensor `state`; and, when the driver supports brightness, number `brightness` 0–100, a run-time value that replaces `brightness` until the next start.
 
 ### 9.3 MQTT bridge
 
@@ -987,10 +1009,32 @@ Presence and power ships as the backend-only reference module `mm3-presence`; th
 | `<base>/notify/<NAME>` | in | Publish a bus notification (payload JSON) |
 | `<base>/event/<NAME>` | out | Notifications listed in `mqtt.export` (glob list) |
 | `<base>/state` | out, retained | `online` / `offline` (Last Will) |
-| `<base>/display/set` | in | `ON` / `OFF` |
-| `<base>/presence` | out | `detected` / `clear` |
+| \<base>/ha/\<instance>/\<object\_id>/state | out, retained | State of a Home Assistant entity; the engine's own entities use the instance \_engine (CORE-343, CORE-344) |
+| \<base>/ha/\<instance>/\<object\_id>/set | in | Command for that entity |
 
 With `ha_discovery: true` the engine publishes `homeassistant/<component>/<node_id>/<object>/config` so Home Assistant creates one device with: a reload button, a page select (CORE-236), and per instance a visibility switch and an enabled switch (runtime stop and start, CORE-240); modules add their own entities through ctx.mqtt.ha\_entity() (mm3-presence adds the display switch, brightness and presence sensor). Echo loops are prevented by dropping inbound messages whose `source` is the bridge itself (CORE-51).
+
+The presence module defines its own topics (9.2); the engine's topics are only those above.
+
+**Connection**
+
+- CORE-338: Bridge configuration. `engine.mqtt` is optional; without it the bridge is off. Keys: `url` (required: `mqtt://host[:port]`, default port 1883, or `mqtts://host[:port]`, default port 8883); `username` and `password` (a secret field, CORE-13, usually `!env`); `ca`, a PEM file relative to the directory of the main configuration file that replaces the system CA store for this connection (missing or unreadable: `CORE_CFG_FILE_UNREADABLE`); `client_id` (default `mm3-<hostname>`); `keepalive` (seconds, 10–3600, default 60); `base_topic` (default `mm3/<hostname>`; no `+` or `#`, no leading or trailing `/`); `export` and `import` (glob lists of notification names, default `[]`); `ha_discovery` (default false); `discovery_prefix` (default `homeassistant`); `node_id` (matching `[a-z0-9_]{1,64}`; default `base_topic` lower-cased with every other character replaced by `_`). `<hostname>` is the host name, lower-cased. Any other key is an error. With `mqtts` the connection uses TLS 1.2 or later and always verifies the certificate and host name; there are no client certificates.
+- CORE-339: Connection. The bridge owns one MQTT client (aiomqtt behind one adapter in `mm3.core.services.mqtt`), shared by the bridge and every instance. Its Last Will is `offline` on `<base>/state`, retained, QoS 1; after every connect it publishes `online` there, retained, and before a clean stop `offline`. A lost or refused connection is retried after 1 s, doubling up to 60 s, with ±20 % jitter; after every connect the subscriptions of the bridge and of the instances are restored. A change of `engine.mqtt` on hot reload reconnects with the new settings. Extending CORE-305, `GET /api/v1/status` carries `mqtt`: `{connected, since, error}`, with `error` a short reason without credentials or null, or null when the bridge is off; `mm3 diag check` reports the bridge as ok, fail (configured but not connected) or skip (off). Credentials are never logged.
+
+**Notifications**
+
+- CORE-340: Inbound. The bridge subscribes to `<base>/notify/+`. A message on `<base>/notify/<NAME>` is sent on the bus as a broadcast with source `mqtt` and a new trace only when NAME matches a glob of `mqtt.import`, does not start with `CORE_`, and its payload is empty (taken as `{}`) or a JSON object of at most 256 KiB that passes the registry check (CORE-225). Any other message is dropped, logged as a warning at most once a minute per name, and counted in the bridge's health. MQTT cannot target an instance or send a request.
+- CORE-341: Outbound. Every broadcast notification whose name matches a glob of `mqtt.export`, `CORE_*` names included, is published on `<base>/event/<NAME>` as the envelope of 5.1 in JSON, QoS 0, not retained. Notifications with source `mqtt` are never exported (CORE-51). While the bridge is disconnected, exports are dropped, not queued.
+
+**Modules**
+
+- CORE-342: `ctx.mqtt` and the connection (extends CORE-100). With the bridge off, `publish`, `subscribe` and `ha_entity` raise `ConfigurationError`. `publish` while disconnected raises `TransientError`; nothing is queued. `subscribe` while disconnected succeeds and takes effect on connect. The topics `<base>/notify/`, `<base>/event/`, `<base>/state` and `<base>/ha/` belong to the engine: publishing to them raises `PermissionError` even when a grant matches.
+
+**Home Assistant**
+
+- CORE-343: Discovery and engine entities. With `ha_discovery: true` the bridge publishes, retained, one discovery config per entity on `<discovery_prefix>/<component>/<node_id>/<object>/config`, all on one device `{identifiers: [node_id], name, manufacturer: "MagicMirror 3", sw_version}`, whose name is `engine.location.name` resolved in `engine.locale`, else `node_id`, and with availability `<base>/state`. `<object>` is `_engine-<object_id>` for the engine's entities and `<instance>-<object_id>` for a module's, and `unique_id` is `<node_id>-<object>`. The configs are published after every connect, when `<discovery_prefix>/status` receives `online`, and on `CORE_LOCALE_CHANGED`. The engine's entities, named by the core catalog keys `HA_*` in `engine.locale`: button `reload` (as `POST /api/v1/shell/reload`); select `page` with the page ids as options (as `PAGE_SET`, CORE-236); switch `pages_paused`, a pause hold with holder `mqtt` (extending CORE-336); number `kiosk_volume` 0–100 and switch `kiosk_mute`, run-time values as in CORE-306, never saved, with state `None` while no kiosk is connected; and per instance the switches `<id>_visible` (as show and hide, CORE-315) and `<id>_enabled` (runtime stop and start, CORE-240). Their states are published on change and after every connect.
+- CORE-344: Module entities. `ctx.mqtt.ha_entity()` (Module Contract §4.4) needs the capability `ha.discovery` and no grant. `object_id` matches `[a-z0-9_]{1,64}` and is unique within the instance (`ValueError` otherwise); `name` is a key of the module's catalog, resolved in `engine.locale`. The state topic is `<base>/ha/<instance>/<object_id>/state` (retained, QoS 1) and, when `on_command` is given, the command topic is `<base>/ha/<instance>/<object_id>/set`. `set_state` publishes `ON` or `OFF` for a bool, a number or string as text, and `None` as `None` (unknown in Home Assistant); the last state is published again after every connect. A command reaches `on_command` with the payload as text through the instance inbox, one at a time under the handler budget, as in CORE-100; an exception counts as a handler failure (CORE-192). With `ha_discovery: false` the call returns an entity that publishes nothing.
+- CORE-345: Stale entities. The bridge records the discovery topics it has published in `<state>/mqtt/discovery.json`. Once the instances of a start or a hot reload have started, it publishes an empty retained payload on the topics of entities no longer registered: those of removed or disabled instances, and those a RUNNING instance did not register again by the end of its `start()`. `HaEntity.remove()` clears its entity at once. The entities of suspended, runtime-stopped or FAILED instances stay.
 
 ### 9.4 Reference modules
 
@@ -1262,7 +1306,7 @@ Dependencies are updated automatically through tested pull requests; nothing rea
 - CORE-171: `pyproject.toml` declares ranges bounded to the current major of each dependency (`>=x.y,<next`). `uv.lock` pins exact versions with hashes for every platform target; CI, release builds and the installer install only from the lock.
 - CORE-172: Each engine release ships its lock as a constraints file; the installer (10.7) resolves module dependencies within those constraints and refuses a module whose requirements conflict with them.
 - Vendored front-end libraries (CodeMirror, uPlot, Material Design Icons) live under `src/mm3/core/web/vendor/` with a `vendor.json` that records name, version, source URL and SHA-256.
-- System packages (Chromium, cage, wlr-randr, PipeWire, pulseaudio-utils, VA-API drivers, age, rclone) are taken from Debian stable; the install script declares minimum versions.
+- System packages (Chromium, cage, wlr-randr, PipeWire, pulseaudio-utils, VA-API drivers, ddcutil, cec-utils, age, rclone) are taken from Debian stable; the install script declares minimum versions.
 
 **Automatic updates (Renovate)**
 
@@ -1428,6 +1472,8 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.32 | 2026-11-06 | Presence and power, milestone 7: display power through the kiosk agent (CORE-346), CORE\_INTERACTION on touch (CORE-347), ddcutil and cec-utils with the groups i2c and dialout (CORE-348) and the mm3-presence reference module (PRS-01, PRS-02, PRS-03, PRS-04, PRS-05, PRS-06, PRS-07, PRS-08) added; 9.2, 5.5 registry, 6.1 example, system packages, 1.1 (no X11 driver) and 1.2 (display control) updated |
+| 0.31 | 2026-11-06 | MQTT bridge and Home Assistant, milestone 7: bridge configuration (CORE-338), connection, Last Will and status (CORE-339), inbound notifications through mqtt.import (CORE-340), outbound envelopes (CORE-341), ctx.mqtt without a connection (CORE-342), discovery and engine entities (CORE-343), module entities through ha\_entity() (CORE-344) and stale entities (CORE-345) added; 9.3 topic table (display and presence topics moved to the presence module, ha topics added) and 1.1 updated |
 | 0.30 | 2026-11-06 | Pages for MMM-pages and MMM-ProfileSwitcher, milestone 7: pages out of the cycle (CORE-333), timed jump to a page (CORE-334), idle return to default (CORE-335), pause holds with PAGE\_PAUSE, PAGE\_RESUME and REST (CORE-336), previous page and reasons after and idle in CORE\_PAGE\_CHANGED (CORE-337) added; 5.5 registry, 9.1 table and 1.1 updated |
 | 0.29 | 2026-11-05 | Admin extensions of milestone 6: one page per module at /admin/ext/\<module> (CORE-329), the admin element's properties (CORE-330), the API helper (CORE-331) and module routes on ctx.router (CORE-332) added |
 | 0.28 | 2026-11-05 | Layout view of milestone 6: patch and validate also return the draft layout object (CORE-301, CORE-302 changed); Show on mirror answers 204 and the toggle turns off after 60 s without a push (CORE-307 changed); /admin/config may frame the preview (CORE-63 changed); preview iframe messages and pinned page (CORE-325), in-house editing overlay (CORE-326), page write rule (CORE-327) and overlay toolbar with Rescale proportionally (CORE-328) added; gridstack.js removed from 1.2 |
