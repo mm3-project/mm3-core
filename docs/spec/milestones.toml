@@ -262,7 +262,7 @@ name = "Services: MQTT/HA, presence, installer, catalog, backup"
 status = "not_started"
 requirements = [
   "CORE-50..53", "CORE-66", "CORE-100", "CORE-120..126", "CORE-130..136",
-  "CORE-160..165", "CORE-333..337", "CORE-338..348", "PRS-01..08", "MOD-96..99",
+  "CORE-160..165", "CORE-333..337", "CORE-338..366", "PRS-01..08", "MOD-96..99",
 ]
 # CORE-338..345 (core 0.31): MQTT bridge and Home Assistant. CORE-339 extends
 #   CORE-305 (status, milestone 6) and CORE-342 extends CORE-100 without
@@ -273,6 +273,16 @@ requirements = [
 #   CORE-260 (CORE_INTERACTION; CORE_PRESENCE is never emitted); CORE-348
 #   extends CORE-293 (milestone 10) with ddcutil, cec-utils and the groups i2c
 #   and dialout. PRS-xx is the reference module mm3-presence in modules/presence.
+# CORE-349..358 (core 0.33): catalog and installer. They extend CORE-125, 126,
+#   131, 134, 135, 203 (milestone 2), 293 (milestone 10), 298 and 304
+#   (milestone 6) without changing them; sigstore and pypi-attestations come
+#   with the extra mm3-core[installer] (CORE-349).
+# CORE-359..366 (core 0.34): backup and restore. They extend CORE-160..165,
+#   CORE-244 (milestone 2) and CORE-357; scheduled backups run in the installer
+#   service and mm3-backup.timer is gone (CORE-360). CORE-361 adds
+#   CORE_API_UPLOAD_TOO_LARGE and CORE-356 the installer and catalog codes to the
+#   CORE-298 list; the engine's problem codes grow with the routes in this
+#   milestone's development.
 # CORE-333..337 (core 0.30): pages out of the cycle, timed jumps, idle
 #   return, pause holds and the previous page (MMM-pages and
 #   MMM-ProfileSwitcher). They extend CORE-230..237 of milestones 2, 3 and 6

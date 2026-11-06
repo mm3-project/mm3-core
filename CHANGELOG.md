@@ -7,6 +7,24 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (core spec 0.34, Module Contract unchanged at 1.0 rev 15)
+
+- Spec sync for core spec 0.33 and 0.34, assigned to milestone 7. Catalog and
+  installer: added CORE-349 (sigstore and pypi-attestations in the extra
+  `mm3-core[installer]`), CORE-350 (signed index format), CORE-351 (cache,
+  `serial` and `expires`), CORE-352 (wheel SHA-256 and PEP 740 provenance),
+  CORE-353 (CLI through the installer socket, unlisted packages only from
+  root), CORE-354 (staged venv with frozen constraints), CORE-355 (installer
+  protocol), CORE-356 (engine catalog and installer API, new problem codes,
+  `/admin/ws` topic `installer`), CORE-357 (installer unit, polkit rule,
+  READY check) and CORE-358 (removal disables instances first). Backup and
+  restore: added CORE-359 (installer capabilities), CORE-360 (scheduled
+  backups in the installer; `mm3-backup.timer` dropped), CORE-361 (backup
+  routes, `CORE_API_UPLOAD_TOO_LARGE`), CORE-362 (archive layout and sidecar),
+  CORE-363 (restore order), CORE-364 (age keys), CORE-365 (rclone remotes)
+  and CORE-366 (pre-operation backups). They extend existing requirements
+  without changing them, so no closed milestone is reopened.
+
 ### Changed (core spec 0.32, Module Contract 1.0 rev 15)
 
 - Spec sync for core spec 0.31 and 0.32 and Module Contract 1.0 rev 14 and
