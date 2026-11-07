@@ -1,6 +1,6 @@
 /* Admin pages (core spec 9.1, 10.5): served on the admin listener only.
    No inline styles anywhere (CORE-63): every look is a class here. */
-/* Implements CORE-63 (Core spec 0.28, §10.1 Security): no inline styles */
+/* Implements CORE-63 (Core spec 0.38, §10.1 Security): no inline styles */
 /* Implements CORE-326 (Core spec 0.28, §6.6 Live layout preview): the Layout view */
 
 :root {

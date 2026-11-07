@@ -9,7 +9,7 @@ until its token is revoked. Every check also asks the token store whether
 the token still exists, so a revoked token ends its sessions at once.
 
 Implements:
-    CORE-253: Core spec 0.12, §10.1 Security.
+    CORE-253: Core spec 0.38, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
     CORE-62: Core spec 0.12, §10.1 Security.
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
@@ -96,7 +96,7 @@ class SessionStore:
         now: Clock, for tests.
 
     Implements:
-        CORE-253: Core spec 0.12, §10.1 Security.
+        CORE-253: Core spec 0.38, §10.1 Security.
         CORE-254: Core spec 0.12, §10.1 Security.
     """
 
@@ -251,7 +251,7 @@ class LoginLimiter:
         now: Clock, for tests.
 
     Implements:
-        CORE-253: Core spec 0.12, §10.1 Security.
+        CORE-253: Core spec 0.38, §10.1 Security.
     """
 
     def __init__(self, *, now: Callable[[], datetime] = _now) -> None:

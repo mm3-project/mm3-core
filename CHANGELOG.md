@@ -7,6 +7,21 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (core spec 0.38: browser form posts, milestone 3 reopened)
+
+- The login, logout and pairing forms were refused with 403 from every browser
+  (CORE-253, CORE-63). With `Referrer-Policy: no-referrer` a browser sends
+  `Origin: null` on a same-origin form post, and the `Origin` check refused it
+  before the token was looked at; the tests missed it because they set `Origin`
+  by hand. The policy is now `same-origin` on both listeners (still no referrer
+  to other sites) and the browser sends the real origin. `Origin: null` stays
+  refused. New tests drive the forms with a real browser
+  (`tests/test_web_browser_forms.py`, `browser` marker) and keep `Origin: null`
+  refused (`test_core_253_unsafe_requests_need_a_matching_origin`).
+- Core spec 0.38: CORE-63 and CORE-253 changed; the `Implements:` citations of the
+  files that cite them were reviewed and updated, and milestone 3 is closed again
+  at core 0.38 in `docs/spec/milestones.toml`.
+
 ### Added (milestone 7, PR 5: backup and restore, installer side and CLI)
 
 - Backups (core spec 0.37, section 10.8; CORE-160, CORE-161, CORE-362): archives

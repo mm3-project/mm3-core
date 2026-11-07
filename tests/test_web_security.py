@@ -329,7 +329,7 @@ async def test_core_63_headers_on_every_response(auth: WebAuth) -> None:
             assert r.status_code == status
             assert r.headers["content-security-policy"] == CSP
             assert r.headers["x-content-type-options"] == "nosniff"
-            assert r.headers["referrer-policy"] == "no-referrer"
+            assert r.headers["referrer-policy"] == "same-origin"
             assert r.headers["cache-control"] == "no-store"
             policy = r.headers["permissions-policy"]
             for feature in ("camera", "microphone", "geolocation", "usb", "serial"):
@@ -419,6 +419,9 @@ async def test_core_253_unsafe_requests_need_a_matching_origin(auth: WebAuth) ->
     async with client(admin(auth), ADMIN) as c:
         assert (await login(c, token, origin="http://evil.example")).status_code == 403
         assert (await c.post("/admin/login", content=f"token={token}")).status_code == 403
+        # `Origin: null` is what a browser sends under `Referrer-Policy: no-referrer`
+        # (CORE-63): it stays refused, the policy is what makes browsers send the origin.
+        assert (await login(c, token, origin="null")).status_code == 403
         assert (await login(c, token)).status_code == 303
         assert (await c.post("/api/v1/x")).status_code == 403
         assert (
