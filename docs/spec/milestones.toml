@@ -90,7 +90,9 @@ name = "Web shell, WebSocket, i18n, kiosk, visibility"
 status = "done"
 # Reopened by core 0.28 (CORE-63: frame-src 'self' on /admin/config, done in
 #   milestone 6 #74, issue #76); citations reviewed, closed again at core 0.29.
-done_at = { core = "0.29", contract = "1.0 rev 13" }
+# Reopened by core 0.38 (CORE-63: Referrer-Policy same-origin; CORE-253: Origin: null
+#   refused, form posts from a browser); citations reviewed, closed again at core 0.38.
+done_at = { core = "0.38", contract = "1.0 rev 15" }
 requirements = [
   "CORE-06", "CORE-07", "CORE-11", "CORE-12", "CORE-40..42", "CORE-60..64",
   "CORE-95", "CORE-103", "CORE-117", "CORE-143..146", "CORE-223", "CORE-233..235",

@@ -6,9 +6,14 @@ allow list (``server.allow`` or ``admin.allow``). A refused source gets 403
 at most once a minute per address. Every HTTP response carries the security
 headers of CORE-63.
 
+The referrer policy is ``same-origin``, not ``no-referrer``: under
+``no-referrer`` a browser sends ``Origin: null`` with every same-origin form
+post, and the login, logout and pairing forms are refused by the ``Origin``
+check of CORE-253 before the token is looked at.
+
 Implements:
     CORE-61: Core spec 0.12, §10.1 Security.
-    CORE-63: Core spec 0.28, §10.1 Security.
+    CORE-63: Core spec 0.38, §10.1 Security.
     CORE-12: Core spec 0.15, §4.4 Contract rules.
 """
 
@@ -173,7 +178,7 @@ def security_headers(path: str) -> list[tuple[bytes, bytes]]:
     return [
         (b"content-security-policy", csp.encode()),
         (b"x-content-type-options", b"nosniff"),
-        (b"referrer-policy", b"no-referrer"),
+        (b"referrer-policy", b"same-origin"),
         (b"permissions-policy", PERMISSIONS_POLICY.encode()),
     ]
 
@@ -188,7 +193,7 @@ class SecurityHeaders:
         app: The application.
 
     Implements:
-        CORE-63: Core spec 0.28, §10.1 Security.
+        CORE-63: Core spec 0.38, §10.1 Security.
     """
 
     def __init__(self, app: ASGIApp) -> None:

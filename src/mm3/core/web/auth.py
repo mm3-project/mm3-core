@@ -4,12 +4,14 @@ The admin listener accepts an admin token as ``Authorization: Bearer`` or
 an admin session cookie. Requests with an unsafe method that rely on the
 session cookie (and the login and logout forms) must carry an ``Origin``
 header that matches the listener, so another site cannot make the browser
-act for the admin. The mirror listener knows display sessions only; a
+act for the admin. ``Origin: null`` is refused; browsers send the real origin
+with same-origin form posts because the referrer policy is ``same-origin``
+(CORE-63). The mirror listener knows display sessions only; a
 display token or session grants nothing on the admin listener.
 
 Implements:
     CORE-62: Core spec 0.12, §10.1 Security.
-    CORE-253: Core spec 0.12, §10.1 Security.
+    CORE-253: Core spec 0.38, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
 """
 
@@ -47,7 +49,7 @@ def origin_matches(conn: HTTPConnection) -> bool:
         Whether ``Origin`` equals ``<scheme>://<Host header>``.
 
     Implements:
-        CORE-253: Core spec 0.12, §10.1 Security.
+        CORE-253: Core spec 0.38, §10.1 Security.
     """
     origin = conn.headers.get("origin")
     host = conn.headers.get("host")
@@ -113,7 +115,7 @@ class WebAuth:
 
         Implements:
             CORE-62: Core spec 0.12, §10.1 Security.
-            CORE-253: Core spec 0.12, §10.1 Security.
+            CORE-253: Core spec 0.38, §10.1 Security.
         """
         auth = conn.headers.get("authorization", "")
         scheme, _, value = auth.partition(" ")
