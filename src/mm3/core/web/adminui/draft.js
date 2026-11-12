@@ -3,6 +3,8 @@
 // Implements CORE-301 (Core spec 0.28, §6.4 Web configuration editor): the draft
 // lives in the browser; every edit goes through POST /config/patch, which returns
 // the changed files, the records, the documents and the draft's layout object.
+// Implements CORE-301 (Core spec 0.38, §6.4 Web configuration editor): setOp builds
+// operations that apply to the document, creating missing parents (ISS-012).
 // Implements CORE-151 (Core spec 0.10, §6.8 Configuration history, undo and redo):
 // one undo/redo history for the draft, each step a JSON Patch with a readable
 // label, at least 200 steps; YAML typing is grouped per pause of 1 s.
@@ -41,6 +43,34 @@ export function getAt(doc, parts) {
     node = node[p];
   }
   return node;
+}
+
+const isContainer = (v) => v !== null && typeof v === "object" && !isTag(v);
+
+/**
+ * One JSON Patch op that sets `value` at `target` (parts) in `doc`, creating every
+ * missing parent in the same op: an absent or null section such as `audio`, or a
+ * list not yet written such as `pages.list` (ISS-012). A `-` part appends to a list.
+ * Returns null when a parent is a scalar or a tagged node, which cannot hold a child.
+ */
+export function setOp(doc, target, value) {
+  // The deepest existing container on the path; below it, nothing exists yet.
+  let i = 0;
+  while (i < target.length - 1 && target[i] !== "-" && isContainer(getAt(doc, target.slice(0, i + 1)))) i += 1;
+  if (i < target.length - 1) {
+    const at = target.slice(0, i + 1);
+    const here = getAt(doc, at);
+    if (here !== undefined && here !== null) return null; // a scalar or a tag in the way
+    const tail = target.slice(i + 1);
+    const built = tail.reduceRight((acc, key) => (key === "-" ? [acc] : { [key]: acc }), value);
+    if (at[at.length - 1] === "-") return { op: "add", path: pointer(at), value: built };
+    return { op: here === null ? "replace" : "add", path: pointer(at), value: built };
+  }
+  const last = target[target.length - 1];
+  const parent = target.length > 1 ? getAt(doc, target.slice(0, -1)) : doc;
+  if (target.length > 0 && !isContainer(parent)) return null;
+  const exists = last !== "-" && getAt(doc, target) !== undefined;
+  return { op: exists ? "replace" : "add", path: pointer(target), value };
 }
 
 export function isTag(value) {
