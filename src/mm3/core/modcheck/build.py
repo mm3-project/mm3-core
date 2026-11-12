@@ -106,6 +106,23 @@ def core_requirements() -> list[str]:
     return [f"mm3-core[testing]=={dist.version}"]
 
 
+def _browser_pin() -> list[str]:
+    """Pin Playwright in the check venv to the version that runs the check.
+
+    The venv is resolved fresh, without ``uv.lock``, so it would take the newest
+    Playwright, whose Chromium build differs from the one installed for the running
+    version (``playwright install chromium``, or ``MM3_CHROMIUM``); the browser harness
+    then cannot start and the check ends with exit code 2.
+
+    Returns:
+        ``["playwright==<version>"]``, or nothing when Playwright is not installed.
+    """
+    try:
+        return [f"playwright=={metadata.version('playwright')}"]
+    except metadata.PackageNotFoundError:
+        return []
+
+
 def venv_python(venv: Path) -> Path:
     """Return the interpreter of a venv."""
     return venv / "bin" / "python"
@@ -142,7 +159,7 @@ def make_venv(venv: Path, wheel: Path, requires_dist: list[str]) -> Path:
             others.append(line)
     # The module's own range on mm3-core is checked statically (MOD-03); the running
     # engine is what the kit must test, whatever its release number.
-    packages = [*core_requirements(), *others]
+    packages = [*core_requirements(), *_browser_pin(), *others]
     done = _run([uv, "pip", "install", "--python", str(python), *packages], "uv pip install")
     if done.returncode != 0:
         raise ToolError(f"cannot install the engine and dependencies:\n{done.stderr.strip()}")

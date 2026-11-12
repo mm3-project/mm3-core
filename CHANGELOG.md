@@ -7,6 +7,15 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (CI: mm3 module check venv; no spec change)
+
+- `mm3 module check` ended with exit code 2 ("Chromium cannot be started") once
+  Playwright 1.65 was released: the check's temporary venv is resolved without
+  `uv.lock`, took the newest Playwright, and looked for a Chromium build that CI
+  (which installs the locked 1.64.1's) does not have. The venv now pins Playwright to
+  the version that runs the check (`mm3.core.modcheck.build`, CORE-281). The jobs
+  "Reference module ... (CORE-289)" and `test (3.13)` failed on this.
+
 ### Fixed (core spec 0.38: browser form posts, milestone 3 reopened)
 
 - The login, logout and pairing forms were refused with 403 from every browser
