@@ -800,3 +800,12 @@ def test_core_371_wheel_check_runs_only_static(
     out = capsys.readouterr().out
     assert "1 skipped (need the project files)" in out
     assert "Report" not in out
+
+
+def test_core_281_check_venv_pins_the_running_playwright() -> None:
+    """The check venv pins the running Playwright version, so the same Chromium fits."""
+    from importlib import metadata
+
+    from mm3.core.modcheck.build import _browser_pin
+
+    assert _browser_pin() == [f"playwright=={metadata.version('playwright')}"]
