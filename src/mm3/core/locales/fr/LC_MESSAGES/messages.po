@@ -779,3 +779,30 @@ msgstr "Le kiosque n'a pas confirmé à temps le changement d'écran"
 
 msgid "CORE_DISPLAY_UNAVAILABLE"
 msgstr "L'écran ne peut pas être commuté sur ce système"
+
+msgid "CORE_ADMIN_ADD_MODULE"
+msgstr "Ajouter un module"
+
+msgid "CORE_ADMIN_MODULE"
+msgstr "Module"
+
+msgid "CORE_ADMIN_KIND_FRONTEND"
+msgstr "avec interface"
+
+msgid "CORE_ADMIN_KIND_BACKEND"
+msgstr "backend seul"
+
+msgid "CORE_ADMIN_NO_USABLE_MODULES"
+msgstr "Aucun module installé ne peut être ajouté."
+
+msgid "CORE_ADMIN_REFUSED_MODULES"
+msgstr "Refusés au démarrage, non proposés :"
+
+msgid "CORE_ADMIN_STEP_ADDED"
+msgstr "{id} : ajouté"
+
+msgid "CORE_ADMIN_SERVICES"
+msgstr "Services"
+
+msgid "CORE_ADMIN_DISABLED_STATE"
+msgstr "désactivé"

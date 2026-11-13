@@ -19,10 +19,14 @@
 // toolbar and on the disabled list, one undoable step with no confirmation.
 // Implements CORE-376 (Core spec 0.39, §6.6 Live layout preview): New, Rename and Delete
 // page beside the page selector, each one draft step.
+// Implements CORE-374 (Core spec 0.40, §6.6 Live layout preview): Add module from the
+// installed modules (CORE-380), on a preset, one draft step with the id always written.
+// Implements CORE-375 (Core spec 0.40, §6.6 Live layout preview): Delete on the cards of
+// the Services lane.
 
 import { html, nothing, render } from "/admin/static/lit-html.js";
 import { AdminChannel, api, sessionLocale, t } from "/admin/static/admin.js";
-import { clone, diffOps, equal, getAt, isTag, pointer, sectionLocation, sectionValues, setOp } from "/admin/static/draft.js";
+import { clone, diffOps, equal, getAt, instanceId, isTag, pointer, sectionLocation, sectionValues, setOp } from "/admin/static/draft.js";
 
 export const PRESETS = [
   "top_bar",
@@ -165,6 +169,12 @@ export function withTitle(title, lang, text) {
   return { [lang]: text };
 }
 
+/** The id of a new instance: the module name, else `<module>_2`, `<module>_3`… (CORE-374). */
+export function newInstanceId(module, ids) {
+  if (!ids.includes(module)) return module;
+  for (let n = 2; ; n += 1) if (!ids.includes(`${module}_${n}`)) return `${module}_${n}`;
+}
+
 /**
  * The instance after a page was deleted (CORE-376): the page leaves its `pages` list and its
  * `positions`; an instance left with no page is disabled.
@@ -196,6 +206,8 @@ class LayoutView extends HTMLElement {
     this.channel = null;
     this.sentLayout = null;
     this.dlg = null; // the New and Rename page dialog: {mode, id, title}
+    this.installed = null; // GET /installed-modules (CORE-380), read when the tab opens
+    this.addDlg = null; // the Add module dialog: {module, preset}
     this.resize = new ResizeObserver(() => this.fit());
   }
 
@@ -203,6 +215,7 @@ class LayoutView extends HTMLElement {
     // The session keeps an /admin/ws open, so Show on mirror ends when the page closes.
     this.channel = new AdminChannel(() => {}, () => {});
     this.update();
+    this.loadInstalled();
     try {
       const pages = await api("GET", "/pages");
       if (this.page === null && pages && pages.current) this.setPage(pages.current);
@@ -220,6 +233,23 @@ class LayoutView extends HTMLElement {
 
   get draft() {
     return this.host.draft;
+  }
+
+  /** The installed modules (CORE-380); the Services lane needs their kind. */
+  async loadInstalled() {
+    try {
+      this.installed = await api("GET", "/installed-modules");
+    } catch (err) {
+      this.installed = this.installed || [];
+      this.host?.problem(err);
+    }
+    this.update();
+  }
+
+  /** `frontend` or `backend` for an installed module, null when it is not known (CORE-380). */
+  kindOf(module) {
+    const info = (this.installed || []).find((m) => m.name === module);
+    return info ? info.kind : null;
   }
 
   get layout() {
@@ -321,6 +351,107 @@ class LayoutView extends HTMLElement {
     if (this.selected === id) this.selected = null;
     const ops = [{ op: "remove", path: pointer(loc.parts) }];
     return this.host.run(() => this.draft.apply(loc.file, ops, t("CORE_ADMIN_STEP_DELETED", { id })));
+  }
+
+  // --- Add module (CORE-374) ----------------------------------------------------------
+
+  async openAddDialog() {
+    await this.loadInstalled();
+    const usable = (this.installed || []).filter((m) => m.usable);
+    this.addDlg = { module: usable[0] ? usable[0].name : "", preset: "top_left" };
+    this.update();
+    this.querySelector("dialog.module")?.showModal();
+  }
+
+  closeAddDialog() {
+    this.querySelector("dialog.module")?.close();
+  }
+
+  /**
+   * Add module: one draft step appending the instance to `modules` with its id written, a
+   * front-end one on the chosen preset, `config: {}`, and `pages: [<selected page>]` when a
+   * `pages` block exists. A sibling of the same module without an `id` gets its default
+   * id in the same step.
+   */
+  async addModule(name, preset) {
+    const info = (this.installed || []).find((m) => m.name === name && m.usable);
+    const where = sectionLocation(this.draft.documents, this.draft.main, "modules/_order");
+    if (!info || !where) return;
+    const doc = this.draft.documents[where.file];
+    const list = getAt(doc, where.parts);
+    const items = Array.isArray(list) ? list : [];
+    const id = newInstanceId(name, items.map(instanceId).filter(Boolean));
+    const ops = [];
+    items.forEach((item, i) => {
+      if (isObject(item) && item.module === name && typeof item.id !== "string") {
+        ops.push({ op: "add", path: pointer([...where.parts, i, "id"]), value: name });
+      }
+    });
+    const value = { module: name, id };
+    if (info.kind === "frontend") value.position = preset;
+    const block = this.pagesBlock();
+    if (block && isObject(block.value) && this.page !== null) value.pages = [this.page];
+    value.config = {};
+    const op = setOp(doc, [...where.parts, "-"], value);
+    if (!op) return;
+    ops.push(op);
+    this.selected = info.kind === "frontend" ? id : null;
+    await this.host.run(() => this.draft.apply(where.file, ops, t("CORE_ADMIN_STEP_ADDED", { id })));
+  }
+
+  async submitAddDialog() {
+    const d = this.addDlg;
+    if (!d || !d.module) return;
+    this.closeAddDialog();
+    await this.addModule(d.module, d.preset);
+  }
+
+  addDialog() {
+    const d = this.addDlg;
+    if (!d) return html`<dialog class="module"></dialog>`;
+    const all = this.installed || [];
+    const usable = all.filter((m) => m.usable);
+    const refused = all.filter((m) => !m.usable);
+    const info = usable.find((m) => m.name === d.module);
+    return html`<dialog class="module" @close=${() => {
+      this.addDlg = null;
+      this.update();
+    }}>
+      <form @submit=${(e) => {
+        e.preventDefault();
+        this.submitAddDialog();
+      }}>
+        <h3>${t("CORE_ADMIN_ADD_MODULE")}</h3>
+        ${usable.length
+          ? html`<label>${t("CORE_ADMIN_MODULE")}
+              <select name="module" @change=${(e) => {
+                d.module = e.target.value;
+                this.update();
+              }}>
+                ${usable.map(
+                  (m) => html`<option value=${m.name} ?selected=${m.name === d.module}>${m.header} (${m.name}) · ${t(m.kind === "frontend" ? "CORE_ADMIN_KIND_FRONTEND" : "CORE_ADMIN_KIND_BACKEND")}</option>`,
+                )}
+              </select></label>`
+          : html`<p class="alert no-modules">${t("CORE_ADMIN_NO_USABLE_MODULES")}</p>`}
+        ${info && info.kind === "frontend"
+          ? html`<label>${t("CORE_ADMIN_PRESET")}
+              <select name="preset" @change=${(e) => {
+                d.preset = e.target.value;
+              }}>
+                ${PRESETS.map((n) => html`<option value=${n} ?selected=${n === d.preset}>${n}</option>`)}
+              </select></label>`
+          : nothing}
+        ${refused.length
+          ? html`<div class="refused muted"><p>${t("CORE_ADMIN_REFUSED_MODULES")}</p>
+              <ul>${refused.map((m) => html`<li><span class="mono">${m.name}</span>: ${m.error}</li>`)}</ul></div>`
+          : nothing}
+        <div class="row">
+          <span class="spacer"></span>
+          <button type="button" name="cancel" @click=${() => this.closeAddDialog()}>${t("CORE_ADMIN_CANCEL")}</button>
+          <button type="submit" class="primary" name="ok" ?disabled=${!info}>${t("CORE_ADMIN_ADD")}</button>
+        </div>
+      </form>
+    </dialog>`;
   }
 
   // --- pages (CORE-376) ---------------------------------------------------------------
@@ -739,7 +870,9 @@ class LayoutView extends HTMLElement {
 
   disabledList() {
     const values = sectionValues(this.draft.documents, this.draft.main);
-    const ids = (values["modules/_order"] || []).filter((id) => id && values[`modules/${id}`]?.disabled === true);
+    const ids = (values["modules/_order"] || []).filter(
+      (id) => id && values[`modules/${id}`]?.disabled === true && this.kindOf(values[`modules/${id}`].module) !== "backend",
+    );
     if (!ids.length) return nothing;
     return html`<section class="card disabled-list"><h3>${t("CORE_ADMIN_DISABLED_LIST")}</h3>
       <ul>${ids.map(
@@ -747,6 +880,26 @@ class LayoutView extends HTMLElement {
           <button name="enable" @click=${() => this.setEnabled(id, true)}>${t("CORE_ADMIN_ENABLE")}</button>
           <button name="delete" @click=${() => this.deleteInstance(id)}>${t("CORE_ADMIN_DELETE")}</button></li>`,
       )}</ul></section>`;
+  }
+
+  /** The Services lane: a card per backend-only instance, enabled or not (CORE-375). */
+  servicesLane() {
+    const values = sectionValues(this.draft.documents, this.draft.main);
+    const ids = (values["modules/_order"] || []).filter((id) => id && this.kindOf(values[`modules/${id}`]?.module) === "backend");
+    if (!ids.length) return nothing;
+    const header = (module) => (this.installed || []).find((m) => m.name === module)?.header || module;
+    return html`<section class="card services-lane"><h3>${t("CORE_ADMIN_SERVICES")}</h3>
+      <ul>${ids.map((id) => {
+        const item = values[`modules/${id}`];
+        const off = item.disabled === true;
+        return html`<li data-instance=${id}><span class="mono">${id}</span>
+          <span class="muted">${header(item.module)}</span>
+          ${off ? html`<span class="muted">${t("CORE_ADMIN_DISABLED_STATE")}</span>` : nothing}
+          <span class="spacer"></span>
+          <button name="edit" @click=${() => this.host.openForm(`modules/${id}`)}>${t("CORE_ADMIN_EDIT_IN_FORM")}</button>
+          <button name=${off ? "enable" : "disable"} @click=${() => this.setEnabled(id, off)}>${t(off ? "CORE_ADMIN_ENABLE" : "CORE_ADMIN_DISABLE")}</button>
+          <button name="delete" @click=${() => this.deleteInstance(id)}>${t("CORE_ADMIN_DELETE")}</button></li>`;
+      })}</ul></section>`;
   }
 
   update() {
@@ -765,6 +918,7 @@ class LayoutView extends HTMLElement {
           <button name="new-page" ?disabled=${pageCount >= MAX_PAGES} @click=${() => this.openPageDialog("new")}>${t("CORE_ADMIN_NEW_PAGE")}</button>
           <button name="rename-page" ?disabled=${this.page === null} @click=${() => this.openPageDialog("rename")}>${t("CORE_ADMIN_RENAME_PAGE")}</button>
           <button name="delete-page" ?disabled=${pageCount < 2 || this.page === null} @click=${() => this.deletePage(this.page)}>${t("CORE_ADMIN_DELETE_PAGE")}</button>
+          <button name="add-module" @click=${() => this.openAddDialog()}>${t("CORE_ADMIN_ADD_MODULE")}</button>
           ${layout ? html`<span class="muted">${layout.viewport[0]} × ${layout.viewport[1]} px</span>` : nothing}
           <span class="spacer"></span>
           ${this.canRescale()
@@ -790,7 +944,7 @@ class LayoutView extends HTMLElement {
           </div>
         </div>
         <section class="card">${this.toolbar()}</section>
-        ${this.disabledList()} ${this.pageDialog()}
+        ${this.servicesLane()} ${this.disabledList()} ${this.pageDialog()} ${this.addDialog()}
       </div>`,
       this,
     );

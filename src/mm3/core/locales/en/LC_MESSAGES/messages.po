@@ -777,3 +777,30 @@ msgstr "The kiosk did not confirm the display change in time"
 
 msgid "CORE_DISPLAY_UNAVAILABLE"
 msgstr "The display cannot be switched on this system"
+
+msgid "CORE_ADMIN_ADD_MODULE"
+msgstr "Add module"
+
+msgid "CORE_ADMIN_MODULE"
+msgstr "Module"
+
+msgid "CORE_ADMIN_KIND_FRONTEND"
+msgstr "front-end"
+
+msgid "CORE_ADMIN_KIND_BACKEND"
+msgstr "backend-only"
+
+msgid "CORE_ADMIN_NO_USABLE_MODULES"
+msgstr "No installed module can be added."
+
+msgid "CORE_ADMIN_REFUSED_MODULES"
+msgstr "Refused at start, not offered:"
+
+msgid "CORE_ADMIN_STEP_ADDED"
+msgstr "{id}: added"
+
+msgid "CORE_ADMIN_SERVICES"
+msgstr "Services"
+
+msgid "CORE_ADMIN_DISABLED_STATE"
+msgstr "disabled"

@@ -777,3 +777,30 @@ msgstr "El kiosco no confirmó a tiempo el cambio de pantalla"
 
 msgid "CORE_DISPLAY_UNAVAILABLE"
 msgstr "La pantalla no se puede cambiar en este sistema"
+
+msgid "CORE_ADMIN_ADD_MODULE"
+msgstr "Añadir módulo"
+
+msgid "CORE_ADMIN_MODULE"
+msgstr "Módulo"
+
+msgid "CORE_ADMIN_KIND_FRONTEND"
+msgstr "con interfaz"
+
+msgid "CORE_ADMIN_KIND_BACKEND"
+msgstr "solo backend"
+
+msgid "CORE_ADMIN_NO_USABLE_MODULES"
+msgstr "No se puede añadir ningún módulo instalado."
+
+msgid "CORE_ADMIN_REFUSED_MODULES"
+msgstr "Rechazados al arrancar, no se ofrecen:"
+
+msgid "CORE_ADMIN_STEP_ADDED"
+msgstr "{id}: añadido"
+
+msgid "CORE_ADMIN_SERVICES"
+msgstr "Servicios"
+
+msgid "CORE_ADMIN_DISABLED_STATE"
+msgstr "desactivado"

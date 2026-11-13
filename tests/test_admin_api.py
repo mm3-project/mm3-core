@@ -348,6 +348,51 @@ async def test_core_315_modules_entries(api: Api) -> None:
     assert mods[2]["pages"] == "all"
 
 
+async def test_core_380_installed_modules(api: Api) -> None:
+    r = await api.get("/api/v1/installed-modules")
+    assert r.status_code == 200
+    mods = r.json()
+    assert [m["name"] for m in mods] == ["answerer", "panel"]  # sorted by name
+    panel = mods[1]
+    assert set(panel) == {
+        "name",
+        "version",
+        "distribution",
+        "kind",
+        "header",
+        "usable",
+        "error",
+        "instances",
+    }
+    assert panel["kind"] == "frontend"
+    assert panel["usable"] is True
+    assert panel["error"] is None
+    assert panel["header"] == "panel"  # no HEADER entry: the module name
+    assert panel["instances"] == ["one", "two"]  # configuration order
+    assert mods[0]["kind"] == "backend"
+    assert mods[0]["instances"] == ["ans"]
+
+
+async def test_core_380_refused_module_is_listed_not_usable(api: Api) -> None:
+    api.engine.supervisor.registry.add(object, name="broken")
+    mods = {m["name"]: m for m in (await api.get("/api/v1/installed-modules")).json()}
+    assert mods["broken"]["usable"] is False
+    assert "MirrorModule" in mods["broken"]["error"]
+    assert mods["broken"]["instances"] == []
+    assert mods["panel"]["usable"] is True
+
+
+async def test_core_380_needs_admin_authentication(api: Api) -> None:
+    r = await api.client.get("/api/v1/installed-modules")
+    assert r.status_code == 401
+
+
+async def test_core_380_path_is_not_an_instance_path(api: Api) -> None:
+    # CORE-332: module routes live under /api/v1/modules/<instance id>/, so the
+    # installed-modules path cannot be shadowed by an instance named like it.
+    assert (await api.get("/api/v1/modules/installed-modules/health")).status_code == 404
+
+
 async def test_core_113_health_route(api: Api) -> None:
     r = await api.get("/api/v1/modules/ans/health")
     assert r.status_code == 200

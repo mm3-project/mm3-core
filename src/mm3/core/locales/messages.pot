@@ -772,3 +772,30 @@ msgstr ""
 
 msgid "CORE_DISPLAY_UNAVAILABLE"
 msgstr ""
+
+msgid "CORE_ADMIN_ADD_MODULE"
+msgstr ""
+
+msgid "CORE_ADMIN_MODULE"
+msgstr ""
+
+msgid "CORE_ADMIN_KIND_FRONTEND"
+msgstr ""
+
+msgid "CORE_ADMIN_KIND_BACKEND"
+msgstr ""
+
+msgid "CORE_ADMIN_NO_USABLE_MODULES"
+msgstr ""
+
+msgid "CORE_ADMIN_REFUSED_MODULES"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_ADDED"
+msgstr ""
+
+msgid "CORE_ADMIN_SERVICES"
+msgstr ""
+
+msgid "CORE_ADMIN_DISABLED_STATE"
+msgstr ""
