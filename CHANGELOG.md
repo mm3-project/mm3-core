@@ -7,6 +7,27 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (test kit and tests: three intermittent failures; ISS-015, ISS-016; no spec change)
+
+- `mm3.testing` virtual clock (`LoopClock`, CORE-278): a job due exactly at the end of
+  `h.advance()` could be missed. The loop clock starts at the real monotonic time, so a
+  time planned from the wall clock and the target of `advance(to=...)` can differ by one
+  float rounding (about 1e-11 s). The scheduler then waited for that remainder, asyncio
+  ran the timer at once because it is inside its clock resolution, the virtual time did
+  not move, and the scheduler waited again until the settle rounds ran out. Waits shorter
+  than a microsecond (one `datetime` tick) are now rounded up to one microsecond, and
+  `advance()` also runs a timer up to two microseconds past its target. Nothing changes
+  for a wait of a microsecond or more. This is the cause of the intermittent
+  `test_prs_05_days_are_start_days` (13 failures in 190 runs before, none in 70 after).
+  `test_wth_11_sent_after_every_refresh_whatever_the_view` (ISS-015) fails the same way,
+  one job missed at an exact boundary, but its failure was seen only 2 times (CI and one
+  local run) and was not captured, so it is expected to be fixed by this and not proved.
+- `test_core_377_history_survives_a_reload_until_save_or_discard` (ISS-016) checked the
+  Redo button as soon as it was drawn, before the page had restored the stored history
+  (the buttons are drawn first). It now waits for the enabled button and for each step
+  (9 failures in 24 runs before, none in 60 after). The page itself is unchanged.
+- Test: `test_core_278_advance_runs_a_job_one_float_rounding_past_the_target`.
+
 ### Changed (admin landing; ISS-001; Core spec 0.40)
 
 - An admin page asked for without a session answers 303 to

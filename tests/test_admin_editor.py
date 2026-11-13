@@ -786,9 +786,11 @@ async def test_core_377_history_survives_a_reload_until_save_or_discard(
         assert await undo.is_disabled()
         # The undone steps are still there to redo, also after another reload.
         await page.reload()
-        await page.wait_for_selector("nav.tabs button:has-text('Redo')")
+        # The buttons are drawn before the stored history is restored: wait for it.
+        await page.wait_for_selector("nav.tabs button:has-text('Redo'):not([disabled])")
         assert await page.locator("nav.tabs button:has-text('Redo')").is_enabled()
         await page.keyboard.press("Control+Shift+z")
+        await locale_is(page, "it")
         await page.keyboard.press("Control+Shift+z")
         await locale_is(page, "fr")
         # CORE-302: Save writes at once; no dialog opens, and the history is cleared.
