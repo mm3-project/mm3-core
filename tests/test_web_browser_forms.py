@@ -1,4 +1,4 @@
-"""Form posts from a real browser reach the handlers (CORE-63, CORE-253, CORE-254).
+"""Form posts from a real browser reach the handlers (CORE-63, CORE-253, CORE-254, CORE-378).
 
 The other web tests send ``Origin`` by hand. A browser sends what its
 ``Referrer-Policy`` allows: with ``no-referrer`` it sends ``Origin: null`` on
@@ -74,6 +74,23 @@ async def test_core_253_browser_login_and_logout(
     await page.click("button[type=submit]")
     await page.wait_for_url(f"{base}/admin/login")
     assert ADMIN_COOKIE not in {c["name"] for c in await context.cookies(base)}
+    await context.close()
+
+
+async def test_core_378_browser_login_returns_to_the_page_asked_for(
+    gateway: WebGateway, browser: Browser, tmp_path: Path
+) -> None:
+    token = TokenStore(tmp_path).new("browser-landing", "admin")
+    base = f"http://127.0.0.1:{gateway.admin.port}"
+    context = await browser.new_context()
+    page = await context.new_page()
+    await page.goto(f"{base}/admin/debug?view=logs")
+    await page.wait_for_url(f"{base}/admin/login?next=/admin/debug%3Fview%3Dlogs")
+    await page.fill("input[name=token]", token)
+    await page.click("button[type=submit]")
+    await page.wait_for_url(f"{base}/admin/debug?view=logs")
+    await page.goto(f"{base}/admin/login")
+    await page.wait_for_url(f"{base}/admin")
     await context.close()
 
 

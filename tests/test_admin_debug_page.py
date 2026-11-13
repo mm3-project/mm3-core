@@ -70,7 +70,7 @@ async def test_debug_page_needs_a_session_and_has_no_inline_code(auth: WebAuth) 
     async with client(app) as c:
         r = await c.get("/admin/debug")
         assert r.status_code == 303
-        assert r.headers["location"] == "/admin/login"
+        assert r.headers["location"] == "/admin/login?next=/admin/debug"
         c.cookies.update(session_cookie(auth))
         page = await c.get("/admin/debug")
     assert page.status_code == 200

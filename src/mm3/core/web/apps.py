@@ -21,6 +21,7 @@ Implements:
     CORE-63: Core spec 0.38, §10.1 Security.
     CORE-253: Core spec 0.38, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
+    CORE-378: Core spec 0.40, §10.1 Security.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-298: Core spec 0.25, §9.1 Remote-control API.
     CORE-313: Core spec 0.22, §9.1 Remote-control API.
@@ -35,7 +36,7 @@ import asyncio
 from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING
-from urllib.parse import parse_qs
+from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from fastapi import FastAPI, Request, WebSocket
 from fastapi.exception_handlers import http_exception_handler
@@ -104,6 +105,7 @@ __all__ = [
 
 
 MAX_FORM_BYTES = 4096
+MAX_NEXT_BYTES = 1024
 ADMIN_STATIC_DIR = Path(__file__).parent / "adminui"
 """The admin page's scripts and styles, served only on the admin listener (CORE-34)."""
 _ALL_METHODS = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
@@ -112,6 +114,48 @@ _log = get_logger(subsystem="web")
 
 def _client(request: Request) -> str:
     return request.client.host if request.client else "unknown"
+
+
+def safe_next(value: str | None) -> str | None:
+    """Return ``value`` when it is a path under ``/admin`` on this listener, else ``None``.
+
+    The login page and the login form carry the page the browser asked for
+    as ``next``. Only a local path under ``/admin`` is followed: a scheme or
+    host, a protocol-relative ``//``, a backslash, a control character, a dot
+    segment (also percent-encoded), and ``/admin/login`` or ``/admin/logout``
+    themselves are refused, so the redirect can never leave the admin pages.
+
+    Args:
+        value: The ``next`` value as received.
+
+    Returns:
+        The path and query to redirect to, or ``None`` when it is not allowed.
+
+    Implements:
+        CORE-378: Core spec 0.40, §10.1 Security.
+    """
+    if not value or len(value) > MAX_NEXT_BYTES:
+        return None
+    if "\\" in value or any(ord(ch) < 0x20 or ord(ch) == 0x7F for ch in value):
+        return None
+    parts = urlsplit(value)
+    if parts.scheme or parts.netloc or parts.fragment or "#" in value:
+        return None
+    path = parts.path
+    if path != "/admin" and not path.startswith("/admin/"):
+        return None
+    decoded = unquote(path)
+    if "\\" in decoded or any(seg in (".", "..") for seg in decoded.split("/")):
+        return None
+    if decoded.rstrip("/") in ("/admin/login", "/admin/logout"):
+        return None
+    return value
+
+
+def _login_redirect(request: Request) -> RedirectResponse:
+    """Answer an admin page without a session: 303 to the login with ``next`` (CORE-378)."""
+    target = request.url.path + (f"?{request.url.query}" if request.url.query else "")
+    return RedirectResponse(f"/admin/login?next={quote(target, safe='/')}", status_code=303)
 
 
 async def _form_field(request: Request, name: str) -> str | None:
@@ -280,6 +324,7 @@ def admin_app(
     Implements:
         CORE-62: Core spec 0.12, §10.1 Security.
         CORE-253: Core spec 0.38, §10.1 Security.
+        CORE-378: Core spec 0.40, §10.1 Security.
         CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
         CORE-298: Core spec 0.25, §9.1 Remote-control API.
         CORE-313: Core spec 0.22, §9.1 Remote-control API.
@@ -303,16 +348,20 @@ def admin_app(
             await shells.serve(websocket, "admin")
 
     @app.get("/admin/login")
-    async def login_get() -> HTMLResponse:
-        return _html(login_page())
+    async def login_get(request: Request) -> Response:
+        check = await auth.check_admin(request, request.method)
+        if check.outcome == "ok" and check.via == "session":
+            return RedirectResponse("/admin", status_code=303)  # CORE-378
+        return _html(login_page(next_path=safe_next(request.query_params.get("next"))))
 
     @app.post("/admin/login")
     async def login_post(request: Request) -> Response:
         address = _client(request)
         if not origin_matches(request):
             return _html(message_page("CORE_WEB_LOGIN_TITLE", "CORE_WEB_FORBIDDEN"), 403)
+        landing = safe_next(await _form_field(request, "next"))
         if auth.limiter.locked(address):
-            return _html(login_page("CORE_WEB_LOGIN_LOCKED"), 429)
+            return _html(login_page("CORE_WEB_LOGIN_LOCKED", landing), 429)
         token = await _form_field(request, "token") or ""
         rec = await asyncio.to_thread(auth.tokens.verify, token, "admin")
         if rec is None:
@@ -320,12 +369,12 @@ def admin_app(
             _log.info("web_login_failed", address=address)
             if auth.limiter.locked(address):
                 _log.warning("web_login_locked", address=address)
-                return _html(login_page("CORE_WEB_LOGIN_LOCKED"), 429)
-            return _html(login_page("CORE_WEB_LOGIN_FAILED"), 401)
+                return _html(login_page("CORE_WEB_LOGIN_LOCKED", landing), 429)
+            return _html(login_page("CORE_WEB_LOGIN_FAILED", landing), 401)
         auth.limiter.succeeded(address)
         sid = await asyncio.to_thread(auth.sessions.create, rec)
         _log.info("web_login", token=rec.name, address=address)
-        response = RedirectResponse("/admin", status_code=303)
+        response = RedirectResponse(landing or "/admin", status_code=303)  # CORE-378
         response.set_cookie(
             ADMIN_COOKIE,
             sid,
@@ -351,7 +400,7 @@ def admin_app(
         async def preview(request: Request) -> Response:
             check = await auth.check_admin(request, request.method)
             if check.outcome != "ok":
-                return RedirectResponse("/admin/login", status_code=303)
+                return _login_redirect(request)
             return _html(shell_page("preview"))
 
         add_shell_files(app, sources)
@@ -388,7 +437,7 @@ def admin_app(
     async def admin_extension(module: str, request: Request) -> Response:
         check = await auth.check_admin(request, request.method)
         if check.outcome != "ok":
-            return RedirectResponse("/admin/login", status_code=303)
+            return _login_redirect(request)
         ext = find_extension(module)
         if ext is None:
             return Response(status_code=404)
@@ -432,14 +481,14 @@ def admin_app(
     async def admin_debug(request: Request) -> Response:
         check = await auth.check_admin(request, request.method)
         if check.outcome != "ok":
-            return RedirectResponse("/admin/login", status_code=303)
+            return _login_redirect(request)
         return _html(admin_debug_page(await extension_links(request, check.via)))
 
     @app.get("/admin/config")
     async def admin_config(request: Request) -> Response:
         check = await auth.check_admin(request, request.method)
         if check.outcome != "ok":
-            return RedirectResponse("/admin/login", status_code=303)
+            return _login_redirect(request)
         return _html(admin_config_page(await extension_links(request, check.via)))
 
     @app.get("/admin/static/{path:path}")
@@ -478,7 +527,7 @@ def admin_app(
     async def admin_home(request: Request) -> Response:
         check = await auth.check_admin(request, request.method)
         if check.outcome != "ok":
-            return RedirectResponse("/admin/login", status_code=303)
+            return _login_redirect(request)
         return _html(admin_home_page())
 
     if api is not None:
