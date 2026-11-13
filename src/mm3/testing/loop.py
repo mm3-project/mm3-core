@@ -31,6 +31,27 @@ T = TypeVar("T")
 _SELECT_CAP = 0.05
 """Longest real wait of the patched loop; virtual timers never make it block long."""
 
+_QUANTUM = 1e-6
+"""Shortest wait the virtual clock gives: one microsecond, the resolution of ``datetime``.
+
+The loop clock starts at the real monotonic time, so a time computed in two steps
+(a scheduler job planned from the wall clock, a target computed by ``advance(to=...)``)
+can differ by a float rounding, about 1e-11 s. The scheduler then waits for that
+remainder; asyncio runs a timer that close at once (its clock resolution), the time
+does not move, and the scheduler waits again, so the job never runs. A wait shorter
+than this is rounded up, which leaves the timer pending until ``advance()`` moves to it.
+"""
+
+_DUE_TOLERANCE = 2 * _QUANTUM
+"""A timer this many virtual seconds past the target of ``advance()`` still falls due at it."""
+
+
+def _wait_for(seconds: float) -> float:
+    """Never negative; a wait of less than a microsecond (but not none) is a microsecond."""
+    if seconds <= 0.0:
+        return 0.0
+    return max(seconds, _QUANTUM)
+
 
 class DriveError(RuntimeError):
     """An awaited operation can never finish: nothing is scheduled and nothing runs."""
@@ -175,12 +196,12 @@ class LoopClock:
 
     async def sleep(self, seconds: float) -> None:
         """Sleep on the loop, in virtual time."""
-        await asyncio.sleep(max(seconds, 0.0))
+        await asyncio.sleep(_wait_for(seconds))
 
     async def wait(self, event: asyncio.Event, timeout: float) -> bool:  # noqa: ASYNC109
         """Wait until ``event`` is set or ``timeout`` virtual seconds pass."""
         try:
-            async with asyncio.timeout(max(timeout, 0.0)):
+            async with asyncio.timeout(_wait_for(timeout)):
                 await event.wait()
         except TimeoutError:
             return False
@@ -231,7 +252,7 @@ class LoopClock:
             raise ValueError("advance() moves forward; use jump() for a clock step back")
         target = self._now + step
         await self.settle()
-        while (due := self.next_timer()) is not None and due <= target:
+        while (due := self.next_timer()) is not None and due <= target + _DUE_TOLERANCE:
             self._move(due - self._now)
             await self.settle()
         self._move(target - self._now)

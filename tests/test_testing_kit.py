@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import math
 import os
 import threading
 from datetime import UTC, datetime, timedelta
@@ -188,6 +189,37 @@ async def test_core_278_drive_reports_operations_that_never_finish() -> None:
             await clock.drive(asyncio.sleep(100), limit=10)
         with pytest.raises(ValueError, match="forward"):
             await clock.advance(-1)
+    finally:
+        clock.release()
+
+
+async def test_core_278_advance_runs_a_job_one_float_rounding_past_the_target() -> None:
+    # The loop clock starts at the real monotonic time. A job planned from the wall
+    # clock and the target of advance(to=...) are computed in different steps and can
+    # differ by one ulp (the flaky WTH-11 refresh count and PRS-05 start days, ISS-015
+    # and ISS-016). The job is the scheduler's: it compares the time exactly and waits
+    # again for the remainder, which asyncio would run at once without the time moving.
+    clock = LoopClock.acquire(datetime(2026, 1, 1, tzinfo=UTC))
+    try:
+        target = clock.boottime() + 600.0
+        ran: list[str] = []
+
+        never = asyncio.Event()
+
+        async def job(name: str, due: float) -> None:
+            while clock.boottime() < due:
+                await clock.wait(never, due - clock.boottime())
+            ran.append(name)
+
+        tasks = [
+            asyncio.ensure_future(job("one ulp late", math.nextafter(target, math.inf))),
+            asyncio.ensure_future(job("a millisecond late", target + 0.001)),
+        ]
+        await clock.advance(600)
+        assert ran == ["one ulp late"]
+        await clock.advance(1)
+        assert ran == ["one ulp late", "a millisecond late"]
+        await asyncio.gather(*tasks)
     finally:
         clock.release()
 
