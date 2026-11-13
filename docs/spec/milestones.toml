@@ -262,10 +262,13 @@ done_at = { core = "0.29", contract = "1.0 rev 13" }
 #   (absent sections in the Form view) added here. They reopen the milestone
 #   through the spec-change issue (CORE-79); the work is PRs B', C, D and E of
 #   the round 1 plan.
+# Core spec 0.40 (13 Nov 2026; Source: ISS-011): CORE-380 (installed modules
+#   route, read by Add module) added here; CORE-374 changed to cite it; the
+#   work is PR C2 of the round 1 plan.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
-  "CORE-290..292", "CORE-298..332", "CORE-374..379", "MOD-38", "MOD-39",
+  "CORE-290..292", "CORE-298..332", "CORE-374..380", "MOD-38", "MOD-39",
   "MOD-74",
 ]
 
