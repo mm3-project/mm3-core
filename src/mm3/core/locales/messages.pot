@@ -799,3 +799,717 @@ msgstr ""
 
 msgid "CORE_ADMIN_DISABLED_STATE"
 msgstr ""
+
+msgid "CFG_CONFIG_VERSION"
+msgstr ""
+
+msgid "CFG_CONFIG_VERSION_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE"
+msgstr ""
+
+msgid "CFG_ENGINE_HELP"
+msgstr ""
+
+msgid "CFG_DISPLAY"
+msgstr ""
+
+msgid "CFG_DISPLAY_HELP"
+msgstr ""
+
+msgid "CFG_AUDIO"
+msgstr ""
+
+msgid "CFG_AUDIO_HELP"
+msgstr ""
+
+msgid "CFG_LAYOUT"
+msgstr ""
+
+msgid "CFG_LAYOUT_HELP"
+msgstr ""
+
+msgid "CFG_PAGES"
+msgstr ""
+
+msgid "CFG_PAGES_HELP"
+msgstr ""
+
+msgid "CFG_MODULES"
+msgstr ""
+
+msgid "CFG_MODULES_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP"
+msgstr ""
+
+msgid "CFG_BACKUP_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_LOCALE"
+msgstr ""
+
+msgid "CFG_ENGINE_LOCALE_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEZONE"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEZONE_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_UNITS"
+msgstr ""
+
+msgid "CFG_ENGINE_UNITS_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_LOCATION"
+msgstr ""
+
+msgid "CFG_ENGINE_LOCATION_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_SERVER"
+msgstr ""
+
+msgid "CFG_ENGINE_SERVER_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_ADMIN"
+msgstr ""
+
+msgid "CFG_ENGINE_ADMIN_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_BUS"
+msgstr ""
+
+msgid "CFG_ENGINE_BUS_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_THREADS"
+msgstr ""
+
+msgid "CFG_ENGINE_THREADS_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_LOG_LEVEL"
+msgstr ""
+
+msgid "CFG_ENGINE_LOG_LEVEL_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_DEBUG_TTL"
+msgstr ""
+
+msgid "CFG_ENGINE_DEBUG_TTL_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_HISTORY"
+msgstr ""
+
+msgid "CFG_ENGINE_HISTORY_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_INPUT"
+msgstr ""
+
+msgid "CFG_ENGINE_INPUT_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_LOCATION_LAT"
+msgstr ""
+
+msgid "CFG_ENGINE_LOCATION_LAT_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_LOCATION_LON"
+msgstr ""
+
+msgid "CFG_ENGINE_LOCATION_LON_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_LOCATION_NAME"
+msgstr ""
+
+msgid "CFG_ENGINE_LOCATION_NAME_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_SERVER_HOST"
+msgstr ""
+
+msgid "CFG_ENGINE_SERVER_HOST_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_SERVER_PORT"
+msgstr ""
+
+msgid "CFG_ENGINE_SERVER_PORT_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_SERVER_ALLOW"
+msgstr ""
+
+msgid "CFG_ENGINE_SERVER_ALLOW_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_ADMIN_HOST"
+msgstr ""
+
+msgid "CFG_ENGINE_ADMIN_HOST_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_ADMIN_PORT"
+msgstr ""
+
+msgid "CFG_ENGINE_ADMIN_PORT_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_ADMIN_ALLOW"
+msgstr ""
+
+msgid "CFG_ENGINE_ADMIN_ALLOW_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_URL"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_URL_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_USERNAME"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_USERNAME_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_PASSWORD"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_PASSWORD_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_CA"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_CA_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_CLIENT_ID"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_CLIENT_ID_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_KEEPALIVE"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_KEEPALIVE_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_BASE_TOPIC"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_BASE_TOPIC_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_EXPORT"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_EXPORT_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_IMPORT"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_IMPORT_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_HA_DISCOVERY"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_HA_DISCOVERY_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_DISCOVERY_PREFIX"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_DISCOVERY_PREFIX_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_NODE_ID"
+msgstr ""
+
+msgid "CFG_ENGINE_MQTT_NODE_ID_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_START"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_START_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_STOP"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_STOP_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_SUSPEND"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_SUSPEND_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_RECONFIGURE"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_RECONFIGURE_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_HANDLER"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_HANDLER_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_JOB"
+msgstr ""
+
+msgid "CFG_ENGINE_TIMEOUTS_JOB_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_BUS_QUEUE_SIZE"
+msgstr ""
+
+msgid "CFG_ENGINE_BUS_QUEUE_SIZE_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_HISTORY_KEEP"
+msgstr ""
+
+msgid "CFG_ENGINE_HISTORY_KEEP_HELP"
+msgstr ""
+
+msgid "CFG_ENGINE_INPUT_TOUCH"
+msgstr ""
+
+msgid "CFG_ENGINE_INPUT_TOUCH_HELP"
+msgstr ""
+
+msgid "CFG_DISPLAY_OUTPUT"
+msgstr ""
+
+msgid "CFG_DISPLAY_OUTPUT_HELP"
+msgstr ""
+
+msgid "CFG_DISPLAY_WIDTH"
+msgstr ""
+
+msgid "CFG_DISPLAY_WIDTH_HELP"
+msgstr ""
+
+msgid "CFG_DISPLAY_HEIGHT"
+msgstr ""
+
+msgid "CFG_DISPLAY_HEIGHT_HELP"
+msgstr ""
+
+msgid "CFG_DISPLAY_REFRESH"
+msgstr ""
+
+msgid "CFG_DISPLAY_REFRESH_HELP"
+msgstr ""
+
+msgid "CFG_DISPLAY_ROTATION"
+msgstr ""
+
+msgid "CFG_DISPLAY_ROTATION_HELP"
+msgstr ""
+
+msgid "CFG_DISPLAY_SCALE"
+msgstr ""
+
+msgid "CFG_DISPLAY_SCALE_HELP"
+msgstr ""
+
+msgid "CFG_AUDIO_SINK"
+msgstr ""
+
+msgid "CFG_AUDIO_SINK_HELP"
+msgstr ""
+
+msgid "CFG_AUDIO_VOLUME"
+msgstr ""
+
+msgid "CFG_AUDIO_VOLUME_HELP"
+msgstr ""
+
+msgid "CFG_AUDIO_MUTE"
+msgstr ""
+
+msgid "CFG_AUDIO_MUTE_HELP"
+msgstr ""
+
+msgid "CFG_LAYOUT_GRID"
+msgstr ""
+
+msgid "CFG_LAYOUT_GRID_HELP"
+msgstr ""
+
+msgid "CFG_LAYOUT_GAP"
+msgstr ""
+
+msgid "CFG_LAYOUT_GAP_HELP"
+msgstr ""
+
+msgid "CFG_LAYOUT_PADDING"
+msgstr ""
+
+msgid "CFG_LAYOUT_PADDING_HELP"
+msgstr ""
+
+msgid "CFG_LAYOUT_GRID_COLUMNS"
+msgstr ""
+
+msgid "CFG_LAYOUT_GRID_COLUMNS_HELP"
+msgstr ""
+
+msgid "CFG_LAYOUT_GRID_ROWS"
+msgstr ""
+
+msgid "CFG_LAYOUT_GRID_ROWS_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_DEFAULT"
+msgstr ""
+
+msgid "CFG_PAGES_DEFAULT_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_ROTATE"
+msgstr ""
+
+msgid "CFG_PAGES_ROTATE_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_PAUSE_ON_INTERACTION"
+msgstr ""
+
+msgid "CFG_PAGES_PAUSE_ON_INTERACTION_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_RESET_ON_RESUME"
+msgstr ""
+
+msgid "CFG_PAGES_RESET_ON_RESUME_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_RETURN_AFTER"
+msgstr ""
+
+msgid "CFG_PAGES_RETURN_AFTER_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_TRANSITION"
+msgstr ""
+
+msgid "CFG_PAGES_TRANSITION_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_LIST"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_ID"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_ID_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_TITLE"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_TITLE_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_ROTATE"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_ROTATE_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_CYCLE"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_CYCLE_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_AFTER"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_AFTER_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_AFTER_TIME"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_AFTER_TIME_HELP"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_AFTER_PAGE"
+msgstr ""
+
+msgid "CFG_PAGES_LIST_AFTER_PAGE_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_MODULE"
+msgstr ""
+
+msgid "CFG_MODULES_MODULE_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_ID"
+msgstr ""
+
+msgid "CFG_MODULES_ID_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_POSITIONS"
+msgstr ""
+
+msgid "CFG_MODULES_POSITIONS_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_PAGES"
+msgstr ""
+
+msgid "CFG_MODULES_PAGES_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_CONFIG"
+msgstr ""
+
+msgid "CFG_MODULES_CONFIG_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_DISABLED"
+msgstr ""
+
+msgid "CFG_MODULES_DISABLED_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_LOCALE"
+msgstr ""
+
+msgid "CFG_MODULES_LOCALE_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_COL"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_COL_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_ROW"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_ROW_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_WIDTH"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_WIDTH_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_HEIGHT"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_HEIGHT_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_Z"
+msgstr ""
+
+msgid "CFG_MODULES_POSITION_Z_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_SCALE"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_SCALE_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_ALIGN"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_ALIGN_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_VALIGN"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_VALIGN_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_OPACITY"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_OPACITY_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_OVERFLOW"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_OVERFLOW_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_HEADER"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_HEADER_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_CLASSES"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_CLASSES_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_CSS"
+msgstr ""
+
+msgid "CFG_MODULES_APPEARANCE_CSS_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_MQTT"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_MQTT_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_HTTP"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_HTTP_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_MQTT_PUBLISH"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_MQTT_PUBLISH_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_HTTP_PREFIX"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_HTTP_PREFIX_HELP"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_HTTP_CA"
+msgstr ""
+
+msgid "CFG_MODULES_GRANTS_HTTP_CA_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP_SCHEDULE"
+msgstr ""
+
+msgid "CFG_BACKUP_SCHEDULE_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP_ENCRYPT_TO"
+msgstr ""
+
+msgid "CFG_BACKUP_ENCRYPT_TO_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP_PARTS"
+msgstr ""
+
+msgid "CFG_BACKUP_PARTS_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP_KEEP"
+msgstr ""
+
+msgid "CFG_BACKUP_KEEP_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP_REMOTE"
+msgstr ""
+
+msgid "CFG_BACKUP_REMOTE_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP_KEEP_DAILY"
+msgstr ""
+
+msgid "CFG_BACKUP_KEEP_DAILY_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP_KEEP_WEEKLY"
+msgstr ""
+
+msgid "CFG_BACKUP_KEEP_WEEKLY_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP_KEEP_MONTHLY"
+msgstr ""
+
+msgid "CFG_BACKUP_KEEP_MONTHLY_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP_REMOTE_NAME"
+msgstr ""
+
+msgid "CFG_BACKUP_REMOTE_NAME_HELP"
+msgstr ""
+
+msgid "CFG_BACKUP_REMOTE_PATH"
+msgstr ""
+
+msgid "CFG_BACKUP_REMOTE_PATH_HELP"
+msgstr ""

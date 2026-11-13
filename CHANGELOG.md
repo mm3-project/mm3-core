@@ -7,6 +7,28 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (admin Form view: labels in the admin language; ISS-003; Core spec 0.40)
+
+- The Form view shows each field's schema `title` as its label and its `description` as
+  its help, both read as catalog keys of the module that owns the model, then of the core
+  catalog (CORE-310, Module Contract MOD-46). The path-derived keys
+  `CONFIG_<PATH>_LABEL` and `_HELP` are no longer read. A missing label shows the field
+  name and a missing help shows nothing. `GET /admin/i18n.json` serves the `CFG_*` keys
+  of each catalog in `forms`, instead of the `CONFIG_*` keys.
+- The engine's own configuration models (`engine`, `display`, `audio`, `layout`, `pages`,
+  `modules`, `backup` and every nested model) now carry `title` and `description` keys
+  `CFG_<SECTION>_<FIELD>` and `CFG_<SECTION>_<FIELD>_HELP` (119 fields, 238 keys), with
+  texts in EN, IT, FR, ES and DE in the core catalog (compiled files and `messages.pot`
+  updated). Before this the engine's sections showed bare field names in every language.
+- `mm3 module check`: a config field without a `title` or a `description`, or whose key is
+  not in the English catalog, is a MOD-46 warning (a SHOULD finding, CORE-310); a title
+  that is not an UPPER_SNAKE key still fails the MUST. Models nested in the configuration
+  and defined in the package are checked too. New `label_problems()` in
+  `mm3.core.config.modelcheck` does the same on a loaded model.
+- Tests: `tests/test_form_labels.py` fails CI when an engine field or a field of
+  `mm3-clock`, `mm3-weather`, `mm3-presence` or `mm3-greeting` lacks a label or a help,
+  or when a language lacks a key; a Chromium test checks the labels in English and Italian.
+
 ### Specification (spec sync to Core spec 0.40; Source: ISS-011)
 
 - `docs/spec/` synced to Core spec 0.40 (Module Contract 1.0 rev 15 unchanged).

@@ -804,3 +804,719 @@ msgstr "Services"
 
 msgid "CORE_ADMIN_DISABLED_STATE"
 msgstr "disabled"
+
+# Form labels (title) and help (description) of the engine's configuration fields (CORE-310).
+
+msgid "CFG_CONFIG_VERSION"
+msgstr "Config version"
+
+msgid "CFG_CONFIG_VERSION_HELP"
+msgstr "Version of the configuration file format."
+
+msgid "CFG_ENGINE"
+msgstr "Engine"
+
+msgid "CFG_ENGINE_HELP"
+msgstr "Language, listeners, MQTT bridge, time budgets and other settings of the engine."
+
+msgid "CFG_DISPLAY"
+msgstr "Display"
+
+msgid "CFG_DISPLAY_HELP"
+msgstr "Output, resolution, rotation and scale of the screen."
+
+msgid "CFG_AUDIO"
+msgstr "Audio"
+
+msgid "CFG_AUDIO_HELP"
+msgstr "Sound output, volume and mute of the kiosk."
+
+msgid "CFG_LAYOUT"
+msgstr "Layout"
+
+msgid "CFG_LAYOUT_HELP"
+msgstr "Grid, gap and padding of the screen."
+
+msgid "CFG_PAGES"
+msgstr "Pages"
+
+msgid "CFG_PAGES_HELP"
+msgstr "Pages that show different modules, and how the mirror moves between them."
+
+msgid "CFG_MODULES"
+msgstr "Modules"
+
+msgid "CFG_MODULES_HELP"
+msgstr "The module instances that run on the mirror."
+
+msgid "CFG_BACKUP"
+msgstr "Backup"
+
+msgid "CFG_BACKUP_HELP"
+msgstr "Schedule, encryption, retention and remote copy of backups."
+
+msgid "CFG_ENGINE_LOCALE"
+msgstr "Language"
+
+msgid "CFG_ENGINE_LOCALE_HELP"
+msgstr "Language of the mirror and of the admin, as a tag such as en or it."
+
+msgid "CFG_ENGINE_TIMEZONE"
+msgstr "Time zone"
+
+msgid "CFG_ENGINE_TIMEZONE_HELP"
+msgstr "Name of an IANA time zone, such as Europe/Rome; the system's by default."
+
+msgid "CFG_ENGINE_UNITS"
+msgstr "Units"
+
+msgid "CFG_ENGINE_UNITS_HELP"
+msgstr "Metric or imperial units, for modules that show measurements."
+
+msgid "CFG_ENGINE_LOCATION"
+msgstr "Location"
+
+msgid "CFG_ENGINE_LOCATION_HELP"
+msgstr "The mirror's place, shared by modules such as the clock and the weather."
+
+msgid "CFG_ENGINE_SERVER"
+msgstr "Mirror server"
+
+msgid "CFG_ENGINE_SERVER_HELP"
+msgstr "Address and port that serve the mirror display."
+
+msgid "CFG_ENGINE_ADMIN"
+msgstr "Admin server"
+
+msgid "CFG_ENGINE_ADMIN_HELP"
+msgstr "Address and port of the admin interface."
+
+msgid "CFG_ENGINE_MQTT"
+msgstr "MQTT bridge"
+
+msgid "CFG_ENGINE_MQTT_HELP"
+msgstr "Connection to an MQTT broker; leave it out to switch the bridge off."
+
+msgid "CFG_ENGINE_TIMEOUTS"
+msgstr "Time budgets"
+
+msgid "CFG_ENGINE_TIMEOUTS_HELP"
+msgstr "How long the engine waits for a module before it counts a call as failed."
+
+msgid "CFG_ENGINE_BUS"
+msgstr "Message bus"
+
+msgid "CFG_ENGINE_BUS_HELP"
+msgstr "Settings of the bus that carries notifications between modules."
+
+msgid "CFG_ENGINE_THREADS"
+msgstr "Worker threads"
+
+msgid "CFG_ENGINE_THREADS_HELP"
+msgstr "Size of the shared pool that runs blocking work."
+
+msgid "CFG_ENGINE_LOG_LEVEL"
+msgstr "Log level"
+
+msgid "CFG_ENGINE_LOG_LEVEL_HELP"
+msgstr "Default level of the log: debug, info, warning or error."
+
+msgid "CFG_ENGINE_DEBUG_TTL"
+msgstr "Debug duration"
+
+msgid "CFG_ENGINE_DEBUG_TTL_HELP"
+msgstr "How long a raised log level stays on before it returns to the default."
+
+msgid "CFG_ENGINE_HISTORY"
+msgstr "Configuration history"
+
+msgid "CFG_ENGINE_HISTORY_HELP"
+msgstr "How many saved versions of the configuration are kept."
+
+msgid "CFG_ENGINE_INPUT"
+msgstr "Input"
+
+msgid "CFG_ENGINE_INPUT_HELP"
+msgstr "Touch and other input on the kiosk."
+
+msgid "CFG_ENGINE_LOCATION_LAT"
+msgstr "Latitude"
+
+msgid "CFG_ENGINE_LOCATION_LAT_HELP"
+msgstr "Degrees, from -90 to 90."
+
+msgid "CFG_ENGINE_LOCATION_LON"
+msgstr "Longitude"
+
+msgid "CFG_ENGINE_LOCATION_LON_HELP"
+msgstr "Degrees, from -180 to 180."
+
+msgid "CFG_ENGINE_LOCATION_NAME"
+msgstr "Name"
+
+msgid "CFG_ENGINE_LOCATION_NAME_HELP"
+msgstr "Name of the place that modules show; one text per language."
+
+msgid "CFG_ENGINE_SERVER_HOST"
+msgstr "Address"
+
+msgid "CFG_ENGINE_SERVER_HOST_HELP"
+msgstr "Address that serves the mirror display; 127.0.0.1 accepts only this machine."
+
+msgid "CFG_ENGINE_SERVER_PORT"
+msgstr "Port"
+
+msgid "CFG_ENGINE_SERVER_PORT_HELP"
+msgstr "TCP port, from 1 to 65535."
+
+msgid "CFG_ENGINE_SERVER_ALLOW"
+msgstr "Allowed networks"
+
+msgid "CFG_ENGINE_SERVER_ALLOW_HELP"
+msgstr "Networks other than this machine that may connect, such as 192.168.1.0/24."
+
+msgid "CFG_ENGINE_ADMIN_HOST"
+msgstr "Address"
+
+msgid "CFG_ENGINE_ADMIN_HOST_HELP"
+msgstr "Address that serves the admin interface; 127.0.0.1 accepts only this machine."
+
+msgid "CFG_ENGINE_ADMIN_PORT"
+msgstr "Port"
+
+msgid "CFG_ENGINE_ADMIN_PORT_HELP"
+msgstr "TCP port, from 1 to 65535."
+
+msgid "CFG_ENGINE_ADMIN_ALLOW"
+msgstr "Allowed networks"
+
+msgid "CFG_ENGINE_ADMIN_ALLOW_HELP"
+msgstr "Networks other than this machine that may connect, such as 192.168.1.0/24."
+
+msgid "CFG_ENGINE_MQTT_URL"
+msgstr "Broker URL"
+
+msgid "CFG_ENGINE_MQTT_URL_HELP"
+msgstr "mqtt://host[:port], or mqtts://host[:port] for TLS."
+
+msgid "CFG_ENGINE_MQTT_USERNAME"
+msgstr "User name"
+
+msgid "CFG_ENGINE_MQTT_USERNAME_HELP"
+msgstr "User name for the broker; leave empty for none."
+
+msgid "CFG_ENGINE_MQTT_PASSWORD"
+msgstr "Password"
+
+msgid "CFG_ENGINE_MQTT_PASSWORD_HELP"
+msgstr "Password for the broker; kept as a secret."
+
+msgid "CFG_ENGINE_MQTT_CA"
+msgstr "CA file"
+
+msgid "CFG_ENGINE_MQTT_CA_HELP"
+msgstr "PEM file of the certificate authority, relative to the main configuration file."
+
+msgid "CFG_ENGINE_MQTT_CLIENT_ID"
+msgstr "Client id"
+
+msgid "CFG_ENGINE_MQTT_CLIENT_ID_HELP"
+msgstr "MQTT client id; mm3-<hostname> by default."
+
+msgid "CFG_ENGINE_MQTT_KEEPALIVE"
+msgstr "Keepalive"
+
+msgid "CFG_ENGINE_MQTT_KEEPALIVE_HELP"
+msgstr "Seconds between keepalive messages, from 10 to 3600."
+
+msgid "CFG_ENGINE_MQTT_BASE_TOPIC"
+msgstr "Base topic"
+
+msgid "CFG_ENGINE_MQTT_BASE_TOPIC_HELP"
+msgstr "Root of the engine's topics; mm3/<hostname> by default."
+
+msgid "CFG_ENGINE_MQTT_EXPORT"
+msgstr "Exported notifications"
+
+msgid "CFG_ENGINE_MQTT_EXPORT_HELP"
+msgstr "Name patterns of notifications published under <base>/event/; none by default."
+
+msgid "CFG_ENGINE_MQTT_IMPORT"
+msgstr "Imported notifications"
+
+msgid "CFG_ENGINE_MQTT_IMPORT_HELP"
+msgstr "Name patterns accepted from <base>/notify/; none by default."
+
+msgid "CFG_ENGINE_MQTT_HA_DISCOVERY"
+msgstr "Home Assistant discovery"
+
+msgid "CFG_ENGINE_MQTT_HA_DISCOVERY_HELP"
+msgstr "Publish the entities so that Home Assistant finds them by itself."
+
+msgid "CFG_ENGINE_MQTT_DISCOVERY_PREFIX"
+msgstr "Discovery prefix"
+
+msgid "CFG_ENGINE_MQTT_DISCOVERY_PREFIX_HELP"
+msgstr "Discovery prefix of Home Assistant; homeassistant by default."
+
+msgid "CFG_ENGINE_MQTT_NODE_ID"
+msgstr "Device id"
+
+msgid "CFG_ENGINE_MQTT_NODE_ID_HELP"
+msgstr "Id of the Home Assistant device; taken from the base topic when empty."
+
+msgid "CFG_ENGINE_TIMEOUTS_START"
+msgstr "Start"
+
+msgid "CFG_ENGINE_TIMEOUTS_START_HELP"
+msgstr "Seconds a module may take to start."
+
+msgid "CFG_ENGINE_TIMEOUTS_STOP"
+msgstr "Stop"
+
+msgid "CFG_ENGINE_TIMEOUTS_STOP_HELP"
+msgstr "Seconds a module may take to stop."
+
+msgid "CFG_ENGINE_TIMEOUTS_SUSPEND"
+msgstr "Suspend"
+
+msgid "CFG_ENGINE_TIMEOUTS_SUSPEND_HELP"
+msgstr "Seconds a module may take to suspend."
+
+msgid "CFG_ENGINE_TIMEOUTS_RECONFIGURE"
+msgstr "Reconfigure"
+
+msgid "CFG_ENGINE_TIMEOUTS_RECONFIGURE_HELP"
+msgstr "Seconds a module may take to apply a new configuration."
+
+msgid "CFG_ENGINE_TIMEOUTS_HANDLER"
+msgstr "Handler"
+
+msgid "CFG_ENGINE_TIMEOUTS_HANDLER_HELP"
+msgstr "Seconds a handler may run before it counts as too slow."
+
+msgid "CFG_ENGINE_TIMEOUTS_JOB"
+msgstr "Job"
+
+msgid "CFG_ENGINE_TIMEOUTS_JOB_HELP"
+msgstr "Seconds a scheduled job may run."
+
+msgid "CFG_ENGINE_BUS_QUEUE_SIZE"
+msgstr "Queue size"
+
+msgid "CFG_ENGINE_BUS_QUEUE_SIZE_HELP"
+msgstr "How many notifications can wait in the queue of one module."
+
+msgid "CFG_ENGINE_HISTORY_KEEP"
+msgstr "Versions kept"
+
+msgid "CFG_ENGINE_HISTORY_KEEP_HELP"
+msgstr "Number of saved versions to keep, at least 10."
+
+msgid "CFG_ENGINE_INPUT_TOUCH"
+msgstr "Touch"
+
+msgid "CFG_ENGINE_INPUT_TOUCH_HELP"
+msgstr "Accept touch input on the kiosk screen."
+
+msgid "CFG_DISPLAY_OUTPUT"
+msgstr "Output"
+
+msgid "CFG_DISPLAY_OUTPUT_HELP"
+msgstr "Name of the screen output, such as HDMI-A-1; empty uses the current one."
+
+msgid "CFG_DISPLAY_WIDTH"
+msgstr "Width"
+
+msgid "CFG_DISPLAY_WIDTH_HELP"
+msgstr "Horizontal resolution in pixels."
+
+msgid "CFG_DISPLAY_HEIGHT"
+msgstr "Height"
+
+msgid "CFG_DISPLAY_HEIGHT_HELP"
+msgstr "Vertical resolution in pixels."
+
+msgid "CFG_DISPLAY_REFRESH"
+msgstr "Refresh rate"
+
+msgid "CFG_DISPLAY_REFRESH_HELP"
+msgstr "Refresh rate in Hz."
+
+msgid "CFG_DISPLAY_ROTATION"
+msgstr "Rotation"
+
+msgid "CFG_DISPLAY_ROTATION_HELP"
+msgstr "Screen rotation in degrees: 0, 90, 180 or 270."
+
+msgid "CFG_DISPLAY_SCALE"
+msgstr "Scale"
+
+msgid "CFG_DISPLAY_SCALE_HELP"
+msgstr "Scale factor of the whole screen, from 0.5 to 3."
+
+msgid "CFG_AUDIO_SINK"
+msgstr "Output"
+
+msgid "CFG_AUDIO_SINK_HELP"
+msgstr "auto, hdmi, analog or the name of an output."
+
+msgid "CFG_AUDIO_VOLUME"
+msgstr "Volume"
+
+msgid "CFG_AUDIO_VOLUME_HELP"
+msgstr "Volume in percent, from 0 to 100; empty leaves it as it is."
+
+msgid "CFG_AUDIO_MUTE"
+msgstr "Mute"
+
+msgid "CFG_AUDIO_MUTE_HELP"
+msgstr "Mute the output."
+
+msgid "CFG_LAYOUT_GRID"
+msgstr "Grid"
+
+msgid "CFG_LAYOUT_GRID_HELP"
+msgstr "Number of columns and rows that modules are placed on."
+
+msgid "CFG_LAYOUT_GAP"
+msgstr "Gap"
+
+msgid "CFG_LAYOUT_GAP_HELP"
+msgstr "Space between cells, such as 16px."
+
+msgid "CFG_LAYOUT_PADDING"
+msgstr "Padding"
+
+msgid "CFG_LAYOUT_PADDING_HELP"
+msgstr "Space between the grid and the screen edge, such as 32px."
+
+msgid "CFG_LAYOUT_GRID_COLUMNS"
+msgstr "Columns"
+
+msgid "CFG_LAYOUT_GRID_COLUMNS_HELP"
+msgstr "Number of columns, from 1 to 48."
+
+msgid "CFG_LAYOUT_GRID_ROWS"
+msgstr "Rows"
+
+msgid "CFG_LAYOUT_GRID_ROWS_HELP"
+msgstr "Number of rows, from 1 to 48."
+
+msgid "CFG_PAGES_DEFAULT"
+msgstr "Default page"
+
+msgid "CFG_PAGES_DEFAULT_HELP"
+msgstr "The page shown first and returned to; the first page when empty."
+
+msgid "CFG_PAGES_ROTATE"
+msgstr "Rotation time"
+
+msgid "CFG_PAGES_ROTATE_HELP"
+msgstr "How long each page stays before the next one; 0 turns rotation off."
+
+msgid "CFG_PAGES_PAUSE_ON_INTERACTION"
+msgstr "Pause after touch"
+
+msgid "CFG_PAGES_PAUSE_ON_INTERACTION_HELP"
+msgstr "How long rotation pauses after someone touches the screen."
+
+msgid "CFG_PAGES_RESET_ON_RESUME"
+msgstr "Restart on resume"
+
+msgid "CFG_PAGES_RESET_ON_RESUME_HELP"
+msgstr "Return to the default page when the mirror wakes up."
+
+msgid "CFG_PAGES_RETURN_AFTER"
+msgstr "Return after"
+
+msgid "CFG_PAGES_RETURN_AFTER_HELP"
+msgstr "Return to the default page after this much idle time; 0 turns it off."
+
+msgid "CFG_PAGES_TRANSITION"
+msgstr "Transition"
+
+msgid "CFG_PAGES_TRANSITION_HELP"
+msgstr "Effect between pages: fade or none."
+
+msgid "CFG_PAGES_LIST"
+msgstr "Pages"
+
+msgid "CFG_PAGES_LIST_HELP"
+msgstr "The pages: at least one, at most 32."
+
+msgid "CFG_PAGES_LIST_ID"
+msgstr "Page id"
+
+msgid "CFG_PAGES_LIST_ID_HELP"
+msgstr "Lowercase letters, digits and underscores; used in the configuration."
+
+msgid "CFG_PAGES_LIST_TITLE"
+msgstr "Title"
+
+msgid "CFG_PAGES_LIST_TITLE_HELP"
+msgstr "Name shown in the admin and in Home Assistant; one text per language."
+
+msgid "CFG_PAGES_LIST_ROTATE"
+msgstr "Rotation time"
+
+msgid "CFG_PAGES_LIST_ROTATE_HELP"
+msgstr "How long this page stays; replaces the rotation time of all pages."
+
+msgid "CFG_PAGES_LIST_CYCLE"
+msgstr "In the cycle"
+
+msgid "CFG_PAGES_LIST_CYCLE_HELP"
+msgstr "Off takes the page out of the rotation; it is then shown only on request."
+
+msgid "CFG_PAGES_LIST_AFTER"
+msgstr "Jump after"
+
+msgid "CFG_PAGES_LIST_AFTER_HELP"
+msgstr "Jump to another page once this one has been current for a while."
+
+msgid "CFG_PAGES_LIST_AFTER_TIME"
+msgstr "Time"
+
+msgid "CFG_PAGES_LIST_AFTER_TIME_HELP"
+msgstr "How long the page stays current before the jump."
+
+msgid "CFG_PAGES_LIST_AFTER_PAGE"
+msgstr "Target page"
+
+msgid "CFG_PAGES_LIST_AFTER_PAGE_HELP"
+msgstr "The page to jump to; the default page when empty."
+
+msgid "CFG_MODULES_MODULE"
+msgstr "Module"
+
+msgid "CFG_MODULES_MODULE_HELP"
+msgstr "The installed module that this instance runs."
+
+msgid "CFG_MODULES_ID"
+msgstr "Instance id"
+
+msgid "CFG_MODULES_ID_HELP"
+msgstr "Unique name of the instance; the module name by default."
+
+msgid "CFG_MODULES_POSITION"
+msgstr "Position"
+
+msgid "CFG_MODULES_POSITION_HELP"
+msgstr "A region such as top_left, or a rectangle on the grid."
+
+msgid "CFG_MODULES_POSITIONS"
+msgstr "Positions per page"
+
+msgid "CFG_MODULES_POSITIONS_HELP"
+msgstr "A position for individual pages, replacing the one above."
+
+msgid "CFG_MODULES_PAGES"
+msgstr "Pages"
+
+msgid "CFG_MODULES_PAGES_HELP"
+msgstr "all, or the list of pages that show this instance."
+
+msgid "CFG_MODULES_APPEARANCE"
+msgstr "Appearance"
+
+msgid "CFG_MODULES_APPEARANCE_HELP"
+msgstr "Scale, alignment, opacity and header of the instance."
+
+msgid "CFG_MODULES_CONFIG"
+msgstr "Settings"
+
+msgid "CFG_MODULES_CONFIG_HELP"
+msgstr "The settings of the module itself."
+
+msgid "CFG_MODULES_DISABLED"
+msgstr "Disabled"
+
+msgid "CFG_MODULES_DISABLED_HELP"
+msgstr "A disabled instance stays in the configuration but is not started."
+
+msgid "CFG_MODULES_LOCALE"
+msgstr "Language"
+
+msgid "CFG_MODULES_LOCALE_HELP"
+msgstr "Language of this instance; follows the engine when empty."
+
+msgid "CFG_MODULES_GRANTS"
+msgstr "Permissions"
+
+msgid "CFG_MODULES_GRANTS_HELP"
+msgstr "What the instance may reach: MQTT topics and web addresses."
+
+msgid "CFG_MODULES_POSITION_COL"
+msgstr "Column"
+
+msgid "CFG_MODULES_POSITION_COL_HELP"
+msgstr "First column, counted from 1."
+
+msgid "CFG_MODULES_POSITION_ROW"
+msgstr "Row"
+
+msgid "CFG_MODULES_POSITION_ROW_HELP"
+msgstr "First row, counted from 1."
+
+msgid "CFG_MODULES_POSITION_WIDTH"
+msgstr "Width in cells"
+
+msgid "CFG_MODULES_POSITION_WIDTH_HELP"
+msgstr "Number of columns the module covers."
+
+msgid "CFG_MODULES_POSITION_HEIGHT"
+msgstr "Height in cells"
+
+msgid "CFG_MODULES_POSITION_HEIGHT_HELP"
+msgstr "Number of rows the module covers."
+
+msgid "CFG_MODULES_POSITION_Z"
+msgstr "Layer"
+
+msgid "CFG_MODULES_POSITION_Z_HELP"
+msgstr "Stacking order: higher is in front; 0 by default."
+
+msgid "CFG_MODULES_APPEARANCE_SCALE"
+msgstr "Scale"
+
+msgid "CFG_MODULES_APPEARANCE_SCALE_HELP"
+msgstr "Size of the module's content, from 0.5 to 3."
+
+msgid "CFG_MODULES_APPEARANCE_ALIGN"
+msgstr "Horizontal alignment"
+
+msgid "CFG_MODULES_APPEARANCE_ALIGN_HELP"
+msgstr "Where the content sits in the cell: start, center or end."
+
+msgid "CFG_MODULES_APPEARANCE_VALIGN"
+msgstr "Vertical alignment"
+
+msgid "CFG_MODULES_APPEARANCE_VALIGN_HELP"
+msgstr "Where the content sits in the cell: start, center or end."
+
+msgid "CFG_MODULES_APPEARANCE_OPACITY"
+msgstr "Opacity"
+
+msgid "CFG_MODULES_APPEARANCE_OPACITY_HELP"
+msgstr "From 0 (invisible) to 1 (fully visible)."
+
+msgid "CFG_MODULES_APPEARANCE_OVERFLOW"
+msgstr "Overflow"
+
+msgid "CFG_MODULES_APPEARANCE_OVERFLOW_HELP"
+msgstr "What happens when the content is larger than the cell: clip, fit or scroll."
+
+msgid "CFG_MODULES_APPEARANCE_HEADER"
+msgstr "Header"
+
+msgid "CFG_MODULES_APPEARANCE_HEADER_HELP"
+msgstr "Show a header: on or off, or your own text per language."
+
+msgid "CFG_MODULES_APPEARANCE_CLASSES"
+msgstr "CSS classes"
+
+msgid "CFG_MODULES_APPEARANCE_CLASSES_HELP"
+msgstr "Extra classes added to the module, for use in custom.css."
+
+msgid "CFG_MODULES_APPEARANCE_CSS"
+msgstr "CSS"
+
+msgid "CFG_MODULES_APPEARANCE_CSS_HELP"
+msgstr "Style rules that apply to this instance only."
+
+msgid "CFG_MODULES_GRANTS_MQTT"
+msgstr "MQTT topics"
+
+msgid "CFG_MODULES_GRANTS_MQTT_HELP"
+msgstr "The topic patterns the instance may use."
+
+msgid "CFG_MODULES_GRANTS_HTTP"
+msgstr "Web addresses"
+
+msgid "CFG_MODULES_GRANTS_HTTP_HELP"
+msgstr "URL prefixes the instance may call; an entry can name its own CA file."
+
+msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE"
+msgstr "Subscribe"
+
+msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE_HELP"
+msgstr "Topic patterns the instance may subscribe to."
+
+msgid "CFG_MODULES_GRANTS_MQTT_PUBLISH"
+msgstr "Publish"
+
+msgid "CFG_MODULES_GRANTS_MQTT_PUBLISH_HELP"
+msgstr "Topic patterns the instance may publish to."
+
+msgid "CFG_MODULES_GRANTS_HTTP_PREFIX"
+msgstr "URL prefix"
+
+msgid "CFG_MODULES_GRANTS_HTTP_PREFIX_HELP"
+msgstr "The addresses this entry covers."
+
+msgid "CFG_MODULES_GRANTS_HTTP_CA"
+msgstr "CA file"
+
+msgid "CFG_MODULES_GRANTS_HTTP_CA_HELP"
+msgstr "PEM file used instead of the system store for these addresses."
+
+msgid "CFG_BACKUP_SCHEDULE"
+msgstr "Schedule"
+
+msgid "CFG_BACKUP_SCHEDULE_HELP"
+msgstr "Time of the daily backup, as HH:MM."
+
+msgid "CFG_BACKUP_ENCRYPT_TO"
+msgstr "Encrypt to"
+
+msgid "CFG_BACKUP_ENCRYPT_TO_HELP"
+msgstr "age public key the backups are encrypted to; empty leaves them unencrypted."
+
+msgid "CFG_BACKUP_PARTS"
+msgstr "Parts"
+
+msgid "CFG_BACKUP_PARTS_HELP"
+msgstr "What is backed up: config, data, modules or secrets; config, data and modules by default."
+
+msgid "CFG_BACKUP_KEEP"
+msgstr "Retention"
+
+msgid "CFG_BACKUP_KEEP_HELP"
+msgstr "How many backups are kept."
+
+msgid "CFG_BACKUP_REMOTE"
+msgstr "Remote copy"
+
+msgid "CFG_BACKUP_REMOTE_HELP"
+msgstr "Where a copy is sent after each backup; the local backup stays."
+
+msgid "CFG_BACKUP_KEEP_DAILY"
+msgstr "Daily"
+
+msgid "CFG_BACKUP_KEEP_DAILY_HELP"
+msgstr "Number of daily backups kept."
+
+msgid "CFG_BACKUP_KEEP_WEEKLY"
+msgstr "Weekly"
+
+msgid "CFG_BACKUP_KEEP_WEEKLY_HELP"
+msgstr "Number of weekly backups kept."
+
+msgid "CFG_BACKUP_KEEP_MONTHLY"
+msgstr "Monthly"
+
+msgid "CFG_BACKUP_KEEP_MONTHLY_HELP"
+msgstr "Number of monthly backups kept."
+
+msgid "CFG_BACKUP_REMOTE_NAME"
+msgstr "Remote name"
+
+msgid "CFG_BACKUP_REMOTE_NAME_HELP"
+msgstr "Name of the rclone remote."
+
+msgid "CFG_BACKUP_REMOTE_PATH"
+msgstr "Path"
+
+msgid "CFG_BACKUP_REMOTE_PATH_HELP"
+msgstr "Folder on the remote; empty uses its root."

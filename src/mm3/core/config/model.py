@@ -119,11 +119,27 @@ class Rect(_Model):
         CORE-91: Core spec 0.8, §6.5 Screen layout.
     """
 
-    col: int = Field(ge=1, le=48)
-    row: int = Field(ge=1, le=48)
-    width: int = Field(ge=1, le=48)
-    height: int = Field(ge=1, le=48)
-    z: int = 0
+    col: int = Field(
+        ge=1, le=48, title="CFG_MODULES_POSITION_COL", description="CFG_MODULES_POSITION_COL_HELP"
+    )
+    row: int = Field(
+        ge=1, le=48, title="CFG_MODULES_POSITION_ROW", description="CFG_MODULES_POSITION_ROW_HELP"
+    )
+    width: int = Field(
+        ge=1,
+        le=48,
+        title="CFG_MODULES_POSITION_WIDTH",
+        description="CFG_MODULES_POSITION_WIDTH_HELP",
+    )
+    height: int = Field(
+        ge=1,
+        le=48,
+        title="CFG_MODULES_POSITION_HEIGHT",
+        description="CFG_MODULES_POSITION_HEIGHT_HELP",
+    )
+    z: int = Field(
+        default=0, title="CFG_MODULES_POSITION_Z", description="CFG_MODULES_POSITION_Z_HELP"
+    )
 
 
 def _position_kind(value: Any) -> str:
@@ -144,26 +160,68 @@ def _header_kind(value: Any) -> str:
 class Appearance(_Model):
     """Appearance common to every instance (core spec 6.5)."""
 
-    scale: float = Field(default=1.0, ge=0.5, le=3.0)
-    align: Literal["start", "center", "end"] = "start"
-    valign: Literal["start", "center", "end"] = "start"
-    opacity: float = Field(default=1.0, ge=0, le=1)
-    overflow: Literal["clip", "fit", "scroll"] = "clip"
+    scale: float = Field(
+        default=1.0,
+        ge=0.5,
+        le=3.0,
+        title="CFG_MODULES_APPEARANCE_SCALE",
+        description="CFG_MODULES_APPEARANCE_SCALE_HELP",
+    )
+    align: Literal["start", "center", "end"] = Field(
+        default="start",
+        title="CFG_MODULES_APPEARANCE_ALIGN",
+        description="CFG_MODULES_APPEARANCE_ALIGN_HELP",
+    )
+    valign: Literal["start", "center", "end"] = Field(
+        default="start",
+        title="CFG_MODULES_APPEARANCE_VALIGN",
+        description="CFG_MODULES_APPEARANCE_VALIGN_HELP",
+    )
+    opacity: float = Field(
+        default=1.0,
+        ge=0,
+        le=1,
+        title="CFG_MODULES_APPEARANCE_OPACITY",
+        description="CFG_MODULES_APPEARANCE_OPACITY_HELP",
+    )
+    overflow: Literal["clip", "fit", "scroll"] = Field(
+        default="clip",
+        title="CFG_MODULES_APPEARANCE_OVERFLOW",
+        description="CFG_MODULES_APPEARANCE_OVERFLOW_HELP",
+    )
     header: Annotated[
         Annotated[StrictBool, Tag("flag")] | Annotated[LocalizedText, Tag("text")],
         Discriminator(_header_kind),
-    ] = False
-    classes: list[Annotated[str, Field(pattern=r"^[A-Za-z_][A-Za-z0-9_-]*$")]] = Field(
-        default_factory=list
+    ] = Field(
+        default=False,
+        title="CFG_MODULES_APPEARANCE_HEADER",
+        description="CFG_MODULES_APPEARANCE_HEADER_HELP",
     )
-    css: str | None = None
+    classes: list[Annotated[str, Field(pattern=r"^[A-Za-z_][A-Za-z0-9_-]*$")]] = Field(
+        default_factory=list,
+        title="CFG_MODULES_APPEARANCE_CLASSES",
+        description="CFG_MODULES_APPEARANCE_CLASSES_HELP",
+    )
+    css: str | None = Field(
+        default=None,
+        title="CFG_MODULES_APPEARANCE_CSS",
+        description="CFG_MODULES_APPEARANCE_CSS_HELP",
+    )
 
 
 class MqttGrants(_Model):
     """MQTT topic globs an instance may use (Contract section 8)."""
 
-    subscribe: list[str] = Field(default_factory=list)
-    publish: list[str] = Field(default_factory=list)
+    subscribe: list[str] = Field(
+        default_factory=list,
+        title="CFG_MODULES_GRANTS_MQTT_SUBSCRIBE",
+        description="CFG_MODULES_GRANTS_MQTT_SUBSCRIBE_HELP",
+    )
+    publish: list[str] = Field(
+        default_factory=list,
+        title="CFG_MODULES_GRANTS_MQTT_PUBLISH",
+        description="CFG_MODULES_GRANTS_MQTT_PUBLISH_HELP",
+    )
 
 
 class HttpGrant(_Model):
@@ -178,15 +236,31 @@ class HttpGrant(_Model):
         CORE-284: Core spec 0.19, §3.4 HTTP transport.
     """
 
-    prefix: str = Field(min_length=1)
-    ca: str = Field(min_length=1)
+    prefix: str = Field(
+        min_length=1,
+        title="CFG_MODULES_GRANTS_HTTP_PREFIX",
+        description="CFG_MODULES_GRANTS_HTTP_PREFIX_HELP",
+    )
+    ca: str = Field(
+        min_length=1,
+        title="CFG_MODULES_GRANTS_HTTP_CA",
+        description="CFG_MODULES_GRANTS_HTTP_CA_HELP",
+    )
 
 
 class Grants(_Model):
     """Scopes granted to an instance (Contract section 8)."""
 
-    mqtt: MqttGrants = MqttGrants()
-    http: list[str | HttpGrant] = Field(default_factory=list)
+    mqtt: MqttGrants = Field(
+        default=MqttGrants(),
+        title="CFG_MODULES_GRANTS_MQTT",
+        description="CFG_MODULES_GRANTS_MQTT_HELP",
+    )
+    http: list[str | HttpGrant] = Field(
+        default_factory=list,
+        title="CFG_MODULES_GRANTS_HTTP",
+        description="CFG_MODULES_GRANTS_HTTP_HELP",
+    )
 
 
 class InstanceConfig(_Model):
@@ -199,23 +273,62 @@ class InstanceConfig(_Model):
         CORE-202: Core spec 0.8, §6.2 Rules.
     """
 
-    module: str = Field(min_length=1)
-    id: str | None = Field(default=None, pattern=INSTANCE_ID_PATTERN)
-    position: Position | None = None
-    positions: dict[str, Position] = Field(default_factory=dict)
-    pages: Literal["all"] | list[str] = "all"
-    appearance: Appearance = Appearance()
-    config: dict[str, Any] = Field(default_factory=dict)
-    disabled: bool = False
-    locale: LocaleTag | None = None
-    grants: Grants = Grants()
+    module: str = Field(
+        min_length=1, title="CFG_MODULES_MODULE", description="CFG_MODULES_MODULE_HELP"
+    )
+    id: str | None = Field(
+        default=None,
+        pattern=INSTANCE_ID_PATTERN,
+        title="CFG_MODULES_ID",
+        description="CFG_MODULES_ID_HELP",
+    )
+    position: Position | None = Field(
+        default=None, title="CFG_MODULES_POSITION", description="CFG_MODULES_POSITION_HELP"
+    )
+    positions: dict[str, Position] = Field(
+        default_factory=dict,
+        title="CFG_MODULES_POSITIONS",
+        description="CFG_MODULES_POSITIONS_HELP",
+    )
+    pages: Literal["all"] | list[str] = Field(
+        default="all", title="CFG_MODULES_PAGES", description="CFG_MODULES_PAGES_HELP"
+    )
+    appearance: Appearance = Field(
+        default=Appearance(),
+        title="CFG_MODULES_APPEARANCE",
+        description="CFG_MODULES_APPEARANCE_HELP",
+    )
+    config: dict[str, Any] = Field(
+        default_factory=dict, title="CFG_MODULES_CONFIG", description="CFG_MODULES_CONFIG_HELP"
+    )
+    disabled: bool = Field(
+        default=False, title="CFG_MODULES_DISABLED", description="CFG_MODULES_DISABLED_HELP"
+    )
+    locale: LocaleTag | None = Field(
+        default=None, title="CFG_MODULES_LOCALE", description="CFG_MODULES_LOCALE_HELP"
+    )
+    grants: Grants = Field(
+        default=Grants(), title="CFG_MODULES_GRANTS", description="CFG_MODULES_GRANTS_HELP"
+    )
 
 
 class GridSize(_Model):
     """Grid size (``layout.grid``), each 1 to 48."""
 
-    columns: int = Field(default=12, ge=1, le=48)
-    rows: int = Field(default=12, ge=1, le=48)
+    columns: int = Field(
+        default=12,
+        ge=1,
+        le=48,
+        title="CFG_LAYOUT_GRID_COLUMNS",
+        description="CFG_LAYOUT_GRID_COLUMNS_HELP",
+    )
+    rows: int = Field(
+        default=12,
+        ge=1,
+        le=48,
+        title="CFG_LAYOUT_GRID_ROWS",
+        description="CFG_LAYOUT_GRID_ROWS_HELP",
+    )
 
 
 class LayoutConfig(_Model):
@@ -225,20 +338,44 @@ class LayoutConfig(_Model):
         CORE-213: Core spec 0.9, §6.5 Screen layout.
     """
 
-    grid: GridSize = GridSize()
-    gap: Pixels = 16
-    padding: Pixels = 32
+    grid: GridSize = Field(
+        default=GridSize(), title="CFG_LAYOUT_GRID", description="CFG_LAYOUT_GRID_HELP"
+    )
+    gap: Pixels = Field(default=16, title="CFG_LAYOUT_GAP", description="CFG_LAYOUT_GAP_HELP")
+    padding: Pixels = Field(
+        default=32, title="CFG_LAYOUT_PADDING", description="CFG_LAYOUT_PADDING_HELP"
+    )
 
 
 class DisplayConfig(_Model):
     """The ``display`` block (core spec 6.7)."""
 
-    output: str | None = None
-    width: int | None = Field(default=None, ge=320, le=7680)
-    height: int | None = Field(default=None, ge=320, le=7680)
-    refresh: int | None = Field(default=None, ge=1)
-    rotation: Literal[0, 90, 180, 270] = 0
-    scale: float = Field(default=1.0, ge=0.5, le=3.0)
+    output: str | None = Field(
+        default=None, title="CFG_DISPLAY_OUTPUT", description="CFG_DISPLAY_OUTPUT_HELP"
+    )
+    width: int | None = Field(
+        default=None,
+        ge=320,
+        le=7680,
+        title="CFG_DISPLAY_WIDTH",
+        description="CFG_DISPLAY_WIDTH_HELP",
+    )
+    height: int | None = Field(
+        default=None,
+        ge=320,
+        le=7680,
+        title="CFG_DISPLAY_HEIGHT",
+        description="CFG_DISPLAY_HEIGHT_HELP",
+    )
+    refresh: int | None = Field(
+        default=None, ge=1, title="CFG_DISPLAY_REFRESH", description="CFG_DISPLAY_REFRESH_HELP"
+    )
+    rotation: Literal[0, 90, 180, 270] = Field(
+        default=0, title="CFG_DISPLAY_ROTATION", description="CFG_DISPLAY_ROTATION_HELP"
+    )
+    scale: float = Field(
+        default=1.0, ge=0.5, le=3.0, title="CFG_DISPLAY_SCALE", description="CFG_DISPLAY_SCALE_HELP"
+    )
 
 
 class AudioConfig(_Model):
@@ -261,9 +398,13 @@ class AudioConfig(_Model):
         -: Core spec 0.21, §6.7 Display output.
     """
 
-    sink: str = Field(default="auto", min_length=1)
-    volume: int | None = Field(default=None, ge=0, le=100)
-    mute: bool = False
+    sink: str = Field(
+        default="auto", min_length=1, title="CFG_AUDIO_SINK", description="CFG_AUDIO_SINK_HELP"
+    )
+    volume: int | None = Field(
+        default=None, ge=0, le=100, title="CFG_AUDIO_VOLUME", description="CFG_AUDIO_VOLUME_HELP"
+    )
+    mute: bool = Field(default=False, title="CFG_AUDIO_MUTE", description="CFG_AUDIO_MUTE_HELP")
 
 
 class PageAfter(_Model):
@@ -276,8 +417,17 @@ class PageAfter(_Model):
             layout rules, because it relates two fields).
     """
 
-    time: timedelta = Field(gt=timedelta(0))
-    page: str | None = Field(default=None, pattern=PAGE_ID_PATTERN)
+    time: timedelta = Field(
+        gt=timedelta(0),
+        title="CFG_PAGES_LIST_AFTER_TIME",
+        description="CFG_PAGES_LIST_AFTER_TIME_HELP",
+    )
+    page: str | None = Field(
+        default=None,
+        pattern=PAGE_ID_PATTERN,
+        title="CFG_PAGES_LIST_AFTER_PAGE",
+        description="CFG_PAGES_LIST_AFTER_PAGE_HELP",
+    )
 
 
 class PageConfig(_Model):
@@ -293,11 +443,21 @@ class PageConfig(_Model):
             time (CORE-334).
     """
 
-    id: str = Field(pattern=PAGE_ID_PATTERN)
-    title: LocalizedText | None = None
-    rotate: timedelta | None = None
-    cycle: bool = True
-    after: PageAfter | None = None
+    id: str = Field(
+        pattern=PAGE_ID_PATTERN, title="CFG_PAGES_LIST_ID", description="CFG_PAGES_LIST_ID_HELP"
+    )
+    title: LocalizedText | None = Field(
+        default=None, title="CFG_PAGES_LIST_TITLE", description="CFG_PAGES_LIST_TITLE_HELP"
+    )
+    rotate: timedelta | None = Field(
+        default=None, title="CFG_PAGES_LIST_ROTATE", description="CFG_PAGES_LIST_ROTATE_HELP"
+    )
+    cycle: bool = Field(
+        default=True, title="CFG_PAGES_LIST_CYCLE", description="CFG_PAGES_LIST_CYCLE_HELP"
+    )
+    after: PageAfter | None = Field(
+        default=None, title="CFG_PAGES_LIST_AFTER", description="CFG_PAGES_LIST_AFTER_HELP"
+    )
 
     def resolved_title(self, locale: str) -> str:
         """Return the page title for a locale; the id when no title is set (CORE-230).
@@ -316,21 +476,64 @@ class PagesConfig(_Model):
 
     model_config = ConfigDict(extra="forbid", frozen=True, validate_by_name=True)
 
-    default: str | None = None
-    rotate: timedelta = timedelta(0)
-    pause_on_interaction: timedelta = timedelta(minutes=2)
-    reset_on_resume: bool = True
-    return_after: timedelta = Field(default=timedelta(0), ge=timedelta(0))
-    transition: Literal["fade", "none"] = "fade"
-    pages: list[PageConfig] = Field(alias="list", min_length=1, max_length=32)
+    default: str | None = Field(
+        default=None, title="CFG_PAGES_DEFAULT", description="CFG_PAGES_DEFAULT_HELP"
+    )
+    rotate: timedelta = Field(
+        default=timedelta(0), title="CFG_PAGES_ROTATE", description="CFG_PAGES_ROTATE_HELP"
+    )
+    pause_on_interaction: timedelta = Field(
+        default=timedelta(minutes=2),
+        title="CFG_PAGES_PAUSE_ON_INTERACTION",
+        description="CFG_PAGES_PAUSE_ON_INTERACTION_HELP",
+    )
+    reset_on_resume: bool = Field(
+        default=True,
+        title="CFG_PAGES_RESET_ON_RESUME",
+        description="CFG_PAGES_RESET_ON_RESUME_HELP",
+    )
+    return_after: timedelta = Field(
+        default=timedelta(0),
+        ge=timedelta(0),
+        title="CFG_PAGES_RETURN_AFTER",
+        description="CFG_PAGES_RETURN_AFTER_HELP",
+    )
+    transition: Literal["fade", "none"] = Field(
+        default="fade", title="CFG_PAGES_TRANSITION", description="CFG_PAGES_TRANSITION_HELP"
+    )
+    pages: list[PageConfig] = Field(
+        alias="list",
+        min_length=1,
+        max_length=32,
+        title="CFG_PAGES_LIST",
+        description="CFG_PAGES_LIST_HELP",
+    )
 
 
 class BackupKeep(_Model):
     """Backup retention counts (CORE-244)."""
 
-    daily: int = Field(default=7, ge=0, le=1000)
-    weekly: int = Field(default=4, ge=0, le=1000)
-    monthly: int = Field(default=6, ge=0, le=1000)
+    daily: int = Field(
+        default=7,
+        ge=0,
+        le=1000,
+        title="CFG_BACKUP_KEEP_DAILY",
+        description="CFG_BACKUP_KEEP_DAILY_HELP",
+    )
+    weekly: int = Field(
+        default=4,
+        ge=0,
+        le=1000,
+        title="CFG_BACKUP_KEEP_WEEKLY",
+        description="CFG_BACKUP_KEEP_WEEKLY_HELP",
+    )
+    monthly: int = Field(
+        default=6,
+        ge=0,
+        le=1000,
+        title="CFG_BACKUP_KEEP_MONTHLY",
+        description="CFG_BACKUP_KEEP_MONTHLY_HELP",
+    )
 
     @field_validator("monthly")
     @classmethod
@@ -347,8 +550,14 @@ class BackupKeep(_Model):
 class BackupRemote(_Model):
     """Remote copy target (CORE-244)."""
 
-    name: str = Field(pattern=r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$")
-    path: str = ""
+    name: str = Field(
+        pattern=r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$",
+        title="CFG_BACKUP_REMOTE_NAME",
+        description="CFG_BACKUP_REMOTE_NAME_HELP",
+    )
+    path: str = Field(
+        default="", title="CFG_BACKUP_REMOTE_PATH", description="CFG_BACKUP_REMOTE_PATH_HELP"
+    )
 
 
 BackupPart = Literal["config", "data", "modules", "secrets"]
@@ -361,11 +570,27 @@ class BackupConfig(_Model):
         CORE-244: Core spec 0.8, §10.8 Backup and restore.
     """
 
-    schedule: str = Field(default="03:30", pattern=r"^(?:[01][0-9]|2[0-3]):[0-5][0-9]$")
-    encrypt_to: str | None = Field(default=None, pattern=r"^age1[02-9ac-hj-np-z]{58}$")
-    parts: list[BackupPart] | None = Field(default=None, min_length=1)
-    keep: BackupKeep = BackupKeep()
-    remote: BackupRemote | None = None
+    schedule: str = Field(
+        default="03:30",
+        pattern=r"^(?:[01][0-9]|2[0-3]):[0-5][0-9]$",
+        title="CFG_BACKUP_SCHEDULE",
+        description="CFG_BACKUP_SCHEDULE_HELP",
+    )
+    encrypt_to: str | None = Field(
+        default=None,
+        pattern=r"^age1[02-9ac-hj-np-z]{58}$",
+        title="CFG_BACKUP_ENCRYPT_TO",
+        description="CFG_BACKUP_ENCRYPT_TO_HELP",
+    )
+    parts: list[BackupPart] | None = Field(
+        default=None, min_length=1, title="CFG_BACKUP_PARTS", description="CFG_BACKUP_PARTS_HELP"
+    )
+    keep: BackupKeep = Field(
+        default=BackupKeep(), title="CFG_BACKUP_KEEP", description="CFG_BACKUP_KEEP_HELP"
+    )
+    remote: BackupRemote | None = Field(
+        default=None, title="CFG_BACKUP_REMOTE", description="CFG_BACKUP_REMOTE_HELP"
+    )
 
     @field_validator("parts")
     @classmethod
@@ -408,14 +633,26 @@ class MirrorConfig(_Model):
         CORE-201: Core spec 0.21, §6.2 Rules.
     """
 
-    config_version: Annotated[int, Field(ge=1)] = 1
-    engine: EngineSettings = Field(default_factory=EngineSettings)
-    display: DisplayConfig = DisplayConfig()
-    audio: AudioConfig | None = None
-    layout: LayoutConfig = LayoutConfig()
-    pages: PagesConfig | None = None
-    modules: list[InstanceConfig] = Field(default_factory=list)
-    backup: BackupConfig = BackupConfig()
+    config_version: Annotated[int, Field(ge=1)] = Field(
+        default=1, title="CFG_CONFIG_VERSION", description="CFG_CONFIG_VERSION_HELP"
+    )
+    engine: EngineSettings = Field(
+        default_factory=EngineSettings, title="CFG_ENGINE", description="CFG_ENGINE_HELP"
+    )
+    display: DisplayConfig = Field(
+        default=DisplayConfig(), title="CFG_DISPLAY", description="CFG_DISPLAY_HELP"
+    )
+    audio: AudioConfig | None = Field(default=None, title="CFG_AUDIO", description="CFG_AUDIO_HELP")
+    layout: LayoutConfig = Field(
+        default=LayoutConfig(), title="CFG_LAYOUT", description="CFG_LAYOUT_HELP"
+    )
+    pages: PagesConfig | None = Field(default=None, title="CFG_PAGES", description="CFG_PAGES_HELP")
+    modules: list[InstanceConfig] = Field(
+        default_factory=list, title="CFG_MODULES", description="CFG_MODULES_HELP"
+    )
+    backup: BackupConfig = Field(
+        default=BackupConfig(), title="CFG_BACKUP", description="CFG_BACKUP_HELP"
+    )
 
     @field_validator("config_version")
     @classmethod

@@ -246,16 +246,64 @@ def test_core_281_config_findings() -> None:
     texts = sorted((m, f.message.split(":")[0].split(" ")[0], f.severity) for m, f in found)
     assert ("MOD-47", "token", "fail") in texts
     assert ("MOD-47", "password", "warn") in texts
-    assert ("MOD-46", "lon", "fail") in texts
-    assert ("MOD-46", "other", "fail") in texts
-    assert not [t for t in texts if t[1] in ("api_key", "lat")]
+    assert ("MOD-46", "lon", "fail") in texts  # not a key: breaks the MUST
+    assert ("MOD-46", "other", "warn") in texts  # a key the catalog lacks: SHOULD (CORE-310)
+    assert not [t for t in texts if t[1] == "lat"]  # complete labels
+    assert [t for t in texts if t[1] == "api_key"] == [("MOD-46", "api_key", "warn")] * 2
+
+
+NESTED = """
+from pydantic import Field
+from mm3 import ModuleConfig
+
+class Zone(ModuleConfig):
+    label: str = Field("", title="CFG_ZONE_LABEL", description="CFG_ZONE_LABEL_HELP")
+    bare: int = 0
+
+class Cfg(ModuleConfig):
+    zones: list[Zone] = Field(default_factory=list, title="CFG_ZONES")
+    show: bool = Field(True, title="CFG_SHOW", description="CFG_SHOW_HELP")
+
+class M:
+    config_model = Cfg
+"""
+
+
+def test_core_310_missing_title_and_description_are_should_findings() -> None:
+    trees = {"c.py": ast.parse(NESTED)}
+    facts = find_class(trees, "M")
+    assert facts is not None
+    keys = {"CFG_ZONE_LABEL", "CFG_ZONE_LABEL_HELP", "CFG_ZONES", "CFG_SHOW", "CFG_SHOW_HELP"}
+    found = [(m, f.message, f.severity) for m, f in config_findings(trees, facts, keys)]
+    # The nested model is checked too; every finding is a warning, none breaks the MUST.
+    assert {s for _, _, s in found} == {"warn"}
+    assert [m for m, _, _ in found] == ["MOD-46"] * 3
+    messages = " | ".join(msg for _, msg, _ in found)
+    assert "bare: no title" in messages
+    assert "bare: no description" in messages
+    assert "zones: no description" in messages
+
+
+def test_core_310_complete_labels_give_no_finding() -> None:
+    src = NESTED.replace("    bare: int = 0\n", "").replace(
+        'title="CFG_ZONES")', 'title="CFG_ZONES", description="CFG_ZONES_HELP")'
+    )
+    trees = {"c.py": ast.parse(src)}
+    facts = find_class(trees, "M")
+    assert facts is not None
+    keys = {
+        "CFG_ZONE_LABEL", "CFG_ZONE_LABEL_HELP", "CFG_ZONES", "CFG_ZONES_HELP",
+        "CFG_SHOW", "CFG_SHOW_HELP",
+    }  # fmt: skip
+    assert config_findings(trees, facts, keys) == []
 
 
 def test_core_281_config_model_must_subclass_module_config() -> None:
     trees = {"c.py": ast.parse(CONFIG + "\nclass M:\n    config_model = Plain\n")}
     facts = find_class(trees, "M")
     assert facts is not None
-    assert [m for m, _ in config_findings(trees, facts, None)] == ["MOD-45"]
+    found = [m for m, _ in config_findings(trees, facts, None)]
+    assert [m for m in found if m != "MOD-46"] == ["MOD-45"]
 
 
 @pytest.mark.parametrize(
