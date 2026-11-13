@@ -7,6 +7,36 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (admin editor: draft history, Save without a dialog, absent sections; ENH-004, ENH-010, ISS-008; Core spec 0.40)
+
+- Draft history life (CORE-377). The undo and redo steps of the draft are kept in the
+  browser with the draft, so a page reload keeps both. The history starts at the version
+  the draft was loaded from and is cleared by Save, Discard or Open in editor (which no
+  longer adds an "Open version" step); Undo is disabled at its start. Up to 500 steps; the
+  browser store keeps one splice per changed file instead of whole texts, and drops the
+  oldest steps first when the storage quota is reached. A stored history that does not fit
+  the stored draft is dropped, never half used.
+- Save writes at once with no confirmation or preview (CORE-302, CORE-377). The old
+  "Save these changes?" dialog is gone; the diff and the validation records open from the
+  new "Review changes" button of the save bar. Catalog keys `CORE_ADMIN_SAVE_TITLE` and
+  `CORE_ADMIN_OPENED_VERSION` are removed.
+- Absent sections (CORE-379). `audio`, `backup`, `pages` and the other optional top-level
+  sections are no longer greyed out in the Form view; they show "Not in config, defaults
+  apply", with "Add section" (`{}`, or the page `main` for `pages`) and "Remove section"
+  as one draft step each. A toggle shows its schema default while the key is absent.
+- Section undo (CORE-152, ISS-008). "Undo last change here" marks its step as a revert of
+  the step it undoes; each press reverts the latest step of the section that is neither a
+  revert nor already reverted, so repeated presses walk back through the section's steps
+  instead of toggling between the last two values. The button shows the label of the step
+  it would revert and is disabled when there is none; undoing a revert with Ctrl+Z makes
+  its step revertable again.
+- Catalogs: six new `CORE_ADMIN_*` keys in EN, IT, FR, ES and DE (compiled files and
+  `messages.pot` updated). The stale `textPrefix` property of the Form view is removed.
+- Tests: `test_core_377_*`, `test_core_302_review_changes_shows_the_diff_on_request`,
+  `test_core_152_repeated_section_undo_walks_back_through_the_section` and
+  `test_core_379_absent_sections_are_listed_and_can_be_added_and_removed`; two existing
+  tests no longer click through the removed dialog.
+
 ### Fixed (admin Form view: labels in the admin language; ISS-003; Core spec 0.40)
 
 - The Form view shows each field's schema `title` as its label and its `description` as

@@ -402,10 +402,12 @@ async def test_core_151_form_edit_undo_redo_and_save(
             "() => document.querySelector("
             "'mm3-schema-form [data-path=\"/locale\"] input').value === 'en'"
         )
-        # Save: the dialog shows the diff, then version 2 is written.
+        # CORE-302: Review changes shows the diff on request; Save then writes version 2
+        # with no confirmation dialog in between.
+        await page.click(".savebar >> text=Review changes")
+        await page.wait_for_selector("dialog.review >> text=modules/w")
+        await page.click("dialog.review >> text=Close")
         await page.click(".savebar >> button.primary")
-        await page.wait_for_selector("dialog.save >> text=modules/w")
-        await page.click("dialog.save >> button.primary")
         await page.wait_for_selector("text=Saved as version 2.")
     finally:
         await browser.close()
@@ -567,7 +569,8 @@ async def test_core_324_open_in_editor_and_language(
         await page.wait_for_selector("text=Unsaved changes")
         value = await page.locator('mm3-schema-form [data-path="/locale"] input').input_value()
         assert value == "en"
-        await page.wait_for_selector("button:has-text('Undo') >> text=Open version 1")
+        # CORE-377: the history starts again at the opened version, so nothing to undo.
+        assert await page.locator("nav.tabs button:has-text('Undo')").is_disabled()
         # CORE-309: the language picker keeps Italian for this session.
         await page.select_option("header select.lang", "it")
         await page.wait_for_selector("nav.tabs >> text=Modulo")
@@ -646,7 +649,6 @@ async def test_core_301_form_edit_in_an_absent_section_applies(
             "() => !document.querySelector('.savebar button.primary').disabled"
         )
         await page.click(".savebar >> button.primary")
-        await page.click("dialog.save >> button.primary")
         await page.wait_for_selector("text=Saved as version 2.")
     finally:
         await browser.close()
@@ -683,6 +685,259 @@ async def test_core_35_section_errors_shown_and_listed(
     finally:
         await browser.close()
         await pw.stop()
+    assert not problems, problems
+
+
+# --- ENH-004, ENH-010, ISS-008: draft history and absent sections (Core spec 0.39) ----------------
+
+
+LOCALE = 'mm3-schema-form [data-path="/locale"] input'
+
+
+async def set_locale(page: Any, value: str) -> None:
+    field = page.locator(LOCALE)
+    await field.fill(value)
+    await field.press("Tab")
+    await page.wait_for_selector(f"nav.tabs button:has-text('Undo') >> text=→ {value}")
+
+
+async def locale_is(page: Any, value: str) -> None:
+    await page.wait_for_function(
+        "(v) => document.querySelector("
+        "'mm3-schema-form [data-path=\"/locale\"] input').value === v",
+        arg=value,
+    )
+
+
+async def test_core_377_history_and_splices_round_trip(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    """ENH-004: the browser store keeps one splice per file and rebuilds the texts."""
+    base, sid, _root, _history = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        out = await page.evaluate(
+            """async () => {
+              const { splice, applySplice, rebuildSteps } = await import('/admin/static/draft.js');
+              const a = 'engine:\\n  locale: en  # language\\n';
+              const b = 'engine:\\n  locale: fr  # language\\n';
+              const c = 'engine:\\n  locale: de  # language\\n';
+              const s1 = splice(a, b);
+              const patch = (path, x, y) => ({ path, ...splice(x, y) });
+              const stored = {
+                undo: [{ id: 1, label: 'one', revertOf: null, sections: ['engine'], secBefore: {},
+                         patches: [patch('c.yaml', a, b)] }],
+                redo: [{ id: 2, label: 'two', revertOf: null, sections: ['engine'], secBefore: {},
+                         patches: [patch('c.yaml', b, c)] }],
+              };
+              const ok = rebuildSteps(stored, { 'c.yaml': b });
+              const bad = rebuildSteps(stored, { 'c.yaml': 'something else' });
+              return {
+                s1, back: applySplice(b, s1, true), fwd: applySplice(a, s1),
+                wrong: applySplice('other', s1), same: splice(a, a),
+                undoBefore: ok.undo[0].before['c.yaml'] === a,
+                undoAfter: ok.undo[0].after['c.yaml'] === b,
+                redoAfter: ok.redo[0].after['c.yaml'] === c, bad,
+              };
+            }"""
+        )
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert (out["s1"]["del"], out["s1"]["ins"]) == ("en", "fr")
+    assert out["back"].count("locale: en") == 1
+    assert out["fwd"].count("locale: fr") == 1
+    assert out["wrong"] is None
+    assert out["same"] == {
+        "start": len("engine:\n  locale: en  # language\n"),
+        "del": "",
+        "ins": "",
+    }
+    assert [out["undoBefore"], out["undoAfter"], out["redoAfter"]] == [True, True, True]
+    assert out["bad"] is None  # a history that does not fit the draft is dropped, not half used
+    assert not problems, problems
+
+
+async def test_core_377_history_survives_a_reload_until_save_or_discard(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    """ENH-004: the history is kept with the draft; Save and Discard clear it; Save asks nothing."""
+    base, sid, root, history = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        undo = page.locator("nav.tabs button:has-text('Undo')")
+        assert await undo.is_disabled()  # the start of the history
+        await set_locale(page, "it")
+        await set_locale(page, "fr")
+        # A reload keeps the draft and the steps; undo walks back to the loaded version.
+        await page.reload()
+        await page.wait_for_selector("text=Unsaved changes")
+        await locale_is(page, "fr")
+        await page.wait_for_selector("nav.tabs button:has-text('Undo') >> text=→ fr")
+        await page.keyboard.press("Control+z")
+        await locale_is(page, "it")
+        await page.keyboard.press("Control+z")
+        await locale_is(page, "en")
+        await page.wait_for_function("() => !document.querySelector('.savebar')")
+        assert await undo.is_disabled()
+        # The undone steps are still there to redo, also after another reload.
+        await page.reload()
+        await page.wait_for_selector("nav.tabs button:has-text('Redo')")
+        assert await page.locator("nav.tabs button:has-text('Redo')").is_enabled()
+        await page.keyboard.press("Control+Shift+z")
+        await page.keyboard.press("Control+Shift+z")
+        await locale_is(page, "fr")
+        # CORE-302: Save writes at once; no dialog opens, and the history is cleared.
+        await page.click(".savebar >> button.primary")
+        await page.wait_for_selector("text=Saved as version 2.")
+        assert await page.locator("dialog[open]").count() == 0
+        assert await undo.is_disabled()
+        await page.reload()
+        assert await page.locator("nav.tabs button:has-text('Undo')").is_disabled()
+        # Discard clears it as well.
+        await set_locale(page, "de")
+        await page.click(".savebar >> text=Discard")
+        await page.wait_for_function("() => !document.querySelector('.savebar')")
+        assert await undo.is_disabled()
+        await page.reload()
+        assert await page.locator("nav.tabs button:has-text('Undo')").is_disabled()
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert "locale: fr" in (root / "config.yaml").read_text()
+    assert history.store.meta(2).origin == "admin"
+    assert not problems, problems
+
+
+async def test_core_302_review_changes_shows_the_diff_on_request(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    """ENH-004: the diff of the draft opens only from "Review changes"."""
+    base, sid, _root, _history = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        await set_locale(page, "it")
+        assert await page.locator("dialog[open]").count() == 0
+        await page.click(".savebar >> text=Review changes")
+        await page.wait_for_selector("dialog.review[open] >> text=engine")
+        await page.click("dialog.review >> text=Close")
+        assert await page.locator("dialog[open]").count() == 0
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert not problems, problems
+
+
+async def test_core_152_repeated_section_undo_walks_back_through_the_section(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    """ISS-008: each press reverts the latest step of the section that is not a revert."""
+    base, sid, _root, _history = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        here = page.locator("button:has-text('Undo last change here')")
+        assert await here.is_disabled()  # no step touches the section yet
+        await set_locale(page, "it")
+        await set_locale(page, "fr")
+        await set_locale(page, "de")
+        # The control names the step it would revert, then walks back: de → fr → it → en.
+        assert "→ de" in (await here.inner_text())
+        await here.click()
+        await locale_is(page, "fr")
+        await here.click()
+        await locale_is(page, "it")
+        await here.click()
+        await locale_is(page, "en")
+        await page.wait_for_function("() => !document.querySelector('.savebar')")
+        assert await here.is_disabled()  # the start of the draft history
+        # CORE-151's undo treats a revert as an ordinary step: undoing the last revert
+        # makes its step revertable again.
+        await page.keyboard.press("Control+z")
+        await locale_is(page, "it")
+        assert "→ it" in (await here.inner_text())
+        await here.click()
+        await locale_is(page, "en")
+        # A reload keeps the marks, so the walk goes on where it stopped.
+        await set_locale(page, "es")
+        await set_locale(page, "pt")
+        await here.click()
+        await locale_is(page, "es")
+        await page.reload()
+        await page.wait_for_selector("text=Unsaved changes")
+        await locale_is(page, "es")
+        await page.locator("button:has-text('Undo last change here')").click()
+        await locale_is(page, "en")
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert not problems, problems
+
+
+async def test_core_379_absent_sections_are_listed_and_can_be_added_and_removed(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    """ENH-010: an absent section is labelled, not grey; Add and Remove are one step each."""
+    base, sid, root, _history = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        await page.click("nav.sections >> text=audio")
+        await page.wait_for_selector("p.absent >> text=Not in config, defaults apply")
+        entry = page.locator("nav.sections button:has-text('audio')")
+        assert "muted" not in ((await entry.get_attribute("class")) or "")
+        # The fields show their defaults and the form is usable at once.
+        assert await page.locator('mm3-schema-form [data-path="/mute"] input').is_enabled()
+        await page.click("button.section-toggle >> text=Add section")
+        await page.wait_for_selector("text=Unsaved changes")
+        assert await page.locator("p.absent").count() == 0
+        await page.wait_for_selector("button.section-toggle >> text=Remove section")
+        await page.wait_for_selector("nav.tabs button:has-text('Undo') >> text=Add section audio")
+        # Undo takes the step back; the section is absent again.
+        await page.keyboard.press("Control+z")
+        await page.wait_for_selector("p.absent >> text=Not in config, defaults apply")
+        await page.keyboard.press("Control+Shift+z")
+        await page.wait_for_selector("button.section-toggle >> text=Remove section")
+        # pages is added holding the page main, and validates.
+        await page.click("nav.sections >> text=pages")
+        await page.click("button.section-toggle >> text=Add section")
+        await page.wait_for_selector('mm3-schema-form [data-path="/list/0/id"] input')
+        assert (
+            await page.locator('mm3-schema-form [data-path="/list/0/id"] input').input_value()
+            == "main"
+        )
+        await page.wait_for_function(
+            "() => !document.querySelector('.savebar button.primary').disabled"
+        )
+        await page.click(".savebar >> button.primary")
+        await page.wait_for_selector("text=Saved as version 2.")
+        text = (root / "config.yaml").read_text()
+        assert "audio: {}" in text
+        assert "pages:\n  list:\n    - id: main" in text
+        # Remove section deletes the key, as one step that can be undone.
+        await page.click("nav.sections >> text=audio")
+        await page.click("button.section-toggle >> text=Remove section")
+        await page.wait_for_selector("p.absent >> text=Not in config, defaults apply")
+        await page.keyboard.press("Control+z")
+        await page.wait_for_selector("button.section-toggle >> text=Remove section")
+        await page.keyboard.press("Control+Shift+z")
+        await page.wait_for_selector("p.absent >> text=Not in config, defaults apply")
+        await page.click(".savebar >> button.primary")
+        await page.wait_for_selector("text=Saved as version 3.")
+    finally:
+        await browser.close()
+        await pw.stop()
+    text = (root / "config.yaml").read_text()
+    assert "audio" not in text
+    assert "pages:" in text
     assert not problems, problems
 
 

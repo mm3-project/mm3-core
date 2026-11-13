@@ -189,7 +189,6 @@ msgstr "Esta pantalla no muestra esa instancia."
 msgid "REQUEST_TIMEOUT"
 msgstr "No llegó ninguna respuesta a tiempo."
 
-
 msgid "CORE_API_UNAUTHORIZED"
 msgstr "Inicia sesión con un token de administración."
 
@@ -237,6 +236,12 @@ msgstr "El motor se está iniciando o deteniendo."
 
 msgid "CORE_API_REQUEST_TIMEOUT"
 msgstr "No ha llegado ninguna respuesta a tiempo."
+
+msgid "CORE_ADMIN_ABSENT_SECTION"
+msgstr "No está en la configuración, se aplican los valores predeterminados"
+
+msgid "CORE_ADMIN_ADD_SECTION"
+msgstr "Añadir sección"
 
 msgid "CORE_ADMIN_AUDIO_FAILURE"
 msgstr "Problema de audio"
@@ -355,6 +360,9 @@ msgstr "Registros recientes"
 msgid "CORE_ADMIN_RECONNECTING"
 msgstr "Reconectando…"
 
+msgid "CORE_ADMIN_REMOVE_SECTION"
+msgstr "Quitar sección"
+
 msgid "CORE_ADMIN_RESEND"
 msgstr "Reenviar"
 
@@ -370,6 +378,9 @@ msgstr "Reinicios"
 msgid "CORE_ADMIN_RESUME"
 msgstr "Reanudar"
 
+msgid "CORE_ADMIN_REVIEW_CHANGES"
+msgstr "Revisar los cambios"
+
 msgid "CORE_ADMIN_SEARCH"
 msgstr "Buscar"
 
@@ -378,6 +389,12 @@ msgstr "Tamaño"
 
 msgid "CORE_ADMIN_STATE"
 msgstr "Estado"
+
+msgid "CORE_ADMIN_STEP_ADD_SECTION"
+msgstr "Añadir la sección {section}"
+
+msgid "CORE_ADMIN_STEP_REMOVE_SECTION"
+msgstr "Quitar la sección {section}"
 
 msgid "CORE_ADMIN_SUSPENDED"
 msgstr "Suspendido"
@@ -544,9 +561,6 @@ msgstr "Idioma"
 msgid "CORE_ADMIN_LANGUAGE_ENGINE"
 msgstr "Idioma del espejo"
 
-msgid "CORE_ADMIN_OPENED_VERSION"
-msgstr "Abrir la versión {version}"
-
 msgid "CORE_ADMIN_OPEN_IN_EDITOR"
 msgstr "Abrir en el editor"
 
@@ -573,9 +587,6 @@ msgstr "Guardar"
 
 msgid "CORE_ADMIN_SAVED_VERSION"
 msgstr "Guardado como versión {version}."
-
-msgid "CORE_ADMIN_SAVE_TITLE"
-msgstr "¿Guardar estos cambios?"
 
 msgid "CORE_ADMIN_SECRET_KEPT"
 msgstr "se mantiene"

@@ -8,17 +8,112 @@
 // Implements CORE-151 (Core spec 0.10, §6.8 Configuration history, undo and redo):
 // one undo/redo history for the draft, each step a JSON Patch with a readable
 // label, at least 200 steps; YAML typing is grouped per pause of 1 s.
-// Implements CORE-152 (Core spec 0.22, §6.8 Configuration history, undo and redo):
-// section undo reverts only the latest step touching a section of CORE-216.
+// Implements CORE-152 (Core spec 0.39, §6.8 Configuration history, undo and redo):
+// section undo marks its step as a revert of the step it undoes; each press reverts the
+// latest step touching the section that is neither a revert nor already reverted.
+// Implements CORE-377 (Core spec 0.39, §6.8 Configuration history, undo and redo): the
+// history starts at the loaded version, is kept in the browser with the draft (a reload
+// keeps both), is cleared by Save, Discard or loading another version, up to 500 steps.
 // Implements CORE-300 (Core spec 0.22, §6.4 Web configuration editor): save with If-Match.
-// Implements CORE-302 (Core spec 0.28, §6.4 Web configuration editor): validate with the
-// diff preview.
+// Implements CORE-302 (Core spec 0.39, §6.4 Web configuration editor): validate returns
+// the diff, shown on request in "Review changes"; Save does not wait for it.
 
 import { ApiError } from "/admin/static/admin.js";
 
 export const MAX_STEPS = 500;
 const STORE_KEY = "mm3.admin.draft";
 export const TOP_SECTIONS = ["engine", "display", "audio", "layout", "pages", "backup"];
+
+// --- compact history (CORE-377) ------------------------------------------------------
+// A step keeps the texts it changed, before and after. In the browser store it keeps
+// only one splice per file (the span between the common start and end), so 500 steps
+// stay far below the storage quota.
+
+/** The splice that turns `a` into `b`: {start, del, ins}. */
+export function splice(a, b) {
+  const m = Math.min(a.length, b.length);
+  let start = 0;
+  while (start < m && a[start] === b[start]) start += 1;
+  let tail = 0;
+  while (tail < m - start && a[a.length - 1 - tail] === b[b.length - 1 - tail]) tail += 1;
+  return { start, del: a.slice(start, a.length - tail), ins: b.slice(start, b.length - tail) };
+}
+
+/** Apply (or, reversed, undo) a splice; null when the text is not the one it was made on. */
+export function applySplice(text, sp, reverse = false) {
+  const [del, ins] = reverse ? [sp.ins, sp.del] : [sp.del, sp.ins];
+  if (text.slice(sp.start, sp.start + del.length) !== del) return null;
+  return text.slice(0, sp.start) + ins + text.slice(sp.start + del.length);
+}
+
+/** `{path: text}` limited to the paths whose text differs between `before` and `after`. */
+function changedTexts(before, after) {
+  const b = {};
+  const a = {};
+  for (const path of new Set([...Object.keys(before), ...Object.keys(after)])) {
+    if ((before[path] ?? "") !== (after[path] ?? "")) {
+      b[path] = before[path] ?? "";
+      a[path] = after[path] ?? "";
+    }
+  }
+  return { before: b, after: a };
+}
+
+function pick(values, names) {
+  const out = {};
+  for (const n of names) if (n in values) out[n] = values[n];
+  return out;
+}
+
+const serializeStep = (s) => ({
+  id: s.id,
+  label: s.label,
+  revertOf: s.revertOf,
+  sections: s.sections,
+  secBefore: s.secBefore,
+  patches: Object.keys(s.before).map((path) => ({ path, ...splice(s.before[path], s.after[path]) })),
+});
+
+/**
+ * The steps of a stored history, with their texts rebuilt from the draft's current
+ * texts: undo steps walk back from them, redo steps forward. Null when a splice does
+ * not fit (the stored history is then dropped, never half-used).
+ */
+export function rebuildSteps(stored, texts) {
+  const undo = [];
+  let state = { ...texts };
+  for (let i = (stored.undo || []).length - 1; i >= 0; i -= 1) {
+    const s = stored.undo[i];
+    const before = {};
+    const after = {};
+    for (const p of s.patches) {
+      const cur = state[p.path] ?? "";
+      const prior = applySplice(cur, p, true);
+      if (prior === null) return null;
+      after[p.path] = cur;
+      before[p.path] = prior;
+      state[p.path] = prior;
+    }
+    undo.unshift({ ...s, before, after });
+  }
+  const redo = [];
+  state = { ...texts };
+  for (let i = (stored.redo || []).length - 1; i >= 0; i -= 1) {
+    const s = stored.redo[i];
+    const before = {};
+    const after = {};
+    for (const p of s.patches) {
+      const cur = state[p.path] ?? "";
+      const next = applySplice(cur, p);
+      if (next === null) return null;
+      before[p.path] = cur;
+      after[p.path] = next;
+      state[p.path] = next;
+    }
+    redo.unshift({ ...s, before, after });
+  }
+  return { undo, redo };
+}
 
 // --- JSON helpers --------------------------------------------------------------------
 
@@ -200,6 +295,7 @@ export class Draft extends EventTarget {
     this.baseGrid = null; // the saved configuration's grid, for Rescale (CORE-328)
     this.undoStack = [];
     this.redoStack = [];
+    this.nextStepId = 1;
     this.pending = new Map(); // YAML typing not yet a step: path -> {before, timer}
     this.busy = false;
   }
@@ -237,8 +333,11 @@ export class Draft extends EventTarget {
         else this.files.set(path, { role: "include", saved: "", text });
       }
     }
+    // CORE-377: the history belongs to the draft and is kept with it; a draft made from
+    // another version, or none, starts a new history.
     this.undoStack = [];
     this.redoStack = [];
+    if (keep) this.restoreSteps(stored);
     await this.refresh([...this.changedTexts().keys()]);
     if (!keep) this.baseGrid = this.layout ? { ...this.layout.grid } : null;
   }
@@ -251,11 +350,37 @@ export class Draft extends EventTarget {
     }
   }
 
+  restoreSteps(stored) {
+    if (!stored || (!stored.undo?.length && !stored.redo?.length)) return;
+    const rebuilt = rebuildSteps(stored, this.texts());
+    if (!rebuilt) return;
+    this.undoStack = rebuilt.undo.slice(-MAX_STEPS);
+    this.redoStack = rebuilt.redo.slice(-MAX_STEPS);
+    const ids = [...this.undoStack, ...this.redoStack].map((s) => s.id);
+    this.nextStepId = Math.max(0, ...ids) + 1;
+  }
+
+  /** Keep the draft and its history in the browser (CORE-377); history is dropped before the draft. */
   persist() {
     try {
       const texts = Object.fromEntries(this.changedTexts());
-      if (Object.keys(texts).length) localStorage.setItem(STORE_KEY, JSON.stringify({ base: this.base, texts }));
-      else localStorage.removeItem(STORE_KEY);
+      let undo = this.undoStack.map(serializeStep);
+      let redo = this.redoStack.map(serializeStep);
+      if (!Object.keys(texts).length && !undo.length && !redo.length) {
+        localStorage.removeItem(STORE_KEY);
+        return;
+      }
+      for (;;) {
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify({ base: this.base, texts, undo, redo }));
+          return;
+        } catch (err) {
+          // Over the quota: the oldest steps go first; the draft itself is never dropped here.
+          if (!undo.length && !redo.length) throw err;
+          undo = undo.slice(Math.ceil(undo.length / 2));
+          redo = redo.slice(0, Math.floor(redo.length / 2));
+        }
+      }
     } catch {
       // the draft stays in memory only
     }
@@ -307,32 +432,42 @@ export class Draft extends EventTarget {
 
   // --- steps -------------------------------------------------------------------------
 
+  /**
+   * One step from the state it started in: the texts it changed, the sections it touched
+   * with their values before and after (CORE-216, CORE-152), and, for a section undo,
+   * the step it reverts.
+   */
+  makeStep(label, before, docsBefore, revertOf = null) {
+    const sections = changedSections(docsBefore, this.documents, this.main);
+    return {
+      id: this.nextStepId++,
+      label,
+      revertOf,
+      sections,
+      secBefore: clone(pick(sectionValues(docsBefore, this.main), sections)),
+      ...changedTexts(before, this.texts()),
+    };
+  }
+
   push(step) {
     this.undoStack.push(step);
     if (this.undoStack.length > MAX_STEPS) this.undoStack.shift();
     this.redoStack = [];
+    this.persist();
   }
 
   /** A Form or Layout edit: JSON Patch ops on one file, as one labelled step. */
-  apply(file, patch, label) {
-    return this.applyOps([{ file, patch }], label);
+  apply(file, patch, label, revertOf = null) {
+    return this.applyOps([{ file, patch }], label, revertOf);
   }
 
   /** JSON Patch ops on several files, as one labelled step (Rescale, CORE-328). */
-  async applyOps(ops, label) {
+  async applyOps(ops, label, revertOf = null) {
     await this.flushTyping();
     const before = this.texts();
     const docsBefore = clone(this.documents);
     await this.refresh([...this.changedTexts().keys()], ops);
-    this.push({
-      label,
-      forward: ops,
-      before,
-      after: this.texts(),
-      sections: changedSections(docsBefore, this.documents, this.main),
-      docsBefore,
-      docsAfter: clone(this.documents),
-    });
+    this.push(this.makeStep(label, before, docsBefore, revertOf));
     this.changed();
   }
 
@@ -361,15 +496,7 @@ export class Draft extends EventTarget {
       } catch (err) {
         this.dispatchEvent(new CustomEvent("problem", { detail: err }));
       }
-      this.push({
-        label: `${path}: YAML`,
-        forward: [{ file: path, text: this.files.get(path).text }],
-        before: p.before,
-        after: this.texts(),
-        sections: changedSections(p.docsBefore, this.documents, this.main),
-        docsBefore: p.docsBefore,
-        docsAfter: clone(this.documents),
-      });
+      this.push(this.makeStep(`${path}: YAML`, p.before, p.docsBefore));
     }
     this.changed();
   }
@@ -392,6 +519,7 @@ export class Draft extends EventTarget {
     if (!step) return null;
     await this.setTexts(step.before);
     this.redoStack.push(step);
+    this.persist();
     this.changed();
     return step;
   }
@@ -402,23 +530,31 @@ export class Draft extends EventTarget {
     if (!step) return null;
     await this.setTexts(step.after);
     this.undoStack.push(step);
+    this.persist();
     this.changed();
     return step;
   }
 
+  /**
+   * CORE-152: the step "Undo last change here" would revert for a section: the latest step
+   * touching it that is neither a revert nor already reverted. A revert that was undone
+   * with CORE-151's undo is no longer in the stack, so its step can be reverted again.
+   */
   lastStepFor(section) {
+    const reverted = new Set(this.undoStack.map((s) => s.revertOf).filter((id) => id !== null));
     for (let i = this.undoStack.length - 1; i >= 0; i -= 1) {
-      if (this.undoStack[i].sections.includes(section)) return this.undoStack[i];
+      const step = this.undoStack[i];
+      if (step.revertOf === null && !reverted.has(step.id) && step.sections.includes(section)) return step;
     }
     return null;
   }
 
-  /** CORE-152: revert only the latest step touching a section, as a new step. */
+  /** CORE-152: revert the step of `lastStepFor`, as a new step marked as its revert. */
   async undoSection(section, labelFor) {
     await this.flushTyping();
     const step = this.lastStepFor(section);
     if (!step) return null;
-    const old = sectionValues(step.docsBefore, this.main)[section];
+    const old = step.secBefore[section];
     const loc = sectionLocation(this.documents, this.main, section);
     if (!loc) return null;
     let patch;
@@ -441,8 +577,8 @@ export class Draft extends EventTarget {
       const cur = getAt(this.documents[loc.file], loc.parts);
       patch = cur === undefined ? [{ op: "add", path: pointer(loc.parts), value: old }] : diffOps(loc.parts, cur, old);
     }
-    if (!patch.length) return null;
-    await this.apply(loc.file, patch, labelFor(step, section));
+    // An empty patch still records the revert, so the next press goes one step further.
+    await this.apply(loc.file, patch, labelFor(step, section), step.id);
     return step;
   }
 
@@ -477,27 +613,21 @@ export class Draft extends EventTarget {
     await this.load();
   }
 
-  /** Open in editor (CORE-324): a version's files become the draft, as one step. */
-  async openVersion(version, label) {
+  /**
+   * Open in editor (CORE-324): a version's files become the draft. The draft history
+   * starts again at that version (CORE-377), so there are no steps to undo.
+   */
+  async openVersion(version) {
     await this.flushTyping();
     const data = await call("GET", `/config/history/${version}`);
-    const before = this.texts();
-    const docsBefore = clone(this.documents);
     const texts = {};
     for (const f of data.files) {
       texts[f.path] = f.content;
       if (!this.files.has(f.path)) this.files.set(f.path, { role: f.role, saved: "", text: "" });
     }
+    this.undoStack = [];
+    this.redoStack = [];
     await this.setTexts(texts);
-    this.push({
-      label,
-      forward: [],
-      before,
-      after: this.texts(),
-      sections: changedSections(docsBefore, this.documents, this.main),
-      docsBefore,
-      docsAfter: clone(this.documents),
-    });
     this.changed();
   }
 }

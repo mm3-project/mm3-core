@@ -5,14 +5,20 @@
 // views of one draft, on the admin listener only.
 // Implements CORE-151 (Core spec 0.10, §6.8 Configuration history, undo and redo):
 // toolbar Undo/Redo with the step label, Ctrl+Z, Ctrl+Shift+Z and Ctrl+Y.
-// Implements CORE-152 (Core spec 0.22, §6.8 Configuration history, undo and redo):
-// "Undo last change here" on each section of the Form view.
+// Implements CORE-152 (Core spec 0.39, §6.8 Configuration history, undo and redo):
+// "Undo last change here" on each section of the Form view, with the label of the step it
+// would revert, disabled when there is none.
+// Implements CORE-377 (Core spec 0.39, §6.8 Configuration history, undo and redo): the
+// draft history is kept with the draft; Undo is disabled at its start.
 // Implements CORE-35, CORE-300 (Core spec 0.22, §6.4 Web configuration editor): Save is
 // disabled while an error remains; a conflict offers to reload.
-// Implements CORE-302 (Core spec 0.28, §6.4 Web configuration editor): Save validates and
-// shows the diff first.
+// Implements CORE-302 (Core spec 0.39, §6.4 Web configuration editor): Save writes without
+// a confirmation or preview; the diff is shown on request in "Review changes".
 // Implements CORE-324 (Core spec 0.26, §6.8 Configuration history, undo and redo):
 // Open in editor loads a version as the draft.
+// Implements CORE-379 (Core spec 0.39, §6.4 Web configuration editor): a section absent
+// from the config is listed like the others, labelled "Not in config, defaults apply",
+// with Add section and Remove section, each one draft step.
 // Implements CORE-329 (Core spec 0.29, §11.1 Engine additions): the Form view lists the
 // instance's capabilities, admin.extension among them (MOD-71).
 // Implements CORE-301 (Core spec 0.38, §6.4 Web configuration editor): an edit in a
@@ -166,11 +172,12 @@ class AdminConfig extends HTMLElement {
     return sectionValues(this.draft.documents, this.draft.main)[section];
   }
 
+  /** The label and help texts of a section: the module's catalog over the core catalog (CORE-310). */
   formTexts(section) {
     const core = this.forms[""] || {};
-    if (!section.startsWith("modules/")) return { texts: core, textPrefix: `CONFIG_${section.toUpperCase()}` };
+    if (!section.startsWith("modules/")) return core;
     const value = this.sectionValue(section) || {};
-    return { texts: { ...core, ...(this.forms[value.module] || {}) }, textPrefix: "CONFIG", module: value.module };
+    return { ...core, ...(this.forms[value.module] || {}) };
   }
 
   formRecords(section) {
@@ -207,6 +214,23 @@ class AdminConfig extends HTMLElement {
     await this.run(() => this.draft.apply(loc.file, [op], detail.label));
   }
 
+  /** Add section (CORE-379): the smallest valid content, one draft step. */
+  async addSection(section) {
+    const doc = this.draft.documents[this.draft.main];
+    const value = section === "pages" ? { list: [{ id: "main" }] } : {};
+    const op = setOp(doc, [section], value);
+    if (!op) return;
+    await this.run(() => this.draft.apply(this.draft.main, [op], t("CORE_ADMIN_STEP_ADD_SECTION", { section })));
+  }
+
+  /** Remove section (CORE-379): deletes the key; an included file is left as it is. */
+  async removeSection(section) {
+    const doc = this.draft.documents[this.draft.main];
+    if (getAt(doc, [section]) === undefined) return;
+    const op = { op: "remove", path: pointer([section]) };
+    await this.run(() => this.draft.apply(this.draft.main, [op], t("CORE_ADMIN_STEP_REMOVE_SECTION", { section })));
+  }
+
   async sectionUndo(section) {
     await this.run(() =>
       this.draft.undoSection(section, (step) => t("CORE_ADMIN_UNDO_STEP", { label: step.label })),
@@ -219,12 +243,15 @@ class AdminConfig extends HTMLElement {
     if (!sections.some((s) => s.id === this.section)) this.section = "engine";
     const section = this.section;
     const value = this.sectionValue(section);
-    const { texts, textPrefix } = this.formTexts(section);
+    const texts = this.formTexts(section);
     const last = this.draft.lastStepFor(section);
+    const top = TOP_SECTIONS.includes(section);
+    const absent = top && value === undefined;
     return html`<div class="editor">
       <nav class="sections">
         ${sections.map(
-          (s) => html`<button class=${[s.id === section ? "active" : "", s.present ? "" : "muted", this.hasError(s.id) ? "has-error" : ""].join(" ")}
+          (s) => html`<button class=${[s.id === section ? "active" : "", this.hasError(s.id) ? "has-error" : ""].join(" ")}
+            title=${s.present ? "" : t("CORE_ADMIN_ABSENT_SECTION")}
             @click=${() => {
               this.section = s.id;
               this.update();
@@ -235,9 +262,15 @@ class AdminConfig extends HTMLElement {
         <div class="toolbar">
           <h2>${section}</h2>
           <span class="spacer"></span>
+          ${top
+            ? html`<button class="section-toggle" ?disabled=${this.busy}
+                @click=${() => (absent ? this.addSection(section) : this.removeSection(section))}>
+                ${t(absent ? "CORE_ADMIN_ADD_SECTION" : "CORE_ADMIN_REMOVE_SECTION")}</button>`
+            : nothing}
           <button ?disabled=${!last || this.busy} title=${last ? last.label : ""} @click=${() => this.sectionUndo(section)}>
-            ${t("CORE_ADMIN_UNDO_HERE")}</button>
+            ${t("CORE_ADMIN_UNDO_HERE")}${last ? html` <span class="muted">${last.label}</span>` : nothing}</button>
         </div>
+        ${absent ? html`<p class="muted absent">${t("CORE_ADMIN_ABSENT_SECTION")}</p>` : nothing}
         ${this.capabilityLine(value)}
         <mm3-schema-form
           .data=${{
@@ -245,7 +278,6 @@ class AdminConfig extends HTMLElement {
             node: this.sectionSchema(section) || {},
             value,
             texts,
-            textPrefix,
             section,
             instance: section.startsWith("modules/"),
             records: this.formRecords(section),
@@ -366,16 +398,17 @@ class AdminConfig extends HTMLElement {
 
   // --- save ---------------------------------------------------------------------------
 
-  async askSave() {
+  /** Review changes (CORE-302): the diff and the records of the draft, on request only. */
+  async review() {
     await this.run(async () => {
       this.preview = await this.draft.validate();
     });
     this.update();
-    this.querySelector("dialog.save")?.showModal();
+    this.querySelector("dialog.review")?.showModal();
   }
 
+  /** Save writes at once, with no confirmation or preview (CORE-302, CORE-377). */
   async save() {
-    this.querySelector("dialog.save")?.close();
     let saved = null;
     await this.run(async () => {
       saved = await this.draft.save();
@@ -395,12 +428,11 @@ class AdminConfig extends HTMLElement {
     this.update();
   }
 
-  saveDialog() {
+  reviewDialog() {
     const p = this.preview;
-    if (!p) return html`<dialog class="save"></dialog>`;
-    const errors = p.records.filter((r) => r.severity === "error");
-    return html`<dialog class="save">
-      <h2>${t("CORE_ADMIN_SAVE_TITLE")}</h2>
+    if (!p) return html`<dialog class="review"></dialog>`;
+    return html`<dialog class="review">
+      <h2>${t("CORE_ADMIN_REVIEW_CHANGES")}</h2>
       ${this.recordList(p.records)}
       ${p.diff.length
         ? html`<div class="diff">${p.diff.map(
@@ -408,9 +440,7 @@ class AdminConfig extends HTMLElement {
           )}</div>`
         : html`<p class="muted">${t("CORE_ADMIN_NO_CHANGES")}</p>`}
       <div class="toolbar">
-        <button @click=${() => this.querySelector("dialog.save")?.close()}>${t("CORE_ADMIN_CANCEL")}</button>
-        <button class="primary" ?disabled=${errors.length > 0 || this.busy} @click=${() => this.save()}>
-          ${t("CORE_ADMIN_SAVE")}</button>
+        <button @click=${() => this.querySelector("dialog.review")?.close()}>${t("CORE_ADMIN_CLOSE")}</button>
       </div>
     </dialog>`;
   }
@@ -462,8 +492,9 @@ class AdminConfig extends HTMLElement {
                   this.update();
                 }}>${t("CORE_ADMIN_ERRORS", { count: errors })}</button>` : nothing}
             <span class="spacer"></span>
+            <button @click=${() => this.review()} ?disabled=${this.busy}>${t("CORE_ADMIN_REVIEW_CHANGES")}</button>
             <button @click=${() => this.reloadDraft()}>${t("CORE_ADMIN_DISCARD")}</button>
-            <button class="primary" ?disabled=${errors > 0 || this.busy} @click=${() => this.askSave()}>${t("CORE_ADMIN_SAVE")}</button>
+            <button class="primary" ?disabled=${errors > 0 || this.busy} @click=${() => this.save()}>${t("CORE_ADMIN_SAVE")}</button>
           </div>
           ${errors && this.showErrors ? this.errorList() : nothing}`
         : nothing}
@@ -475,12 +506,12 @@ class AdminConfig extends HTMLElement {
             @mm3-open=${(e) => this.openVersion(e.detail.version)}
             @mm3-saved=${() => this.reloadDraft(true)}></mm3-config-history>`
         : nothing}
-      ${this.saveDialog()}`;
+      ${this.reviewDialog()}`;
   }
 
   async openVersion(version) {
     if (this.draft.dirty && !window.confirm(t("CORE_ADMIN_REPLACE_DRAFT"))) return;
-    await this.run(() => this.draft.openVersion(version, t("CORE_ADMIN_OPENED_VERSION", { version })));
+    await this.run(() => this.draft.openVersion(version));
     this.setTab("form");
   }
 }
