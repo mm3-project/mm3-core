@@ -252,10 +252,21 @@ done_at = { core = "0.29", contract = "1.0 rev 13" }
 #   /admin/config (CORE-35..37, CORE-299 history, CORE-300..303,
 #   CORE-320..322). Open in editor and the Layout, Form and YAML tabs of
 #   CORE-322 come with part D, with CORE-151 and CORE-152.
+# Core spec 0.39 (13 Nov 2026, admin editor round 1 of the issue log; Source:
+#   ISS-003, ISS-011, ENH-001, ENH-004, ISS-008, ISS-001, ENH-010): CORE-152
+#   (repeated section undo), CORE-302 (diff on request, no save prompt) and
+#   CORE-310 (form texts from the schema title and description, MOD-46)
+#   changed; CORE-374 (add an instance), CORE-375 (delete an instance),
+#   CORE-376 (pages in the Layout view), CORE-377 (draft history life),
+#   CORE-378 (admin landing, extends CORE-253 of milestone 3) and CORE-379
+#   (absent sections in the Form view) added here. They reopen the milestone
+#   through the spec-change issue (CORE-79); the work is PRs B', C, D and E of
+#   the round 1 plan.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
-  "CORE-290..292", "CORE-298..332", "MOD-38", "MOD-39", "MOD-74",
+  "CORE-290..292", "CORE-298..332", "CORE-374..379", "MOD-38", "MOD-39",
+  "MOD-74",
 ]
 
 [[milestone]]

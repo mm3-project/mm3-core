@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.38"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32", "0.33", "0.34", "0.35", "0.36", "0.37", "0.38"]
+version = "0.39"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32", "0.33", "0.34", "0.35", "0.36", "0.37", "0.38", "0.39"]
 
 [[spec]]
 name = "Module Contract"
@@ -1057,9 +1057,9 @@ id = "CORE-152"
 spec = "Core spec"
 section = "6.8"
 title = "Configuration history, undo and redo"
-hash = "54a438c8f8e6"
+hash = "37d5cc2c07cd"
 introduced_in = "0.1"
-changed_in = "0.22"
+changed_in = "0.39"
 status = "active"
 
 [[requirement]]
@@ -2427,9 +2427,9 @@ id = "CORE-302"
 spec = "Core spec"
 section = "6.4"
 title = "Web configuration editor"
-hash = "da57bbb8c4f5"
+hash = "92e02a5f6ac0"
 introduced_in = "0.22"
-changed_in = "0.28"
+changed_in = "0.39"
 status = "active"
 
 [[requirement]]
@@ -2507,9 +2507,9 @@ id = "CORE-310"
 spec = "Core spec"
 section = "6.4"
 title = "Web configuration editor"
-hash = "700d63eaaf09"
+hash = "8a35cf16c1b5"
 introduced_in = "0.22"
-changed_in = "0.22"
+changed_in = "0.39"
 status = "active"
 
 [[requirement]]
@@ -3140,6 +3140,66 @@ title = "Installer service"
 hash = "de56ab19c313"
 introduced_in = "0.37"
 changed_in = "0.37"
+status = "active"
+
+[[requirement]]
+id = "CORE-374"
+spec = "Core spec"
+section = "6.6"
+title = "Live layout preview"
+hash = "8c7303b4a79f"
+introduced_in = "0.39"
+changed_in = "0.39"
+status = "active"
+
+[[requirement]]
+id = "CORE-375"
+spec = "Core spec"
+section = "6.6"
+title = "Live layout preview"
+hash = "d0cb5f15169c"
+introduced_in = "0.39"
+changed_in = "0.39"
+status = "active"
+
+[[requirement]]
+id = "CORE-376"
+spec = "Core spec"
+section = "6.6"
+title = "Live layout preview"
+hash = "e902bb9a6e19"
+introduced_in = "0.39"
+changed_in = "0.39"
+status = "active"
+
+[[requirement]]
+id = "CORE-377"
+spec = "Core spec"
+section = "6.8"
+title = "Configuration history, undo and redo"
+hash = "d9437ee74050"
+introduced_in = "0.39"
+changed_in = "0.39"
+status = "active"
+
+[[requirement]]
+id = "CORE-378"
+spec = "Core spec"
+section = "10.1"
+title = "Security"
+hash = "4225f0706883"
+introduced_in = "0.39"
+changed_in = "0.39"
+status = "active"
+
+[[requirement]]
+id = "CORE-379"
+spec = "Core spec"
+section = "6.4"
+title = "Web configuration editor"
+hash = "9ea1f6cd16cf"
+introduced_in = "0.39"
+changed_in = "0.39"
 status = "active"
 
 [[requirement]]

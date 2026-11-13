@@ -7,6 +7,20 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Specification (spec sync to Core spec 0.39; Source: ISS-003, ISS-011, ENH-001, ENH-004, ISS-008, ISS-001, ENH-010)
+
+- `docs/spec/` synced to Core spec 0.39 (Module Contract 1.0 rev 15 unchanged).
+  Changed: CORE-152 (repeated "Undo last change here" walks back through the
+  section's steps), CORE-302 (the save diff is shown on request, Save asks
+  nothing) and CORE-310 (form label and help are the schema `title` and
+  `description` as catalog keys, MOD-46). Added: CORE-374 (add an instance),
+  CORE-375 (delete an instance), CORE-376 (pages in the Layout view), CORE-377
+  (draft history life), CORE-378 (admin landing) and CORE-379 (absent sections
+  in the Form view), assigned to milestone 6, which they reopen (CORE-79).
+  No code change; the code follows in its own PRs.
+- Test `test_core_75_log_ids_are_not_requirements`: issue-log ids (`ISS-nnn`,
+  `ENH-nnn`) in a history row's `Source:` part are not read as requirement ids.
+
 ### Fixed (CI: mm3 module check venv; no spec change)
 
 - `mm3 module check` ended with exit code 2 ("Chromium cannot be started") once
