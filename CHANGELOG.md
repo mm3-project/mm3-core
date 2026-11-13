@@ -7,6 +7,11 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Security (dependencies; core spec 10.9)
+
+- `opentelemetry-api` 1.45.1 -> 1.45.2 in `uv.lock` (transitive; CVE-2026-126360 reported by
+  the `pip-audit` job, CORE-174). No code or spec change.
+
 ### Added (admin Layout view: delete an instance, pages; ISS-011 in part, ENH-001; Core spec 0.39)
 
 - Delete an instance (CORE-375): "Delete" on the overlay toolbar and on each entry
