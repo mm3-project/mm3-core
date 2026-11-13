@@ -123,7 +123,8 @@ async def test_admin_texts_follow_the_engine_locale(auth: WebAuth) -> None:
     assert data["locale"] == "it"
     assert data["messages"]["CORE_ADMIN_TAB_OVERVIEW"] == "Panoramica"
     assert data["messages"]["CORE_API_NOT_FOUND"] == "Non trovato."  # CORE-298 code texts
-    assert not any(k.startswith("CORE_CFG_") for k in data["messages"])
+    # CORE-206: record codes are catalog keys, so the admin shows them localized (ISS-010).
+    assert data["messages"]["CORE_CFG_REQUIRED"] == "Questo valore è obbligatorio"
     assert admin_texts("pt-BR")["CORE_ADMIN_TAB_OVERVIEW"] == "Overview"  # English fallback
 
 

@@ -15,9 +15,14 @@
 // Open in editor loads a version as the draft.
 // Implements CORE-329 (Core spec 0.29, §11.1 Engine additions): the Form view lists the
 // instance's capabilities, admin.extension among them (MOD-71).
+// Implements CORE-301 (Core spec 0.38, §6.4 Web configuration editor): an edit in a
+// section or list that is not in the config yet creates it in the same step (ISS-012).
+// Implements CORE-35, CORE-206 (Core spec 0.38, §6.4 Web configuration editor):
+// localized messages inline on the field, a section's own errors at its top, and the
+// error count of the save bar opens the list of errors with a link to each (ISS-010).
 
 import { html, nothing, render } from "/admin/static/lit-html.js";
-import { loadTexts, t } from "/admin/static/admin.js";
+import { loadTexts, recordText, t } from "/admin/static/admin.js";
 import {
   Draft,
   TOP_SECTIONS,
@@ -27,6 +32,7 @@ import {
   pointer,
   sectionLocation,
   sectionValues,
+  setOp,
 } from "/admin/static/draft.js";
 import "/admin/static/schemaform.js";
 import "/admin/static/history.js";
@@ -50,6 +56,7 @@ class AdminConfig extends HTMLElement {
     this.preview = null;
     this.busy = false;
     this.yaml = null;
+    this.showErrors = false;
     this.draft.addEventListener("change", () => this.update());
     this.draft.addEventListener("problem", (e) => this.problem(e.detail));
   }
@@ -174,7 +181,7 @@ class AdminConfig extends HTMLElement {
     for (const r of this.draft.records) {
       if (!r.path || !r.path.startsWith(base)) continue;
       const rel = r.path.slice(base.length);
-      (out[rel] = out[rel] || []).push(r.message);
+      (out[rel] = out[rel] || []).push(recordText(r));
     }
     return out;
   }
@@ -188,24 +195,14 @@ class AdminConfig extends HTMLElement {
     if (!parts) return;
     const rel = detail.path ? detail.path.split("/").slice(1).map(unescapePart) : [];
     const doc = this.draft.documents[loc.file];
-    let target = [...parts, ...rel];
-    let value = detail.value;
-    let op;
-    if (detail.remove) {
-      op = getAt(doc, target) === undefined ? null : { op: "remove", path: pointer(target) };
-    } else {
-      // Create missing parents (for example a config block that is not written yet).
-      let i = parts.length;
-      while (i < target.length - 1 && getAt(doc, target.slice(0, i + 1)) !== undefined) i += 1;
-      if (i < target.length - 1) {
-        const tail = target.slice(i + 1);
-        target = target.slice(0, i + 1);
-        value = tail.reduceRight((acc, key) => (key === "-" ? [acc] : { [key]: acc }), value);
-      }
-      const last = target[target.length - 1];
-      const exists = last !== "-" && getAt(doc, target) !== undefined;
-      op = { op: exists ? "replace" : "add", path: pointer(target), value };
-    }
+    const target = [...parts, ...rel];
+    // ISS-012: setOp creates every missing parent, the section itself included, so an
+    // edit in a section that is not in the config (audio, backup, pages) applies.
+    const op = detail.remove
+      ? getAt(doc, target) === undefined
+        ? null
+        : { op: "remove", path: pointer(target) }
+      : setOp(doc, target, detail.value);
     if (!op) return;
     await this.run(() => this.draft.apply(loc.file, [op], detail.label));
   }
@@ -330,8 +327,41 @@ class AdminConfig extends HTMLElement {
     if (!records.length) return nothing;
     return html`<section class="card"><table><tbody>${records.map(
       (r) => html`<tr><td class="level-${r.severity}">${r.severity}</td><td class="mono nowrap">${r.line ? `${r.line}:${r.col}` : ""}</td>
-        <td class="mono">${r.path}</td><td>${r.message}</td></tr>`,
+        <td class="mono">${r.path}</td><td>${recordText(r)}</td></tr>`,
     )}</tbody></table></section>`;
+  }
+
+  /** The section of the Form view that holds a record's path, or null (ISS-010). */
+  sectionOf(path) {
+    if (!path) return null;
+    let best = null;
+    let len = -1;
+    for (const s of this.sections()) {
+      const loc = sectionLocation(this.draft.documents, this.draft.main, s.id);
+      if (!loc || !loc.parts || loc.file !== this.draft.main) continue;
+      const base = pointer(loc.parts);
+      if ((path === base || path.startsWith(`${base}/`)) && base.length > len) {
+        best = s.id;
+        len = base.length;
+      }
+    }
+    return best;
+  }
+
+  /** The draft's errors under the save bar, each with a link to its Form section (ISS-010). */
+  errorList() {
+    const list = this.draft.records.filter((r) => r.severity === "error");
+    return html`<section class="card errors" role="alert"><ul>${list.map((r) => {
+      const section = this.sectionOf(r.path);
+      return html`<li>${section
+        ? html`<button type="button" class="link mono" @click=${() => {
+            this.section = section;
+            this.setTab("form");
+            this.update();
+          }}>${r.path}</button>`
+        : html`<span class="mono">${r.file || ""}${r.line ? `:${r.line}` : ""} ${r.path || "/"}</span>`}
+        ${recordText(r)}</li>`;
+    })}</ul></section>`;
   }
 
   // --- save ---------------------------------------------------------------------------
@@ -426,11 +456,16 @@ class AdminConfig extends HTMLElement {
       ${d.dirty
         ? html`<div class="savebar">
             <span>${t("CORE_ADMIN_UNSAVED")}</span>
-            ${errors ? html`<span class="level-error">${t("CORE_ADMIN_ERRORS", { count: errors })}</span>` : nothing}
+            ${errors ? html`<button type="button" class="link level-error" aria-expanded=${this.showErrors ? "true" : "false"}
+                @click=${() => {
+                  this.showErrors = !this.showErrors;
+                  this.update();
+                }}>${t("CORE_ADMIN_ERRORS", { count: errors })}</button>` : nothing}
             <span class="spacer"></span>
             <button @click=${() => this.reloadDraft()}>${t("CORE_ADMIN_DISCARD")}</button>
             <button class="primary" ?disabled=${errors > 0 || this.busy} @click=${() => this.askSave()}>${t("CORE_ADMIN_SAVE")}</button>
-          </div>`
+          </div>
+          ${errors && this.showErrors ? this.errorList() : nothing}`
         : nothing}
       ${this.tab === "layout" ? html`<mm3-layout-view .host=${this}></mm3-layout-view>` : nothing}
       ${this.tab === "form" ? this.formView() : nothing}

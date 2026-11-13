@@ -7,6 +7,8 @@
 // Implements CORE-303 (Core spec 0.22, §6.4 Web configuration editor) and CORE-320
 // (Core spec 0.25, §6.4 Web configuration editor): a secret shows as kept until a
 // new value is typed; !env references are shown and edited as written.
+// Implements CORE-35, CORE-206 (Core spec 0.38, §6.4 Web configuration editor):
+// errors inline on the field and, for the section itself, at the top of the form.
 //
 // Properties: schema (the root, for $refs), node (this form's schema), value,
 // texts ({key: text}), textPrefix (CONFIG_<SECTION> or CONFIG), records ({pointer:
@@ -136,7 +138,10 @@ export class SchemaForm extends HTMLElement {
       render(nothing, this);
       return;
     }
+    // ISS-010: records on the section itself (path "" here, such as CORE-33's missing
+    // position on an instance) are shown at the top; no field would show them.
     render(html`<form class="schema-form" @submit=${(e) => e.preventDefault()}>
+      ${this.errors("")}
       ${this.field([], [], this.node, this.value, true)}
     </form>`, this);
   }

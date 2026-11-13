@@ -39,8 +39,12 @@ __all__ = [
     "t",
 ]
 
-ADMIN_PREFIXES = ("CORE_ADMIN_", "CORE_API_", "CORE_WEB_")
-"""Keys the admin pages read from the engine catalog (CORE-11, CORE-298)."""
+ADMIN_PREFIXES = ("CORE_ADMIN_", "CORE_API_", "CORE_WEB_", "CORE_CFG_")
+"""Keys the admin pages read from the engine catalog (CORE-11, CORE-298).
+
+The ``CORE_CFG_`` codes give validation records their localized text in the editor
+(CORE-206; ISS-010).
+"""
 
 TEXT: dict[str, str] = {
     key: text

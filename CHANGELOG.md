@@ -16,6 +16,31 @@ separately under **Module API** in each release (Module Contract, section 10).
   the version that runs the check (`mm3.core.modcheck.build`, CORE-281). The jobs
   "Reference module ... (CORE-289)" and `test (3.13)` failed on this.
 
+### Fixed (admin Form view save path; ISS-012, ISS-010; no spec change)
+
+- A Form view edit in a section or list that is not in the configuration yet
+  (the mute toggle of an absent `audio`, Add on `backup.parts` or `pages.list`)
+  failed with 422 `CORE_API_PATCH_FAILED` "… does not exist" and blocked Save
+  (ISS-012). The Form created missing parents only below an existing section;
+  the new `setOp` in `draft.js` builds one operation that creates every missing
+  parent from the file root, the section included, and replaces a null section
+  (`audio:` with no value). Requirements: the Form view and CORE-301
+  (operations must apply to the draft's document).
+- A refused save showed only the error count ("1 errors") when the record sat on
+  a section itself, such as the missing position of an instance (CORE-33,
+  recorded at `/modules/N`), because the Form showed errors only on fields
+  (ISS-010). The Form now shows a section's own errors at its top; the save
+  bar's count opens the list of the draft's errors with a link to each section;
+  record messages are shown in the admin language from their `CORE_CFG_*` code
+  (CORE-206: the admin texts now carry the `CORE_CFG_*` keys), in the Form, the
+  YAML gutter, the record lists and the save dialog. Requirements: Validation
+  while editing, CORE-35, CORE-206.
+- Tests: `test_core_301_form_ops_create_missing_parents`,
+  `test_core_301_form_edit_in_an_absent_section_applies`,
+  `test_core_35_section_errors_shown_and_listed`,
+  `test_core_206_admin_texts_carry_validation_codes`;
+  `test_admin_texts_follow_the_engine_locale` now expects the `CORE_CFG_*` texts.
+
 ### Fixed (core spec 0.38: browser form posts, milestone 3 reopened)
 
 - The login, logout and pairing forms were refused with 403 from every browser

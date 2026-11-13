@@ -7,6 +7,8 @@
 // file, showing the true file content.
 // Implements CORE-151 (Core spec 0.10, §6.8 Configuration history, undo and redo):
 // Ctrl+Z, Ctrl+Shift+Z and Ctrl+Y go to the shared draft history.
+// Implements CORE-35, CORE-206 (Core spec 0.38, §6.4 Web configuration editor):
+// gutter messages are localized.
 
 import {
   EditorState,
@@ -32,6 +34,7 @@ import {
   syntaxTree,
   yaml,
 } from "/admin/static/codemirror.js";
+import { recordText } from "/admin/static/admin.js";
 
 const LINT_DELAY_MS = 300;
 
@@ -197,7 +200,7 @@ export class YamlView {
           from,
           to: line.to > from ? line.to : from,
           severity: r.severity === "error" ? "error" : "warning",
-          message: r.message,
+          message: recordText(r),
         };
       });
   }

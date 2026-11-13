@@ -6,6 +6,8 @@
 // shown with the catalog text of their code.
 // Implements CORE-304 (Core spec 0.22, §10.5 Diagnostics and debugging): one
 // /admin/ws connection with subscribe and unsubscribe per topic, reconnecting.
+// Implements CORE-35, CORE-206 (Core spec 0.38, §6.4 Web configuration editor):
+// validation records are shown with the localized text of their CORE_CFG_* code.
 
 let messages = {};
 let locale = "en";
@@ -60,6 +62,20 @@ function languagePicker(data) {
 export function t(key, params = {}) {
   const text = messages[key] ?? key;
   return text.replace(/\{(\w+)\}/g, (m, name) => (name in params ? String(params[name]) : m));
+}
+
+/**
+ * A validation record's text in the admin language: the catalog text of its
+ * CORE_CFG_* code with its params, else the server's English message (ISS-010).
+ */
+export function recordText(r) {
+  if (!r) return "";
+  if (r.code && r.code in messages) {
+    const params = {};
+    for (const [k, v] of Object.entries(r.params || {})) params[k] = Array.isArray(v) ? v.join(", ") : v;
+    return t(r.code, params);
+  }
+  return r.message || r.code || "";
 }
 
 export function fmtTime(iso) {

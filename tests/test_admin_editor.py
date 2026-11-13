@@ -531,3 +531,120 @@ async def test_core_324_open_in_editor_and_language(
         await browser.close()
         await pw.stop()
     assert not problems, problems
+
+
+# --- ISS-012, ISS-010: the Form save path (Core spec 0.38, §6.4) ------------------------------
+
+
+async def test_core_301_form_ops_create_missing_parents(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    """ISS-012: setOp builds an op that applies when the section or list is absent."""
+    base, sid, _root, _history = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        cases = await page.evaluate(
+            """async () => {
+              const { setOp } = await import('/admin/static/draft.js');
+              const doc = {engine: {locale: 'en'}, audio: null, modules: [{module: 'w'}],
+                           layout: {'!include': 'layout.yaml'}, pages: {list: []}};
+              return {
+                absent: setOp(doc, ['backup', 'parts'], ['config']),
+                deep: setOp(doc, ['pages2', 'list', '-'], {id: 'p'}),
+                nul: setOp(doc, ['audio', 'mute'], true),
+                append: setOp(doc, ['pages', 'list', '-'], {id: 'p'}),
+                replace: setOp(doc, ['engine', 'locale'], 'it'),
+                add: setOp(doc, ['engine', 'debug_ttl'], '1h'),
+                item: setOp(doc, ['modules', '0', 'config', 'city'], 'Bari'),
+                tag: setOp(doc, ['layout', 'columns'], 4),
+              };
+            }"""
+        )
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert cases["absent"] == {"op": "add", "path": "/backup", "value": {"parts": ["config"]}}
+    assert cases["deep"] == {"op": "add", "path": "/pages2", "value": {"list": [{"id": "p"}]}}
+    assert cases["nul"] == {"op": "replace", "path": "/audio", "value": {"mute": True}}
+    assert cases["append"] == {"op": "add", "path": "/pages/list/-", "value": {"id": "p"}}
+    assert cases["replace"] == {"op": "replace", "path": "/engine/locale", "value": "it"}
+    assert cases["add"] == {"op": "add", "path": "/engine/debug_ttl", "value": "1h"}
+    assert cases["item"] == {"op": "add", "path": "/modules/0/config", "value": {"city": "Bari"}}
+    assert cases["tag"] is None  # a tagged node cannot take a child here
+    assert not problems, problems
+
+
+async def test_core_301_form_edit_in_an_absent_section_applies(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    """ISS-012: the mute toggle of an absent `audio` and Add on an absent `pages` list."""
+    base, sid, root, _history = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        await page.click("nav.sections >> text=audio")
+        await page.check('mm3-schema-form [data-path="/mute"] input[type=checkbox]')
+        await page.wait_for_selector("text=Unsaved changes")
+        assert await page.locator("p.alert").count() == 0  # no "could not be applied"
+        await page.click("nav.sections >> text=pages")
+        await page.click('mm3-schema-form [data-path="/list"] > button:has-text("Add")')
+        await page.wait_for_selector('mm3-schema-form [data-path="/list/0/id"]')
+        assert await page.locator("p.alert").count() == 0
+        # The new page has no id yet, so Save stays disabled until it gets one.
+        page_id = page.locator('mm3-schema-form [data-path="/list/0/id"] input')
+        await page_id.fill("main")
+        await page_id.press("Tab")
+        await page.wait_for_function(
+            "() => !document.querySelector('.savebar button.primary').disabled"
+        )
+        await page.click(".savebar >> button.primary")
+        await page.click("dialog.save >> button.primary")
+        await page.wait_for_selector("text=Saved as version 2.")
+    finally:
+        await browser.close()
+        await pw.stop()
+    text = (root / "config.yaml").read_text()
+    assert "audio:\n  mute: true" in text
+    assert "pages:\n  list:\n    - id: main" in text
+    assert not problems, problems
+
+
+async def test_core_35_section_errors_shown_and_listed(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    """ISS-010: a cleared position is explained in the form and in the save bar's list."""
+    base, sid, _root, _history = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        await page.click("nav.sections >> text=w")
+        await page.locator('mm3-schema-form [data-path="/position"] >> text=Clear').first.click()
+        # The record sits on the instance itself (CORE-33), shown at the top of the form.
+        top = page.locator("mm3-schema-form form > .field-error")
+        await top.wait_for()
+        assert "needs a position" in (await top.inner_text())
+        # The save bar's count opens the list; its link leads back to the section.
+        await page.click(".savebar >> text=1 errors")
+        item = page.locator(".card.errors li")
+        assert "needs a position" in (await item.inner_text())
+        await page.click("nav.sections >> text=engine")
+        await item.locator("button").click()
+        await page.wait_for_selector("mm3-schema-form form > .field-error")
+        assert await page.locator(".savebar button.primary").is_disabled()
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert not problems, problems
+
+
+def test_core_206_admin_texts_carry_validation_codes() -> None:
+    """ISS-010: the admin gets the CORE_CFG_* texts to localize records."""
+    from mm3.core.web.pages import admin_texts
+
+    it = admin_texts("it")
+    assert it["CORE_CFG_REQUIRED"] == "Questo valore è obbligatorio"
+    assert "{module}" in it["CORE_CFG_POSITION_REQUIRED"]

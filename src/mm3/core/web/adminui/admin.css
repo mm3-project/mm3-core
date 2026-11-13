@@ -153,6 +153,9 @@ header.bar select.lang { margin-right: 8px; }
 .savebar { display: flex; gap: 10px; align-items: center; padding: 8px 12px; margin-bottom: 12px;
   border: 1px solid var(--accent); border-radius: 8px; background: var(--panel); position: sticky; top: 0; z-index: 2; }
 .savebar .spacer, .toolbar .spacer { flex: 1; }
+.card.errors { margin: -4px 0 12px; border-color: var(--bad, #c0392b); }
+.card.errors ul { margin: 0; padding-left: 18px; }
+.card.errors li { margin: 2px 0; }
 .toolbar h2 { margin: 0; font-size: 15px; }
 .editor { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 12px; }
 @media (max-width: 800px) { .editor { grid-template-columns: 1fr; } }
