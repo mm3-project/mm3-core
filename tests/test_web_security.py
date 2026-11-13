@@ -21,7 +21,7 @@ from mm3.cli.main import build_parser
 from mm3.cli.token_cmd import pair_link, run_token
 from mm3.core.settings import EngineSettings, ServerSettings
 from mm3.core.web import security as security_mod
-from mm3.core.web.apps import admin_app, mirror_app, protect
+from mm3.core.web.apps import admin_app, mirror_app, protect, safe_next
 from mm3.core.web.auth import WebAuth
 from mm3.core.web.gateway import ListenerError, WebGateway
 from mm3.core.web.pages import TEXT, admin_home_page, login_page, message_page, pair_page
@@ -482,6 +482,125 @@ def test_core_253_sessions_survive_a_restart(tmp_path: Path, now: Now) -> None:
     assert again.check(sid, "admin") is not None
     assert again.check(sid, "display") is None
     assert stat.S_IMODE((tmp_path / "sessions.json").stat().st_mode) == 0o600
+
+
+# --- CORE-378: admin landing ----------------------------------------------------------
+
+ADMIN_PAGES = ("/admin", "/admin/config", "/admin/debug", "/admin/ext/clock")
+
+
+async def test_core_378_page_without_session_goes_to_login_with_next(auth: WebAuth) -> None:
+    async with client(admin(auth), ADMIN) as c:
+        for path in ADMIN_PAGES:
+            r = await c.get(path)
+            assert r.status_code == 303, path
+            assert r.headers["location"] == f"/admin/login?next={path}", path
+        r = await c.get("/admin/config?tab=form&x=a b")
+        assert r.status_code == 303
+        assert r.headers["location"] == "/admin/login?next=/admin/config%3Ftab%3Dform%26x%3Da%2520b"
+        # the login page gets the request's own path and query back, byte for byte
+        back = await c.get(r.headers["location"])
+        assert 'name="next" value="/admin/config?tab=form&amp;x=a%20b"' in back.text
+
+
+async def test_core_378_login_returns_to_next(auth: WebAuth) -> None:
+    token = auth.tokens.new("me")
+    async with client(admin(auth), ADMIN) as c:
+        r = await c.post(
+            "/admin/login",
+            content=f"token={token}&next=%2Fadmin%2Fconfig%3Ftab%3Dyaml",
+            headers={"content-type": "application/x-www-form-urlencoded", "origin": ADMIN},
+        )
+        assert r.status_code == 303
+        assert r.headers["location"] == "/admin/config?tab=yaml"
+        assert (await c.get("/admin/config")).status_code == 200
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        None,
+        "",
+        "/",
+        "/api/v1/status",
+        "/administrator",
+        "https://evil.example/admin",
+        "//evil.example/admin",
+        "/\\evil.example",
+        "/admin\\x",
+        "/admin/../api/v1/status",
+        "/admin/%2e%2e/api",
+        "/admin/%2E%2E/api",
+        "/admin/./x",
+        "/admin/x\r\nSet-Cookie: a=b",
+        "/admin#frag",
+        "/admin/login",
+        "/admin/login/",
+        "/admin/logout",
+        "/admin/" + "a" * 2000,
+    ],
+)
+def test_core_378_next_outside_admin_is_refused(value: str | None) -> None:
+    assert safe_next(value) is None
+
+
+@pytest.mark.parametrize(
+    "value", ["/admin", "/admin/", "/admin/config?tab=form", "/admin/ext/clock"]
+)
+def test_core_378_next_under_admin_is_kept(value: str) -> None:
+    assert safe_next(value) == value
+
+
+async def test_core_378_login_with_an_unsafe_next_goes_to_the_admin_home(auth: WebAuth) -> None:
+    token = auth.tokens.new("me")
+    async with client(admin(auth), ADMIN) as c:
+        for bad in (
+            "https%3A%2F%2Fevil.example%2Fadmin",
+            "%2F%2Fevil.example",
+            "%2Fapi%2Fv1%2Fstatus",
+        ):
+            r = await c.post(
+                "/admin/login",
+                content=f"token={token}&next={bad}",
+                headers={"content-type": "application/x-www-form-urlencoded", "origin": ADMIN},
+            )
+            assert r.status_code == 303
+            assert r.headers["location"] == "/admin", bad
+
+
+async def test_core_378_login_form_carries_next_and_keeps_it_on_failure(auth: WebAuth) -> None:
+    async with client(admin(auth), ADMIN) as c:
+        page = await c.get("/admin/login?next=/admin/debug")
+        assert page.status_code == 200
+        assert '<input type="hidden" name="next" value="/admin/debug">' in page.text
+        assert 'name="next"' not in (await c.get("/admin/login")).text
+        assert 'name="next"' not in (await c.get("/admin/login?next=https://evil.example")).text
+        shown = await c.get("/admin/login", params={"next": '/admin/x"><script>'})
+        assert "<script>" not in shown.text
+        failed = await c.post(
+            "/admin/login",
+            content="token=mm3_wrong&next=%2Fadmin%2Fdebug",
+            headers={"content-type": "application/x-www-form-urlencoded", "origin": ADMIN},
+        )
+        assert failed.status_code == 401
+        assert 'name="next" value="/admin/debug"' in failed.text
+
+
+async def test_core_378_login_page_with_a_session_goes_to_the_admin_home(auth: WebAuth) -> None:
+    token = auth.tokens.new("me")
+    async with client(admin(auth), ADMIN) as c:
+        assert (await c.get("/admin/login")).status_code == 200
+        await login(c, token)
+        r = await c.get("/admin/login?next=/admin/debug")
+        assert r.status_code == 303
+        assert r.headers["location"] == "/admin"
+
+
+async def test_core_378_api_routes_keep_answering_401(auth: WebAuth) -> None:
+    async with client(admin(auth), ADMIN) as c:
+        for path in ("/api/v1/status", "/api/openapi.json", "/admin/i18n.json"):
+            r = await c.get(path)
+            assert r.status_code == 401, path
 
 
 # --- CORE-254: display pairing --------------------------------------------------------

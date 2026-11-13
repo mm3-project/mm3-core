@@ -170,7 +170,7 @@ requirements = [
 number = 6
 name = "Admin: REST API, config editor, preview, debug page"
 status = "done"
-done_at = { core = "0.29", contract = "1.0 rev 13" }
+done_at = { core = "0.40", contract = "1.0 rev 15" }
 # CORE-290..292 (sd_notify, loop watchdog, mm3.service) come from the first
 #   manual install; the unit already carries the CORE-65 hardening directives,
 #   which stays in milestone 10 and is closed there by the install test.
@@ -265,6 +265,8 @@ done_at = { core = "0.29", contract = "1.0 rev 13" }
 # Core spec 0.40 (13 Nov 2026; Source: ISS-011): CORE-380 (installed modules
 #   route, read by Add module) added here; CORE-374 changed to cite it; the
 #   work is PR C2 of the round 1 plan.
+# Closed again at Core 0.40 with the admin landing (CORE-378, ISS-001), the last
+#   requirement of the round 1 work in this milestone.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",

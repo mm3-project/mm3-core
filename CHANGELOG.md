@@ -7,6 +7,25 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (admin landing; ISS-001; Core spec 0.40)
+
+- An admin page asked for without a session answers 303 to
+  `/admin/login?next=<path and query>` instead of a bare `/admin/login` (CORE-378):
+  `/admin`, `/admin/config`, `/admin/debug`, `/admin/preview` and `/admin/ext/<module>`.
+  The login form carries `next` in a hidden field and keeps it after a failed or locked
+  attempt; a successful login answers 303 to `next` when it is a path under `/admin`, and
+  to `/admin` otherwise. A `next` with a scheme or host, a backslash, a control character,
+  a dot segment (also percent-encoded), a fragment, more than 1 KiB, or pointing at
+  `/admin/login` or `/admin/logout` is ignored (`mm3.core.web.apps.safe_next`).
+  `GET /admin/login` with a valid session answers 303 to `/admin`. API routes keep
+  answering 401. No new catalog keys.
+- Tests: `test_core_378_*` in `tests/test_web_security.py` and a real-browser test
+  `test_core_378_browser_login_returns_to_the_page_asked_for`; the redirect assertions of
+  the debug page and the preview shell now expect the `next` parameter.
+- Milestone 6 is closed again at Core 0.40 (`docs/spec/milestones.toml`). The admin home
+  (`/admin`) is still the placeholder page; the status view CORE-305 describes for it is
+  not part of this change.
+
 ### Changed (admin editor: draft history, Save without a dialog, absent sections; ENH-004, ENH-010, ISS-008; Core spec 0.40)
 
 - Draft history life (CORE-377). The undo and redo steps of the draft are kept in the

@@ -8,6 +8,7 @@ Implements:
     CORE-11: Core spec 0.15, §4.4 Contract rules.
     CORE-63: Core spec 0.38, §10.1 Security.
     CORE-253: Core spec 0.38, §10.1 Security.
+    CORE-378: Core spec 0.40, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
     -: Core spec 0.24, §10.5 Diagnostics and debugging.
     CORE-322: Core spec 0.25, §6.4 Web configuration editor.
@@ -246,19 +247,31 @@ def admin_extension_page(href: str, extensions: Sequence[tuple[str, str]], attrs
     return _admin_page("mm3-admin-ext", "ext.js", href, extensions, attrs)
 
 
-def login_page(error_key: str | None = None) -> str:
-    """Render ``/admin/login`` (CORE-253).
+def login_page(error_key: str | None = None, next_path: str | None = None) -> str:
+    """Render ``/admin/login`` (CORE-253, CORE-378).
 
     Args:
         error_key: Key of an error to show above the form.
+        next_path: The admin page to return to after login, already checked
+            by the caller; carried in a hidden ``next`` field.
 
     Returns:
         The HTML.
+
+    Implements:
+        CORE-253: Core spec 0.38, §10.1 Security.
+        CORE-378: Core spec 0.40, §10.1 Security.
     """
     error = f'<p role="alert">{t(error_key)}</p>\n' if error_key else ""
+    landing = (
+        f'<input type="hidden" name="next" value="{escape(next_path, quote=True)}">\n'
+        if next_path
+        else ""
+    )
     body = (
         f"<h1>{t('CORE_WEB_LOGIN_TITLE')}</h1>\n{error}"
         '<form method="post" action="/admin/login">\n'
+        f"{landing}"
         f"<label>{t('CORE_WEB_LOGIN_TOKEN')} "
         '<input type="password" name="token" autocomplete="off" required autofocus></label>\n'
         f'<button type="submit">{t("CORE_WEB_LOGIN_SUBMIT")}</button>\n</form>'

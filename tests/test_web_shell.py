@@ -336,7 +336,7 @@ async def test_core_252_preview_needs_an_admin_session(mirror: Mirror) -> None:
     async with httpx.AsyncClient(base_url=mirror.admin) as c:
         anon = await c.get("/admin/preview")
         assert anon.status_code == 303
-        assert anon.headers["location"] == "/admin/login"
+        assert anon.headers["location"] == "/admin/login?next=/admin/preview"
         c.cookies.set(ADMIN_COOKIE, cookie)
         ok = await c.get("/admin/preview")
         assert ok.status_code == 200
