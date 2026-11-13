@@ -7,6 +7,14 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Specification (spec sync to Core spec 0.40; Source: ISS-011)
+
+- `docs/spec/` synced to Core spec 0.40 (Module Contract 1.0 rev 15 unchanged).
+  Added: CORE-380 (`GET /api/v1/installed-modules`, the modules the engine
+  loaded, with kind, label, usable and instances), assigned to milestone 6.
+  Changed: CORE-374 (Add module reads CORE-380; `GET /api/v1/modules` lists
+  instances, CORE-315). No code change; the code is PR C2.
+
 ### Security (dependencies; core spec 10.9)
 
 - `opentelemetry-api` 1.45.1 -> 1.45.2 in `uv.lock` (transitive; CVE-2026-126360 reported by
