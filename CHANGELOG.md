@@ -7,6 +7,27 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (admin Layout view: delete an instance, pages; ISS-011 in part, ENH-001; Core spec 0.39)
+
+- Delete an instance (CORE-375): "Delete" on the overlay toolbar and on each entry
+  of the disabled list removes the instance's whole entry as one draft step, with no
+  confirmation; the step is undone like any other (CORE-151).
+- Pages in the Layout view (CORE-376): "New page", "Rename page" and "Delete page"
+  beside the page selector, each one draft step. New page checks the id as typed
+  (CORE-230) and writes the title as a `LocalizedText` in the session language; without
+  a `pages` block it creates one with `main` and the new page. Rename changes the title
+  in the session language only. Delete is not offered for the last page; it removes the
+  page from `pages.list`, from every instance's `pages` and `positions`, disables an
+  instance left with no page and moves `default` to the first remaining page when it
+  was the deleted one.
+- Not in this PR: "Add module" (CORE-374) and the Services lane with its Delete
+  (CORE-375). CORE-374 names `GET /api/v1/modules` as the list of installed modules,
+  but CORE-315 defines that route as the running instances; no route returns installed
+  modules with their label and kind. This is a spec gap, settled in its own defining
+  session (Core 0.40); ISS-011 stays open until then.
+- Catalog keys `CORE_ADMIN_DELETE`, `CORE_ADMIN_NEW_PAGE` and others in the five
+  languages.
+
 ### Specification (spec sync to Core spec 0.39; Source: ISS-003, ISS-011, ENH-001, ENH-004, ISS-008, ISS-001, ENH-010)
 
 - `docs/spec/` synced to Core spec 0.39 (Module Contract 1.0 rev 15 unchanged).

@@ -694,6 +694,45 @@ msgstr "{id}: disabled"
 msgid "CORE_ADMIN_STEP_RESCALED"
 msgstr "Rescaled to {columns} × {rows}"
 
+msgid "CORE_ADMIN_DELETE"
+msgstr "Delete"
+
+msgid "CORE_ADMIN_STEP_DELETED"
+msgstr "{id}: deleted"
+
+msgid "CORE_ADMIN_NEW_PAGE"
+msgstr "New page"
+
+msgid "CORE_ADMIN_RENAME_PAGE"
+msgstr "Rename page"
+
+msgid "CORE_ADMIN_DELETE_PAGE"
+msgstr "Delete page"
+
+msgid "CORE_ADMIN_RENAME"
+msgstr "Rename"
+
+msgid "CORE_ADMIN_PAGE_ID"
+msgstr "Page id"
+
+msgid "CORE_ADMIN_PAGE_TITLE"
+msgstr "Title ({language})"
+
+msgid "CORE_ADMIN_PAGE_ID_INVALID"
+msgstr "Start with a lowercase letter, then lowercase letters, digits or _ (at most 32 characters)."
+
+msgid "CORE_ADMIN_PAGE_ID_TAKEN"
+msgstr "A page with this id already exists."
+
+msgid "CORE_ADMIN_STEP_PAGE_ADDED"
+msgstr "Page {page}: added"
+
+msgid "CORE_ADMIN_STEP_PAGE_RENAMED"
+msgstr "Page {page}: renamed"
+
+msgid "CORE_ADMIN_STEP_PAGE_DELETED"
+msgstr "Page {page}: deleted"
+
 msgid "CORE_ADMIN_EXT_FAILED"
 msgstr "The admin page of {module} could not be loaded."
 

@@ -696,6 +696,45 @@ msgstr "{id} : désactivé"
 msgid "CORE_ADMIN_STEP_RESCALED"
 msgstr "Redimensionné à {columns} × {rows}"
 
+msgid "CORE_ADMIN_DELETE"
+msgstr "Supprimer"
+
+msgid "CORE_ADMIN_STEP_DELETED"
+msgstr "{id} : supprimé"
+
+msgid "CORE_ADMIN_NEW_PAGE"
+msgstr "Nouvelle page"
+
+msgid "CORE_ADMIN_RENAME_PAGE"
+msgstr "Renommer la page"
+
+msgid "CORE_ADMIN_DELETE_PAGE"
+msgstr "Supprimer la page"
+
+msgid "CORE_ADMIN_RENAME"
+msgstr "Renommer"
+
+msgid "CORE_ADMIN_PAGE_ID"
+msgstr "ID de la page"
+
+msgid "CORE_ADMIN_PAGE_TITLE"
+msgstr "Titre ({language})"
+
+msgid "CORE_ADMIN_PAGE_ID_INVALID"
+msgstr "Commencez par une lettre minuscule, puis des lettres minuscules, des chiffres ou _ (32 caractères au plus)."
+
+msgid "CORE_ADMIN_PAGE_ID_TAKEN"
+msgstr "Une page avec cet ID existe déjà."
+
+msgid "CORE_ADMIN_STEP_PAGE_ADDED"
+msgstr "Page {page} : ajoutée"
+
+msgid "CORE_ADMIN_STEP_PAGE_RENAMED"
+msgstr "Page {page} : renommée"
+
+msgid "CORE_ADMIN_STEP_PAGE_DELETED"
+msgstr "Page {page} : supprimée"
+
 msgid "CORE_ADMIN_EXT_FAILED"
 msgstr "La page d'administration de {module} n'a pas pu être chargée."
 

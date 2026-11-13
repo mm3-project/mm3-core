@@ -15,10 +15,14 @@
 // Implements CORE-307 (Core spec 0.28, §6.6 Live layout preview): the Show on mirror toggle.
 // Implements CORE-240 (Core spec 0.6, §6.9 Pages and visibility): Disable writes
 // `disabled` through the normal save ("Save as disabled").
+// Implements CORE-375 (Core spec 0.39, §6.6 Live layout preview): Delete on the overlay
+// toolbar and on the disabled list, one undoable step with no confirmation.
+// Implements CORE-376 (Core spec 0.39, §6.6 Live layout preview): New, Rename and Delete
+// page beside the page selector, each one draft step.
 
 import { html, nothing, render } from "/admin/static/lit-html.js";
-import { AdminChannel, api, t } from "/admin/static/admin.js";
-import { clone, diffOps, equal, getAt, isTag, sectionLocation, sectionValues } from "/admin/static/draft.js";
+import { AdminChannel, api, sessionLocale, t } from "/admin/static/admin.js";
+import { clone, diffOps, equal, getAt, isTag, pointer, sectionLocation, sectionValues, setOp } from "/admin/static/draft.js";
 
 export const PRESETS = [
   "top_bar",
@@ -127,6 +131,57 @@ export function rescaledItem(item, from, to) {
   return next;
 }
 
+// --- pages (CORE-230, CORE-376) ------------------------------------------------------
+
+const PAGE_ID = /^[a-z][a-z0-9_]{0,31}$/;
+export const MAX_PAGES = 32;
+
+/** The page ids of the draft's `pages` block; the implicit `main` without a list (CORE-230). */
+export function pageIds(pages) {
+  if (!isObject(pages) || !Array.isArray(pages.list)) return ["main"];
+  return pages.list.map((e) => (isObject(e) ? e.id : e)).filter((id) => typeof id === "string");
+}
+
+/** The catalog key of what is wrong with a new page id, or null (checked as typed, CORE-376). */
+export function pageIdProblem(id, ids) {
+  if (!PAGE_ID.test(id)) return "CORE_ADMIN_PAGE_ID_INVALID";
+  if (ids.includes(id)) return "CORE_ADMIN_PAGE_ID_TAKEN";
+  return null;
+}
+
+/** A page title in `lang`: the text of a map, or the string that is the same in every language. */
+export function titleIn(title, lang) {
+  if (typeof title === "string") return title;
+  return isObject(title) && typeof title[lang] === "string" ? title[lang] : "";
+}
+
+/**
+ * A `LocalizedText` with `text` in `lang` only (CORE-376): other languages are kept; a plain
+ * string, the same in every language, stays the English text.
+ */
+export function withTitle(title, lang, text) {
+  if (isObject(title)) return { ...title, [lang]: text };
+  if (typeof title === "string" && lang !== "en") return { en: title, [lang]: text };
+  return { [lang]: text };
+}
+
+/**
+ * The instance after a page was deleted (CORE-376): the page leaves its `pages` list and its
+ * `positions`; an instance left with no page is disabled.
+ */
+export function withoutPage(item, page) {
+  const next = clone(item);
+  if (Array.isArray(next.pages) && next.pages.includes(page)) {
+    next.pages = next.pages.filter((p) => p !== page);
+    if (!next.pages.length) next.disabled = true;
+  }
+  if (isObject(next.positions) && page in next.positions) {
+    delete next.positions[page];
+    if (!Object.keys(next.positions).length) delete next.positions;
+  }
+  return next;
+}
+
 class LayoutView extends HTMLElement {
   constructor() {
     super();
@@ -140,6 +195,7 @@ class LayoutView extends HTMLElement {
     this.pushTimer = null;
     this.channel = null;
     this.sentLayout = null;
+    this.dlg = null; // the New and Rename page dialog: {mode, id, title}
     this.resize = new ResizeObserver(() => this.fit());
   }
 
@@ -256,6 +312,155 @@ class LayoutView extends HTMLElement {
     else next.disabled = true;
     if (!enabled && this.selected === id) this.selected = null;
     return this.commit(id, next, t(enabled ? "CORE_ADMIN_STEP_ENABLED" : "CORE_ADMIN_STEP_DISABLED", { id }));
+  }
+
+  /** Delete an instance: one undoable step removing its whole entry, no confirmation (CORE-375). */
+  deleteInstance(id) {
+    const loc = sectionLocation(this.draft.documents, this.draft.main, `modules/${id}`);
+    if (!loc || !loc.parts) return undefined;
+    if (this.selected === id) this.selected = null;
+    const ops = [{ op: "remove", path: pointer(loc.parts) }];
+    return this.host.run(() => this.draft.apply(loc.file, ops, t("CORE_ADMIN_STEP_DELETED", { id })));
+  }
+
+  // --- pages (CORE-376) ---------------------------------------------------------------
+
+  pagesBlock() {
+    const loc = sectionLocation(this.draft.documents, this.draft.main, "pages");
+    if (!loc) return null;
+    const doc = this.draft.documents[loc.file];
+    return { loc, doc, value: getAt(doc, loc.parts) };
+  }
+
+  pageIdList() {
+    const block = this.pagesBlock();
+    return pageIds(block ? block.value : undefined);
+  }
+
+  openPageDialog(mode) {
+    const block = this.pagesBlock();
+    let title = "";
+    if (mode === "rename" && block && isObject(block.value) && Array.isArray(block.value.list)) {
+      const entry = block.value.list.find((e) => isObject(e) && e.id === this.page);
+      title = entry ? titleIn(entry.title, sessionLocale()) : "";
+    }
+    this.dlg = { mode, id: "", title };
+    this.update();
+    this.querySelector("dialog.page")?.showModal();
+  }
+
+  closePageDialog() {
+    this.querySelector("dialog.page")?.close();
+  }
+
+  /** New page: appends to `pages.list`, creating the block with `main` when there is none. */
+  async addPage(id, title) {
+    const block = this.pagesBlock();
+    if (!block) return;
+    const { loc, doc, value } = block;
+    const entry = { id, title: { [sessionLocale()]: title } };
+    let op;
+    if (!isObject(value)) op = setOp(doc, loc.parts, { list: [{ id: "main" }, entry], default: "main" });
+    else if (!Array.isArray(value.list)) op = setOp(doc, [...loc.parts, "list"], [{ id: "main" }, entry]);
+    else op = setOp(doc, [...loc.parts, "list", "-"], entry);
+    if (!op) return;
+    await this.host.run(() => this.draft.apply(loc.file, [op], t("CORE_ADMIN_STEP_PAGE_ADDED", { page: id })));
+    this.setPage(id);
+  }
+
+  /** Rename page: the title in the session language only, never the id. */
+  async renamePage(id, title) {
+    const block = this.pagesBlock();
+    if (!block) return;
+    const { loc, doc, value } = block;
+    const lang = sessionLocale();
+    const index = isObject(value) && Array.isArray(value.list) ? value.list.findIndex((e) => isObject(e) && e.id === id) : -1;
+    let op;
+    if (index < 0) op = setOp(doc, loc.parts, { list: [{ id, title: withTitle(undefined, lang, title) }] });
+    else op = setOp(doc, [...loc.parts, "list", index, "title"], withTitle(value.list[index].title, lang, title));
+    if (!op) return;
+    await this.host.run(() => this.draft.apply(loc.file, [op], t("CORE_ADMIN_STEP_PAGE_RENAMED", { page: id })));
+  }
+
+  /**
+   * Delete page: not the last one. The page leaves `pages.list`, every instance's `pages` and
+   * `positions`; an instance left with no page is disabled; `default` moves to the first
+   * remaining page when it was the deleted one. One draft step; the selector then shows
+   * the default page.
+   */
+  async deletePage(id) {
+    const block = this.pagesBlock();
+    const ids = this.pageIdList();
+    if (!block || ids.length < 2 || !ids.includes(id) || !isObject(block.value) || !Array.isArray(block.value.list)) return;
+    const { loc, value } = block;
+    const remaining = ids.filter((p) => p !== id);
+    const index = value.list.findIndex((e) => (isObject(e) ? e.id : e) === id);
+    const ops = new Map();
+    const add = (file, list) => ops.set(file, [...(ops.get(file) || []), ...list]);
+    const pageOps = [{ op: "remove", path: pointer([...loc.parts, "list", index]) }];
+    let fallback = typeof value.default === "string" && remaining.includes(value.default) ? value.default : remaining[0];
+    if (value.default === id) {
+      pageOps.push({ op: "replace", path: pointer([...loc.parts, "default"]), value: remaining[0] });
+      fallback = remaining[0];
+    }
+    add(loc.file, pageOps);
+    const where = sectionLocation(this.draft.documents, this.draft.main, "modules/_order");
+    const list = where ? getAt(this.draft.documents[where.file], where.parts) : null;
+    if (Array.isArray(list)) {
+      list.forEach((item, i) => {
+        if (isObject(item)) add(where.file, diffOps([...where.parts, i], item, withoutPage(item, id)));
+      });
+    }
+    const steps = [...ops].map(([file, patch]) => ({ file, patch }));
+    await this.host.run(() => this.draft.applyOps(steps, t("CORE_ADMIN_STEP_PAGE_DELETED", { page: id })));
+    this.setPage(fallback);
+  }
+
+  async submitPageDialog() {
+    const d = this.dlg;
+    if (!d) return;
+    const title = d.title.trim();
+    this.closePageDialog();
+    if (d.mode === "new") await this.addPage(d.id, title);
+    else await this.renamePage(this.page, title);
+  }
+
+  pageDialog() {
+    const d = this.dlg;
+    if (!d) return html`<dialog class="page"></dialog>`;
+    const problem = d.mode === "new" ? (d.id === "" ? null : pageIdProblem(d.id, this.pageIdList())) : null;
+    const valid = d.title.trim() !== "" && (d.mode === "rename" || (d.id !== "" && !problem));
+    return html`<dialog class="page" @close=${() => {
+      this.dlg = null;
+      this.update();
+    }}>
+      <form @submit=${(e) => {
+        e.preventDefault();
+        if (valid) this.submitPageDialog();
+      }}>
+        <h3>${t(d.mode === "new" ? "CORE_ADMIN_NEW_PAGE" : "CORE_ADMIN_RENAME_PAGE")}</h3>
+        ${d.mode === "new"
+          ? html`<label>${t("CORE_ADMIN_PAGE_ID")}
+              <input type="text" name="page-id" maxlength="32" autocomplete="off" .value=${d.id}
+                @input=${(e) => {
+                  d.id = e.target.value;
+                  this.update();
+                }}></label>
+              <p class="alert page-id-problem" ?hidden=${!problem}>${problem ? t(problem) : ""}</p>`
+          : html`<p class="muted mono">${this.page}</p>`}
+        <label>${t("CORE_ADMIN_PAGE_TITLE", { language: sessionLocale() })}
+          <input type="text" name="page-title" autocomplete="off" .value=${d.title}
+            @input=${(e) => {
+              d.title = e.target.value;
+              this.update();
+            }}></label>
+        <div class="row">
+          <span class="spacer"></span>
+          <button type="button" name="cancel" @click=${() => this.closePageDialog()}>${t("CORE_ADMIN_CANCEL")}</button>
+          <button type="submit" class="primary" name="ok" ?disabled=${!valid}>${t(d.mode === "new" ? "CORE_ADMIN_ADD" : "CORE_ADMIN_RENAME")}</button>
+        </div>
+      </form>
+    </dialog>`;
   }
 
   /** Every rectangle from the saved grid to the draft's (CORE-94), as one step. */
@@ -511,6 +716,7 @@ class LayoutView extends HTMLElement {
         <span class="spacer"></span>
         <button @click=${() => this.host.openForm(`modules/${id}`)}>${t("CORE_ADMIN_EDIT_IN_FORM")}</button>
         <button name="disable" @click=${() => this.setEnabled(id, false)}>${t("CORE_ADMIN_DISABLE")}</button>
+        <button name="delete" @click=${() => this.deleteInstance(id)}>${t("CORE_ADMIN_DELETE")}</button>
       </div>
       <div class="fields">
         <label>${t("CORE_ADMIN_PRESET")}
@@ -538,7 +744,8 @@ class LayoutView extends HTMLElement {
     return html`<section class="card disabled-list"><h3>${t("CORE_ADMIN_DISABLED_LIST")}</h3>
       <ul>${ids.map(
         (id) => html`<li><span class="mono">${id}</span>
-          <button @click=${() => this.setEnabled(id, true)}>${t("CORE_ADMIN_ENABLE")}</button></li>`,
+          <button name="enable" @click=${() => this.setEnabled(id, true)}>${t("CORE_ADMIN_ENABLE")}</button>
+          <button name="delete" @click=${() => this.deleteInstance(id)}>${t("CORE_ADMIN_DELETE")}</button></li>`,
       )}</ul></section>`;
   }
 
@@ -546,6 +753,7 @@ class LayoutView extends HTMLElement {
     if (!this.host) return;
     const layout = this.layout;
     const pages = this.pages();
+    const pageCount = this.pageIdList().length;
     if (layout && (this.page === null || !pages.includes(this.page))) this.page = pages[0] || null;
     render(
       html`<div class="layout-view">
@@ -554,6 +762,9 @@ class LayoutView extends HTMLElement {
             <select class="page" @change=${(e) => this.setPage(e.target.value)}>
               ${pages.map((p) => html`<option value=${p} ?selected=${p === this.page}>${p}</option>`)}
             </select></label>
+          <button name="new-page" ?disabled=${pageCount >= MAX_PAGES} @click=${() => this.openPageDialog("new")}>${t("CORE_ADMIN_NEW_PAGE")}</button>
+          <button name="rename-page" ?disabled=${this.page === null} @click=${() => this.openPageDialog("rename")}>${t("CORE_ADMIN_RENAME_PAGE")}</button>
+          <button name="delete-page" ?disabled=${pageCount < 2 || this.page === null} @click=${() => this.deletePage(this.page)}>${t("CORE_ADMIN_DELETE_PAGE")}</button>
           ${layout ? html`<span class="muted">${layout.viewport[0]} × ${layout.viewport[1]} px</span>` : nothing}
           <span class="spacer"></span>
           ${this.canRescale()
@@ -579,7 +790,7 @@ class LayoutView extends HTMLElement {
           </div>
         </div>
         <section class="card">${this.toolbar()}</section>
-        ${this.disabledList()}
+        ${this.disabledList()} ${this.pageDialog()}
       </div>`,
       this,
     );

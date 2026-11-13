@@ -694,6 +694,45 @@ msgstr "{id}: disattivato"
 msgid "CORE_ADMIN_STEP_RESCALED"
 msgstr "Riscalato a {columns} × {rows}"
 
+msgid "CORE_ADMIN_DELETE"
+msgstr "Elimina"
+
+msgid "CORE_ADMIN_STEP_DELETED"
+msgstr "{id}: eliminato"
+
+msgid "CORE_ADMIN_NEW_PAGE"
+msgstr "Nuova pagina"
+
+msgid "CORE_ADMIN_RENAME_PAGE"
+msgstr "Rinomina pagina"
+
+msgid "CORE_ADMIN_DELETE_PAGE"
+msgstr "Elimina pagina"
+
+msgid "CORE_ADMIN_RENAME"
+msgstr "Rinomina"
+
+msgid "CORE_ADMIN_PAGE_ID"
+msgstr "ID pagina"
+
+msgid "CORE_ADMIN_PAGE_TITLE"
+msgstr "Titolo ({language})"
+
+msgid "CORE_ADMIN_PAGE_ID_INVALID"
+msgstr "Inizia con una lettera minuscola, poi lettere minuscole, cifre o _ (al massimo 32 caratteri)."
+
+msgid "CORE_ADMIN_PAGE_ID_TAKEN"
+msgstr "Esiste già una pagina con questo ID."
+
+msgid "CORE_ADMIN_STEP_PAGE_ADDED"
+msgstr "Pagina {page}: aggiunta"
+
+msgid "CORE_ADMIN_STEP_PAGE_RENAMED"
+msgstr "Pagina {page}: rinominata"
+
+msgid "CORE_ADMIN_STEP_PAGE_DELETED"
+msgstr "Pagina {page}: eliminata"
+
 msgid "CORE_ADMIN_EXT_FAILED"
 msgstr "Non è stato possibile caricare la pagina admin di {module}."
 

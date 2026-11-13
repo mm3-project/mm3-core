@@ -692,6 +692,45 @@ msgstr ""
 msgid "CORE_ADMIN_STEP_RESCALED"
 msgstr ""
 
+msgid "CORE_ADMIN_DELETE"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_DELETED"
+msgstr ""
+
+msgid "CORE_ADMIN_NEW_PAGE"
+msgstr ""
+
+msgid "CORE_ADMIN_RENAME_PAGE"
+msgstr ""
+
+msgid "CORE_ADMIN_DELETE_PAGE"
+msgstr ""
+
+msgid "CORE_ADMIN_RENAME"
+msgstr ""
+
+msgid "CORE_ADMIN_PAGE_ID"
+msgstr ""
+
+msgid "CORE_ADMIN_PAGE_TITLE"
+msgstr ""
+
+msgid "CORE_ADMIN_PAGE_ID_INVALID"
+msgstr ""
+
+msgid "CORE_ADMIN_PAGE_ID_TAKEN"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_PAGE_ADDED"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_PAGE_RENAMED"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_PAGE_DELETED"
+msgstr ""
+
 msgid "CORE_ADMIN_EXT_FAILED"
 msgstr ""
 
