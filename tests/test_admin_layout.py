@@ -416,8 +416,47 @@ class Running:
     mirror: MirrorPreview
 
 
+NO_PAGES_MAIN = """engine:
+  locale: en
+modules:
+  - module: boxmod
+    id: a
+    position: top_left
+  - module: boxmod
+    id: b
+    position: { col: 7, row: 2, width: 3, height: 3 }
+"""
+
+THREE_PAGES_MAIN = """engine:
+  locale: en
+pages:
+  default: energy
+  list:
+    - id: home
+    - id: energy
+    - id: garage
+modules:
+  - module: boxmod
+    id: a
+    position: top_left
+  - module: boxmod
+    id: b
+    pages: [home, energy]
+    position: { col: 7, row: 2, width: 3, height: 3 }
+    positions:
+      energy: { col: 7, row: 6, width: 3, height: 3 }
+  - module: boxmod
+    id: c
+    pages: [energy]
+    position: { col: 1, row: 9, width: 6, height: 3 }
+"""
+
+
 @pytest.fixture
-async def running(tmp_path: Path, box_module: Any) -> AsyncIterator[Running]:
+async def running(
+    request: pytest.FixtureRequest, tmp_path: Path, box_module: Any
+) -> AsyncIterator[Running]:
+    """The engine with the Layout tab; ``indirect`` parametrization sets the configuration."""
     from mm3.core.config.manager import ConfigManager
     from mm3.core.diag.inspector import BusInspector
     from mm3.core.pages import PageService
@@ -434,7 +473,7 @@ async def running(tmp_path: Path, box_module: Any) -> AsyncIterator[Running]:
     configure_logging("info", stream=io.StringIO(), json=True)
     root = tmp_path / "etc"
     root.mkdir()
-    (root / "config.yaml").write_text(PAGE_MAIN)
+    (root / "config.yaml").write_text(getattr(request, "param", PAGE_MAIN))
     env = tmp_path / "mm3.env"
     env.write_text("")
     env.chmod(0o600)
@@ -825,3 +864,215 @@ async def test_core_152_section_undo_after_layout_edits(running: Running) -> Non
         mods = (await draft(page))["docs"]["config.yaml"]["modules"]
         assert mods[0]["position"] == "top_left"
         assert mods[1]["positions"]["home"]["width"] == 4
+
+
+# --- CORE-375, CORE-376: delete an instance, pages in the Layout view ----------------------
+
+
+async def draft_errors(page: Any) -> list[str]:
+    return list(
+        await page.evaluate(
+            "() => document.querySelector('mm3-admin-config').draft.records"
+            ".filter((r) => r.severity === 'error').map((r) => r.code)"
+        )
+    )
+
+
+async def module_ids(page: Any) -> list[str]:
+    mods = (await draft(page))["docs"]["config.yaml"]["modules"]
+    return [m["id"] for m in mods]
+
+
+async def test_core_375_delete_is_one_undoable_step_without_a_confirmation(
+    running: Running,
+) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        await page.click('.overlay .box[data-instance="b"]')
+        await page.click('.inst-toolbar button[name="delete"]')
+        await wait_steps(page, 1)
+        assert await module_ids(page) == ["a", "c"]
+        assert await page.locator("dialog[open]").count() == 0  # no confirmation
+        assert await page.locator('.overlay .box[data-instance="b"]').count() == 0
+        assert (await draft(page))["steps"] == ["b: deleted"]
+        # The step is undone like any other (CORE-151), with the whole entry back.
+        await page.keyboard.press("Control+z")
+        await wait_steps(page, 0)
+        mods = (await draft(page))["docs"]["config.yaml"]["modules"]
+        assert [m["id"] for m in mods] == ["a", "b", "c"]
+        assert mods[1]["position"] == {"col": 7, "row": 2, "width": 3, "height": 3}
+        assert mods[1]["pages"] == ["home", "energy"]
+        await page.wait_for_selector('.overlay .box[data-instance="b"]')
+
+
+async def test_core_375_delete_from_the_disabled_list(running: Running) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        await page.click('.overlay .box[data-instance="b"]')
+        await page.click('.inst-toolbar button[name="disable"]')
+        await wait_steps(page, 1)
+        await page.click(".disabled-list button[name=delete]")
+        await wait_steps(page, 2)
+        assert await module_ids(page) == ["a", "c"]
+        assert await page.locator(".disabled-list").count() == 0
+        assert await draft_errors(page) == []
+
+
+async def test_core_376_page_ids_are_checked_as_typed(running: Running) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        await page.click("button[name=new-page]")
+        await page.wait_for_selector("dialog.page[open]")
+        ok = page.locator("dialog.page button[name=ok]")
+        await page.fill("dialog.page input[name=page-title]", "Garage")
+        assert await ok.is_disabled()  # no id yet
+        for bad, shown in (
+            ("Garage", "lowercase"),
+            ("1garage", "lowercase"),
+            ("ga-rage", "lowercase"),
+            ("home", "already exists"),
+        ):
+            await page.fill("dialog.page input[name=page-id]", bad)
+            assert shown in await page.locator("dialog.page .page-id-problem").inner_text()
+            assert await ok.is_disabled(), bad
+        await page.fill("dialog.page input[name=page-id]", "garage")
+        assert await page.locator("dialog.page .page-id-problem").is_hidden()
+        assert await ok.is_enabled()
+        await page.fill("dialog.page input[name=page-title]", "")
+        assert await ok.is_disabled()  # the title is asked for too
+        await page.click("dialog.page button[name=cancel]")
+        assert (await draft(page))["steps"] == []  # nothing written
+
+
+async def test_core_376_new_page_is_one_step_with_a_title_in_the_session_language(
+    running: Running,
+) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        await page.click("button[name=new-page]")
+        await page.fill("dialog.page input[name=page-id]", "garage")
+        await page.fill("dialog.page input[name=page-title]", "Garage")
+        await page.press("dialog.page input[name=page-title]", "Enter")
+        await wait_steps(page, 1)
+        pages = (await draft(page))["docs"]["config.yaml"]["pages"]
+        assert pages["list"] == [
+            {"id": "home"},
+            {"id": "energy"},
+            {"id": "garage", "title": {"en": "Garage"}},
+        ]
+        assert (await draft(page))["steps"] == ["Page garage: added"]
+        assert await page.locator("select.page").input_value() == "garage"
+        assert await draft_errors(page) == []
+        await page.keyboard.press("Control+z")
+        await wait_steps(page, 0)
+        assert len((await draft(page))["docs"]["config.yaml"]["pages"]["list"]) == 2
+
+
+@pytest.mark.parametrize("running", [NO_PAGES_MAIN], indirect=True)
+async def test_core_376_without_a_pages_block_the_step_creates_main_and_the_page(
+    running: Running,
+) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        assert await page.locator("button[name=delete-page]").is_disabled()  # the last page
+        await page.click("button[name=new-page]")
+        await page.fill("dialog.page input[name=page-id]", "kitchen")
+        await page.fill("dialog.page input[name=page-title]", "Kitchen")
+        await page.click("dialog.page button[name=ok]")
+        await wait_steps(page, 1)
+        assert (await draft(page))["docs"]["config.yaml"]["pages"] == {
+            "list": [{"id": "main"}, {"id": "kitchen", "title": {"en": "Kitchen"}}],
+            "default": "main",
+        }
+        assert await draft_errors(page) == []
+        assert await page.locator("button[name=delete-page]").is_enabled()
+
+
+async def test_core_376_rename_changes_the_title_and_never_the_id(running: Running) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        await page.click("button[name=rename-page]")
+        assert await page.locator("dialog.page input[name=page-id]").count() == 0
+        await page.fill("dialog.page input[name=page-title]", "Casa")
+        await page.click("dialog.page button[name=ok]")
+        await wait_steps(page, 1)
+        pages = (await draft(page))["docs"]["config.yaml"]["pages"]
+        assert pages["list"][0] == {"id": "home", "title": {"en": "Casa"}}
+        # Another rename starts from the title in this language and keeps the id.
+        await page.click("button[name=rename-page]")
+        assert await page.locator("dialog.page input[name=page-title]").input_value() == "Casa"
+        await page.fill("dialog.page input[name=page-title]", "House")
+        await page.click("dialog.page button[name=ok]")
+        await wait_steps(page, 2)
+        pages = (await draft(page))["docs"]["config.yaml"]["pages"]
+        assert pages["list"][0] == {"id": "home", "title": {"en": "House"}}
+        assert (await draft(page))["steps"][-1] == "Page home: renamed"
+
+
+async def test_core_376_titles_keep_the_other_languages(running: Running) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        got = await page.evaluate(
+            """async () => {
+              const m = await import("/admin/static/layout.js");
+              return [
+                m.withTitle({it: "Casa"}, "en", "Home"),
+                m.withTitle("Home", "it", "Casa"),
+                m.withTitle("Home", "en", "House"),
+                m.withTitle(undefined, "fr", "Maison"),
+                m.titleIn({it: "Casa"}, "en"),
+                m.titleIn("Home", "it"),
+                m.pageIdProblem("garage", ["home"]),
+                m.pageIdProblem("Garage", ["home"]),
+                m.pageIdProblem("a".repeat(33), ["home"]),
+                m.pageIdProblem("home", ["home"]),
+              ];
+            }"""
+        )
+        assert got == [
+            {"it": "Casa", "en": "Home"},
+            {"en": "Home", "it": "Casa"},
+            {"en": "House"},
+            {"fr": "Maison"},
+            "",
+            "Home",
+            None,
+            "CORE_ADMIN_PAGE_ID_INVALID",
+            "CORE_ADMIN_PAGE_ID_INVALID",
+            "CORE_ADMIN_PAGE_ID_TAKEN",
+        ]
+
+
+@pytest.mark.parametrize("running", [THREE_PAGES_MAIN], indirect=True)
+async def test_core_376_delete_page_cleans_up_in_one_undoable_step(running: Running) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        before = (await draft(page))["docs"]["config.yaml"]
+        await page.select_option("select.page", "energy")
+        await page.click("button[name=delete-page]")
+        await wait_steps(page, 1)
+        docs = (await draft(page))["docs"]["config.yaml"]
+        assert [e["id"] for e in docs["pages"]["list"]] == ["home", "garage"]
+        assert docs["pages"]["default"] == "home"  # the first remaining page
+        a, b, c = docs["modules"]
+        assert "pages" not in a
+        assert b["pages"] == ["home"]
+        assert "positions" not in b
+        assert c["pages"] == []  # left with no page ...
+        assert c["disabled"] is True  # ... so disabled
+        assert (await draft(page))["steps"] == ["Page energy: deleted"]
+        assert await page.locator("dialog[open]").count() == 0  # no confirmation
+        assert await page.locator("select.page").input_value() == "home"
+        assert await draft_errors(page) == []
+        await page.wait_for_selector(".disabled-list >> text=c")
+        # One undo brings back the page, the default and every instance.
+        await page.keyboard.press("Control+z")
+        await wait_steps(page, 0)
+        assert (await draft(page))["docs"]["config.yaml"] == before
+
+
+@pytest.mark.parametrize("running", [THREE_PAGES_MAIN], indirect=True)
+async def test_core_376_deleting_a_page_that_is_not_the_default_keeps_the_default(
+    running: Running,
+) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        await page.select_option("select.page", "garage")
+        await page.click("button[name=delete-page]")
+        await wait_steps(page, 1)
+        docs = (await draft(page))["docs"]["config.yaml"]
+        assert docs["pages"]["default"] == "energy"
+        assert [e["id"] for e in docs["pages"]["list"]] == ["home", "energy"]
+        assert docs["modules"][2]["pages"] == ["energy"]  # untouched
+        assert await page.locator("select.page").input_value() == "energy"

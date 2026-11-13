@@ -696,6 +696,45 @@ msgstr "{id}: deaktiviert"
 msgid "CORE_ADMIN_STEP_RESCALED"
 msgstr "Skaliert auf {columns} × {rows}"
 
+msgid "CORE_ADMIN_DELETE"
+msgstr "Löschen"
+
+msgid "CORE_ADMIN_STEP_DELETED"
+msgstr "{id}: gelöscht"
+
+msgid "CORE_ADMIN_NEW_PAGE"
+msgstr "Neue Seite"
+
+msgid "CORE_ADMIN_RENAME_PAGE"
+msgstr "Seite umbenennen"
+
+msgid "CORE_ADMIN_DELETE_PAGE"
+msgstr "Seite löschen"
+
+msgid "CORE_ADMIN_RENAME"
+msgstr "Umbenennen"
+
+msgid "CORE_ADMIN_PAGE_ID"
+msgstr "Seiten-ID"
+
+msgid "CORE_ADMIN_PAGE_TITLE"
+msgstr "Titel ({language})"
+
+msgid "CORE_ADMIN_PAGE_ID_INVALID"
+msgstr "Mit einem Kleinbuchstaben beginnen, danach Kleinbuchstaben, Ziffern oder _ (höchstens 32 Zeichen)."
+
+msgid "CORE_ADMIN_PAGE_ID_TAKEN"
+msgstr "Eine Seite mit dieser ID gibt es bereits."
+
+msgid "CORE_ADMIN_STEP_PAGE_ADDED"
+msgstr "Seite {page}: hinzugefügt"
+
+msgid "CORE_ADMIN_STEP_PAGE_RENAMED"
+msgstr "Seite {page}: umbenannt"
+
+msgid "CORE_ADMIN_STEP_PAGE_DELETED"
+msgstr "Seite {page}: gelöscht"
+
 msgid "CORE_ADMIN_EXT_FAILED"
 msgstr "Die Admin-Seite von {module} konnte nicht geladen werden."
 

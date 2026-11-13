@@ -59,6 +59,11 @@ function languagePicker(data) {
   bar.insertBefore(select, logout);
 }
 
+/** The language of this admin session (CORE-309); `en` until the texts are loaded. */
+export function sessionLocale() {
+  return locale;
+}
+
 export function t(key, params = {}) {
   const text = messages[key] ?? key;
   return text.replace(/\{(\w+)\}/g, (m, name) => (name in params ? String(params[name]) : m));
