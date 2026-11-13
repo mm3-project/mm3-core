@@ -49,6 +49,10 @@ jobs:
       - name: Coverage matrix (CORE-78)
         run: uv run python tools/trace_report.py --out coverage.md && cat coverage.md >> "$GITHUB_STEP_SUMMARY"
 
+  # Python matrix: the full suite (browser tests, coverage gate) runs on 3.13, the
+  # Debian 13 interpreter. 3.11, the supported floor (requires-python >=3.11), runs
+  # the non-browser tests only; lint and mypy also run on 3.11. 3.14 is checked by
+  # the Canary workflow (newest-allowed), so it is not repeated here.
   test:
     runs-on: ubuntu-latest
     # A hung step fails the job after this long (GitHub's default is 6 h).
@@ -56,21 +60,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.11", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --frozen --all-extras
-      # Browser tests (marker "browser") need Chromium; one job runs them, the
-      # others skip them. Includes the shell smoke test: a module renders in
+      # Browser tests (marker "browser") need Chromium; the 3.13 job runs them, the
+      # 3.11 floor job does not. Includes the shell smoke test: a module renders in
       # five languages and follows the grid when the window resizes.
       - name: Chromium for the browser tests
         if: matrix.python-version == '3.13'
         run: uv run playwright install --with-deps chromium
       # Deprecation warnings fail the suite (CORE-175), see pyproject.toml.
-      - run: uv run pytest
+      - name: Full suite with the coverage gate (CORE-72)
+        if: matrix.python-version == '3.13'
+        run: uv run pytest
+      - name: Floor job, non-browser tests
+        if: matrix.python-version != '3.13'
+        run: uv run pytest -m "not browser" --no-cov
 
   # Implements CORE-289 (Core spec 0.19, §9.4 Reference modules)
   modules:

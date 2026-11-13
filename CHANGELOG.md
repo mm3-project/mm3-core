@@ -7,6 +7,15 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (CI: Python matrix; no spec change)
+
+- The full suite, with the browser tests and the 85 % coverage gate, runs on Python
+  3.13 only (the Debian 13 interpreter). Python 3.11, the supported floor
+  (`requires-python >=3.11`), runs the non-browser tests without the coverage gate;
+  lint and mypy also run on 3.11. The 3.12 and 3.14 test jobs are dropped: 3.14 is
+  covered by the Canary workflow (`newest-allowed`). The ruleset's required checks
+  `test (3.12)` and `test (3.14)` must be removed by a repository admin.
+
 ### Fixed (CI: mm3 module check venv; no spec change)
 
 - `mm3 module check` ended with exit code 2 ("Chromium cannot be started") once
