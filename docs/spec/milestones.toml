@@ -267,10 +267,14 @@ done_at = { core = "0.40", contract = "1.0 rev 15" }
 #   work is PR C2 of the round 1 plan.
 # Closed again at Core 0.40 with the admin landing (CORE-378, ISS-001), the last
 #   requirement of the round 1 work in this milestone.
+# Core spec 0.41 (14 Nov 2026; Source: ENH-007): CORE-381 (connection indicator
+#   for the MQTT bridge in the admin header and the status view of the admin
+#   home, extends CORE-304, CORE-305 and CORE-378) added here; it reopens the
+#   milestone through the spec-change issue (CORE-79).
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
-  "CORE-290..292", "CORE-298..332", "CORE-374..380", "MOD-38", "MOD-39",
+  "CORE-290..292", "CORE-298..332", "CORE-374..381", "MOD-38", "MOD-39",
   "MOD-74",
 ]
 
