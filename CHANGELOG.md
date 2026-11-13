@@ -7,6 +7,13 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (spec: strict label check for new modules; ENH-011; Core spec 0.41, Module Contract 1.0 rev 16)
+
+- CORE-381 added: `mm3 module check --strict [ID,…]` turns warnings into failures, all of
+  them or only those of the named checks; `--strict MOD-46` is the label check. The
+  module-index CI (MOD-99, changed) and the CI workflow that `mm3 new-module` writes are to
+  run it. Specification only: the flag and the scaffold workflow follow in a code PR.
+
 ### Fixed (admin Form view: labels in the admin language; ISS-003; Core spec 0.40)
 
 - The Form view shows each field's schema `title` as its label and its `description` as

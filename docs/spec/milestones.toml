@@ -278,7 +278,8 @@ name = "Services: MQTT/HA, presence, installer, catalog, backup"
 status = "in_progress"
 requirements = [
   "CORE-50..53", "CORE-66", "CORE-100", "CORE-120..126", "CORE-130..136",
-  "CORE-160..165", "CORE-333..337", "CORE-338..373", "PRS-01..08", "MOD-96..99",
+  "CORE-160..165", "CORE-333..337", "CORE-338..373", "CORE-381", "PRS-01..08",
+  "MOD-96..99",
 ]
 # CORE-338..345 (core 0.31): MQTT bridge and Home Assistant. CORE-339 extends
 #   CORE-305 (status, milestone 6) and CORE-342 extends CORE-100 without
@@ -323,6 +324,10 @@ requirements = [
 #   restore. The engine's /api/v1/backups* routes (CORE-361, 413
 #   CORE_API_UPLOAD_TOO_LARGE, CORE-365 forwarding) and the Backups admin page
 #   come with the CORE-356 forwarding layer; the milestone stays in_progress.
+# CORE-381 (core 0.41; Source: ENH-011): the strict label check of `mm3 module check`
+#   (extends CORE-281 of milestone 4 and CORE-310 of milestone 6 without changing
+#   them) with the module-index CI (MOD-99, changed in Contract rev 16) and the
+#   CI workflow of the new-module scaffold.
 # CORE-333..337 (core 0.30): pages out of the cycle, timed jumps, idle
 #   return, pause holds and the previous page (MMM-pages and
 #   MMM-ProfileSwitcher). They extend CORE-230..237 of milestones 2, 3 and 6

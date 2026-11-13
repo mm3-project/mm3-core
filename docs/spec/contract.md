@@ -1,6 +1,6 @@
 # MM3 Module Contract v1.0
 
-Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 15 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 16 (draft)
 
 ## 1. Scope and conformance
 
@@ -535,6 +535,7 @@ Report      ./mm3-weather/.mm3/check-report.json
 - Builds the wheel with `uv build`, installs it in a temporary venv together with the running `mm3-core` and its `[testing]` extra (core CORE-279, CORE-281), then runs static checks, the test kit suite and the browser harness.
 - Exit code 0 = compliant, 1 = a MUST failed, 2 = tool error; `--format json` and `--junit` for CI.
 - `--only static` gives a fast check for editors and pre-commit hooks.
+- `--strict [ID,…]` turns warnings into failures, all of them or only those of the named checks (core CORE-381). MOD-46 is a MUST whose missing label keys are reported as warnings; `--strict MOD-46` makes them fail, and the index CI (MOD-99) and the CI workflow of the scaffold use it.
 - MOD-95: A module published as compatible with MM3 MUST pass `mm3 module check` for the API version it declares; the admin catalog shows the check result if a report is shipped in the wheel.
 
 * **Static checks** read the source tree and the built wheel without importing the module: Python by AST (MOD-12, 23, 28, 29, 40, 61, 80, 86) and the JavaScript under `static/` by an in-house tokenizer that understands comments, strings, template literals and regular expressions and accepts any modern syntax (MOD-30–32, 35, 37, 61, 80). MOD-05 also requires a compiled `.mo` and `messages.json` for every `.po` in the wheel (core CORE-280). MOD-61 treats as user-visible a literal with letters and a space in rendered templates, in `set_state`, `patch_state` and `send_to_client` payloads, in notification payloads and in error messages; keys, CSS classes and identifiers are not. Each finding gives file, line and MOD id.
@@ -565,7 +566,7 @@ async def test_core_publishes_forecast():
 - **Fakes**: `h.http.mock(method, url, *, status=200, json=None, text=None, headers=None, raises=None)` answers calls whose URL starts with `url` (latest mock wins); an unmocked call raises `HttpConnectionError` and is listed in the contract report. Grants apply as on a mirror, so a URL outside them raises `PermissionError`. `h.mqtt` (`fake_mqtt`) records publishes and delivers `h.mqtt.inject(topic, payload)` to matching subscriptions through the instance inbox, as on a mirror (section 4.4).
 - **Contract checks**: `await h.check_contract()` runs every section 11 row checked by the test kit (MOD-06, 10–16, 24–27, 29, 42, 43, 70, 72, 83) on fresh instances built from the harness arguments, with the test's HTTP mocks and h.respond handlers, and raises `ContractError` listing the failed ids. Every `SecretStr` field is filled with a random canary that must not appear in snapshots, payloads, client messages or logs (MOD-16, 42, 83). `sys.addaudithook` reports file writes outside the storage directory (MOD-06) and any file, socket or subprocess use during `__init__` (MOD-10); every event-loop callback that runs longer than 100 ms, measured with a real clock because the harness loop runs on virtual time, is reported (MOD-11). MOD-72 applies to modules that declare a capability with a grant scope (http.outbound, mqtt.publish, mqtt.subscribe) and passes when, with no grants, the instance never reaches FAILED or DISABLED and logs at least one `warning`; MOD-27 runs 20 suspend/resume cycles; MOD-43 sends each consumed notification with an extra field and with each optional field removed.
 - **Browser harness** (`mm3.testing.browser`, Playwright): loads the element in a stand-alone shell page, feeds states, resizes the cell, toggles preview and locale, records render time, CSP violations and overflow; supports screenshot comparisons per locale.
-- **Scaffold**: `mm3 new-module <name> --kind full|backend|frontend` (core CORE-281) generates a src-layout package with `mm3-build` as build requirement (core CORE-280), the class with its declarations, all five locale catalogs, a README with "Notifications" and "Grants" sections and a sample test; it passes `mm3 module check` from the first run. `--kind frontend` writes the class with no hooks that section 1 calls the generated stub.
+- **Scaffold**: `mm3 new-module <name> --kind full|backend|frontend` (core CORE-281) generates a src-layout package with `mm3-build` as build requirement (core CORE-280), the class with its declarations, all five locale catalogs, a README with "Notifications" and "Grants" sections and a sample test; it passes `mm3 module check` from the first run, and its CI workflow `.github/workflows/check.yml` runs it with `--strict MOD-46` (core CORE-381). `--kind frontend` writes the class with no hooks that section 1 calls the generated stub.
 
 ### 12.3 Publishing to the module catalog
 
@@ -574,7 +575,7 @@ A module enters the public catalog (core spec 10.6) through a pull request to th
 - MOD-96: Releases MUST be uploaded with PyPI Trusted Publishing from the module's public source repository, so they carry PEP 740 attestations; manual uploads with API tokens are rejected by the index.
 - MOD-97: The source repository MUST be public and the license OSI-approved; the README MUST list required capabilities and grants (MOD-71) and notifications (MOD-41).
 - MOD-98: The index entry `modules/<name>.yaml` MUST provide PyPI name, source repository, maintainer contact, license, category, and a `LocalizedText` description in all five languages; at least one screenshot SHOULD be provided.
-- MOD-99: Each release MUST pass `mm3 module check` in the index CI for its declared `api_version`; failing releases stay on PyPI but are not listed.
+- MOD-99: Each release MUST pass `mm3 module check` in the index CI for its declared `api_version`; failing releases stay on PyPI but are not listed. The index CI runs the check with `--strict MOD-46` (core CORE-381), so a release with a field that has no translated label is not listed.
 - The **verified** badge is granted after a manual review of code, capabilities and data handling; it is reviewed again when a release adds capabilities.
 
 ```yaml
@@ -719,6 +720,7 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
+| 1.0 rev 16 | 2026-11-13 | Strict label check for new modules: the index CI runs mm3 module check in strict mode for the label check (MOD-99 changed; core CORE-381); 12.1 and the scaffold text describe --strict. Source: ENH-011 |
 | 1.0 rev 15 | 2026-11-06 | Aligned with core spec 0.32: ctx.system.set\_display\_power(on) under the capability system.power (§4; core CORE-346). No MOD ids added, changed or removed |
 | 1.0 rev 14 | 2026-11-06 | Aligned with core spec 0.31: ctx.mqtt.ha\_entity() and HaEntity defined, errors without a bridge or connection, engine-owned topics (§4, §4.4; core CORE-342 to CORE-345). No MOD ids added, changed or removed |
 | 1.0 rev 13 | 2026-11-05 | Aligned with core spec 0.29: the admin element and its rules (MOD-38, MOD-39 added, §5.3, §11) and module routes on ctx.router (MOD-74 added, §8, §11); /core/mm3.js also exports render |
