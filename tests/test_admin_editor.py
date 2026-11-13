@@ -226,12 +226,57 @@ def test_core_310_form_texts(tmp_path: Path) -> None:
     for lang, label in (("en", "City"), ("it", "Città")):
         (root / lang).mkdir(parents=True)
         (root / lang / "messages.json").write_text(
-            json.dumps({"CONFIG_CITY_LABEL": label, "CONFIG_CITY_HELP": "help", "OTHER": "x"})
+            json.dumps(
+                {
+                    "CFG_CITY": label,
+                    "CFG_CITY_HELP": "help",
+                    "CONFIG_OLD_LABEL": "old",
+                    "OTHER": "x",
+                }
+            )
         )
     texts = form_texts("it", {"wlike": root, "none": None})
-    assert texts["wlike"] == {"CONFIG_CITY_LABEL": "Città", "CONFIG_CITY_HELP": "help"}
+    assert texts["wlike"] == {"CFG_CITY": "Città", "CFG_CITY_HELP": "help"}
     assert "none" not in texts
-    assert form_texts("fr", {"wlike": root})["wlike"]["CONFIG_CITY_LABEL"] == "City"
+    assert form_texts("fr", {"wlike": root})["wlike"]["CFG_CITY"] == "City"
+
+
+async def test_core_310_form_labels_are_the_schema_title_and_description(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    base, sid, _, _ = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        # An engine field: title and description are keys of the core catalog.
+        field = page.locator('mm3-schema-form [data-path="/locale"]')
+        assert (await field.locator(".label").inner_text()).strip() == "Language"
+        assert "Language of the mirror" in await field.locator("small").inner_text()
+        # A module section: the instance's own fields read the core catalog; a module
+        # field with no catalog entry shows its name and no help.
+        await page.click("nav.sections >> text=w")
+        await page.wait_for_selector('mm3-schema-form [data-path="/config/city"]')
+        disabled = page.locator('mm3-schema-form [data-path="/disabled"]')
+        assert (await disabled.locator(".label").inner_text()).strip() == "Disabled"
+        city = page.locator('mm3-schema-form [data-path="/config/city"]')
+        assert (await city.locator(".label").inner_text()).strip() == "city"
+        assert await city.locator("small").count() == 0
+        # The admin language follows the session: the same fields in Italian.
+        status = await page.evaluate(
+            "async () => (await fetch('/api/v1/session/locale', {method: 'PUT', "
+            "headers: {'content-type': 'application/json'}, "
+            "body: JSON.stringify({locale: 'it'})})).status"
+        )
+        assert status in (200, 204)
+        await page.reload()
+        await page.wait_for_selector("mm3-schema-form .field")
+        field = page.locator('mm3-schema-form [data-path="/locale"]')
+        assert (await field.locator(".label").inner_text()).strip() == "Lingua"
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert problems == []
 
 
 # --- CORE-323: the CodeMirror bundle ---------------------------------------------------------

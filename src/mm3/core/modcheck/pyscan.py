@@ -477,10 +477,35 @@ def _field_call(value: ast.expr | None) -> ast.Call | None:
     return None
 
 
+def _reachable_models(
+    root: str, classes: dict[str, tuple[str, ast.ClassDef]]
+) -> list[tuple[str, tuple[str, ast.ClassDef]]]:
+    """The config class and the model classes of the package its annotations name."""
+    order: list[str] = []
+    todo = [root]
+    while todo:
+        name = todo.pop(0)
+        if name in order or name not in classes:
+            continue
+        order.append(name)
+        for stmt in classes[name][1].body:
+            if isinstance(stmt, ast.AnnAssign):
+                for ref in re.findall(r"[A-Za-z_][A-Za-z0-9_]*", ast.unparse(stmt.annotation)):
+                    if ref in classes and classes[ref][1].bases:
+                        todo.append(ref)
+    return [(n, classes[n]) for n in order]
+
+
 def config_findings(
     trees: dict[str, ast.Module], facts: ClassFacts, en_keys: set[str] | None
 ) -> list[tuple[str, Finding]]:
     """Check the configuration model (MOD-45, MOD-46, MOD-47).
+
+    A title or description that is not an UPPER_SNAKE key breaks MOD-46. A field
+    without a title or a description, or whose key is not in the English catalog,
+    is only a warning (a SHOULD finding): the form then shows the field name or no
+    help (CORE-310). The models nested in the configuration are checked too, when
+    they are defined in the package.
 
     Args:
         trees: Parsed package files by relative path.
@@ -489,6 +514,10 @@ def config_findings(
 
     Returns:
         ``(MOD id, finding)`` pairs.
+
+    Implements:
+        MOD-45, MOD-46, MOD-47: Module Contract 1.0 rev 15, §6.2 Configuration.
+        CORE-310: Core spec 0.40, §6.4 Web configuration editor.
     """
     out: list[tuple[str, Finding]] = []
     if facts.config_model is None:
@@ -499,6 +528,15 @@ def config_findings(
     rel, node = classes[facts.config_model]
     if not _is_module_config(facts.config_model, classes, set()):
         out.append(("MOD-45", Finding(f"{node.name} must subclass ModuleConfig", rel, node.lineno)))
+    for _, (rel, node) in _reachable_models(facts.config_model, classes):
+        out.extend(_model_findings(rel, node, en_keys))
+    return out
+
+
+def _model_findings(
+    rel: str, node: ast.ClassDef, en_keys: set[str] | None
+) -> list[tuple[str, Finding]]:
+    out: list[tuple[str, Finding]] = []
     for stmt in ast.walk(node):
         if isinstance(stmt, ast.Assign) and any(
             isinstance(t, ast.Name) and t.id == "model_config" for t in stmt.targets
@@ -515,6 +553,22 @@ def config_findings(
             continue
         name, annotation = stmt.target.id, ast.unparse(stmt.annotation)
         call = _field_call(stmt.value)
+        given = {kw.arg for kw in (call.keywords if call else [])}
+        for kind in ("title", "description"):
+            if kind not in given:
+                out.append(
+                    (
+                        "MOD-46",
+                        Finding(
+                            f"{name}: no {kind} (the form shows "
+                            + ("the field name" if kind == "title" else "no help")
+                            + ")",
+                            rel,
+                            stmt.lineno,
+                            "warn",
+                        ),
+                    )
+                )
         for kw in call.keywords if call else []:
             if kw.arg in ("title", "description") and isinstance(kw.value, ast.Constant):
                 key = kw.value.value
@@ -537,6 +591,7 @@ def config_findings(
                                 f"{name}: {kw.arg} key {key} is not in the English catalog",
                                 rel,
                                 kw.value.lineno,
+                                "warn",
                             ),
                         )
                     )

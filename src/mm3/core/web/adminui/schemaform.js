@@ -1,9 +1,10 @@
 // <mm3-schema-form>: the in-house form renderer of the admin Form view.
 // Implements CORE-37 (Core spec 0.22, §6.4 Web configuration editor): fields come
 // from the JSON Schema; `ui` hints (widget, order, group, hidden) are honoured.
-// Implements CORE-310 (Core spec 0.22, §6.4 Web configuration editor): labels and
-// help from CONFIG_<PATH>_LABEL / _HELP; a missing label shows the field name; a
-// LocalizedText field has one input per language plus "add language".
+// Implements CORE-310 (Core spec 0.40, §6.4 Web configuration editor): a field's
+// label is its schema `title` and its help its `description`, both catalog keys; a
+// missing label shows the field name and a missing help nothing; a LocalizedText
+// field has one input per language plus "add language".
 // Implements CORE-303 (Core spec 0.22, §6.4 Web configuration editor) and CORE-320
 // (Core spec 0.25, §6.4 Web configuration editor): a secret shows as kept until a
 // new value is typed; !env references are shown and edited as written.
@@ -11,21 +12,14 @@
 // errors inline on the field and, for the section itself, at the top of the form.
 //
 // Properties: schema (the root, for $refs), node (this form's schema), value,
-// texts ({key: text}), textPrefix (CONFIG_<SECTION> or CONFIG), records ({pointer:
-// [message]}). Events: "mm3-change" {path, value, remove, label}.
+// texts ({key: text}: the module's catalog over the core catalog, CORE-264), records
+// ({pointer: [message]}). Events: "mm3-change" {path, value, remove, label}.
 
 import { html, nothing, render } from "/admin/static/lit-html.js";
 import { t } from "/admin/static/admin.js";
 import { escapePart, isTag } from "/admin/static/draft.js";
 
 const LANGS = ["en", "it", "fr", "es", "de"];
-
-function snake(name) {
-  return String(name)
-    .replace(/([a-z0-9])([A-Z])/g, "$1_$2")
-    .replace(/[^A-Za-z0-9]+/g, "_")
-    .toUpperCase();
-}
 
 function short(value) {
   if (value === undefined) return "–";
@@ -40,7 +34,6 @@ export class SchemaForm extends HTMLElement {
     this.node = null;
     this.value = undefined;
     this.texts = {};
-    this.textPrefix = "CONFIG";
     this.records = {};
     this.section = "";
     this.instance = false;
@@ -102,26 +95,14 @@ export class SchemaForm extends HTMLElement {
 
   // --- texts ---------------------------------------------------------------------------
 
-  textKey(names, kind) {
-    // CORE-310: a module's own fields (under config) use its catalog without the
-    // section; instance keys and engine sections use the core catalog, section first.
-    let prefix = this.textPrefix;
-    let rest = names.filter((n) => typeof n !== "number");
-    if (this.instance) {
-      if (rest[0] === "config") rest = rest.slice(1);
-      else prefix = "CONFIG_MODULES";
-    }
-    const path = rest.map(snake).filter(Boolean).join("_");
-    return `${prefix}${path ? `_${path}` : ""}_${kind}`;
-  }
-
   label(names, node) {
-    const key = this.textKey(names, "LABEL");
-    return this.texts[key] || node.title || names[names.length - 1] || "";
+    const key = node.title;
+    return (typeof key === "string" && this.texts[key]) || names[names.length - 1] || "";
   }
 
-  help(names) {
-    return this.texts[this.textKey(names, "HELP")] || "";
+  help(names, node) {
+    const key = node.description;
+    return (typeof key === "string" && this.texts[key]) || "";
   }
 
   // --- changes -----------------------------------------------------------------------
@@ -158,7 +139,7 @@ export class SchemaForm extends HTMLElement {
     const path = parts.map((p) => `/${escapePart(p)}`).join("");
     if (isTag(value)) return this.tagged(path, names, node, value);
     const label = root ? nothing : html`<span class="label">${this.label(names, node)}</span>`;
-    const help = this.help(names);
+    const help = this.help(names, node);
     const wrap = (control) => html`<div class="field" data-path=${path}>
       <label>${label}${control}</label>
       ${help && !root ? html`<small class="muted">${help}</small>` : nothing}
@@ -240,7 +221,7 @@ export class SchemaForm extends HTMLElement {
       groups.get(group).push([key, sub]);
     }
     const body = [...groups].map(([group, entries]) => html`
-      ${group ? html`<h4 class="group">${this.texts[`${this.textPrefix}_GROUP_${snake(group)}`] || group}</h4>` : nothing}
+      ${group ? html`<h4 class="group">${this.texts[group] || group}</h4>` : nothing}
       ${entries.map(([key, sub]) => this.field([...parts, key], [...names, key], sub, v[key]))}`);
     if (root) return html`${body}`;
     const legend =

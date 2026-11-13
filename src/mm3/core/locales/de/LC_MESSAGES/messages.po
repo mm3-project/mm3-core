@@ -806,3 +806,719 @@ msgstr "Dienste"
 
 msgid "CORE_ADMIN_DISABLED_STATE"
 msgstr "deaktiviert"
+
+# Form labels (title) and help (description) of the engine's configuration fields (CORE-310).
+
+msgid "CFG_CONFIG_VERSION"
+msgstr "Konfigurationsversion"
+
+msgid "CFG_CONFIG_VERSION_HELP"
+msgstr "Version des Formats der Konfigurationsdatei."
+
+msgid "CFG_ENGINE"
+msgstr "Engine"
+
+msgid "CFG_ENGINE_HELP"
+msgstr "Sprache, Listener, MQTT-Brücke, Zeitbudgets und weitere Einstellungen der Engine."
+
+msgid "CFG_DISPLAY"
+msgstr "Anzeige"
+
+msgid "CFG_DISPLAY_HELP"
+msgstr "Ausgang, Auflösung, Drehung und Skalierung des Bildschirms."
+
+msgid "CFG_AUDIO"
+msgstr "Audio"
+
+msgid "CFG_AUDIO_HELP"
+msgstr "Tonausgang, Lautstärke und Stummschaltung des Kiosks."
+
+msgid "CFG_LAYOUT"
+msgstr "Layout"
+
+msgid "CFG_LAYOUT_HELP"
+msgstr "Raster, Abstand und Innenabstand des Bildschirms."
+
+msgid "CFG_PAGES"
+msgstr "Seiten"
+
+msgid "CFG_PAGES_HELP"
+msgstr "Seiten mit verschiedenen Modulen und wie der Spiegel zwischen ihnen wechselt."
+
+msgid "CFG_MODULES"
+msgstr "Module"
+
+msgid "CFG_MODULES_HELP"
+msgstr "Die Modulinstanzen, die auf dem Spiegel laufen."
+
+msgid "CFG_BACKUP"
+msgstr "Sicherung"
+
+msgid "CFG_BACKUP_HELP"
+msgstr "Zeitplan, Verschlüsselung, Aufbewahrung und Remote-Kopie der Sicherungen."
+
+msgid "CFG_ENGINE_LOCALE"
+msgstr "Sprache"
+
+msgid "CFG_ENGINE_LOCALE_HELP"
+msgstr "Sprache des Spiegels und der Verwaltung als Code, zum Beispiel en oder it."
+
+msgid "CFG_ENGINE_TIMEZONE"
+msgstr "Zeitzone"
+
+msgid "CFG_ENGINE_TIMEZONE_HELP"
+msgstr "Name einer IANA-Zeitzone, zum Beispiel Europe/Berlin; standardmäßig die des Systems."
+
+msgid "CFG_ENGINE_UNITS"
+msgstr "Einheiten"
+
+msgid "CFG_ENGINE_UNITS_HELP"
+msgstr "Metrische oder imperiale Einheiten für Module, die Messwerte anzeigen."
+
+msgid "CFG_ENGINE_LOCATION"
+msgstr "Standort"
+
+msgid "CFG_ENGINE_LOCATION_HELP"
+msgstr "Der Ort des Spiegels, gemeinsam genutzt von Modulen wie Uhr und Wetter."
+
+msgid "CFG_ENGINE_SERVER"
+msgstr "Spiegel-Server"
+
+msgid "CFG_ENGINE_SERVER_HELP"
+msgstr "Adresse und Port, die die Spiegelanzeige bereitstellen."
+
+msgid "CFG_ENGINE_ADMIN"
+msgstr "Admin-Server"
+
+msgid "CFG_ENGINE_ADMIN_HELP"
+msgstr "Adresse und Port der Verwaltungsoberfläche."
+
+msgid "CFG_ENGINE_MQTT"
+msgstr "MQTT-Brücke"
+
+msgid "CFG_ENGINE_MQTT_HELP"
+msgstr "Verbindung zu einem MQTT-Broker; weglassen schaltet die Brücke ab."
+
+msgid "CFG_ENGINE_TIMEOUTS"
+msgstr "Zeitbudgets"
+
+msgid "CFG_ENGINE_TIMEOUTS_HELP"
+msgstr "Wie lange die Engine auf ein Modul wartet, bevor ein Aufruf als fehlgeschlagen gilt."
+
+msgid "CFG_ENGINE_BUS"
+msgstr "Nachrichtenbus"
+
+msgid "CFG_ENGINE_BUS_HELP"
+msgstr "Einstellungen des Busses, der Benachrichtigungen zwischen Modulen befördert."
+
+msgid "CFG_ENGINE_THREADS"
+msgstr "Worker-Threads"
+
+msgid "CFG_ENGINE_THREADS_HELP"
+msgstr "Größe des gemeinsamen Pools für blockierende Arbeit."
+
+msgid "CFG_ENGINE_LOG_LEVEL"
+msgstr "Log-Stufe"
+
+msgid "CFG_ENGINE_LOG_LEVEL_HELP"
+msgstr "Standardstufe des Logs: debug, info, warning oder error."
+
+msgid "CFG_ENGINE_DEBUG_TTL"
+msgstr "Debug-Dauer"
+
+msgid "CFG_ENGINE_DEBUG_TTL_HELP"
+msgstr "Wie lange eine erhöhte Log-Stufe aktiv bleibt, bevor sie zur Standardstufe zurückkehrt."
+
+msgid "CFG_ENGINE_HISTORY"
+msgstr "Konfigurationsverlauf"
+
+msgid "CFG_ENGINE_HISTORY_HELP"
+msgstr "Wie viele gespeicherte Versionen der Konfiguration aufbewahrt werden."
+
+msgid "CFG_ENGINE_INPUT"
+msgstr "Eingabe"
+
+msgid "CFG_ENGINE_INPUT_HELP"
+msgstr "Touch und andere Eingaben am Kiosk."
+
+msgid "CFG_ENGINE_LOCATION_LAT"
+msgstr "Breitengrad"
+
+msgid "CFG_ENGINE_LOCATION_LAT_HELP"
+msgstr "Grad, von -90 bis 90."
+
+msgid "CFG_ENGINE_LOCATION_LON"
+msgstr "Längengrad"
+
+msgid "CFG_ENGINE_LOCATION_LON_HELP"
+msgstr "Grad, von -180 bis 180."
+
+msgid "CFG_ENGINE_LOCATION_NAME"
+msgstr "Name"
+
+msgid "CFG_ENGINE_LOCATION_NAME_HELP"
+msgstr "Name des Ortes, den Module anzeigen; ein Text je Sprache."
+
+msgid "CFG_ENGINE_SERVER_HOST"
+msgstr "Adresse"
+
+msgid "CFG_ENGINE_SERVER_HOST_HELP"
+msgstr "Adresse, über die die Spiegelanzeige bereitgestellt wird; 127.0.0.1 akzeptiert nur diesen Rechner."
+
+msgid "CFG_ENGINE_SERVER_PORT"
+msgstr "Port"
+
+msgid "CFG_ENGINE_SERVER_PORT_HELP"
+msgstr "TCP-Port, von 1 bis 65535."
+
+msgid "CFG_ENGINE_SERVER_ALLOW"
+msgstr "Erlaubte Netzwerke"
+
+msgid "CFG_ENGINE_SERVER_ALLOW_HELP"
+msgstr "Andere Netzwerke als dieser Rechner, die sich verbinden dürfen, zum Beispiel 192.168.1.0/24."
+
+msgid "CFG_ENGINE_ADMIN_HOST"
+msgstr "Adresse"
+
+msgid "CFG_ENGINE_ADMIN_HOST_HELP"
+msgstr "Adresse, über die die Verwaltungsoberfläche bereitgestellt wird; 127.0.0.1 akzeptiert nur diesen Rechner."
+
+msgid "CFG_ENGINE_ADMIN_PORT"
+msgstr "Port"
+
+msgid "CFG_ENGINE_ADMIN_PORT_HELP"
+msgstr "TCP-Port, von 1 bis 65535."
+
+msgid "CFG_ENGINE_ADMIN_ALLOW"
+msgstr "Erlaubte Netzwerke"
+
+msgid "CFG_ENGINE_ADMIN_ALLOW_HELP"
+msgstr "Andere Netzwerke als dieser Rechner, die sich verbinden dürfen, zum Beispiel 192.168.1.0/24."
+
+msgid "CFG_ENGINE_MQTT_URL"
+msgstr "Broker-URL"
+
+msgid "CFG_ENGINE_MQTT_URL_HELP"
+msgstr "mqtt://Host[:Port], oder mqtts://Host[:Port] für TLS."
+
+msgid "CFG_ENGINE_MQTT_USERNAME"
+msgstr "Benutzername"
+
+msgid "CFG_ENGINE_MQTT_USERNAME_HELP"
+msgstr "Benutzername für den Broker; leer lassen, wenn keiner nötig ist."
+
+msgid "CFG_ENGINE_MQTT_PASSWORD"
+msgstr "Passwort"
+
+msgid "CFG_ENGINE_MQTT_PASSWORD_HELP"
+msgstr "Passwort für den Broker; wird als Geheimnis behandelt."
+
+msgid "CFG_ENGINE_MQTT_CA"
+msgstr "CA-Datei"
+
+msgid "CFG_ENGINE_MQTT_CA_HELP"
+msgstr "PEM-Datei der Zertifizierungsstelle, relativ zur Hauptkonfigurationsdatei."
+
+msgid "CFG_ENGINE_MQTT_CLIENT_ID"
+msgstr "Client-ID"
+
+msgid "CFG_ENGINE_MQTT_CLIENT_ID_HELP"
+msgstr "MQTT-Client-ID; standardmäßig mm3-<Hostname>."
+
+msgid "CFG_ENGINE_MQTT_KEEPALIVE"
+msgstr "Keepalive"
+
+msgid "CFG_ENGINE_MQTT_KEEPALIVE_HELP"
+msgstr "Sekunden zwischen Keepalive-Nachrichten, von 10 bis 3600."
+
+msgid "CFG_ENGINE_MQTT_BASE_TOPIC"
+msgstr "Basis-Topic"
+
+msgid "CFG_ENGINE_MQTT_BASE_TOPIC_HELP"
+msgstr "Wurzel der Topics der Engine; standardmäßig mm3/<Hostname>."
+
+msgid "CFG_ENGINE_MQTT_EXPORT"
+msgstr "Exportierte Benachrichtigungen"
+
+msgid "CFG_ENGINE_MQTT_EXPORT_HELP"
+msgstr "Namensmuster der Benachrichtigungen, die unter <base>/event/ veröffentlicht werden; standardmäßig keine."
+
+msgid "CFG_ENGINE_MQTT_IMPORT"
+msgstr "Importierte Benachrichtigungen"
+
+msgid "CFG_ENGINE_MQTT_IMPORT_HELP"
+msgstr "Namensmuster, die von <base>/notify/ angenommen werden; standardmäßig keine."
+
+msgid "CFG_ENGINE_MQTT_HA_DISCOVERY"
+msgstr "Home-Assistant-Discovery"
+
+msgid "CFG_ENGINE_MQTT_HA_DISCOVERY_HELP"
+msgstr "Veröffentlicht die Entitäten, damit Home Assistant sie selbst findet."
+
+msgid "CFG_ENGINE_MQTT_DISCOVERY_PREFIX"
+msgstr "Discovery-Präfix"
+
+msgid "CFG_ENGINE_MQTT_DISCOVERY_PREFIX_HELP"
+msgstr "Discovery-Präfix von Home Assistant; standardmäßig homeassistant."
+
+msgid "CFG_ENGINE_MQTT_NODE_ID"
+msgstr "Geräte-ID"
+
+msgid "CFG_ENGINE_MQTT_NODE_ID_HELP"
+msgstr "ID des Geräts in Home Assistant; aus dem Basis-Topic abgeleitet, wenn leer."
+
+msgid "CFG_ENGINE_TIMEOUTS_START"
+msgstr "Start"
+
+msgid "CFG_ENGINE_TIMEOUTS_START_HELP"
+msgstr "Sekunden, die ein Modul zum Starten brauchen darf."
+
+msgid "CFG_ENGINE_TIMEOUTS_STOP"
+msgstr "Stopp"
+
+msgid "CFG_ENGINE_TIMEOUTS_STOP_HELP"
+msgstr "Sekunden, die ein Modul zum Beenden brauchen darf."
+
+msgid "CFG_ENGINE_TIMEOUTS_SUSPEND"
+msgstr "Anhalten"
+
+msgid "CFG_ENGINE_TIMEOUTS_SUSPEND_HELP"
+msgstr "Sekunden, die ein Modul zum Anhalten brauchen darf."
+
+msgid "CFG_ENGINE_TIMEOUTS_RECONFIGURE"
+msgstr "Neu konfigurieren"
+
+msgid "CFG_ENGINE_TIMEOUTS_RECONFIGURE_HELP"
+msgstr "Sekunden, die ein Modul zum Übernehmen einer neuen Konfiguration brauchen darf."
+
+msgid "CFG_ENGINE_TIMEOUTS_HANDLER"
+msgstr "Handler"
+
+msgid "CFG_ENGINE_TIMEOUTS_HANDLER_HELP"
+msgstr "Sekunden, die ein Handler laufen darf, bevor er als zu langsam gilt."
+
+msgid "CFG_ENGINE_TIMEOUTS_JOB"
+msgstr "Job"
+
+msgid "CFG_ENGINE_TIMEOUTS_JOB_HELP"
+msgstr "Sekunden, die ein geplanter Job laufen darf."
+
+msgid "CFG_ENGINE_BUS_QUEUE_SIZE"
+msgstr "Warteschlangengröße"
+
+msgid "CFG_ENGINE_BUS_QUEUE_SIZE_HELP"
+msgstr "Wie viele Benachrichtigungen in der Warteschlange eines Moduls warten können."
+
+msgid "CFG_ENGINE_HISTORY_KEEP"
+msgstr "Aufbewahrte Versionen"
+
+msgid "CFG_ENGINE_HISTORY_KEEP_HELP"
+msgstr "Anzahl der aufzubewahrenden gespeicherten Versionen, mindestens 10."
+
+msgid "CFG_ENGINE_INPUT_TOUCH"
+msgstr "Touch"
+
+msgid "CFG_ENGINE_INPUT_TOUCH_HELP"
+msgstr "Touch-Eingabe auf dem Kiosk-Bildschirm annehmen."
+
+msgid "CFG_DISPLAY_OUTPUT"
+msgstr "Ausgang"
+
+msgid "CFG_DISPLAY_OUTPUT_HELP"
+msgstr "Name des Bildschirmausgangs, zum Beispiel HDMI-A-1; leer verwendet den aktuellen."
+
+msgid "CFG_DISPLAY_WIDTH"
+msgstr "Breite"
+
+msgid "CFG_DISPLAY_WIDTH_HELP"
+msgstr "Horizontale Auflösung in Pixeln."
+
+msgid "CFG_DISPLAY_HEIGHT"
+msgstr "Höhe"
+
+msgid "CFG_DISPLAY_HEIGHT_HELP"
+msgstr "Vertikale Auflösung in Pixeln."
+
+msgid "CFG_DISPLAY_REFRESH"
+msgstr "Bildwiederholrate"
+
+msgid "CFG_DISPLAY_REFRESH_HELP"
+msgstr "Bildwiederholrate in Hz."
+
+msgid "CFG_DISPLAY_ROTATION"
+msgstr "Drehung"
+
+msgid "CFG_DISPLAY_ROTATION_HELP"
+msgstr "Drehung des Bildschirms in Grad: 0, 90, 180 oder 270."
+
+msgid "CFG_DISPLAY_SCALE"
+msgstr "Skalierung"
+
+msgid "CFG_DISPLAY_SCALE_HELP"
+msgstr "Skalierungsfaktor des ganzen Bildschirms, von 0,5 bis 3."
+
+msgid "CFG_AUDIO_SINK"
+msgstr "Ausgang"
+
+msgid "CFG_AUDIO_SINK_HELP"
+msgstr "auto, hdmi, analog oder der Name eines Ausgangs."
+
+msgid "CFG_AUDIO_VOLUME"
+msgstr "Lautstärke"
+
+msgid "CFG_AUDIO_VOLUME_HELP"
+msgstr "Lautstärke in Prozent, von 0 bis 100; leer lässt sie unverändert."
+
+msgid "CFG_AUDIO_MUTE"
+msgstr "Stumm"
+
+msgid "CFG_AUDIO_MUTE_HELP"
+msgstr "Schaltet den Ausgang stumm."
+
+msgid "CFG_LAYOUT_GRID"
+msgstr "Raster"
+
+msgid "CFG_LAYOUT_GRID_HELP"
+msgstr "Anzahl der Spalten und Zeilen, auf denen Module platziert werden."
+
+msgid "CFG_LAYOUT_GAP"
+msgstr "Abstand"
+
+msgid "CFG_LAYOUT_GAP_HELP"
+msgstr "Abstand zwischen den Zellen, zum Beispiel 16px."
+
+msgid "CFG_LAYOUT_PADDING"
+msgstr "Innenabstand"
+
+msgid "CFG_LAYOUT_PADDING_HELP"
+msgstr "Abstand zwischen Raster und Bildschirmrand, zum Beispiel 32px."
+
+msgid "CFG_LAYOUT_GRID_COLUMNS"
+msgstr "Spalten"
+
+msgid "CFG_LAYOUT_GRID_COLUMNS_HELP"
+msgstr "Anzahl der Spalten, von 1 bis 48."
+
+msgid "CFG_LAYOUT_GRID_ROWS"
+msgstr "Zeilen"
+
+msgid "CFG_LAYOUT_GRID_ROWS_HELP"
+msgstr "Anzahl der Zeilen, von 1 bis 48."
+
+msgid "CFG_PAGES_DEFAULT"
+msgstr "Standardseite"
+
+msgid "CFG_PAGES_DEFAULT_HELP"
+msgstr "Die zuerst gezeigte Seite, zu der zurückgekehrt wird; leer ist die erste Seite."
+
+msgid "CFG_PAGES_ROTATE"
+msgstr "Wechselzeit"
+
+msgid "CFG_PAGES_ROTATE_HELP"
+msgstr "Wie lange jede Seite bleibt, bevor die nächste kommt; 0 schaltet den Wechsel ab."
+
+msgid "CFG_PAGES_PAUSE_ON_INTERACTION"
+msgstr "Pause nach Berührung"
+
+msgid "CFG_PAGES_PAUSE_ON_INTERACTION_HELP"
+msgstr "Wie lange der Wechsel nach einer Berührung des Bildschirms pausiert."
+
+msgid "CFG_PAGES_RESET_ON_RESUME"
+msgstr "Beim Fortsetzen neu starten"
+
+msgid "CFG_PAGES_RESET_ON_RESUME_HELP"
+msgstr "Kehrt zur Standardseite zurück, wenn der Spiegel aufwacht."
+
+msgid "CFG_PAGES_RETURN_AFTER"
+msgstr "Zurück nach"
+
+msgid "CFG_PAGES_RETURN_AFTER_HELP"
+msgstr "Kehrt nach dieser Ruhezeit zur Standardseite zurück; 0 schaltet es ab."
+
+msgid "CFG_PAGES_TRANSITION"
+msgstr "Übergang"
+
+msgid "CFG_PAGES_TRANSITION_HELP"
+msgstr "Effekt zwischen den Seiten: Überblenden oder keiner."
+
+msgid "CFG_PAGES_LIST"
+msgstr "Seiten"
+
+msgid "CFG_PAGES_LIST_HELP"
+msgstr "Die Seiten: mindestens eine, höchstens 32."
+
+msgid "CFG_PAGES_LIST_ID"
+msgstr "Seiten-ID"
+
+msgid "CFG_PAGES_LIST_ID_HELP"
+msgstr "Kleinbuchstaben, Ziffern und Unterstriche; wird in der Konfiguration verwendet."
+
+msgid "CFG_PAGES_LIST_TITLE"
+msgstr "Titel"
+
+msgid "CFG_PAGES_LIST_TITLE_HELP"
+msgstr "Name in der Verwaltung und in Home Assistant; ein Text je Sprache."
+
+msgid "CFG_PAGES_LIST_ROTATE"
+msgstr "Wechselzeit"
+
+msgid "CFG_PAGES_LIST_ROTATE_HELP"
+msgstr "Wie lange diese Seite bleibt; ersetzt die Wechselzeit aller Seiten."
+
+msgid "CFG_PAGES_LIST_CYCLE"
+msgstr "Im Wechsel"
+
+msgid "CFG_PAGES_LIST_CYCLE_HELP"
+msgstr "Aus nimmt die Seite aus dem Wechsel; sie wird dann nur auf Anforderung gezeigt."
+
+msgid "CFG_PAGES_LIST_AFTER"
+msgstr "Springen nach"
+
+msgid "CFG_PAGES_LIST_AFTER_HELP"
+msgstr "Springt zu einer anderen Seite, nachdem diese eine Weile aktuell war."
+
+msgid "CFG_PAGES_LIST_AFTER_TIME"
+msgstr "Zeit"
+
+msgid "CFG_PAGES_LIST_AFTER_TIME_HELP"
+msgstr "Wie lange die Seite aktuell bleibt, bevor der Sprung erfolgt."
+
+msgid "CFG_PAGES_LIST_AFTER_PAGE"
+msgstr "Zielseite"
+
+msgid "CFG_PAGES_LIST_AFTER_PAGE_HELP"
+msgstr "Die Seite, zu der gesprungen wird; leer ist die Standardseite."
+
+msgid "CFG_MODULES_MODULE"
+msgstr "Modul"
+
+msgid "CFG_MODULES_MODULE_HELP"
+msgstr "Das installierte Modul, das diese Instanz ausführt."
+
+msgid "CFG_MODULES_ID"
+msgstr "Instanz-ID"
+
+msgid "CFG_MODULES_ID_HELP"
+msgstr "Eindeutiger Name der Instanz; standardmäßig der Modulname."
+
+msgid "CFG_MODULES_POSITION"
+msgstr "Position"
+
+msgid "CFG_MODULES_POSITION_HELP"
+msgstr "Eine Region wie top_left oder ein Rechteck im Raster."
+
+msgid "CFG_MODULES_POSITIONS"
+msgstr "Positionen je Seite"
+
+msgid "CFG_MODULES_POSITIONS_HELP"
+msgstr "Eine Position für einzelne Seiten, die die obige ersetzt."
+
+msgid "CFG_MODULES_PAGES"
+msgstr "Seiten"
+
+msgid "CFG_MODULES_PAGES_HELP"
+msgstr "all oder die Liste der Seiten, die diese Instanz zeigen."
+
+msgid "CFG_MODULES_APPEARANCE"
+msgstr "Darstellung"
+
+msgid "CFG_MODULES_APPEARANCE_HELP"
+msgstr "Skalierung, Ausrichtung, Deckkraft und Kopfzeile der Instanz."
+
+msgid "CFG_MODULES_CONFIG"
+msgstr "Einstellungen"
+
+msgid "CFG_MODULES_CONFIG_HELP"
+msgstr "Die Einstellungen des Moduls selbst."
+
+msgid "CFG_MODULES_DISABLED"
+msgstr "Deaktiviert"
+
+msgid "CFG_MODULES_DISABLED_HELP"
+msgstr "Eine deaktivierte Instanz bleibt in der Konfiguration, wird aber nicht gestartet."
+
+msgid "CFG_MODULES_LOCALE"
+msgstr "Sprache"
+
+msgid "CFG_MODULES_LOCALE_HELP"
+msgstr "Sprache dieser Instanz; folgt der Engine, wenn leer."
+
+msgid "CFG_MODULES_GRANTS"
+msgstr "Berechtigungen"
+
+msgid "CFG_MODULES_GRANTS_HELP"
+msgstr "Worauf die Instanz zugreifen darf: MQTT-Topics und Webadressen."
+
+msgid "CFG_MODULES_POSITION_COL"
+msgstr "Spalte"
+
+msgid "CFG_MODULES_POSITION_COL_HELP"
+msgstr "Erste Spalte, ab 1 gezählt."
+
+msgid "CFG_MODULES_POSITION_ROW"
+msgstr "Zeile"
+
+msgid "CFG_MODULES_POSITION_ROW_HELP"
+msgstr "Erste Zeile, ab 1 gezählt."
+
+msgid "CFG_MODULES_POSITION_WIDTH"
+msgstr "Breite in Zellen"
+
+msgid "CFG_MODULES_POSITION_WIDTH_HELP"
+msgstr "Anzahl der Spalten, die das Modul belegt."
+
+msgid "CFG_MODULES_POSITION_HEIGHT"
+msgstr "Höhe in Zellen"
+
+msgid "CFG_MODULES_POSITION_HEIGHT_HELP"
+msgstr "Anzahl der Zeilen, die das Modul belegt."
+
+msgid "CFG_MODULES_POSITION_Z"
+msgstr "Ebene"
+
+msgid "CFG_MODULES_POSITION_Z_HELP"
+msgstr "Stapelreihenfolge: höher liegt weiter vorn; standardmäßig 0."
+
+msgid "CFG_MODULES_APPEARANCE_SCALE"
+msgstr "Skalierung"
+
+msgid "CFG_MODULES_APPEARANCE_SCALE_HELP"
+msgstr "Größe des Modulinhalts, von 0,5 bis 3."
+
+msgid "CFG_MODULES_APPEARANCE_ALIGN"
+msgstr "Horizontale Ausrichtung"
+
+msgid "CFG_MODULES_APPEARANCE_ALIGN_HELP"
+msgstr "Wo der Inhalt in der Zelle liegt: start, center oder end."
+
+msgid "CFG_MODULES_APPEARANCE_VALIGN"
+msgstr "Vertikale Ausrichtung"
+
+msgid "CFG_MODULES_APPEARANCE_VALIGN_HELP"
+msgstr "Wo der Inhalt in der Zelle liegt: start, center oder end."
+
+msgid "CFG_MODULES_APPEARANCE_OPACITY"
+msgstr "Deckkraft"
+
+msgid "CFG_MODULES_APPEARANCE_OPACITY_HELP"
+msgstr "Von 0 (unsichtbar) bis 1 (voll sichtbar)."
+
+msgid "CFG_MODULES_APPEARANCE_OVERFLOW"
+msgstr "Überlauf"
+
+msgid "CFG_MODULES_APPEARANCE_OVERFLOW_HELP"
+msgstr "Was passiert, wenn der Inhalt größer als die Zelle ist: clip, fit oder scroll."
+
+msgid "CFG_MODULES_APPEARANCE_HEADER"
+msgstr "Kopfzeile"
+
+msgid "CFG_MODULES_APPEARANCE_HEADER_HELP"
+msgstr "Eine Kopfzeile zeigen: ein oder aus, oder ein eigener Text je Sprache."
+
+msgid "CFG_MODULES_APPEARANCE_CLASSES"
+msgstr "CSS-Klassen"
+
+msgid "CFG_MODULES_APPEARANCE_CLASSES_HELP"
+msgstr "Zusätzliche Klassen am Modul, zur Verwendung in custom.css."
+
+msgid "CFG_MODULES_APPEARANCE_CSS"
+msgstr "CSS"
+
+msgid "CFG_MODULES_APPEARANCE_CSS_HELP"
+msgstr "Stilregeln, die nur für diese Instanz gelten."
+
+msgid "CFG_MODULES_GRANTS_MQTT"
+msgstr "MQTT-Topics"
+
+msgid "CFG_MODULES_GRANTS_MQTT_HELP"
+msgstr "Die Topic-Muster, die die Instanz verwenden darf."
+
+msgid "CFG_MODULES_GRANTS_HTTP"
+msgstr "Webadressen"
+
+msgid "CFG_MODULES_GRANTS_HTTP_HELP"
+msgstr "URL-Präfixe, die die Instanz aufrufen darf; ein Eintrag kann eine eigene CA-Datei nennen."
+
+msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE"
+msgstr "Abonnieren"
+
+msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE_HELP"
+msgstr "Topic-Muster, die die Instanz abonnieren darf."
+
+msgid "CFG_MODULES_GRANTS_MQTT_PUBLISH"
+msgstr "Veröffentlichen"
+
+msgid "CFG_MODULES_GRANTS_MQTT_PUBLISH_HELP"
+msgstr "Topic-Muster, auf denen die Instanz veröffentlichen darf."
+
+msgid "CFG_MODULES_GRANTS_HTTP_PREFIX"
+msgstr "URL-Präfix"
+
+msgid "CFG_MODULES_GRANTS_HTTP_PREFIX_HELP"
+msgstr "Die Adressen, die dieser Eintrag abdeckt."
+
+msgid "CFG_MODULES_GRANTS_HTTP_CA"
+msgstr "CA-Datei"
+
+msgid "CFG_MODULES_GRANTS_HTTP_CA_HELP"
+msgstr "PEM-Datei, die für diese Adressen statt des Systemspeichers verwendet wird."
+
+msgid "CFG_BACKUP_SCHEDULE"
+msgstr "Zeitplan"
+
+msgid "CFG_BACKUP_SCHEDULE_HELP"
+msgstr "Uhrzeit der täglichen Sicherung, als HH:MM."
+
+msgid "CFG_BACKUP_ENCRYPT_TO"
+msgstr "Verschlüsseln für"
+
+msgid "CFG_BACKUP_ENCRYPT_TO_HELP"
+msgstr "Öffentlicher age-Schlüssel, für den die Sicherungen verschlüsselt werden; leer bleiben sie unverschlüsselt."
+
+msgid "CFG_BACKUP_PARTS"
+msgstr "Teile"
+
+msgid "CFG_BACKUP_PARTS_HELP"
+msgstr "Was gesichert wird: config, data, modules oder secrets; standardmäßig config, data und modules."
+
+msgid "CFG_BACKUP_KEEP"
+msgstr "Aufbewahrung"
+
+msgid "CFG_BACKUP_KEEP_HELP"
+msgstr "Wie viele Sicherungen aufbewahrt werden."
+
+msgid "CFG_BACKUP_REMOTE"
+msgstr "Remote-Kopie"
+
+msgid "CFG_BACKUP_REMOTE_HELP"
+msgstr "Wohin nach jeder Sicherung eine Kopie geschickt wird; die lokale Sicherung bleibt."
+
+msgid "CFG_BACKUP_KEEP_DAILY"
+msgstr "Täglich"
+
+msgid "CFG_BACKUP_KEEP_DAILY_HELP"
+msgstr "Anzahl der aufbewahrten täglichen Sicherungen."
+
+msgid "CFG_BACKUP_KEEP_WEEKLY"
+msgstr "Wöchentlich"
+
+msgid "CFG_BACKUP_KEEP_WEEKLY_HELP"
+msgstr "Anzahl der aufbewahrten wöchentlichen Sicherungen."
+
+msgid "CFG_BACKUP_KEEP_MONTHLY"
+msgstr "Monatlich"
+
+msgid "CFG_BACKUP_KEEP_MONTHLY_HELP"
+msgstr "Anzahl der aufbewahrten monatlichen Sicherungen."
+
+msgid "CFG_BACKUP_REMOTE_NAME"
+msgstr "Name des Remotes"
+
+msgid "CFG_BACKUP_REMOTE_NAME_HELP"
+msgstr "Name des rclone-Remotes."
+
+msgid "CFG_BACKUP_REMOTE_PATH"
+msgstr "Pfad"
+
+msgid "CFG_BACKUP_REMOTE_PATH_HELP"
+msgstr "Ordner auf dem Remote; leer verwendet die Wurzel."

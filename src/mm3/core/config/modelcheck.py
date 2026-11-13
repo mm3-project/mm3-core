@@ -5,12 +5,14 @@ configuration rules of the Module Contract; they need no running engine.
 
 Implements:
     MOD-45, MOD-46, MOD-47: Module Contract 1.0 rev 6, §6.2 Configuration.
+    CORE-310: Core spec 0.40, §6.4 Web configuration editor.
 """
 
 from __future__ import annotations
 
 import re
 import types
+from collections.abc import Collection
 from dataclasses import dataclass
 from typing import Any, Literal, Union, get_args, get_origin
 
@@ -19,7 +21,7 @@ from pydantic import BaseModel, SecretBytes, SecretStr
 from mm3.config import ModuleConfig
 from mm3.core.publicconfig import is_secret_field
 
-__all__ = ["ModelProblem", "check_config_model"]
+__all__ = ["ModelProblem", "check_config_model", "label_problems"]
 
 _KEY = re.compile(r"^[A-Z][A-Z0-9_]*$")
 _SECRET_NAME = re.compile(r"(?:^|_)(?:key|token|password|passwd|secret|apikey)(?:$|_)", re.I)
@@ -103,4 +105,39 @@ def check_config_model(model: type[BaseModel], *, _prefix: str = "") -> list[Mod
         for sub in _nested_models(info.annotation):
             if sub is not model:
                 out.extend(check_config_model(sub, _prefix=path))
+    return out
+
+
+def label_problems(
+    model: type[BaseModel], keys: Collection[str], *, _prefix: str = ""
+) -> list[ModelProblem]:
+    """Find the fields of a model whose form label or help is missing (CORE-310).
+
+    The admin Form view shows a field's ``title`` and ``description``, both catalog
+    keys. A field without one, or whose key is not in ``keys``, shows its name or no
+    help. The engine's own models and the reference modules must have none of these
+    (the CI of mm3-core fails on them); for other modules they are a SHOULD finding.
+
+    Args:
+        model: The class to check, with the models nested in it.
+        keys: The keys of the English catalog the form reads for this model.
+
+    Returns:
+        One ``MOD-46`` warning per missing or unknown key, empty when complete.
+
+    Implements:
+        CORE-310: Core spec 0.40, §6.4 Web configuration editor.
+    """
+    out: list[ModelProblem] = []
+    for name, info in model.model_fields.items():
+        path = f"{_prefix}.{name}" if _prefix else name
+        for kind, key in (("title", info.title), ("description", info.description)):
+            if key is None:
+                out.append(ModelProblem("MOD-46", "warning", path, f"no {kind}"))
+            elif key not in keys:
+                message = f"{kind} key {key} not in catalog"
+                out.append(ModelProblem("MOD-46", "warning", path, message))
+        for sub in _nested_models(info.annotation):
+            if sub is not model:
+                out.extend(label_problems(sub, keys, _prefix=path))
     return out

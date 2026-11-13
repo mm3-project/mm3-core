@@ -92,12 +92,42 @@ class Timeouts(_Block):
         -: Core spec 0.8, §3.2 Concurrency rules.
     """
 
-    start: float = Field(default=15.0, gt=0)
-    stop: float = Field(default=10.0, gt=0)
-    suspend: float = Field(default=5.0, gt=0)
-    reconfigure: float = Field(default=5.0, gt=0)
-    handler: float = Field(default=5.0, gt=0)
-    job: float = Field(default=60.0, gt=0)
+    start: float = Field(
+        default=15.0,
+        gt=0,
+        title="CFG_ENGINE_TIMEOUTS_START",
+        description="CFG_ENGINE_TIMEOUTS_START_HELP",
+    )
+    stop: float = Field(
+        default=10.0,
+        gt=0,
+        title="CFG_ENGINE_TIMEOUTS_STOP",
+        description="CFG_ENGINE_TIMEOUTS_STOP_HELP",
+    )
+    suspend: float = Field(
+        default=5.0,
+        gt=0,
+        title="CFG_ENGINE_TIMEOUTS_SUSPEND",
+        description="CFG_ENGINE_TIMEOUTS_SUSPEND_HELP",
+    )
+    reconfigure: float = Field(
+        default=5.0,
+        gt=0,
+        title="CFG_ENGINE_TIMEOUTS_RECONFIGURE",
+        description="CFG_ENGINE_TIMEOUTS_RECONFIGURE_HELP",
+    )
+    handler: float = Field(
+        default=5.0,
+        gt=0,
+        title="CFG_ENGINE_TIMEOUTS_HANDLER",
+        description="CFG_ENGINE_TIMEOUTS_HANDLER_HELP",
+    )
+    job: float = Field(
+        default=60.0,
+        gt=0,
+        title="CFG_ENGINE_TIMEOUTS_JOB",
+        description="CFG_ENGINE_TIMEOUTS_JOB_HELP",
+    )
 
 
 class BusSettings(_Block):
@@ -107,7 +137,12 @@ class BusSettings(_Block):
         CORE-27: Core spec 0.4, §5.3 Routing rules.
     """
 
-    queue_size: int = Field(default=1000, ge=1)
+    queue_size: int = Field(
+        default=1000,
+        ge=1,
+        title="CFG_ENGINE_BUS_QUEUE_SIZE",
+        description="CFG_ENGINE_BUS_QUEUE_SIZE_HELP",
+    )
 
 
 class ServerSettings(_Block):
@@ -124,9 +159,23 @@ class ServerSettings(_Block):
         CORE-61: Core spec 0.11, §10.1 Security.
     """
 
-    host: str = "127.0.0.1"
-    port: int = Field(default=8080, ge=1, le=65535)
-    allow: list[IPvAnyNetwork] = Field(default_factory=list)
+    host: str = Field(
+        default="127.0.0.1",
+        title="CFG_ENGINE_SERVER_HOST",
+        description="CFG_ENGINE_SERVER_HOST_HELP",
+    )
+    port: int = Field(
+        default=8080,
+        ge=1,
+        le=65535,
+        title="CFG_ENGINE_SERVER_PORT",
+        description="CFG_ENGINE_SERVER_PORT_HELP",
+    )
+    allow: list[IPvAnyNetwork] = Field(
+        default_factory=list,
+        title="CFG_ENGINE_SERVER_ALLOW",
+        description="CFG_ENGINE_SERVER_ALLOW_HELP",
+    )
 
 
 class AdminSettings(_Block):
@@ -145,9 +194,21 @@ class AdminSettings(_Block):
         CORE-62: Core spec 0.11, §10.1 Security.
     """
 
-    host: str = "127.0.0.1"
-    port: int = Field(default=8081, ge=1, le=65535)
-    allow: list[IPvAnyNetwork] = Field(default_factory=list)
+    host: str = Field(
+        default="127.0.0.1", title="CFG_ENGINE_ADMIN_HOST", description="CFG_ENGINE_ADMIN_HOST_HELP"
+    )
+    port: int = Field(
+        default=8081,
+        ge=1,
+        le=65535,
+        title="CFG_ENGINE_ADMIN_PORT",
+        description="CFG_ENGINE_ADMIN_PORT_HELP",
+    )
+    allow: list[IPvAnyNetwork] = Field(
+        default_factory=list,
+        title="CFG_ENGINE_ADMIN_ALLOW",
+        description="CFG_ENGINE_ADMIN_ALLOW_HELP",
+    )
 
 
 def _hostname() -> str:
@@ -187,18 +248,70 @@ class MqttSettings(_Block):
 
     model_config = ConfigDict(extra="forbid", frozen=True, populate_by_name=True)
 
-    url: str
-    username: str | None = None
-    password: str | None = Field(default=None, repr=False, json_schema_extra={"secret": True})
-    ca: str | None = Field(default=None, min_length=1)
-    client_id: str = Field(default_factory=lambda: f"mm3-{_hostname()}", min_length=1)
-    keepalive: int = Field(default=60, ge=10, le=3600)
-    base_topic: str = Field(default_factory=lambda: f"mm3/{_hostname()}", min_length=1)
-    export: list[str] = Field(default_factory=list)
-    import_: list[str] = Field(default_factory=list, alias="import")
-    ha_discovery: bool = False
-    discovery_prefix: str = Field(default="homeassistant", min_length=1)
-    node_id: str = Field(default="", pattern=r"^([a-z0-9_]{1,64})?$")
+    url: str = Field(title="CFG_ENGINE_MQTT_URL", description="CFG_ENGINE_MQTT_URL_HELP")
+    username: str | None = Field(
+        default=None, title="CFG_ENGINE_MQTT_USERNAME", description="CFG_ENGINE_MQTT_USERNAME_HELP"
+    )
+    password: str | None = Field(
+        default=None,
+        repr=False,
+        json_schema_extra={"secret": True},
+        title="CFG_ENGINE_MQTT_PASSWORD",
+        description="CFG_ENGINE_MQTT_PASSWORD_HELP",
+    )
+    ca: str | None = Field(
+        default=None,
+        min_length=1,
+        title="CFG_ENGINE_MQTT_CA",
+        description="CFG_ENGINE_MQTT_CA_HELP",
+    )
+    client_id: str = Field(
+        default_factory=lambda: f"mm3-{_hostname()}",
+        min_length=1,
+        title="CFG_ENGINE_MQTT_CLIENT_ID",
+        description="CFG_ENGINE_MQTT_CLIENT_ID_HELP",
+    )
+    keepalive: int = Field(
+        default=60,
+        ge=10,
+        le=3600,
+        title="CFG_ENGINE_MQTT_KEEPALIVE",
+        description="CFG_ENGINE_MQTT_KEEPALIVE_HELP",
+    )
+    base_topic: str = Field(
+        default_factory=lambda: f"mm3/{_hostname()}",
+        min_length=1,
+        title="CFG_ENGINE_MQTT_BASE_TOPIC",
+        description="CFG_ENGINE_MQTT_BASE_TOPIC_HELP",
+    )
+    export: list[str] = Field(
+        default_factory=list,
+        title="CFG_ENGINE_MQTT_EXPORT",
+        description="CFG_ENGINE_MQTT_EXPORT_HELP",
+    )
+    import_: list[str] = Field(
+        default_factory=list,
+        alias="import",
+        title="CFG_ENGINE_MQTT_IMPORT",
+        description="CFG_ENGINE_MQTT_IMPORT_HELP",
+    )
+    ha_discovery: bool = Field(
+        default=False,
+        title="CFG_ENGINE_MQTT_HA_DISCOVERY",
+        description="CFG_ENGINE_MQTT_HA_DISCOVERY_HELP",
+    )
+    discovery_prefix: str = Field(
+        default="homeassistant",
+        min_length=1,
+        title="CFG_ENGINE_MQTT_DISCOVERY_PREFIX",
+        description="CFG_ENGINE_MQTT_DISCOVERY_PREFIX_HELP",
+    )
+    node_id: str = Field(
+        default="",
+        pattern=r"^([a-z0-9_]{1,64})?$",
+        title="CFG_ENGINE_MQTT_NODE_ID",
+        description="CFG_ENGINE_MQTT_NODE_ID_HELP",
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -263,13 +376,20 @@ class MqttSettings(_Block):
 class HistorySettings(_Block):
     """Configuration history (``engine.history``, core spec 6.8)."""
 
-    keep: int = Field(default=200, ge=10)
+    keep: int = Field(
+        default=200,
+        ge=10,
+        title="CFG_ENGINE_HISTORY_KEEP",
+        description="CFG_ENGINE_HISTORY_KEEP_HELP",
+    )
 
 
 class InputSettings(_Block):
     """Kiosk input (``engine.input``)."""
 
-    touch: bool = False
+    touch: bool = Field(
+        default=False, title="CFG_ENGINE_INPUT_TOUCH", description="CFG_ENGINE_INPUT_TOUCH_HELP"
+    )
 
 
 class LocationSettings(_Block):
@@ -284,9 +404,15 @@ class LocationSettings(_Block):
         CORE-288: Core spec 0.19, §6.2 Rules.
     """
 
-    lat: float = Field(ge=-90, le=90)
-    lon: float = Field(ge=-180, le=180)
-    name: LocalizedText | None = None
+    lat: float = Field(
+        ge=-90, le=90, title="CFG_ENGINE_LOCATION_LAT", description="CFG_ENGINE_LOCATION_LAT_HELP"
+    )
+    lon: float = Field(
+        ge=-180, le=180, title="CFG_ENGINE_LOCATION_LON", description="CFG_ENGINE_LOCATION_LON_HELP"
+    )
+    name: LocalizedText | None = Field(
+        default=None, title="CFG_ENGINE_LOCATION_NAME", description="CFG_ENGINE_LOCATION_NAME_HELP"
+    )
 
 
 class EngineSettings(_Block):
@@ -313,20 +439,52 @@ class EngineSettings(_Block):
         CORE-288: Core spec 0.19, §6.2 Rules.
     """
 
-    locale: LocaleTag = "en"
-    timezone: str = Field(default_factory=system_timezone)
-    units: Literal["metric", "imperial"] = "metric"
-    location: LocationSettings | None = None
-    server: ServerSettings = ServerSettings()
-    admin: AdminSettings = AdminSettings()
-    mqtt: MqttSettings | None = None
-    timeouts: Timeouts = Timeouts()
-    bus: BusSettings = BusSettings()
-    threads: int = Field(default=8, ge=1)
-    log_level: Literal["debug", "info", "warning", "error"] = "info"
-    debug_ttl: timedelta = timedelta(minutes=30)
-    history: HistorySettings = HistorySettings()
-    input: InputSettings = InputSettings()
+    locale: LocaleTag = Field(
+        default="en", title="CFG_ENGINE_LOCALE", description="CFG_ENGINE_LOCALE_HELP"
+    )
+    timezone: str = Field(
+        default_factory=system_timezone,
+        title="CFG_ENGINE_TIMEZONE",
+        description="CFG_ENGINE_TIMEZONE_HELP",
+    )
+    units: Literal["metric", "imperial"] = Field(
+        default="metric", title="CFG_ENGINE_UNITS", description="CFG_ENGINE_UNITS_HELP"
+    )
+    location: LocationSettings | None = Field(
+        default=None, title="CFG_ENGINE_LOCATION", description="CFG_ENGINE_LOCATION_HELP"
+    )
+    server: ServerSettings = Field(
+        default=ServerSettings(), title="CFG_ENGINE_SERVER", description="CFG_ENGINE_SERVER_HELP"
+    )
+    admin: AdminSettings = Field(
+        default=AdminSettings(), title="CFG_ENGINE_ADMIN", description="CFG_ENGINE_ADMIN_HELP"
+    )
+    mqtt: MqttSettings | None = Field(
+        default=None, title="CFG_ENGINE_MQTT", description="CFG_ENGINE_MQTT_HELP"
+    )
+    timeouts: Timeouts = Field(
+        default=Timeouts(), title="CFG_ENGINE_TIMEOUTS", description="CFG_ENGINE_TIMEOUTS_HELP"
+    )
+    bus: BusSettings = Field(
+        default=BusSettings(), title="CFG_ENGINE_BUS", description="CFG_ENGINE_BUS_HELP"
+    )
+    threads: int = Field(
+        default=8, ge=1, title="CFG_ENGINE_THREADS", description="CFG_ENGINE_THREADS_HELP"
+    )
+    log_level: Literal["debug", "info", "warning", "error"] = Field(
+        default="info", title="CFG_ENGINE_LOG_LEVEL", description="CFG_ENGINE_LOG_LEVEL_HELP"
+    )
+    debug_ttl: timedelta = Field(
+        default=timedelta(minutes=30),
+        title="CFG_ENGINE_DEBUG_TTL",
+        description="CFG_ENGINE_DEBUG_TTL_HELP",
+    )
+    history: HistorySettings = Field(
+        default=HistorySettings(), title="CFG_ENGINE_HISTORY", description="CFG_ENGINE_HISTORY_HELP"
+    )
+    input: InputSettings = Field(
+        default=InputSettings(), title="CFG_ENGINE_INPUT", description="CFG_ENGINE_INPUT_HELP"
+    )
 
     @field_validator("timezone")
     @classmethod

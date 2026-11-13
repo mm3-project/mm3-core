@@ -11,7 +11,7 @@ Implements:
     CORE-254: Core spec 0.12, §10.1 Security.
     -: Core spec 0.24, §10.5 Diagnostics and debugging.
     CORE-322: Core spec 0.25, §6.4 Web configuration editor.
-    CORE-310: Core spec 0.22, §6.4 Web configuration editor.
+    CORE-310: Core spec 0.40, §6.4 Web configuration editor.
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
     CORE-329: Core spec 0.29, §11.1 Engine additions.
 """
@@ -120,11 +120,11 @@ def form_texts(locale: str, roots: Mapping[str, Path | None]) -> dict[str, dict[
         roots: Catalog root per installed module.
 
     Returns:
-        ``{"": core texts, module: texts}`` with only the ``CONFIG_*`` keys,
+        ``{"": core texts, module: texts}`` with only the ``CFG_*`` keys,
         English first, then the language; a module with no texts is left out.
 
     Implements:
-        CORE-310: Core spec 0.22, §6.4 Web configuration editor.
+        CORE-310: Core spec 0.40, §6.4 Web configuration editor.
     """
     out: dict[str, dict[str, str]] = {}
     for name, root in [("", CORE_CATALOG), *sorted(roots.items())]:
@@ -134,7 +134,7 @@ def form_texts(locale: str, roots: Mapping[str, Path | None]) -> dict[str, dict[
         texts: dict[str, str] = {}
         for loc in _chain(locale):
             for key, text in table.get(loc).items():
-                if key.startswith("CONFIG_") and isinstance(text, str):
+                if key.startswith("CFG_") and isinstance(text, str):
                     texts[key] = text
         if texts:
             out[name] = texts
