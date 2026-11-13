@@ -10,6 +10,8 @@
 // new value is typed; !env references are shown and edited as written.
 // Implements CORE-35, CORE-206 (Core spec 0.38, §6.4 Web configuration editor):
 // errors inline on the field and, for the section itself, at the top of the form.
+// Implements CORE-379 (Core spec 0.39, §6.4 Web configuration editor): in a section that is
+// not in the config the fields show their defaults (placeholders; a toggle its default).
 //
 // Properties: schema (the root, for $refs), node (this form's schema), value,
 // texts ({key: text}: the module's catalog over the core catalog, CORE-264), records
@@ -164,7 +166,7 @@ export class SchemaForm extends HTMLElement {
     if (type === "object") return wrap(this.mapping(path, names, node, value));
     if (type === "array") return this.array(parts, names, node, value);
     if (type === "boolean") {
-      return wrap(html`<input type="checkbox" class="toggle" .checked=${value === true}
+      return wrap(html`<input type="checkbox" class="toggle" .checked=${(value ?? node.default) === true}
         @change=${(e) => this.emit(path, e.target.checked, value, names)}>`);
     }
     if (type === "integer" || type === "number") {

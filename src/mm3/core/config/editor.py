@@ -13,7 +13,7 @@ Implements:
     CORE-300, CORE-303: Core spec 0.22, §6.4 Web configuration editor.
     CORE-320: Core spec 0.25, §6.4 Web configuration editor.
     CORE-321: Core spec 0.25, §6.8 Configuration history, undo and redo.
-    CORE-301, CORE-302: Core spec 0.28, §6.4 Web configuration editor.
+    CORE-301, CORE-302: Core spec 0.39, §6.4 Web configuration editor.
     CORE-324: Core spec 0.26, §6.8 Configuration history, undo and redo.
 """
 
@@ -129,7 +129,7 @@ class ConfigEditor:
         masker: Returns the masker of the running configuration's secrets.
 
     Implements:
-        CORE-301, CORE-302: Core spec 0.28, §6.4 Web configuration editor.
+        CORE-301, CORE-302: Core spec 0.39, §6.4 Web configuration editor.
     """
 
     def __init__(

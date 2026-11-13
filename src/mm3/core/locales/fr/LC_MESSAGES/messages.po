@@ -191,7 +191,6 @@ msgstr "Cet écran n'affiche pas cette instance."
 msgid "REQUEST_TIMEOUT"
 msgstr "Aucune réponse n'est arrivée à temps."
 
-
 msgid "CORE_API_UNAUTHORIZED"
 msgstr "Connectez-vous avec un jeton d'administration."
 
@@ -239,6 +238,12 @@ msgstr "Le moteur démarre ou s'arrête."
 
 msgid "CORE_API_REQUEST_TIMEOUT"
 msgstr "Aucune réponse n'est arrivée à temps."
+
+msgid "CORE_ADMIN_ABSENT_SECTION"
+msgstr "Absente de la configuration, les valeurs par défaut s'appliquent"
+
+msgid "CORE_ADMIN_ADD_SECTION"
+msgstr "Ajouter la section"
 
 msgid "CORE_ADMIN_AUDIO_FAILURE"
 msgstr "Problème audio"
@@ -357,6 +362,9 @@ msgstr "Journaux récents"
 msgid "CORE_ADMIN_RECONNECTING"
 msgstr "Reconnexion…"
 
+msgid "CORE_ADMIN_REMOVE_SECTION"
+msgstr "Supprimer la section"
+
 msgid "CORE_ADMIN_RESEND"
 msgstr "Renvoyer"
 
@@ -372,6 +380,9 @@ msgstr "Redémarrages"
 msgid "CORE_ADMIN_RESUME"
 msgstr "Reprendre"
 
+msgid "CORE_ADMIN_REVIEW_CHANGES"
+msgstr "Revoir les modifications"
+
 msgid "CORE_ADMIN_SEARCH"
 msgstr "Rechercher"
 
@@ -380,6 +391,12 @@ msgstr "Taille"
 
 msgid "CORE_ADMIN_STATE"
 msgstr "État"
+
+msgid "CORE_ADMIN_STEP_ADD_SECTION"
+msgstr "Ajouter la section {section}"
+
+msgid "CORE_ADMIN_STEP_REMOVE_SECTION"
+msgstr "Supprimer la section {section}"
 
 msgid "CORE_ADMIN_SUSPENDED"
 msgstr "Suspendu"
@@ -546,9 +563,6 @@ msgstr "Langue"
 msgid "CORE_ADMIN_LANGUAGE_ENGINE"
 msgstr "Langue du miroir"
 
-msgid "CORE_ADMIN_OPENED_VERSION"
-msgstr "Ouvrir la version {version}"
-
 msgid "CORE_ADMIN_OPEN_IN_EDITOR"
 msgstr "Ouvrir dans l'éditeur"
 
@@ -575,9 +589,6 @@ msgstr "Enregistrer"
 
 msgid "CORE_ADMIN_SAVED_VERSION"
 msgstr "Enregistré comme version {version}."
-
-msgid "CORE_ADMIN_SAVE_TITLE"
-msgstr "Enregistrer ces modifications ?"
 
 msgid "CORE_ADMIN_SECRET_KEPT"
 msgstr "conservé"

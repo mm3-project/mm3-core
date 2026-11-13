@@ -187,7 +187,6 @@ msgstr ""
 msgid "REQUEST_TIMEOUT"
 msgstr ""
 
-
 msgid "CORE_API_UNAUTHORIZED"
 msgstr ""
 
@@ -234,6 +233,12 @@ msgid "CORE_API_UNAVAILABLE"
 msgstr ""
 
 msgid "CORE_API_REQUEST_TIMEOUT"
+msgstr ""
+
+msgid "CORE_ADMIN_ABSENT_SECTION"
+msgstr ""
+
+msgid "CORE_ADMIN_ADD_SECTION"
 msgstr ""
 
 msgid "CORE_ADMIN_AUDIO_FAILURE"
@@ -353,6 +358,9 @@ msgstr ""
 msgid "CORE_ADMIN_RECONNECTING"
 msgstr ""
 
+msgid "CORE_ADMIN_REMOVE_SECTION"
+msgstr ""
+
 msgid "CORE_ADMIN_RESEND"
 msgstr ""
 
@@ -368,6 +376,9 @@ msgstr ""
 msgid "CORE_ADMIN_RESUME"
 msgstr ""
 
+msgid "CORE_ADMIN_REVIEW_CHANGES"
+msgstr ""
+
 msgid "CORE_ADMIN_SEARCH"
 msgstr ""
 
@@ -375,6 +386,12 @@ msgid "CORE_ADMIN_SIZE"
 msgstr ""
 
 msgid "CORE_ADMIN_STATE"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_ADD_SECTION"
+msgstr ""
+
+msgid "CORE_ADMIN_STEP_REMOVE_SECTION"
 msgstr ""
 
 msgid "CORE_ADMIN_SUSPENDED"
@@ -542,9 +559,6 @@ msgstr ""
 msgid "CORE_ADMIN_LANGUAGE_ENGINE"
 msgstr ""
 
-msgid "CORE_ADMIN_OPENED_VERSION"
-msgstr ""
-
 msgid "CORE_ADMIN_OPEN_IN_EDITOR"
 msgstr ""
 
@@ -570,9 +584,6 @@ msgid "CORE_ADMIN_SAVE"
 msgstr ""
 
 msgid "CORE_ADMIN_SAVED_VERSION"
-msgstr ""
-
-msgid "CORE_ADMIN_SAVE_TITLE"
 msgstr ""
 
 msgid "CORE_ADMIN_SECRET_KEPT"

@@ -14,7 +14,7 @@ Implements:
     CORE-155, CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
     CORE-217, CORE-218: Core spec 0.10, §6.8 Configuration history, undo and redo.
     CORE-300: Core spec 0.22, §6.4 Web configuration editor.
-    CORE-302: Core spec 0.28, §6.4 Web configuration editor.
+    CORE-302: Core spec 0.39, §6.4 Web configuration editor.
     CORE-363: Core spec 0.37, §10.8 Backup and restore.
 """
 
@@ -654,7 +654,7 @@ class ConfigHistory:
             The outcome; the version is the new or the current one.
 
         Implements:
-            CORE-302: Core spec 0.28, §6.4 Web configuration editor.
+            CORE-302: Core spec 0.39, §6.4 Web configuration editor.
             CORE-300: Core spec 0.22, §6.4 Web configuration editor.
             CORE-217: Core spec 0.10, §6.8 Configuration history, undo and redo.
         """
