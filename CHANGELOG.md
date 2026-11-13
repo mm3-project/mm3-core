@@ -15,6 +15,21 @@ separately under **Module API** in each release (Module Contract, section 10).
   Changed: CORE-374 (Add module reads CORE-380; `GET /api/v1/modules` lists
   instances, CORE-315). No code change; the code is PR C2.
 
+### Added (admin Layout view: add module, Services lane; installed-modules route; ISS-011 completed; Core spec 0.40)
+
+- `GET /api/v1/installed-modules` (CORE-380): the modules the engine loaded, sorted by
+  `name`, each with `version`, `distribution`, `kind` (`frontend` or `backend`), `header`
+  in the admin language, `usable`, `error` and the ids of its instances. A module the
+  registry refused is listed with its reason. Read-only, outside `/api/v1/modules/<instance id>/`.
+- "Add module" in the Layout view (CORE-374): a dialog lists the usable modules from
+  CORE-380 (a refused module is shown with its reason and cannot be picked), takes a
+  position preset for a frontend module and adds the instance as one draft step. The
+  `id` is always written (the module name, else `<module>_2`, `<module>_3`…), also on
+  existing instances of that module that had none, and the new instance is limited to
+  the current page when the configuration has `pages`.
+- Services lane (CORE-375, in part): instances of backend modules are shown in their
+  own lane with "Delete", and are left out of the disabled list.
+
 ### Security (dependencies; core spec 10.9)
 
 - `opentelemetry-api` 1.45.1 -> 1.45.2 in `uv.lock` (transitive; CVE-2026-126360 reported by

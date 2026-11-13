@@ -777,3 +777,30 @@ msgstr "Il kiosk non ha confermato in tempo il cambio dello schermo"
 
 msgid "CORE_DISPLAY_UNAVAILABLE"
 msgstr "Lo schermo non può essere acceso o spento su questo sistema"
+
+msgid "CORE_ADMIN_ADD_MODULE"
+msgstr "Aggiungi modulo"
+
+msgid "CORE_ADMIN_MODULE"
+msgstr "Modulo"
+
+msgid "CORE_ADMIN_KIND_FRONTEND"
+msgstr "con interfaccia"
+
+msgid "CORE_ADMIN_KIND_BACKEND"
+msgstr "solo backend"
+
+msgid "CORE_ADMIN_NO_USABLE_MODULES"
+msgstr "Nessun modulo installato può essere aggiunto."
+
+msgid "CORE_ADMIN_REFUSED_MODULES"
+msgstr "Rifiutati all'avvio, non proposti:"
+
+msgid "CORE_ADMIN_STEP_ADDED"
+msgstr "{id}: aggiunto"
+
+msgid "CORE_ADMIN_SERVICES"
+msgstr "Servizi"
+
+msgid "CORE_ADMIN_DISABLED_STATE"
+msgstr "disabilitato"

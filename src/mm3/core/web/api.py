@@ -25,9 +25,11 @@ Implements:
     CORE-321: Core spec 0.25, §6.8 Configuration history, undo and redo.
     CORE-324: Core spec 0.26, §6.8 Configuration history, undo and redo.
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
-    CORE-301, CORE-302: Core spec 0.28, §6.4 Web configuration editor.
+    CORE-301: Core spec 0.28, §6.4 Web configuration editor.
+    CORE-302: Core spec 0.39, §6.4 Web configuration editor.
     CORE-307: Core spec 0.28, §6.6 Live layout preview.
     CORE-332: Core spec 0.29, §9.1 Remote-control API.
+    CORE-380: Core spec 0.40, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -51,9 +53,11 @@ from mm3.core.context import REQUEST_TIMEOUT_RANGE
 from mm3.core.diag.bundle import Bundle, bundle_name, package_list
 from mm3.core.diag.logfilter import LogFilter
 from mm3.core.diag.secrets import Masker
+from mm3.core.i18n.catalogs import locale_chain
 from mm3.core.logging import get_logger, log_levels, numbered_records
 from mm3.core.pages import HOLDER_REST
 from mm3.core.web.auth import WebAuth
+from mm3.core.web.extensions import header_label
 from mm3.core.web.kiosk import KioskStatus
 from mm3.core.web.modroutes import ModuleRoutes
 from mm3.core.web.modroutes import register as register_module_routes
@@ -339,6 +343,43 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
     async def list_modules() -> list[dict[str, Any]]:
         """Instances in configuration order with state, visibility, positions and health."""
         return [entry(i) for i in sup.instances()]
+
+    async def admin_language(request: Request) -> str:
+        """The admin language of the caller: the session's, else ``engine.locale`` (CORE-309)."""
+        from mm3.core.web.sessions import ADMIN_COOKIE
+
+        sid = request.cookies.get(ADMIN_COOKIE)
+        bearer = request.headers.get("authorization", "").lower().startswith("bearer ")
+        picked = None
+        if auth is not None and sid and not bearer:
+            picked = await asyncio.to_thread(auth.sessions.locale, sid)
+        return picked or sup.settings.locale
+
+    @router.get("/installed-modules")
+    async def list_installed_modules(request: Request) -> list[dict[str, Any]]:
+        """The modules the engine loaded, for Add module in the Layout view (CORE-380)."""
+        chain = locale_chain(None, await admin_language(request))
+        users: dict[str, list[str]] = {}
+        for inst in sup.instances():
+            users.setdefault(inst.spec.module, []).append(inst.instance_id)
+        out: list[dict[str, Any]] = []
+        for module in sup.registry.entries():
+            usable = module.cls is not None and module.error is None
+            out.append(
+                {
+                    "name": module.name,
+                    "version": sup.module_version(module.name),
+                    "distribution": module.distribution,
+                    "kind": "frontend"
+                    if module.cls is not None and module.cls.element is not None
+                    else "backend",
+                    "header": header_label(services.engine.i18n, module.name, chain),
+                    "usable": usable,
+                    "error": None if usable else module.error,
+                    "instances": users.get(module.name, []),
+                }
+            )
+        return out
 
     @router.get("/modules/{iid}/health")
     async def module_health(iid: str) -> dict[str, Any]:

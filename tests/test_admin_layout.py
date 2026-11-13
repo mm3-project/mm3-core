@@ -57,6 +57,12 @@ modules:
 """
 
 
+class Svc(MirrorModule):
+    """A backend-only module: no element, so it goes to the Services lane (CORE-374)."""
+
+    name = "svcmod"
+
+
 def registry() -> Registry:
     reg = Registry()
     reg.add(Panel)
@@ -479,6 +485,8 @@ async def running(
     env.chmod(0o600)
     reg = Registry()
     reg.add(box_module.BoxMod)
+    reg.add(Svc)
+    reg.add(object, name="broken")  # refused at start: listed, never offered (CORE-380)
     result = load_config(root / "config.yaml", registry=reg, env_file=env, environ={})
     assert result.ok, result.records
     history = ConfigHistory(
@@ -583,13 +591,13 @@ async def wait_steps(page: Any, n: int) -> None:
 
 
 @contextlib.asynccontextmanager
-async def layout_tab(running: Running) -> AsyncIterator[tuple[Any, Any, float]]:
+async def layout_tab(running: Running, first: str = "a") -> AsyncIterator[tuple[Any, Any, float]]:
     """Open /admin/config on the Layout tab; yield the page, the iframe and the scale."""
     pw, browser, page, problems = await browse(running.base, running.sid)
     try:
         await page.goto(f"{running.base}/admin/config")
         await page.click("nav.tabs >> text=Layout")
-        await page.wait_for_selector('.overlay .box[data-instance="a"]')
+        await page.wait_for_selector(f'.overlay .box[data-instance="{first}"]')
         frame = page.frame_locator("iframe")
         await frame.locator("mm3-boxmod").first.wait_for()
         scale = await page.evaluate("() => document.querySelector('mm3-layout-view').scale")
@@ -1076,3 +1084,126 @@ async def test_core_376_deleting_a_page_that_is_not_the_default_keeps_the_defaul
         assert [e["id"] for e in docs["pages"]["list"]] == ["home", "energy"]
         assert docs["modules"][2]["pages"] == ["energy"]  # untouched
         assert await page.locator("select.page").input_value() == "energy"
+
+
+# --- CORE-374, CORE-375: Add module and the Services lane ---------------------------------
+
+UNNAMED_MAIN = """engine:
+  locale: en
+modules:
+  - module: boxmod
+    position: top_left
+"""
+
+SERVICE_MAIN = """engine:
+  locale: en
+pages:
+  list:
+    - id: home
+modules:
+  - module: boxmod
+    id: a
+    position: top_left
+  - module: svcmod
+    id: svc
+    disabled: true
+"""
+
+
+async def open_add_dialog(page: Any) -> None:
+    await page.click("button[name=add-module]")
+    await page.wait_for_selector("dialog.module[open]")
+
+
+async def test_core_374_add_module_is_one_step_on_the_chosen_preset(running: Running) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        await open_add_dialog(page)
+        options = await page.locator("dialog.module select[name=module] option").all_inner_texts()
+        assert [o.split(" · ")[0] for o in options] == ["boxmod (boxmod)", "svcmod (svcmod)"]
+        assert await page.locator("dialog.module select[name=preset]").input_value() == "top_left"
+        refused = await page.locator("dialog.module .refused").inner_text()
+        assert "broken" in refused  # listed with its reason, not in the select
+        await page.select_option("dialog.module select[name=preset]", "bottom_bar")
+        await page.click("dialog.module button[name=ok]")
+        await wait_steps(page, 1)
+        mods = (await draft(page))["docs"]["config.yaml"]["modules"]
+        assert mods[3] == {
+            "module": "boxmod",
+            "id": "boxmod",
+            "position": "bottom_bar",
+            "pages": ["home"],
+            "config": {},
+        }
+        assert (await draft(page))["steps"] == ["boxmod: added"]
+        assert await draft_errors(page) == []
+        await page.wait_for_selector('.overlay .box[data-instance="boxmod"]')
+        assert await page.locator(".inst-toolbar h3").inner_text() == "boxmod"  # selected
+        assert await page.locator("dialog[open]").count() == 0
+        await page.keyboard.press("Control+z")  # undone like any step (CORE-151)
+        await wait_steps(page, 0)
+        assert await module_ids(page) == ["a", "b", "c"]
+
+
+async def test_core_374_the_id_is_never_taken_twice(running: Running) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        for n in (1, 2):
+            await open_add_dialog(page)
+            await page.click("dialog.module button[name=ok]")
+            await wait_steps(page, n)
+        assert await module_ids(page) == ["a", "b", "c", "boxmod", "boxmod_2"]
+        assert await draft_errors(page) == []
+
+
+@pytest.mark.parametrize("running", [UNNAMED_MAIN], indirect=True)
+async def test_core_374_a_sibling_without_an_id_gets_its_default_id_in_the_same_step(
+    running: Running,
+) -> None:
+    async with layout_tab(running, "boxmod") as (page, _frame, _scale):
+        await open_add_dialog(page)
+        await page.click("dialog.module button[name=ok]")
+        await wait_steps(page, 1)
+        mods = (await draft(page))["docs"]["config.yaml"]["modules"]
+        assert [m["id"] for m in mods] == ["boxmod", "boxmod_2"]
+        assert "pages" not in mods[1]  # no `pages` block: no `pages` key
+        assert mods[1]["position"] == "top_left"
+        assert await draft_errors(page) == []
+        await page.keyboard.press("Control+z")  # both writes are one step
+        await wait_steps(page, 0)
+        assert "id" not in (await draft(page))["docs"]["config.yaml"]["modules"][0]
+
+
+@pytest.mark.parametrize("running", [SERVICE_MAIN], indirect=True)
+async def test_core_374_a_backend_only_module_has_no_position_and_goes_to_the_services_lane(
+    running: Running,
+) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        await open_add_dialog(page)
+        await page.select_option("dialog.module select[name=module]", "svcmod")
+        assert await page.locator("dialog.module select[name=preset]").count() == 0
+        await page.click("dialog.module button[name=ok]")
+        await wait_steps(page, 1)
+        mods = (await draft(page))["docs"]["config.yaml"]["modules"]
+        assert mods[-1] == {"module": "svcmod", "id": "svcmod", "pages": ["home"], "config": {}}
+        assert await page.locator('.services-lane li[data-instance="svcmod"]').count() == 1
+        assert await page.locator('.overlay .box[data-instance="svcmod"]').count() == 0
+
+
+@pytest.mark.parametrize("running", [SERVICE_MAIN], indirect=True)
+async def test_core_375_delete_from_the_services_lane(running: Running) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        card = page.locator('.services-lane li[data-instance="svc"]')
+        await card.wait_for()
+        assert "disabled" in await card.inner_text()
+        assert await page.locator(".disabled-list").count() == 0  # the lane shows it, once
+        await card.locator("button[name=enable]").click()
+        await wait_steps(page, 1)
+        assert "disabled" not in await card.inner_text()
+        await card.locator("button[name=delete]").click()
+        await wait_steps(page, 2)
+        assert await module_ids(page) == ["a"]
+        assert await page.locator(".services-lane").count() == 0
+        assert await page.locator("dialog[open]").count() == 0  # no confirmation
+        assert (await draft(page))["steps"][-1] == "svc: deleted"
+        await page.keyboard.press("Control+z")
+        await wait_steps(page, 1)
+        assert await module_ids(page) == ["a", "svc"]

@@ -779,3 +779,30 @@ msgstr "Der Kiosk hat die Bildschirmänderung nicht rechtzeitig bestätigt"
 
 msgid "CORE_DISPLAY_UNAVAILABLE"
 msgstr "Der Bildschirm kann auf diesem System nicht geschaltet werden"
+
+msgid "CORE_ADMIN_ADD_MODULE"
+msgstr "Modul hinzufügen"
+
+msgid "CORE_ADMIN_MODULE"
+msgstr "Modul"
+
+msgid "CORE_ADMIN_KIND_FRONTEND"
+msgstr "mit Oberfläche"
+
+msgid "CORE_ADMIN_KIND_BACKEND"
+msgstr "nur Backend"
+
+msgid "CORE_ADMIN_NO_USABLE_MODULES"
+msgstr "Es kann kein installiertes Modul hinzugefügt werden."
+
+msgid "CORE_ADMIN_REFUSED_MODULES"
+msgstr "Beim Start abgelehnt, nicht angeboten:"
+
+msgid "CORE_ADMIN_STEP_ADDED"
+msgstr "{id}: hinzugefügt"
+
+msgid "CORE_ADMIN_SERVICES"
+msgstr "Dienste"
+
+msgid "CORE_ADMIN_DISABLED_STATE"
+msgstr "deaktiviert"
