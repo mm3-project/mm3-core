@@ -95,6 +95,12 @@ def test_core_75_presence_prefix() -> None:
     assert expand_ids("PRS-01..03, WTH-12") == ["PRS-01", "PRS-02", "PRS-03", "WTH-12"]
 
 
+def test_core_75_log_ids_are_not_requirements() -> None:
+    # Issue-log ids in a history row's Source: part are sources, not requirements.
+    assert expand_ids("(CORE-310 changed). Source: ISS-003, ENH-004, ISS-011") == ["CORE-310"]
+    assert expand_ids("Source: ISS-001, ENH-010") == []
+
+
 def test_core_75_versions_sort() -> None:
     assert version_key("0.10") > version_key("0.9")
     assert version_key("1.0 rev 10") > version_key("1.0 rev 9")
