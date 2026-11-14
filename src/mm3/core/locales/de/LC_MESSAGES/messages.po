@@ -137,9 +137,6 @@ msgstr "Das Tag {tag} ist nicht erlaubt; verwende !env oder !include"
 msgid "CORE_SHELL_UNAVAILABLE"
 msgstr "Nicht verfügbar"
 
-msgid "CORE_WEB_ADMIN_PENDING"
-msgstr "Die Verwaltungsoberfläche ist noch nicht verfügbar."
-
 msgid "CORE_WEB_ADMIN_TITLE"
 msgstr "MM3-Verwaltung"
 
@@ -1533,3 +1530,33 @@ msgstr "Pfad"
 
 msgid "CFG_BACKUP_REMOTE_PATH_HELP"
 msgstr "Ordner auf dem Remote; leer verwendet die Wurzel."
+
+msgid "CORE_ADMIN_MQTT"
+msgstr "MQTT"
+
+msgid "CORE_ADMIN_MQTT_OFF"
+msgstr "MQTT aus"
+
+msgid "CORE_ADMIN_MQTT_CONNECTED"
+msgstr "MQTT verbunden"
+
+msgid "CORE_ADMIN_MQTT_CONNECTING"
+msgstr "MQTT verbindet"
+
+msgid "CORE_ADMIN_MQTT_ERROR"
+msgstr "MQTT-Fehler"
+
+msgid "CORE_ADMIN_MQTT_UNAVAILABLE"
+msgstr "MQTT-Status nicht verfügbar"
+
+msgid "CORE_ADMIN_MQTT_SINCE"
+msgstr "Seit {time}"
+
+msgid "CORE_ADMIN_MQTT_SINCE_LABEL"
+msgstr "Seit"
+
+msgid "CORE_ADMIN_MQTT_ERROR_LABEL"
+msgstr "Fehler"
+
+msgid "CORE_ADMIN_STATUS"
+msgstr "Status"

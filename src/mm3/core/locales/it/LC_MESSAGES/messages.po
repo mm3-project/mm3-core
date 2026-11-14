@@ -135,9 +135,6 @@ msgstr "Il tag {tag} non è ammesso; usa !env o !include"
 msgid "CORE_SHELL_UNAVAILABLE"
 msgstr "Non disponibile"
 
-msgid "CORE_WEB_ADMIN_PENDING"
-msgstr "L'interfaccia di amministrazione non è ancora disponibile."
-
 msgid "CORE_WEB_ADMIN_TITLE"
 msgstr "Amministrazione MM3"
 
@@ -1531,3 +1528,33 @@ msgstr "Percorso"
 
 msgid "CFG_BACKUP_REMOTE_PATH_HELP"
 msgstr "Cartella sul remote; se vuoto usa la radice."
+
+msgid "CORE_ADMIN_MQTT"
+msgstr "MQTT"
+
+msgid "CORE_ADMIN_MQTT_OFF"
+msgstr "MQTT disattivato"
+
+msgid "CORE_ADMIN_MQTT_CONNECTED"
+msgstr "MQTT connesso"
+
+msgid "CORE_ADMIN_MQTT_CONNECTING"
+msgstr "MQTT in connessione"
+
+msgid "CORE_ADMIN_MQTT_ERROR"
+msgstr "MQTT errore"
+
+msgid "CORE_ADMIN_MQTT_UNAVAILABLE"
+msgstr "Stato MQTT non disponibile"
+
+msgid "CORE_ADMIN_MQTT_SINCE"
+msgstr "Dal {time}"
+
+msgid "CORE_ADMIN_MQTT_SINCE_LABEL"
+msgstr "Dal"
+
+msgid "CORE_ADMIN_MQTT_ERROR_LABEL"
+msgstr "Errore"
+
+msgid "CORE_ADMIN_STATUS"
+msgstr "Stato"

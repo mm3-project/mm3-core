@@ -170,7 +170,7 @@ requirements = [
 number = 6
 name = "Admin: REST API, config editor, preview, debug page"
 status = "done"
-done_at = { core = "0.40", contract = "1.0 rev 15" }
+done_at = { core = "0.41", contract = "1.0 rev 15" }
 # CORE-290..292 (sd_notify, loop watchdog, mm3.service) come from the first
 #   manual install; the unit already carries the CORE-65 hardening directives,
 #   which stays in milestone 10 and is closed there by the install test.
@@ -270,7 +270,9 @@ done_at = { core = "0.40", contract = "1.0 rev 15" }
 # Core spec 0.41 (14 Nov 2026; Source: ENH-007): CORE-381 (connection indicator
 #   for the MQTT bridge in the admin header and the status view of the admin
 #   home, extends CORE-304, CORE-305 and CORE-378) added here; it reopens the
-#   milestone through the spec-change issue (CORE-79).
+#   milestone through the spec-change issue (CORE-79); the work is the admin home,
+#   the header indicator and the shared status view (ENH-007). Closed again at
+#   Core 0.41.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",

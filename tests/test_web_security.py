@@ -386,7 +386,7 @@ def test_core_63_pages_have_no_inline_script_or_style(html: str) -> None:
 def test_core_63_page_text_comes_from_keys() -> None:
     assert all(re.fullmatch(r"CORE_WEB_[A-Z_]+", k) for k in TEXT)
     for html in (login_page(), admin_home_page(), pair_page()):
-        visible = re.sub(r"<[^>]+>", "", html)
+        visible = re.sub(r"<[^>]+>", " ", html)
         for word in re.findall(r"[A-Za-z]{4,}", visible):
             assert any(word in v for v in TEXT.values()), word
 
@@ -406,7 +406,7 @@ async def test_core_253_login_sets_a_strict_session_cookie(auth: WebAuth) -> Non
             assert flag in cookie
         home = await c.get("/admin")
         assert home.status_code == 200
-        assert TEXT["CORE_WEB_ADMIN_PENDING"] in home.text
+        assert "<mm3-admin-home>" in home.text  # CORE-378, CORE-381: the status view
         api = await c.get("/api/v1/x")
         assert api.status_code == 404
     sid = r.cookies[ADMIN_COOKIE]

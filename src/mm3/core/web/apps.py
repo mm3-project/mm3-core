@@ -6,10 +6,10 @@ The mirror listener serves the shell and its files; so far ``/pair``,
 never answer on the mirror display. The admin listener also carries the
 preview shell's ``/admin/preview/ws`` (CORE-273).
 
-The admin listener serves ``/admin`` and ``/api/*`` behind an admin token or
-session; ``/admin/login`` and ``/admin/logout`` manage the session. With the
-API services the REST routes of core 9.1 are mounted, with OpenAPI only as
-``/api/openapi.json`` (CORE-313); every ``/api`` error, also outside those
+The admin listener serves ``/admin`` (the status view of the admin home, CORE-381) and
+``/api/*`` behind an admin token or session; ``/admin/login`` and ``/admin/logout``
+manage the session. With the API services the REST routes of core 9.1 are mounted, with
+OpenAPI only as ``/api/openapi.json`` (CORE-313); every ``/api`` error, also outside those
 routes, is ``application/problem+json`` (CORE-298).
 
 Both applications are wrapped in the allow list (CORE-61) and the security
@@ -22,6 +22,7 @@ Implements:
     CORE-253: Core spec 0.38, §10.1 Security.
     CORE-254: Core spec 0.12, §10.1 Security.
     CORE-378: Core spec 0.40, §10.1 Security.
+    CORE-381: Core spec 0.41, §9.1 Remote-control API.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-298: Core spec 0.25, §9.1 Remote-control API.
     CORE-313: Core spec 0.22, §9.1 Remote-control API.
@@ -528,7 +529,7 @@ def admin_app(
         check = await auth.check_admin(request, request.method)
         if check.outcome != "ok":
             return _login_redirect(request)
-        return _html(admin_home_page())
+        return _html(admin_home_page(await extension_links(request, check.via)))
 
     if api is not None:
         router = api_router(auth, api)

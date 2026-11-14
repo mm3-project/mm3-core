@@ -1,6 +1,7 @@
 /* Admin pages (core spec 9.1, 10.5): served on the admin listener only.
    No inline styles anywhere (CORE-63): every look is a class here. */
 /* Implements CORE-63 (Core spec 0.38, §10.1 Security): no inline styles */
+/* Implements CORE-381 (Core spec 0.41, §9.1 Remote-control API): the connection indicator */
 /* Implements CORE-326 (Core spec 0.28, §6.6 Live layout preview): the Layout view */
 
 :root {
@@ -55,6 +56,13 @@ header.bar nav { display: flex; gap: 16px; flex: 1; margin-left: 24px; }
 header.bar nav a { color: var(--muted); }
 header.bar nav a[aria-current="page"] { color: var(--text); font-weight: 600; }
 header.bar form { margin: 0; }
+.conn { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 13px; }
+.conn .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); }
+.conn[data-state="connected"] .dot { background: var(--ok); }
+.conn[data-state="connecting"] .dot { background: var(--warn); }
+.conn[data-state="error"] .dot { background: var(--bad); }
+.conn[data-state="error"] { color: var(--bad); font-weight: 600; }
+.card.mqtt[data-state="error"] { border-color: var(--bad); }
 
 button, select, input {
   font: inherit;
