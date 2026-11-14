@@ -279,6 +279,11 @@ async def test_debug_page_renders_in_chromium(
             await page.wait_for_selector(".live.on")
             await page.click("td >> text=one")
             await page.wait_for_selector("text=Health record")
+            # CORE-386: the instance controls are action rows with their effect.
+            rows = page.locator(".detail .action-row")
+            assert await rows.count() == 2
+            assert "Restart instance" in await rows.nth(1).inner_text()
+            assert "Stops and starts only this instance" in await rows.nth(1).inner_text()
             await page.click("text=Live logs")
             # A subscribe on /admin/ws has no acknowledgement, so the test
             # repeats the event until the open tab shows it.

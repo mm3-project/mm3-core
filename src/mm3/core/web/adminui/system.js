@@ -4,8 +4,11 @@
 // Confirm that ends when the status shows the effect or after 120 s.
 // Implements CORE-382 (Core spec 0.42, §9.1 Remote-control API): the routes
 // POST /api/v1/system/<action> it calls.
+// Implements CORE-386 (Core spec 0.43, §9.1 Remote-control API): the rows of the card.
+// Implements CORE-387 (Core spec 0.43, §9.1 Remote-control API): its banners.
 import { html, nothing } from "/admin/static/lit-html.js";
 import { ApiError, api, t } from "/admin/static/admin.js";
+import { actionRow, banner, closeOnBackdrop } from "/admin/static/ui.js";
 
 /** The three actions in card order: route name, catalog key stem. */
 export const ACTIONS = [
@@ -159,44 +162,31 @@ export class SystemControls {
 
 /** The banner of the pending action, or of an error answer (CORE-383). */
 export function systemBanner(sc) {
-  if (sc.error) {
-    return html`<p class="alert" role="alert">${sc.error}
-      <button class="link" @click=${() => sc.dismiss()}>${t("CORE_ADMIN_DISMISS")}</button></p>`;
-  }
+  const dismiss = { label: t("CORE_ADMIN_DISMISS"), onClick: () => sc.dismiss() };
+  if (sc.error) return banner("error", sc.error, dismiss);
   const p = sc.pending;
   if (!p) return nothing;
   const name = stem(p.action);
-  if (p.outcome === "seen") {
-    return html`<p class="alert ok" role="status">${t(`CORE_ADMIN_SYSTEM_SEEN_${name}`)}</p>`;
-  }
-  if (p.outcome === "unseen") {
-    return html`<p class="alert warn" role="status">${t("CORE_ADMIN_SYSTEM_UNSEEN", { action: label(p.action) })}
-      <button class="link" @click=${() => sc.dismiss()}>${t("CORE_ADMIN_DISMISS")}</button></p>`;
-  }
-  return html`<p class="alert info" role="status">${t(`CORE_ADMIN_SYSTEM_PENDING_${name}`)}</p>`;
+  if (p.outcome === "seen") return banner("ok", t(`CORE_ADMIN_SYSTEM_SEEN_${name}`));
+  if (p.outcome === "unseen") return banner("warn", t("CORE_ADMIN_SYSTEM_UNSEEN", { action: label(p.action) }), dismiss);
+  return banner("info", t(`CORE_ADMIN_SYSTEM_PENDING_${name}`));
 }
 
-/** The System card: one row per action with its effect and its button (CORE-383). */
+/** The System card: one row per action with its effect and its button (CORE-383, CORE-386). */
 export function systemCard(sc) {
   const reason = sc.reason;
   return html`
     <section class="card system" aria-labelledby="system-title">
       <h2 id="system-title">${t("CORE_ADMIN_SYSTEM")}</h2>
-      ${ACTIONS.map(
-        ([action, key]) => html`
-          <div class="system-row">
-            <div class="text">
-              <div class="name">${t(`CORE_ADMIN_SYSTEM_${key}`)}</div>
-              <div class="muted">${t(`CORE_ADMIN_SYSTEM_${key}_EFFECT`)}</div>
-            </div>
-            <button
-              type="button"
-              data-action=${action}
-              aria-disabled=${reason ? "true" : "false"}
-              title=${reason || nothing}
-              @click=${() => sc.ask(action)}
-            >${t(`CORE_ADMIN_SYSTEM_${key}`)}</button>
-          </div>`,
+      ${ACTIONS.map(([action, key]) =>
+        actionRow({
+          name: t(`CORE_ADMIN_SYSTEM_${key}`),
+          effect: t(`CORE_ADMIN_SYSTEM_${key}_EFFECT`),
+          label: t(`CORE_ADMIN_SYSTEM_${key}`),
+          reason,
+          id: action,
+          onClick: () => sc.ask(action),
+        }),
       )}
     </section>`;
 }
@@ -209,7 +199,7 @@ export function systemDialog(sc) {
   return html`<dialog class="system-confirm" aria-labelledby="system-confirm-title" @close=${() => sc.cancel()}>
     <h2 id="system-confirm-title">${t(`CORE_ADMIN_SYSTEM_${key}_TITLE`)}</h2>
     <p>${t(`CORE_ADMIN_SYSTEM_${key}_CONFIRM_TEXT`)}</p>
-    <div class="toolbar">
+    <div class="dialog-actions">
       <button type="button" class="cancel" autofocus @click=${() => sc.cancel()}>${t("CORE_ADMIN_CANCEL")}</button>
       <button type="button" class=${action === "reboot" ? "danger confirm" : "primary confirm"} @click=${() => sc.confirm()}>
         ${t(`CORE_ADMIN_SYSTEM_${key}`)}
@@ -222,6 +212,10 @@ export function systemDialog(sc) {
 export function syncDialog(root, sc) {
   const dialog = root.querySelector("dialog.system-confirm");
   if (!dialog) return;
+  if (!dialog.dataset.backdrop) {
+    dialog.dataset.backdrop = "1";
+    closeOnBackdrop(dialog, () => sc.cancel());
+  }
   if (sc.confirming && !dialog.open) dialog.showModal();
   if (!sc.confirming && dialog.open) dialog.close();
 }

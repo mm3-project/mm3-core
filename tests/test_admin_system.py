@@ -221,7 +221,7 @@ async def test_core_382_not_on_the_admin_socket(
 # --- the controls of the System card (CORE-383) ---------------------------------------------
 #
 # system.js runs in the browser; its logic does not touch the DOM, so Node runs it here with
-# stubs for the two modules it imports (lit-html and admin.js) and a manual clock.
+# stubs for the modules it imports (lit-html, admin.js and ui.js) and a manual clock.
 
 _STUBS = {
     "lit.mjs": "export const html=(s,...v)=>({s,v});export const nothing=Symbol('nothing');",
@@ -230,6 +230,10 @@ _STUBS = {
         "this.problem=p;}}"
         "export const t=(k,p={})=>k+(Object.keys(p).length?JSON.stringify(p):'');"
         "export const api=(m,p,b)=>globalThis.__api(m,p,b);"
+    ),
+    "ui.mjs": (
+        "export const actionRow=()=>null;export const banner=()=>null;"
+        "export const closeOnBackdrop=()=>{};"
     ),
 }
 
@@ -327,6 +331,7 @@ def test_core_383_controls_follow_the_status_and_the_installer(tmp_path: Path) -
     source = (ADMIN_STATIC_DIR / "system.js").read_text()
     source = source.replace('"/admin/static/lit-html.js"', '"./lit.mjs"')
     source = source.replace('"/admin/static/admin.js"', '"./admin.mjs"')
+    source = source.replace('"/admin/static/ui.js"', '"./ui.mjs"')
     assert "/admin/static/" not in source
     (tmp_path / "system.mjs").write_text(source)
     for name, text in _STUBS.items():
@@ -501,7 +506,7 @@ async def test_core_383_system_card_in_chromium(
             # Confirm the engine restart: the request goes out and the banner shows.
             await card.locator('button[data-action="restart-engine"]').click()
             await dialog.locator("button.confirm").click()
-            banner = page.locator("mm3-admin-home p.alert.info")
+            banner = page.locator("mm3-admin-home div.alert.info")
             await banner.wait_for()
             assert "Restart engine requested" in await banner.inner_text()
             posts = [c for c in installer_fake.calls if c[0] == "POST"]
@@ -513,8 +518,10 @@ async def test_core_383_system_card_in_chromium(
             started = engine.started_at
             assert started is not None
             engine.started_at = started + timedelta(minutes=5)
-            await page.wait_for_selector("mm3-admin-home p.alert.ok >> text=The engine restarted.")
-            assert await page.locator("mm3-admin-home p.alert.info").count() == 0
+            await page.wait_for_selector(
+                "mm3-admin-home div.alert.ok >> text=The engine restarted."
+            )
+            assert await page.locator("mm3-admin-home div.alert.info").count() == 0
         finally:
             await browser.close()
     assert not [p for p in problems if "WebSocket" not in p and "Failed to load" not in p], problems
@@ -558,9 +565,9 @@ async def test_core_383_system_card_disabled_and_errors_in_chromium(
             await page.wait_for_selector('button[data-action][aria-disabled="false"]')
             await page.locator('button[data-action="restart-kiosk"]').click()
             await page.locator("dialog.system-confirm button.confirm").click()
-            alert = page.locator("mm3-admin-home p.alert[role=alert]")
+            alert = page.locator("mm3-admin-home div.alert[role=alert]")
             await alert.wait_for()
             assert "The installer is busy with another operation." in await alert.inner_text()
-            assert await page.locator("mm3-admin-home p.alert.info").count() == 0
+            assert await page.locator("mm3-admin-home div.alert.info").count() == 0
         finally:
             await browser.close()

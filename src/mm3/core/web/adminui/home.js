@@ -4,9 +4,11 @@
 // Implements CORE-381 (Core spec 0.41, §9.1 Remote-control API): the status view,
 // updated from the `status` topic.
 // Implements CORE-383 (Core spec 0.42, §9.1 Remote-control API): the System card.
+// Implements CORE-387 (Core spec 0.43, §9.1 Remote-control API): its banners.
 import { html, nothing, render } from "/admin/static/lit-html.js";
 import { loadTexts, onStatus, t } from "/admin/static/admin.js";
 import { statusAlerts, statusCards } from "/admin/static/status.js";
+import { banner } from "/admin/static/ui.js";
 import { SystemControls, syncDialog, systemBanner, systemCard, systemDialog } from "/admin/static/system.js";
 
 class AdminHome extends HTMLElement {
@@ -33,9 +35,9 @@ class AdminHome extends HTMLElement {
       html`
         ${systemBanner(this.system)}
         <h1>${t("CORE_ADMIN_STATUS")}</h1>
-        ${live ? nothing : html`<p class="alert warn" role="status">${t("CORE_ADMIN_RECONNECTING")}</p>`}
+        ${live ? nothing : banner("warn", t("CORE_ADMIN_RECONNECTING"))}
         ${status
-          ? html`${statusAlerts(status).map((a) => html`<p class="alert" role="alert">${a}</p>`)}
+          ? html`${statusAlerts(status).map((a) => banner("error", a))}
               ${statusCards(status)}`
           : html`<p class="muted">…</p>`}
         ${systemCard(this.system)}

@@ -579,7 +579,7 @@ msgid "CORE_ADMIN_REMOVE"
 msgstr "Entfernen"
 
 msgid "CORE_ADMIN_REPLACE_DRAFT"
-msgstr "Ungespeicherte Änderungen durch diese Version ersetzen?"
+msgstr "Die nicht gespeicherten Schritte des Entwurfs gehen verloren und lassen sich nicht wiederherstellen."
 
 msgid "CORE_ADMIN_SAVE"
 msgstr "Speichern"
@@ -1638,3 +1638,66 @@ msgstr "Das System wurde neu gestartet."
 
 msgid "CORE_ADMIN_SYSTEM_UNSEEN"
 msgstr "„{action}“ wurde vor 120 s angefordert; die Wirkung wurde nicht gesehen."
+
+msgid "CORE_ADMIN_RESTORE"
+msgstr "Wiederherstellen"
+
+msgid "CORE_ADMIN_RESTORE_ELLIPSIS"
+msgstr "Wiederherstellen…"
+
+msgid "CORE_ADMIN_RESTORE_EFFECT"
+msgstr "Die Wiederherstellung erzeugt Version {created}, gleich Version {version}, und die Engine wendet sie im laufenden Betrieb an. Die aktuelle Konfiguration bleibt im Verlauf."
+
+msgid "CORE_ADMIN_RESTORE_SECTION_EFFECT"
+msgstr "Die Wiederherstellung erzeugt Version {created} mit {section} wie in Version {version}; die übrigen Abschnitte bleiben unverändert."
+
+msgid "CORE_ADMIN_RESTORE_SECTION_ROW"
+msgstr "Ändert nur den gewählten Abschnitt; die übrigen bleiben unverändert."
+
+msgid "CORE_ADMIN_OPEN_IN_EDITOR_EFFECT"
+msgstr "Lädt diese Version als Entwurf. Es wird nichts geschrieben, bis Sie speichern."
+
+msgid "CORE_ADMIN_OPEN"
+msgstr "Öffnen"
+
+msgid "CORE_ADMIN_ALREADY_CURRENT"
+msgstr "Das ist bereits die aktuelle Version."
+
+msgid "CORE_ADMIN_NO_SECTIONS_IN_VERSION"
+msgstr "Diese Version hat keinen Abschnitt geändert."
+
+msgid "CORE_ADMIN_WORKING"
+msgstr "Eine andere Aktion läuft."
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_TITLE"
+msgstr "Den Entwurf durch Version {version} ersetzen?"
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_ACTION"
+msgstr "Entwurf ersetzen"
+
+msgid "CORE_ADMIN_REVIEW_SENTENCE"
+msgstr "Abschnitte, die sich gegenüber der aktuellen Version ändern: {count}. Es wurde nichts geschrieben; mit Speichern werden sie übernommen."
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE"
+msgstr "Fügt dem Entwurf auf Seite {page} eine Instanz hinzu, in {file}. Der Schritt lässt sich rückgängig machen; gespeichert wird erst beim Speichern."
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE_NOPAGE"
+msgstr "Fügt dem Entwurf eine Instanz hinzu, in {file}. Der Schritt lässt sich rückgängig machen; gespeichert wird erst beim Speichern."
+
+msgid "CORE_ADMIN_NEW_PAGE_SENTENCE"
+msgstr "Erstellt eine Seite im Entwurf. Ihre ID lässt sich später nicht ändern, der Titel schon."
+
+msgid "CORE_ADMIN_RENAME_PAGE_SENTENCE"
+msgstr "Ändert den Titel der Seite {page} im Entwurf; ihre ID bleibt gleich."
+
+msgid "CORE_ADMIN_LOG_LEVEL_EFFECT"
+msgstr "Ändert, wie viel diese Instanz in die Logs schreibt; ein erhöhter Pegel kehrt nach einer Weile zum Standard zurück."
+
+msgid "CORE_ADMIN_SET"
+msgstr "Setzen"
+
+msgid "CORE_ADMIN_RESTART_INSTANCE"
+msgstr "Instanz neu starten"
+
+msgid "CORE_ADMIN_RESTART_INSTANCE_EFFECT"
+msgstr "Stoppt und startet nur diese Instanz; ihr Feld auf dem Spiegel behält einige Sekunden das letzte Bild."

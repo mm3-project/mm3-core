@@ -577,7 +577,7 @@ msgid "CORE_ADMIN_REMOVE"
 msgstr "Quitar"
 
 msgid "CORE_ADMIN_REPLACE_DRAFT"
-msgstr "¿Sustituir los cambios sin guardar por esta versión?"
+msgstr "Los pasos no guardados del borrador se pierden y no se pueden recuperar."
 
 msgid "CORE_ADMIN_SAVE"
 msgstr "Guardar"
@@ -1636,3 +1636,66 @@ msgstr "El sistema se ha reiniciado."
 
 msgid "CORE_ADMIN_SYSTEM_UNSEEN"
 msgstr "«{action}» se solicitó hace 120 s; no se vio su efecto."
+
+msgid "CORE_ADMIN_RESTORE"
+msgstr "Restaurar"
+
+msgid "CORE_ADMIN_RESTORE_ELLIPSIS"
+msgstr "Restaurar…"
+
+msgid "CORE_ADMIN_RESTORE_EFFECT"
+msgstr "La restauración crea la versión {created}, igual a la versión {version}, y el motor la aplica en caliente. La configuración actual queda en el historial."
+
+msgid "CORE_ADMIN_RESTORE_SECTION_EFFECT"
+msgstr "La restauración crea la versión {created} con {section} como en la versión {version}; las demás secciones no cambian."
+
+msgid "CORE_ADMIN_RESTORE_SECTION_ROW"
+msgstr "Cambia solo la sección elegida; las demás no cambian."
+
+msgid "CORE_ADMIN_OPEN_IN_EDITOR_EFFECT"
+msgstr "Carga esta versión como borrador. No se escribe nada hasta que guardes."
+
+msgid "CORE_ADMIN_OPEN"
+msgstr "Abrir"
+
+msgid "CORE_ADMIN_ALREADY_CURRENT"
+msgstr "Esta ya es la versión actual."
+
+msgid "CORE_ADMIN_NO_SECTIONS_IN_VERSION"
+msgstr "Esta versión no cambió ninguna sección."
+
+msgid "CORE_ADMIN_WORKING"
+msgstr "Hay otra acción en curso."
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_TITLE"
+msgstr "¿Reemplazar el borrador con la versión {version}?"
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_ACTION"
+msgstr "Reemplazar el borrador"
+
+msgid "CORE_ADMIN_REVIEW_SENTENCE"
+msgstr "Secciones que cambian respecto a la versión actual: {count}. No se ha escrito nada; usa Guardar para aplicarlas."
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE"
+msgstr "Añade una instancia a la página {page} del borrador, en {file}. El paso se puede deshacer; no se guarda nada hasta que guardes."
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE_NOPAGE"
+msgstr "Añade una instancia al borrador, en {file}. El paso se puede deshacer; no se guarda nada hasta que guardes."
+
+msgid "CORE_ADMIN_NEW_PAGE_SENTENCE"
+msgstr "Crea una página en el borrador. Su id no se puede cambiar después; el título sí."
+
+msgid "CORE_ADMIN_RENAME_PAGE_SENTENCE"
+msgstr "Cambia el título de la página {page} en el borrador; su id sigue igual."
+
+msgid "CORE_ADMIN_LOG_LEVEL_EFFECT"
+msgstr "Cambia cuánto escribe esta instancia en los registros; un nivel elevado vuelve al predeterminado pasado un tiempo."
+
+msgid "CORE_ADMIN_SET"
+msgstr "Aplicar"
+
+msgid "CORE_ADMIN_RESTART_INSTANCE"
+msgstr "Reiniciar instancia"
+
+msgid "CORE_ADMIN_RESTART_INSTANCE_EFFECT"
+msgstr "Detiene e inicia solo esta instancia; su recuadro en el espejo conserva su última imagen unos segundos."

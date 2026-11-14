@@ -579,7 +579,7 @@ msgid "CORE_ADMIN_REMOVE"
 msgstr "Supprimer"
 
 msgid "CORE_ADMIN_REPLACE_DRAFT"
-msgstr "Remplacer les modifications non enregistrées par cette version ?"
+msgstr "Les étapes non enregistrées du brouillon sont perdues et ne peuvent pas être récupérées."
 
 msgid "CORE_ADMIN_SAVE"
 msgstr "Enregistrer"
@@ -1638,3 +1638,66 @@ msgstr "Le système a redémarré."
 
 msgid "CORE_ADMIN_SYSTEM_UNSEEN"
 msgstr "« {action} » a été demandé il y a 120 s ; son effet n'a pas été constaté."
+
+msgid "CORE_ADMIN_RESTORE"
+msgstr "Restaurer"
+
+msgid "CORE_ADMIN_RESTORE_ELLIPSIS"
+msgstr "Restaurer…"
+
+msgid "CORE_ADMIN_RESTORE_EFFECT"
+msgstr "La restauration crée la version {created}, identique à la version {version}, et le moteur l'applique à chaud. La configuration actuelle reste dans l'historique."
+
+msgid "CORE_ADMIN_RESTORE_SECTION_EFFECT"
+msgstr "La restauration crée la version {created} avec {section} comme dans la version {version} ; les autres sections restent inchangées."
+
+msgid "CORE_ADMIN_RESTORE_SECTION_ROW"
+msgstr "Ne change que la section choisie ; les autres restent inchangées."
+
+msgid "CORE_ADMIN_OPEN_IN_EDITOR_EFFECT"
+msgstr "Charge cette version comme brouillon. Rien n'est écrit tant que vous n'enregistrez pas."
+
+msgid "CORE_ADMIN_OPEN"
+msgstr "Ouvrir"
+
+msgid "CORE_ADMIN_ALREADY_CURRENT"
+msgstr "C'est déjà la version actuelle."
+
+msgid "CORE_ADMIN_NO_SECTIONS_IN_VERSION"
+msgstr "Cette version n'a changé aucune section."
+
+msgid "CORE_ADMIN_WORKING"
+msgstr "Une autre action est en cours."
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_TITLE"
+msgstr "Remplacer le brouillon par la version {version} ?"
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_ACTION"
+msgstr "Remplacer le brouillon"
+
+msgid "CORE_ADMIN_REVIEW_SENTENCE"
+msgstr "Sections qui changent par rapport à la version actuelle : {count}. Rien n'a été écrit ; utilisez Enregistrer pour les appliquer."
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE"
+msgstr "Ajoute une instance à la page {page} du brouillon, dans {file}. L'étape peut être annulée ; rien n'est enregistré tant que vous n'enregistrez pas."
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE_NOPAGE"
+msgstr "Ajoute une instance au brouillon, dans {file}. L'étape peut être annulée ; rien n'est enregistré tant que vous n'enregistrez pas."
+
+msgid "CORE_ADMIN_NEW_PAGE_SENTENCE"
+msgstr "Crée une page dans le brouillon. Son id ne peut plus être changé ensuite ; son titre, si."
+
+msgid "CORE_ADMIN_RENAME_PAGE_SENTENCE"
+msgstr "Change le titre de la page {page} dans le brouillon ; son id reste le même."
+
+msgid "CORE_ADMIN_LOG_LEVEL_EFFECT"
+msgstr "Change la quantité que cette instance écrit dans les journaux ; un niveau relevé revient à la valeur par défaut après un moment."
+
+msgid "CORE_ADMIN_SET"
+msgstr "Appliquer"
+
+msgid "CORE_ADMIN_RESTART_INSTANCE"
+msgstr "Redémarrer l'instance"
+
+msgid "CORE_ADMIN_RESTART_INSTANCE_EFFECT"
+msgstr "Arrête et démarre seulement cette instance ; son cadre sur le miroir garde son dernier rendu quelques secondes."

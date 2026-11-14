@@ -8,8 +8,13 @@
 // the ETag; a conflict reloads it.
 // Implements CORE-324 (Core spec 0.26, §6.8 Configuration history, undo and redo):
 // Open in editor; the page loads the version as the draft (event "mm3-open").
+// Implements CORE-384 (Core spec 0.43, §9.1 Remote-control API): the restore confirmation.
+// Implements CORE-386 (Core spec 0.43, §9.1 Remote-control API): the action rows of the
+// chosen version.
+// Implements CORE-387 (Core spec 0.43, §9.1 Remote-control API): its banners.
 import { html, nothing, render } from "/admin/static/lit-html.js";
 import { ApiError, fmtTime, t } from "/admin/static/admin.js";
+import { OK_SHOWN_MS, actionRow, banner, confirmDialog } from "/admin/static/ui.js";
 
 const PAGE = 50;
 
@@ -41,14 +46,33 @@ class ConfigHistory extends HTMLElement {
     this.b = null;
     this.diff = null;
     this.sectionFilter = "";
-    this.confirm = null;
     this.message = "";
+    this.messageKind = "error";
+    this.selected = null; // the version whose actions are shown (CORE-386)
+    this.sectionPick = "";
     this.records = [];
     this.busy = false;
   }
 
   async connectedCallback() {
     await this.reload();
+  }
+
+  disconnectedCallback() {
+    clearTimeout(this.messageTimer);
+  }
+
+  /** Show one banner: a done banner goes away after 8 s (CORE-387). */
+  say(kind, text) {
+    clearTimeout(this.messageTimer);
+    this.message = text;
+    this.messageKind = kind;
+    if (text && kind === "ok") {
+      this.messageTimer = setTimeout(() => {
+        this.message = "";
+        this.update();
+      }, OK_SHOWN_MS);
+    }
   }
 
   // --- data -------------------------------------------------------------------------
@@ -65,7 +89,7 @@ class ConfigHistory extends HTMLElement {
       const current = this.items.find((i) => i.current);
       if (current && this.b === null) this.b = current.version;
     } catch (err) {
-      this.message = err.message;
+      this.say("error", err.message);
     }
     this.update();
   }
@@ -77,23 +101,23 @@ class ConfigHistory extends HTMLElement {
       this.items = [...this.items, ...page.items];
       this.next = page.next;
     } catch (err) {
-      this.message = err.message;
+      this.say("error", err.message);
     }
     this.update();
   }
 
   async compare() {
     if (this.a === null || this.b === null) {
-      this.message = t("CORE_ADMIN_SELECT_TWO");
+      this.say("warn", t("CORE_ADMIN_SELECT_TWO"));
       this.update();
       return;
     }
     try {
       this.diff = { a: this.a, b: this.b, sections: await call("GET", `/config/history/${this.a}/diff/${this.b}`) };
       this.sectionFilter = "";
-      this.message = "";
+      this.say("error", "");
     } catch (err) {
-      this.message = err.message;
+      this.say("error", err.message);
     }
     this.update();
   }
@@ -103,17 +127,30 @@ class ConfigHistory extends HTMLElement {
     return current ? current.version : null;
   }
 
+  /** Ask in a dialog of the shape of CORE-384, with the diff as the preview, then restore. */
   async askRestore(version, section = null) {
     const current = this.currentVersion();
+    let sections = [];
     try {
       const path = `/config/history/${current}/diff/${version}${section ? `?section=${encodeURIComponent(section)}` : ""}`;
-      const sections = current !== null ? await call("GET", path) : [];
-      this.confirm = { kind: "restore", version, section, sections };
+      sections = current !== null ? await call("GET", path) : [];
     } catch (err) {
-      this.message = err.message;
+      this.say("error", err.message);
+      this.update();
+      return;
     }
-    this.update();
-    this.querySelector("dialog")?.showModal();
+    const created = Math.max(0, ...this.items.map((i) => i.version)) + 1;
+    const ok = await confirmDialog({
+      title: section
+        ? t("CORE_ADMIN_CONFIRM_RESTORE_SECTION", { section, version })
+        : t("CORE_ADMIN_CONFIRM_RESTORE", { version }),
+      text: section
+        ? t("CORE_ADMIN_RESTORE_SECTION_EFFECT", { section, version, created })
+        : t("CORE_ADMIN_RESTORE_EFFECT", { version, created }),
+      preview: this.sectionsView(sections, null, [t("CORE_ADMIN_NOW"), t("CORE_ADMIN_AFTER_RESTORE")]),
+      action: t("CORE_ADMIN_RESTORE"),
+    });
+    if (ok) await this.act("restore", { version, section });
   }
 
   async act(kind, extra = {}) {
@@ -123,30 +160,23 @@ class ConfigHistory extends HTMLElement {
     try {
       const body = kind === "restore" ? { version: extra.version, section: extra.section || null } : undefined;
       const result = await call("POST", `/config/${kind}`, { body, etag: this.etag });
-      this.message = t("CORE_ADMIN_DONE_VERSION", { version: result.version });
+      this.say("ok", t("CORE_ADMIN_DONE_VERSION", { version: result.version }));
       this.etag = result.etag;
       this.b = null;
       this.diff = null;
     } catch (err) {
-      this.message = err.message;
+      this.say("error", err.message);
       const problem = err.problem || {};
       if (problem.errors) this.records = problem.errors;
       if (problem.etag) this.etag = problem.etag;
     }
     this.busy = false;
-    this.confirm = null;
     await this.reload();
     this.dispatchEvent(new CustomEvent("mm3-saved", { bubbles: true }));
   }
 
   open(version) {
     this.dispatchEvent(new CustomEvent("mm3-open", { detail: { version }, bubbles: true }));
-  }
-
-  close() {
-    this.querySelector("dialog")?.close();
-    this.confirm = null;
-    this.update();
   }
 
   // --- rendering --------------------------------------------------------------------
@@ -161,14 +191,64 @@ class ConfigHistory extends HTMLElement {
         <button ?disabled=${this.busy} @click=${() => this.act("undo")}>${t("CORE_ADMIN_UNDO_SAVE")}</button>
         <button ?disabled=${this.busy} @click=${() => this.act("redo")}>${t("CORE_ADMIN_REDO_SAVE")}</button>
       </div>
-      ${this.message ? html`<p class="alert warn" role="status">${this.message}</p>` : nothing}
+      ${this.message ? banner(this.messageKind, this.message) : nothing}
       ${this.records.length
         ? html`<section class="card"><table><tbody>${this.records.map(
             (r) => html`<tr><td class="level-${r.severity}">${r.severity}</td><td class="mono">${r.path}</td>
               <td>${r.message}</td></tr>`,
           )}</tbody></table></section>`
         : nothing}
-      ${this.historyView()} ${this.diffView()} ${this.dialog()}`;
+      ${this.historyView()} ${this.selectedCard()} ${this.diffView()}`;
+  }
+
+  select(version) {
+    this.selected = this.selected === version ? null : version;
+    this.sectionPick = "";
+    this.update();
+  }
+
+  /** The actions on the chosen version, one row each (CORE-386). */
+  selectedCard() {
+    const i = this.items.find((x) => x.version === this.selected);
+    if (!i) return nothing;
+    const created = Math.max(0, ...this.items.map((x) => x.version)) + 1;
+    const busy = this.busy ? t("CORE_ADMIN_WORKING") : null;
+    const restoreReason = i.current ? t("CORE_ADMIN_ALREADY_CURRENT") : busy;
+    const sections = i.sections;
+    const pick = sections.includes(this.sectionPick) ? this.sectionPick : sections[0] || "";
+    const sectionReason = restoreReason || (sections.length ? null : t("CORE_ADMIN_NO_SECTIONS_IN_VERSION"));
+    return html`<section class="card" aria-labelledby="version-title">
+      <h2 id="version-title">${t("CORE_ADMIN_VERSION")} ${i.version} · ${fmtTime(i.time)}</h2>
+      ${actionRow({
+        name: t("CORE_ADMIN_OPEN_IN_EDITOR"),
+        effect: t("CORE_ADMIN_OPEN_IN_EDITOR_EFFECT"),
+        label: t("CORE_ADMIN_OPEN"),
+        id: "open",
+        reason: busy,
+        onClick: () => this.open(i.version),
+      })}
+      ${actionRow({
+        name: t("CORE_ADMIN_RESTORE_ALL"),
+        effect: t("CORE_ADMIN_RESTORE_EFFECT", { version: i.version, created }),
+        label: t("CORE_ADMIN_RESTORE_ELLIPSIS"),
+        id: "restore",
+        reason: restoreReason,
+        onClick: () => this.askRestore(i.version),
+      })}
+      ${actionRow({
+        name: t("CORE_ADMIN_RESTORE_SECTION"),
+        effect: t("CORE_ADMIN_RESTORE_SECTION_ROW"),
+        label: t("CORE_ADMIN_RESTORE_ELLIPSIS"),
+        id: "restore-section",
+        reason: sectionReason,
+        control: html`<select aria-label=${t("CORE_ADMIN_SECTIONS")} ?disabled=${!sections.length}
+          @change=${(ev) => {
+            this.sectionPick = ev.target.value;
+            this.update();
+          }}>${sections.map((n) => html`<option value=${n} ?selected=${n === pick}>${n}</option>`)}</select>`,
+        onClick: () => this.askRestore(i.version, pick),
+      })}
+    </section>`;
   }
 
   historyView() {
@@ -189,15 +269,13 @@ class ConfigHistory extends HTMLElement {
         </tr></thead>
         <tbody>${this.items.map(
           (i) => html`<tr class=${i.current ? "current" : ""}>
-            <td>${i.version}</td><td>${radio("a", i.version)}</td><td>${radio("b", i.version)}</td>
+            <td><button type="button" class="link" aria-pressed=${this.selected === i.version ? "true" : "false"}
+              @click=${() => this.select(i.version)}>${i.version}</button></td><td>${radio("a", i.version)}</td><td>${radio("b", i.version)}</td>
             <td class="nowrap">${fmtTime(i.time)}</td>
             <td>${t(`CORE_ADMIN_ORIGIN_${String(i.origin).toUpperCase()}`)}</td>
             <td class="mono">${i.author}</td>
             <td class="mono">${i.sections.length ? i.sections.join(", ") : html`<span class="muted">–</span>`}</td>
-            <td class="nowrap">${i.current
-              ? html`<span class="muted">${t("CORE_ADMIN_CURRENT")}</span>`
-              : html`<button ?disabled=${this.busy} @click=${() => this.askRestore(i.version)}>${t("CORE_ADMIN_RESTORE_ALL")}</button>
-                  <button ?disabled=${this.busy} @click=${() => this.open(i.version)}>${t("CORE_ADMIN_OPEN_IN_EDITOR")}</button>`}</td>
+            <td class="nowrap">${i.current ? html`<span class="muted">${t("CORE_ADMIN_CURRENT")}</span>` : nothing}</td>
           </tr>`,
         )}</tbody>
       </table>
@@ -243,25 +321,6 @@ class ConfigHistory extends HTMLElement {
         `${t("CORE_ADMIN_VERSION")} ${d.b}`,
       ])}
     </section>`;
-  }
-
-  dialog() {
-    const c = this.confirm;
-    if (!c) return html`<dialog></dialog>`;
-    const question = c.section
-      ? t("CORE_ADMIN_CONFIRM_RESTORE_SECTION", { section: c.section, version: c.version })
-      : t("CORE_ADMIN_CONFIRM_RESTORE", { version: c.version });
-    return html`<dialog @close=${() => this.close()}>
-      <h2>${question}</h2>
-      ${this.sectionsView(c.sections, null, [t("CORE_ADMIN_NOW"), t("CORE_ADMIN_AFTER_RESTORE")])}
-      <div class="toolbar">
-        <button @click=${() => this.close()}>${t("CORE_ADMIN_CANCEL")}</button>
-        <button class="primary" ?disabled=${this.busy} @click=${() => {
-          this.querySelector("dialog")?.close();
-          this.act("restore", { version: c.version, section: c.section });
-        }}>${t("CORE_ADMIN_CONFIRM")}</button>
-      </div>
-    </dialog>`;
   }
 }
 

@@ -9,9 +9,12 @@
 // browser errors are shown; the bus is subscribed only while its tab is open.
 // Implements CORE-316 (Core spec 0.24, §10.5 Diagnostics and debugging): the log
 // filters of the live view.
+// Implements CORE-386 (Core spec 0.43, §9.1 Remote-control API): the instance controls as rows.
+// Implements CORE-387 (Core spec 0.43, §9.1 Remote-control API): banners of the page.
 import { html, nothing, render } from "/admin/static/lit-html.js";
 import { AdminChannel, api, download, fmtTime, loadTexts, t } from "/admin/static/admin.js";
 import { statusAlerts, statusCards } from "/admin/static/status.js";
+import { actionRow, banner } from "/admin/static/ui.js";
 
 const MAX_ROWS = 2000;
 const LEVELS = ["debug", "info", "warning", "error"];
@@ -213,7 +216,7 @@ class AdminDebug extends HTMLElement {
           ${t(this.live ? "CORE_ADMIN_LIVE" : "CORE_ADMIN_RECONNECTING")}
         </span>
       </nav>
-      ${this.message ? html`<p class="alert warn" role="status">${this.message}</p>` : nothing}
+      ${this.message ? banner("warn", this.message) : nothing}
       ${this.tab === "overview" ? this.overview() : this.tab === "logs" ? this.logsView() : this.busView()}
     `;
   }
@@ -230,7 +233,7 @@ class AdminDebug extends HTMLElement {
     const s = this.status;
     if (!s) return html`<p class="muted">…</p>`;
     return html`
-      ${this.alerts(s).map((a) => html`<p class="alert" role="alert">${a}</p>`)}
+      ${this.alerts(s).map((a) => banner("error", a))}
       ${statusCards(s)}
       <section class="card"><h2>${t("CORE_ADMIN_INSTANCES")}</h2>
         <table>
@@ -267,15 +270,24 @@ class AdminDebug extends HTMLElement {
     if (!open) return row;
     const d = this.detail;
     return html`${row}<tr><td colspan="5"><div class="detail">
-      <div class="row">
-        <label>${t("CORE_ADMIN_LOG_LEVEL")}
-          <select @change=${(ev) => this.setLevel(m.id, ev.target.value)}>
-            <option value="">${t("CORE_ADMIN_LEVEL_DEFAULT")}</option>
-            ${LEVELS.map((l) => html`<option value=${l}>${l}</option>`)}
-          </select>
-        </label>
-        <button @click=${() => this.restart(m.id)}>${t("CORE_ADMIN_RESTART")}</button>
-      </div>
+      ${actionRow({
+        name: t("CORE_ADMIN_LOG_LEVEL"),
+        effect: t("CORE_ADMIN_LOG_LEVEL_EFFECT"),
+        label: t("CORE_ADMIN_SET"),
+        id: "log-level",
+        control: html`<select aria-label=${t("CORE_ADMIN_LOG_LEVEL")}>
+          <option value="">${t("CORE_ADMIN_LEVEL_DEFAULT")}</option>
+          ${LEVELS.map((l) => html`<option value=${l}>${l}</option>`)}
+        </select>`,
+        onClick: (ev) => this.setLevel(m.id, ev.target.closest(".controls").querySelector("select").value),
+      })}
+      ${actionRow({
+        name: t("CORE_ADMIN_RESTART_INSTANCE"),
+        effect: t("CORE_ADMIN_RESTART_INSTANCE_EFFECT"),
+        label: t("CORE_ADMIN_RESTART"),
+        id: "restart",
+        onClick: () => this.restart(m.id),
+      })}
       ${err && err.traceback ? html`<h3>${t("CORE_ADMIN_LAST_ERROR")}</h3><pre>${err.traceback}</pre>` : nothing}
       ${d
         ? html`<h3>${t("CORE_ADMIN_HEALTH")}</h3><pre>${JSON.stringify(d.health, null, 2)}</pre>
@@ -325,7 +337,7 @@ class AdminDebug extends HTMLElement {
         <button @click=${() => download("mm3-logs.jsonl", [...this.logs].reverse().map((r) => JSON.stringify(r)).join("\n") + "\n")}>
           ${t("CORE_ADMIN_DOWNLOAD_JSONL")}</button>
       </div>
-      ${this.dropped.logs ? html`<p class="alert warn">${t("CORE_ADMIN_DROPPED", { count: this.dropped.logs })}</p>` : nothing}
+      ${this.dropped.logs ? banner("warn", t("CORE_ADMIN_DROPPED", { count: this.dropped.logs })) : nothing}
       <section class="card">${this.logTable(this.logs)}</section>`;
   }
 
@@ -354,7 +366,7 @@ class AdminDebug extends HTMLElement {
           this.update();
         }}>${t(this.busPaused ? "CORE_ADMIN_RESUME" : "CORE_ADMIN_PAUSE")}</button>
       </div>
-      ${this.dropped.bus ? html`<p class="alert warn">${t("CORE_ADMIN_DROPPED", { count: this.dropped.bus })}</p>` : nothing}
+      ${this.dropped.bus ? banner("warn", t("CORE_ADMIN_DROPPED", { count: this.dropped.bus })) : nothing}
       <div class="split">
         <section class="card scroll"><table>
           <thead><tr><th>${t("CORE_ADMIN_TIME")}</th><th></th><th>${t("CORE_ADMIN_NAME")}</th>

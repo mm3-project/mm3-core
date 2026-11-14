@@ -569,7 +569,9 @@ async def test_core_324_open_in_editor_and_language(
     try:
         await page.goto(f"{base}/admin/config")
         await page.click("nav.tabs >> text=History")
-        await page.click("tr:has(td:text-is('1')) >> text=Open in editor")
+        # CORE-386: a version's actions are rows under the table, shown once it is chosen.
+        await page.click("tr:has(button.link:text-is('1')) button.link")
+        await page.click(".action-row:has-text('Open in editor') >> button")
         await page.wait_for_selector("text=Unsaved changes")
         value = await page.locator('mm3-schema-form [data-path="/locale"] input').input_value()
         assert value == "en"
@@ -640,11 +642,11 @@ async def test_core_301_form_edit_in_an_absent_section_applies(
         await page.click("nav.sections >> text=audio")
         await page.check('mm3-schema-form [data-path="/mute"] input[type=checkbox]')
         await page.wait_for_selector("text=Unsaved changes")
-        assert await page.locator("p.alert").count() == 0  # no "could not be applied"
+        assert await page.locator("div.alert").count() == 0  # no "could not be applied"
         await page.click("nav.sections >> text=pages")
         await page.click('mm3-schema-form [data-path="/list"] > button:has-text("Add")')
         await page.wait_for_selector('mm3-schema-form [data-path="/list/0/id"]')
-        assert await page.locator("p.alert").count() == 0
+        assert await page.locator("div.alert").count() == 0
         # The new page has no id yet, so Save stays disabled until it gets one.
         page_id = page.locator('mm3-schema-form [data-path="/list/0/id"] input')
         await page_id.fill("main")
@@ -680,7 +682,7 @@ async def test_core_35_section_errors_shown_and_listed(
         assert "needs a position" in (await top.inner_text())
         # The save bar's count opens the list; its link leads back to the section.
         await page.click(".savebar >> text=1 errors")
-        item = page.locator(".card.errors li")
+        item = page.locator(".alert.errors li")
         assert "needs a position" in (await item.inner_text())
         await page.click("nav.sections >> text=engine")
         await item.locator("button").click()
@@ -954,3 +956,102 @@ def test_core_206_admin_texts_carry_validation_codes() -> None:
     it = admin_texts("it")
     assert it["CORE_CFG_REQUIRED"] == "Questo valore è obbligatorio"
     assert "{module}" in it["CORE_CFG_POSITION_REQUIRED"]
+
+
+# --- ENH-012: the same style on all admin pages (Core spec 0.43, §9.1) -------------------------
+
+
+async def test_core_384_replacing_a_draft_asks_in_a_dialog_with_cancel_focused(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    base, sid, root, history = page_world
+    (root / "config.yaml").write_text(MAIN.replace("locale: en", "locale: de"))
+    with history.store.lock():
+        history.record_disk()
+    pw, browser, page, problems = await browse(base, sid)
+    native: list[str] = []
+    page.on("dialog", lambda d: native.append(d.message))  # never the browser's own box
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        await set_locale(page, "it")  # an unsaved step in the draft
+        await page.click("nav.tabs >> text=History")
+        await page.click("tr:has(button.link:text-is('1')) button.link")
+        await page.click(".action-row:has-text('Open in editor') >> button")
+        dialog = page.locator("dialog.confirm[open]")
+        await dialog.wait_for()
+        assert await dialog.locator("h2").inner_text() == "Replace the draft with version 1?"
+        assert "cannot be recovered" in await dialog.locator("p").inner_text()
+        assert await page.evaluate("document.activeElement.classList.contains('cancel')")
+        assert await dialog.locator("button.danger.confirm").count() == 1
+        buttons = await dialog.locator(".dialog-actions button").all_inner_texts()
+        assert buttons == ["Cancel", "Replace the draft"]
+        await page.keyboard.press("Escape")  # closes as Cancel: the draft is kept
+        await page.wait_for_selector("dialog.confirm", state="detached")
+        await page.click("nav.tabs >> text=Form")
+        assert (
+            await page.locator('mm3-schema-form [data-path="/locale"] input').input_value() == "it"
+        )
+        await page.click("nav.tabs >> text=History")
+        await page.click("tr:has(button.link:text-is('1')) button.link")
+        await page.click(".action-row:has-text('Open in editor') >> button")
+        await page.locator("dialog.confirm button.confirm").click()
+        await page.wait_for_selector('mm3-schema-form [data-path="/locale"] input')
+        value = await page.locator('mm3-schema-form [data-path="/locale"] input').input_value()
+        assert value == "en"
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert native == []
+    assert not problems, problems
+
+
+async def test_core_385_review_dialog_has_a_sentence_and_close_is_focused(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    base, sid, _root, _history = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        await set_locale(page, "it")
+        await page.click(".savebar >> text=Review changes")
+        dialog = page.locator("dialog.review[open]")
+        await dialog.wait_for()
+        assert "Nothing has been written" in await dialog.locator("p").first.inner_text()
+        assert await page.evaluate("document.activeElement.textContent.trim()") == "Close"
+        assert await dialog.locator(".dialog-actions button").count() == 1
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert not problems, problems
+
+
+async def test_core_386_restore_rows_are_disabled_for_the_current_version(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    base, sid, root, history = page_world
+    (root / "config.yaml").write_text(MAIN.replace("locale: en", "locale: de"))
+    with history.store.lock():
+        history.record_disk()
+    pw, browser, page, problems = await browse(base, sid)
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.click("nav.tabs >> text=History")
+        await page.click("tr.current button.link")
+        restore = page.locator(".action-row:has-text('Restore all') >> button")
+        assert await restore.get_attribute("aria-disabled") == "true"
+        assert await restore.get_attribute("title") == "This is already the current version."
+        assert (
+            "This is already the current version."
+            in await page.locator(".action-row:has-text('Restore all') .reason").inner_text()
+        )
+        await restore.dispatch_event("click")  # a disabled row does nothing
+        assert await page.locator("dialog.confirm").count() == 0
+        await page.click("tr:not(.current):has(button.link) button.link")
+        assert await restore.get_attribute("aria-disabled") == "false"
+        assert await page.locator(".action-row:has-text('Open in editor') >> button").is_visible()
+    finally:
+        await browser.close()
+        await pw.stop()
+    assert not problems, problems

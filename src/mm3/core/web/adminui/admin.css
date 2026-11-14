@@ -111,7 +111,9 @@ mm3-admin-debug, mm3-admin-config { display: block; padding: 16px; max-width: 14
 .stat dt { color: var(--muted); font-size: 12px; }
 .stat dd { margin: 0 0 6px; font-weight: 600; }
 
-.alert { margin: 4px 0; padding: 6px 10px; border-radius: 6px; border-left: 3px solid var(--bad); }
+.alert { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 4px 0; padding: 6px 10px; border-radius: 6px; border: 1px solid var(--line); border-left: 4px solid var(--bad); background: var(--panel); }
+.alert .text { flex: 1 1 auto; min-width: 0; }
+.alert[hidden] { display: none; }
 .alert.warn { border-left-color: var(--warn); }
 .alert.info { border-left-color: var(--accent); }
 .alert.ok { border-left-color: var(--ok); }
@@ -223,11 +225,15 @@ nav.tabs.files button { font-family: var(--mono); font-size: 12px; }
 .layout-view .disabled-list ul { list-style: none; padding: 0; margin: 0; }
 .layout-view .disabled-list li { display: flex; align-items: center; gap: 10px; padding: 4px 0; }
 
-/* System card and its confirmation dialog (CORE-383). */
-.system-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
-.system-row .text { flex: 1 1 320px; min-width: 0; }
-.system-row .name { font-weight: 600; }
-.system-row button { min-width: 160px; }
-dialog.system-confirm { min-width: min(420px, 92vw); max-width: 460px; }
-dialog.system-confirm h2 { margin: 0 0 8px; font-size: 17px; }
-dialog.system-confirm .toolbar { justify-content: flex-end; margin: 16px 0 0; }
+/* Action rows, confirmation dialogs and dialog footers (CORE-384..386). */
+.system-row, .action-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.system-row .text, .action-row .text { flex: 1 1 320px; min-width: 0; }
+.system-row .name, .action-row .name { font-weight: 600; }
+.system-row button, .action-row button { min-width: 160px; }
+.action-row .reason { font-style: italic; }
+.action-row .controls { display: flex; align-items: center; gap: 8px; }
+dialog h2 { margin: 0 0 8px; font-size: 17px; }
+dialog p { margin: 0 0 12px; }
+dialog.confirm, dialog.system-confirm { min-width: min(420px, 92vw); max-width: 520px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin: 16px 0 0; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
