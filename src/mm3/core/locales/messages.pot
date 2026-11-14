@@ -1558,6 +1558,15 @@ msgstr ""
 msgid "CORE_API_INSTALLER_BUSY"
 msgstr ""
 
+msgid "CORE_API_REAUTH_FAILED"
+msgstr ""
+
+msgid "CORE_API_INSTALLER_LOCKED"
+msgstr ""
+
+msgid "CORE_API_CATALOG_UNAVAILABLE"
+msgstr ""
+
 msgid "CORE_ADMIN_DISMISS"
 msgstr ""
 

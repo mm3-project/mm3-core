@@ -300,7 +300,8 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     engine.bus.add_endpoint(inspector)
     hub.frame_observer = inspector.frame
     editor = ConfigEditor(history, masker, lambda: manager.applied)
-    channel = AdminChannel(hub.auth, lambda: status_object(api), inspector)
+    installer = InstallerLink()
+    channel = AdminChannel(hub.auth, lambda: status_object(api), inspector, installer=installer)
     # CORE-307: Show on mirror ends on DELETE, a reload, 60 s, or the session's last channel.
     mirror = MirrorPreview(hub, lambda: hub.view().layout, channel.has_session)
     channel.session_closed.append(mirror.session_closed)
@@ -315,7 +316,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         masker,
         editor=editor,
         mirror=mirror,
-        installer=InstallerLink(),
+        installer=installer,
     )
     gateway = WebGateway(
         result.config.engine,

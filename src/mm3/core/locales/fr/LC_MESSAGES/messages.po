@@ -1567,6 +1567,15 @@ msgstr "L'installateur est injoignable : l'action n'a pas été envoyée."
 msgid "CORE_API_INSTALLER_BUSY"
 msgstr "L'installateur est occupé par une autre opération. Réessayez quand elle sera terminée."
 
+msgid "CORE_API_REAUTH_FAILED"
+msgstr "La réauthentification a échoué. Vérifiez la phrase secrète et le code, puis réessayez."
+
+msgid "CORE_API_INSTALLER_LOCKED"
+msgstr "L'installateur est verrouillé après trop d'échecs. Réessayez à la fin du verrouillage."
+
+msgid "CORE_API_CATALOG_UNAVAILABLE"
+msgstr "Le catalogue des modules n'est pas disponible : il n'y a pas de copie de l'index, ou il n'a pas pu être téléchargé ou vérifié."
+
 msgid "CORE_ADMIN_DISMISS"
 msgstr "Fermer"
 

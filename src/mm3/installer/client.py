@@ -72,13 +72,27 @@ class InstallerClient:
         self.path = path
         self.timeout = timeout
 
-    def request(self, method: str, target: str, body: dict[str, Any] | None = None) -> Reply:
+    def request(
+        self,
+        method: str,
+        target: str,
+        body: dict[str, Any] | None = None,
+        *,
+        timeout: float | None = None,
+    ) -> Reply:
         """Send one request.
+
+        Args:
+            method: The HTTP method.
+            target: The path.
+            body: A JSON object to send, if any.
+            timeout: Seconds for this request instead of the client's (a refresh waits longer
+                than a status read, CORE-356).
 
         Raises:
             InstallerUnavailable: The socket does not answer.
         """
-        conn = _UnixConnection(self.path, self.timeout)
+        conn = _UnixConnection(self.path, timeout if timeout is not None else self.timeout)
         data = json.dumps(body).encode() if body is not None else None
         headers = {"Content-Type": "application/json"} if data is not None else {}
         try:

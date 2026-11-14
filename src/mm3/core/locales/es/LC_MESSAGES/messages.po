@@ -1565,6 +1565,15 @@ msgstr "No se puede contactar con el instalador, así que la acción no se envi�
 msgid "CORE_API_INSTALLER_BUSY"
 msgstr "El instalador está ocupado con otra operación. Inténtalo de nuevo cuando termine."
 
+msgid "CORE_API_REAUTH_FAILED"
+msgstr "La reautenticación ha fallado. Comprueba la frase de contraseña y el código e inténtalo de nuevo."
+
+msgid "CORE_API_INSTALLER_LOCKED"
+msgstr "El instalador está bloqueado tras demasiados intentos fallidos. Inténtalo de nuevo cuando termine el bloqueo."
+
+msgid "CORE_API_CATALOG_UNAVAILABLE"
+msgstr "El catálogo de módulos no está disponible: no hay copia del índice o no se pudo descargar o verificar."
+
 msgid "CORE_ADMIN_DISMISS"
 msgstr "Cerrar"
 

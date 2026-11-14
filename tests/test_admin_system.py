@@ -61,7 +61,14 @@ class FakeInstaller:
         self.replies: dict[tuple[str, str], Reply] = {}
         self.down = False
 
-    def request(self, method: str, target: str, body: dict[str, Any] | None = None) -> Reply:
+    def request(
+        self,
+        method: str,
+        target: str,
+        body: dict[str, Any] | None = None,
+        *,
+        timeout: float | None = None,
+    ) -> Reply:
         self.calls.append((method, target, body))
         if self.down:
             raise InstallerUnavailable("installer socket /run/mm3-install/installer.sock: gone")
@@ -188,15 +195,17 @@ async def test_core_356_installer_status_reports_available_and_busy(
     api: Api,
     installer: FakeInstaller,
 ) -> None:
-    assert (await api.get("/api/v1/installer")).json() == {"available": True, "busy": False}
+    away = {"available": False, "busy": False, "locked_until": None}
+    idle = {"available": True, "busy": False, "locked_until": None}
+    assert (await api.get("/api/v1/installer")).json() == idle
     installer.replies[("GET", "/v1/status")] = Reply(200, {"busy": True})
-    assert (await api.get("/api/v1/installer")).json() == {"available": True, "busy": True}
+    assert (await api.get("/api/v1/installer")).json() == {**idle, "busy": True}
     installer.replies[("GET", "/v1/status")] = Reply(500, {"error": "boom"})
-    assert (await api.get("/api/v1/installer")).json() == {"available": False, "busy": False}
+    assert (await api.get("/api/v1/installer")).json() == away
     installer.down = True
-    assert (await api.get("/api/v1/installer")).json() == {"available": False, "busy": False}
+    assert (await api.get("/api/v1/installer")).json() == away
     api.services.installer = None
-    assert (await api.get("/api/v1/installer")).json() == {"available": False, "busy": False}
+    assert (await api.get("/api/v1/installer")).json() == away
     is_problem(await api.client.get("/api/v1/installer"), 401, "CORE_API_UNAUTHORIZED")
 
 
