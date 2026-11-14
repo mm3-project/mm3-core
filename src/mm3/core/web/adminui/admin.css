@@ -82,7 +82,7 @@ button[aria-disabled="true"]:hover { border-color: var(--line); }
 a.button { color: var(--accent); }
 input { min-width: 0; }
 
-mm3-admin-debug, mm3-admin-config { display: block; padding: 16px; max-width: 1400px; margin: 0 auto; }
+mm3-admin-debug, mm3-admin-config, mm3-admin-catalog { display: block; padding: 16px; max-width: 1400px; margin: 0 auto; }
 
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
 .tabs button {
@@ -237,3 +237,26 @@ dialog p { margin: 0 0 12px; }
 dialog.confirm, dialog.system-confirm { min-width: min(420px, 92vw); max-width: 520px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin: 16px 0 0; }
 button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* The Catalog page (CORE-120, CORE-133). */
+.badge { display: inline-block; padding: 1px 8px; border-radius: 10px; border: 1px solid var(--line); font-size: 12px; }
+.badge.official { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.badge.verified { border-color: var(--ok); color: var(--ok); }
+.badge.unlisted { border-color: var(--warn); color: var(--warn); }
+.tag { display: inline-block; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); background: var(--bg); font-family: var(--mono); font-size: 12px; }
+.catalog .detail-card, .catalog .card.operation, .catalog .card.installer { margin-bottom: 12px; }
+.catalog td.update { color: var(--accent); font-weight: 600; }
+.catalog-list tbody tr:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+dl.facts { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 8px 0; }
+dl.facts dt { color: var(--muted); font-size: 12px; }
+dl.facts dd { margin: 0; overflow-wrap: anywhere; }
+code.cli { font-family: var(--mono); font-size: 12px; padding: 2px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); overflow-wrap: anywhere; }
+.releases { margin: 8px 0 12px; font-size: 13px; }
+ol.steps { margin: 6px 0 0; padding-left: 20px; }
+.update-count { font-weight: 600; color: var(--accent); }
+dialog.catalog-dialog { min-width: min(520px, 92vw); max-width: 640px; }
+dialog .field { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; font-size: 13px; }
+dialog .field input { max-width: 100%; }
+.card.detail-card h2 { text-transform: none; font-size: 16px; color: var(--text); font-family: var(--mono); }
+.catalog .detail-card { overflow-x: auto; }
+.releases td { overflow-wrap: anywhere; }

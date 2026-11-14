@@ -29,6 +29,7 @@ from mm3.core.i18n.catalogs import CORE_CATALOG, Table
 __all__ = [
     "ADMIN_PREFIXES",
     "TEXT",
+    "admin_catalog_page",
     "admin_config_page",
     "admin_debug_page",
     "admin_home_page",
@@ -180,6 +181,7 @@ def _admin_page(
     here = ' aria-current="page"'
     items = [
         ("/admin/config", t("CORE_WEB_NAV_CONFIG")),
+        ("/admin/catalog", t("CORE_WEB_NAV_CATALOG")),
         ("/admin/debug", t("CORE_WEB_NAV_DEBUG")),
         *extensions,
     ]
@@ -229,6 +231,25 @@ def admin_config_page(extensions: Sequence[tuple[str, str]] = ()) -> str:
         CORE-34: Core spec 0.22, §6.4 Web configuration editor.
     """
     return _admin_page("mm3-admin-config", "config.js", "/admin/config", extensions)
+
+
+def admin_catalog_page(extensions: Sequence[tuple[str, str]] = ()) -> str:
+    """Render ``/admin/catalog``, the page of the module catalog (CORE-120, CORE-133).
+
+    ``catalog.js`` reads the catalog and the installer through the REST API and the
+    ``installer`` topic of the admin channel; the page itself holds no data.
+
+    Args:
+        extensions: Links to the module pages (CORE-329).
+
+    Returns:
+        The HTML.
+
+    Implements:
+        CORE-120: Core spec 0.44, §10.6 Module catalog.
+        CORE-133: Core spec 0.44, §10.7 Installer service.
+    """
+    return _admin_page("mm3-admin-catalog", "catalog.js", "/admin/catalog", extensions)
 
 
 def admin_extension_page(href: str, extensions: Sequence[tuple[str, str]], attrs: str) -> str:

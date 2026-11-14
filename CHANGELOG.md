@@ -7,6 +7,22 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (admin Catalog page; CORE-120, CORE-133, CORE-132, CORE-135, ENH-002; spec 0.44)
+
+- `/admin/catalog` (nav link "Catalog") lists the catalog with search, category filter, an
+  Installed and an Updates available view (with the number of updates) and a button that
+  refreshes the index through the installer. A stale index and an installer that is away are
+  shown as banners (CORE-135). The detail shows publisher, releases with the check result and
+  a link to the report (never fetched by the page), capabilities and grant scopes.
+- Install, update, remove and restore previous open a dialog with the effect, the CLI
+  alternative, a version selector when several compatible releases exist, the passphrase and
+  the TOTP code. The fields are cleared before the request and never stored; a wrong passphrase
+  keeps the dialog open. The remove dialog lists the instances that will be disabled (CORE-358).
+- Progress follows the `installer` topic of `/admin/ws` with a read of the operation after a
+  reconnect; the result ends as a done, rolled back or failed banner and the list is reloaded.
+- 88 new texts (`CORE_ADMIN_CATALOG_*`, `CORE_WEB_NAV_CATALOG`) in en, it, fr, es, de.
+- The backup routes of CORE-361 and the Backups page are still to build.
+
 ### Added (removal disables the instances first; CORE-358, CORE-31, ENH-002; spec 0.44)
 
 - Before a removal is forwarded to the installer, the engine saves a configuration history
