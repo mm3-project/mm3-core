@@ -273,10 +273,16 @@ done_at = { core = "0.41", contract = "1.0 rev 15" }
 #   milestone through the spec-change issue (CORE-79); the work is the admin home,
 #   the header indicator and the shared status view (ENH-007). Closed again at
 #   Core 0.41.
+# Core spec 0.43 (14 Nov 2026; Source: ENH-012): CORE-384..387 (confirmation
+#   dialogs, form and preview dialogs, action rows and banners of the admin
+#   pages, taken from the System card of CORE-383) added here; they extend
+#   CORE-322, CORE-324, CORE-374, CORE-376, CORE-302, CORE-315, CORE-381 and
+#   CORE-383 without changing them; they reopen the milestone through the
+#   spec-change issue (CORE-79); the work is ENH-012.
 requirements = [
   "CORE-34..37", "CORE-97..99", "CORE-102", "CORE-112", "CORE-114..116",
   "CORE-151", "CORE-152", "CORE-236", "CORE-240", "CORE-242",
-  "CORE-290..292", "CORE-298..332", "CORE-374..381", "MOD-38", "MOD-39",
+  "CORE-290..292", "CORE-298..332", "CORE-374..381", "CORE-384..387", "MOD-38", "MOD-39",
   "MOD-74",
 ]
 
