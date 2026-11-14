@@ -5,7 +5,8 @@ the whole service inside a temporary directory. The defaults are the paths of
 CORE-351, CORE-355, CORE-359 and CORE-368.
 
 Implements:
-    CORE-355, CORE-359: Core spec 0.35, §10.7 Installer service.
+    CORE-355: Core spec 0.35, §10.7 Installer service.
+    CORE-359: Core spec 0.42, §10.8 Backup and restore.
     CORE-368: Core spec 0.35, §10.7 Installer service.
     CORE-360, CORE-362, CORE-364, CORE-365, CORE-366: Core spec 0.37, §10.8 Backup and restore.
 """

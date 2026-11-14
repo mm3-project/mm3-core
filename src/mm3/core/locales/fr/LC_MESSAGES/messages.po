@@ -1560,3 +1560,81 @@ msgstr "Erreur"
 
 msgid "CORE_ADMIN_STATUS"
 msgstr "État"
+
+msgid "CORE_API_INSTALLER_UNAVAILABLE"
+msgstr "L'installateur est injoignable : l'action n'a pas été envoyée."
+
+msgid "CORE_API_INSTALLER_BUSY"
+msgstr "L'installateur est occupé par une autre opération. Réessayez quand elle sera terminée."
+
+msgid "CORE_ADMIN_DISMISS"
+msgstr "Fermer"
+
+msgid "CORE_ADMIN_SYSTEM"
+msgstr "Système"
+
+msgid "CORE_ADMIN_SYSTEM_CHECKING"
+msgstr "Vérification de l'installateur…"
+
+msgid "CORE_ADMIN_SYSTEM_INSTALLER_UNAVAILABLE"
+msgstr "L'installateur est injoignable."
+
+msgid "CORE_ADMIN_SYSTEM_INSTALLER_BUSY"
+msgstr "L'installateur est occupé par une autre opération."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE"
+msgstr "Redémarrer le moteur"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_EFFECT"
+msgstr "Interrompt l'administration et les mises à jour du miroir pendant un court instant. Les écrans gardent leur dernier affichage."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_TITLE"
+msgstr "Redémarrer le moteur ?"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_CONFIRM_TEXT"
+msgstr "Le service du moteur redémarre. L'administration et les mises à jour du miroir s'arrêtent un court instant ; le miroir continue d'afficher son dernier rendu. Cette page se reconnecte toute seule."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK"
+msgstr "Redémarrer le kiosque"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_EFFECT"
+msgstr "L'écran du miroir reste noir tant que le kiosque n'est pas revenu. Le moteur et cette page ne sont pas touchés."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_TITLE"
+msgstr "Redémarrer le kiosque ?"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_CONFIRM_TEXT"
+msgstr "Le navigateur du kiosque redémarre. L'écran du miroir reste noir jusqu'à son retour. Le moteur et cette page ne sont pas touchés."
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT"
+msgstr "Redémarrer le système"
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_EFFECT"
+msgstr "Arrête tout, miroir et administration compris, jusqu'au retour de la machine."
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_TITLE"
+msgstr "Redémarrer le système ?"
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_CONFIRM_TEXT"
+msgstr "Toute la machine redémarre. Le miroir et cette administration restent arrêtés jusqu'à son retour. Cette page se reconnecte toute seule."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_RESTART_ENGINE"
+msgstr "Redémarrage du moteur demandé. En attente du retour du moteur."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_RESTART_KIOSK"
+msgstr "Redémarrage du kiosque demandé. En attente de la reconnexion du kiosque."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_REBOOT"
+msgstr "Redémarrage du système demandé. En attente du retour de la machine."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_RESTART_ENGINE"
+msgstr "Le moteur a redémarré."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_RESTART_KIOSK"
+msgstr "Le kiosque est de nouveau connecté."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_REBOOT"
+msgstr "Le système a redémarré."
+
+msgid "CORE_ADMIN_SYSTEM_UNSEEN"
+msgstr "« {action} » a été demandé il y a 120 s ; son effet n'a pas été constaté."

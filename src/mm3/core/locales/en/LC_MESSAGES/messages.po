@@ -1558,3 +1558,81 @@ msgstr "Error"
 
 msgid "CORE_ADMIN_STATUS"
 msgstr "Status"
+
+msgid "CORE_API_INSTALLER_UNAVAILABLE"
+msgstr "The installer cannot be reached, so the action was not sent."
+
+msgid "CORE_API_INSTALLER_BUSY"
+msgstr "The installer is busy with another operation. Try again when it has finished."
+
+msgid "CORE_ADMIN_DISMISS"
+msgstr "Dismiss"
+
+msgid "CORE_ADMIN_SYSTEM"
+msgstr "System"
+
+msgid "CORE_ADMIN_SYSTEM_CHECKING"
+msgstr "Checking the installer…"
+
+msgid "CORE_ADMIN_SYSTEM_INSTALLER_UNAVAILABLE"
+msgstr "The installer cannot be reached."
+
+msgid "CORE_ADMIN_SYSTEM_INSTALLER_BUSY"
+msgstr "The installer is busy with another operation."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE"
+msgstr "Restart engine"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_EFFECT"
+msgstr "Interrupts the admin and the mirror's updates for a short while. The displays keep their last render."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_TITLE"
+msgstr "Restart the engine?"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_CONFIRM_TEXT"
+msgstr "The engine service restarts. The admin and the mirror's updates stop for a short while; the mirror keeps showing its last render. This page reconnects by itself."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK"
+msgstr "Restart kiosk"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_EFFECT"
+msgstr "Blanks the mirror screen until the kiosk is back. The engine and this page are not affected."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_TITLE"
+msgstr "Restart the kiosk?"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_CONFIRM_TEXT"
+msgstr "The kiosk browser restarts. The mirror screen goes blank until it is back. The engine and this page are not affected."
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT"
+msgstr "Reboot system"
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_EFFECT"
+msgstr "Stops everything, the mirror and this admin included, until the machine is back."
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_TITLE"
+msgstr "Reboot the system?"
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_CONFIRM_TEXT"
+msgstr "The whole machine reboots. The mirror and this admin stay stopped until it is back. This page reconnects by itself."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_RESTART_ENGINE"
+msgstr "Restart engine requested. Waiting for the engine to come back."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_RESTART_KIOSK"
+msgstr "Restart kiosk requested. Waiting for the kiosk to reconnect."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_REBOOT"
+msgstr "Reboot requested. Waiting for the machine to come back."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_RESTART_ENGINE"
+msgstr "The engine restarted."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_RESTART_KIOSK"
+msgstr "The kiosk is connected again."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_REBOOT"
+msgstr "The system rebooted."
+
+msgid "CORE_ADMIN_SYSTEM_UNSEEN"
+msgstr "“{action}” was requested 120 s ago; its effect was not seen."

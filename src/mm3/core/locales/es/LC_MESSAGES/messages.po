@@ -1558,3 +1558,81 @@ msgstr "Error"
 
 msgid "CORE_ADMIN_STATUS"
 msgstr "Estado"
+
+msgid "CORE_API_INSTALLER_UNAVAILABLE"
+msgstr "No se puede contactar con el instalador, así que la acción no se envió."
+
+msgid "CORE_API_INSTALLER_BUSY"
+msgstr "El instalador está ocupado con otra operación. Inténtalo de nuevo cuando termine."
+
+msgid "CORE_ADMIN_DISMISS"
+msgstr "Cerrar"
+
+msgid "CORE_ADMIN_SYSTEM"
+msgstr "Sistema"
+
+msgid "CORE_ADMIN_SYSTEM_CHECKING"
+msgstr "Comprobando el instalador…"
+
+msgid "CORE_ADMIN_SYSTEM_INSTALLER_UNAVAILABLE"
+msgstr "No se puede contactar con el instalador."
+
+msgid "CORE_ADMIN_SYSTEM_INSTALLER_BUSY"
+msgstr "El instalador está ocupado con otra operación."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE"
+msgstr "Reiniciar el motor"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_EFFECT"
+msgstr "Interrumpe la administración y las actualizaciones del espejo durante un momento. Las pantallas conservan su último dibujo."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_TITLE"
+msgstr "¿Reiniciar el motor?"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_CONFIRM_TEXT"
+msgstr "El servicio del motor se reinicia. La administración y las actualizaciones del espejo se detienen un momento; el espejo sigue mostrando su último dibujo. Esta página se reconecta sola."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK"
+msgstr "Reiniciar el quiosco"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_EFFECT"
+msgstr "La pantalla del espejo queda en negro hasta que el quiosco vuelva. El motor y esta página no se ven afectados."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_TITLE"
+msgstr "¿Reiniciar el quiosco?"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_CONFIRM_TEXT"
+msgstr "El navegador del quiosco se reinicia. La pantalla del espejo queda en negro hasta que vuelva. El motor y esta página no se ven afectados."
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT"
+msgstr "Reiniciar el sistema"
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_EFFECT"
+msgstr "Detiene todo, el espejo y esta administración incluidos, hasta que la máquina vuelva."
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_TITLE"
+msgstr "¿Reiniciar el sistema?"
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_CONFIRM_TEXT"
+msgstr "Se reinicia toda la máquina. El espejo y esta administración quedan detenidos hasta que vuelva. Esta página se reconecta sola."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_RESTART_ENGINE"
+msgstr "Reinicio del motor solicitado. Esperando a que el motor vuelva."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_RESTART_KIOSK"
+msgstr "Reinicio del quiosco solicitado. Esperando a que el quiosco se reconecte."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_REBOOT"
+msgstr "Reinicio del sistema solicitado. Esperando a que la máquina vuelva."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_RESTART_ENGINE"
+msgstr "El motor se ha reiniciado."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_RESTART_KIOSK"
+msgstr "El quiosco vuelve a estar conectado."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_REBOOT"
+msgstr "El sistema se ha reiniciado."
+
+msgid "CORE_ADMIN_SYSTEM_UNSEEN"
+msgstr "«{action}» se solicitó hace 120 s; no se vio su efecto."

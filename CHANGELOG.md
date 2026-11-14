@@ -7,6 +7,29 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (admin: restart the engine or the kiosk and reboot from the admin; ENH-002; spec 0.42, CORE-382, CORE-383)
+
+- The admin home has a System card (one row per action, with its effect): "Restart engine",
+  "Restart kiosk" and "Reboot system". Each opens a confirmation dialog with Cancel focused
+  and no passphrase (CORE-383). After Confirm a banner follows the effect through the
+  reconnect of the admin channel (CORE-250): it ends when `started_at` is later (engine,
+  reboot) or the kiosk reconnects, or after 120 s with an "effect not seen" message. The
+  buttons are disabled, with the reason as the tooltip, while the installer is unreachable
+  or busy.
+- Engine: `POST /api/v1/system/restart-engine|restart-kiosk|reboot` on the admin listener
+  only, answering 202 `{action, requested_at}`; 409 `CORE_API_INSTALLER_BUSY`, 409
+  `CORE_API_NO_KIOSK` and 503 `CORE_API_INSTALLER_UNAVAILABLE` (CORE-382).
+- Installer: `POST /v1/system/*` answers 202, waits 2 s, then runs `systemctl restart
+  mm3.service`, `systemctl restart mm3-kiosk.service` or `systemctl reboot`, and logs the
+  action with the client at warning level. While an action waits, operations and scheduled
+  backups are refused (busy). The polkit rule now covers those units and
+  `org.freedesktop.login1.reboot` (CORE-357, CORE-359, CORE-382).
+- Minimal slice of CORE-356: the engine had no installer forwarding layer, so this adds the
+  installer client and `GET /api/v1/installer` returning `{available, busy}`. The spec does
+  not define that shape; it is an implementation choice recorded in ENH-002.
+- 26 new catalog keys in five languages. Tests: `tests/test_admin_system.py` (routes, the
+  installer side, the polkit matrix, the UI logic under node, two Chromium runs).
+
 ### Added (admin: MQTT connection indicator and the admin home status view; ENH-007; spec 0.41, CORE-381)
 
 - Every admin page except the login has an MQTT indicator in its header: a coloured dot

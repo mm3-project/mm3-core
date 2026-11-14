@@ -1,14 +1,27 @@
-// MM3: lets the installer user stop, start and restart the engine, nothing else.
-// Implements CORE-357 (Core spec 0.33, §10.7 Installer service)
-// Implements CORE-359 (Core spec 0.35, §10.8 Backup and restore): stop, start and restart
+// MM3: lets the installer user stop, start and restart the engine, restart the kiosk and
+// reboot the machine, nothing else.
+// Implements CORE-357 (Core spec 0.42, §10.7 Installer service)
+// Implements CORE-359 (Core spec 0.42, §10.8 Backup and restore): stop, start and restart
+// of mm3.service, restart of mm3-kiosk.service, reboot through logind
+// Implements CORE-382 (Core spec 0.42, §9.1 Remote-control API): the kiosk restart and the reboot
 polkit.addRule(function (action, subject) {
-    if (action.id === "org.freedesktop.systemd1.manage-units" &&
-            subject.user === "mm3-install" &&
-            action.lookup("unit") === "mm3.service") {
+    if (subject.user !== "mm3-install") {
+        return polkit.Result.NOT_HANDLED;
+    }
+    if (action.id === "org.freedesktop.systemd1.manage-units") {
+        var unit = action.lookup("unit");
         var verb = action.lookup("verb");
-        if (verb === "start" || verb === "stop" || verb === "restart") {
+        if (unit === "mm3.service" &&
+                (verb === "start" || verb === "stop" || verb === "restart")) {
             return polkit.Result.YES;
         }
+        if (unit === "mm3-kiosk.service" && verb === "restart") {
+            return polkit.Result.YES;
+        }
+    }
+    if (action.id === "org.freedesktop.login1.reboot" ||
+            action.id === "org.freedesktop.login1.reboot-multiple-sessions") {
+        return polkit.Result.YES;
     }
     return polkit.Result.NOT_HANDLED;
 });

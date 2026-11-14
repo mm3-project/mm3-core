@@ -9,7 +9,7 @@ step goes through an open directory descriptor with ``O_NOFOLLOW``, so a
 symlink planted by the engine's user can at most spoil its own copy (CORE-373).
 
 Implements:
-    CORE-359: Core spec 0.35, §10.8 Backup and restore.
+    CORE-359: Core spec 0.42, §10.8 Backup and restore.
     CORE-363: Core spec 0.37, §10.8 Backup and restore.
     CORE-373: Core spec 0.37, §10.7 Installer service.
 """

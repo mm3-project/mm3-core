@@ -1558,3 +1558,81 @@ msgstr "Errore"
 
 msgid "CORE_ADMIN_STATUS"
 msgstr "Stato"
+
+msgid "CORE_API_INSTALLER_UNAVAILABLE"
+msgstr "L'installer non è raggiungibile: l'azione non è stata inviata."
+
+msgid "CORE_API_INSTALLER_BUSY"
+msgstr "L'installer è occupato con un'altra operazione. Riprova quando ha finito."
+
+msgid "CORE_ADMIN_DISMISS"
+msgstr "Chiudi"
+
+msgid "CORE_ADMIN_SYSTEM"
+msgstr "Sistema"
+
+msgid "CORE_ADMIN_SYSTEM_CHECKING"
+msgstr "Controllo dell'installer…"
+
+msgid "CORE_ADMIN_SYSTEM_INSTALLER_UNAVAILABLE"
+msgstr "L'installer non è raggiungibile."
+
+msgid "CORE_ADMIN_SYSTEM_INSTALLER_BUSY"
+msgstr "L'installer è occupato con un'altra operazione."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE"
+msgstr "Riavvia il motore"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_EFFECT"
+msgstr "Interrompe l'amministrazione e gli aggiornamenti dello specchio per qualche istante. I display mantengono l'ultima schermata."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_TITLE"
+msgstr "Riavviare il motore?"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_ENGINE_CONFIRM_TEXT"
+msgstr "Il servizio del motore si riavvia. L'amministrazione e gli aggiornamenti dello specchio si fermano per qualche istante; lo specchio continua a mostrare l'ultima schermata. Questa pagina si ricollega da sola."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK"
+msgstr "Riavvia il kiosk"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_EFFECT"
+msgstr "Lo schermo dello specchio resta nero finché il kiosk non torna. Il motore e questa pagina non sono toccati."
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_TITLE"
+msgstr "Riavviare il kiosk?"
+
+msgid "CORE_ADMIN_SYSTEM_RESTART_KIOSK_CONFIRM_TEXT"
+msgstr "Il browser del kiosk si riavvia. Lo schermo dello specchio resta nero finché non torna. Il motore e questa pagina non sono toccati."
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT"
+msgstr "Riavvia il sistema"
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_EFFECT"
+msgstr "Ferma tutto, specchio e amministrazione compresi, finché la macchina non è tornata."
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_TITLE"
+msgstr "Riavviare il sistema?"
+
+msgid "CORE_ADMIN_SYSTEM_REBOOT_CONFIRM_TEXT"
+msgstr "Si riavvia l'intera macchina. Lo specchio e questa amministrazione restano fermi finché non è tornata. Questa pagina si ricollega da sola."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_RESTART_ENGINE"
+msgstr "Riavvio del motore richiesto. In attesa che il motore torni."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_RESTART_KIOSK"
+msgstr "Riavvio del kiosk richiesto. In attesa che il kiosk si ricolleghi."
+
+msgid "CORE_ADMIN_SYSTEM_PENDING_REBOOT"
+msgstr "Riavvio del sistema richiesto. In attesa che la macchina torni."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_RESTART_ENGINE"
+msgstr "Il motore si è riavviato."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_RESTART_KIOSK"
+msgstr "Il kiosk è di nuovo connesso."
+
+msgid "CORE_ADMIN_SYSTEM_SEEN_REBOOT"
+msgstr "Il sistema si è riavviato."
+
+msgid "CORE_ADMIN_SYSTEM_UNSEEN"
+msgstr "«{action}» è stato richiesto 120 s fa; non se ne è visto l'effetto."

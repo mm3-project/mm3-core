@@ -8,8 +8,9 @@ venv runs over the admin socket, as the engine's user ``mm3``, and a non-zero
 exit means rollback (CORE-135).
 
 Implements:
-    CORE-357: Core spec 0.33, §10.7 Installer service.
-    CORE-359, CORE-363: Core spec 0.37, §10.8 Backup and restore.
+    CORE-357: Core spec 0.42, §10.7 Installer service.
+    CORE-359: Core spec 0.42, §10.8 Backup and restore.
+    CORE-363: Core spec 0.37, §10.8 Backup and restore.
     CORE-135: Core spec 0.33, §10.7 Installer service.
 """
 
@@ -24,7 +25,7 @@ from typing import Protocol
 from mm3.installer.paths import ENGINE_USER, Layout
 from mm3.installer.runner import Completed, Runner
 
-__all__ = ["ENGINE_UNIT", "READY_TIMEOUT_S", "Engine", "SystemdEngine"]
+__all__ = ["ENGINE_UNIT", "READY_TIMEOUT_S", "SYSTEMCTL", "Engine", "SystemdEngine"]
 
 ENGINE_UNIT = "mm3.service"
 READY_TIMEOUT_S = 60.0

@@ -9,7 +9,7 @@ installer socket and need root, which the installer checks with
 root (CORE-369).
 
 Implements:
-    CORE-357: Core spec 0.33, §10.7 Installer service.
+    CORE-357: Core spec 0.42, §10.7 Installer service.
     CORE-369: Core spec 0.37, §10.7 Installer service.
     CORE-132: Core spec 0.33, §10.7 Installer service.
 """

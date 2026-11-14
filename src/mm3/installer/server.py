@@ -7,8 +7,10 @@ peer's uid comes from ``SO_PEERCRED``: unlisted sources and the passphrase and
 TOTP setup are accepted only from root (CORE-353, CORE-369); every listed
 operation needs the passphrase, and the TOTP code when enabled (CORE-132). A
 failed re-authentication answers 403, a locked installer 423 and a second
-operation while one runs 409. Bodies are never logged, so passphrases and codes
-are not either.
+operation while one runs 409. ``POST /v1/system/<action>`` (restart the engine
+or the kiosk, reboot, CORE-382) needs no passphrase: it answers 202, waits
+:data:`~mm3.installer.system.DELAY_S` and runs the command. Bodies are never
+logged, so passphrases and codes are not either.
 
 Implements:
     CORE-355: Core spec 0.35, §10.7 Installer service.
@@ -19,6 +21,7 @@ Implements:
     CORE-361: Core spec 0.37, §10.8 Backup and restore (installer side).
     CORE-364: Core spec 0.37, §10.8 Backup and restore.
     CORE-365: Core spec 0.37, §10.8 Backup and restore.
+    CORE-382: Core spec 0.42, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -33,6 +36,7 @@ import socket
 import struct
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from http import HTTPStatus
 from pathlib import Path
 from typing import Any
@@ -45,6 +49,7 @@ from mm3.installer.backup import BackupError
 from mm3.installer.operations import FINAL, BusyError, Installer, Operation, Request
 from mm3.installer.remotes import REMOTE_NAME, RemoteError
 from mm3.installer.schedule import BackupScheduler
+from mm3.installer.system import ACTIONS, DELAY_S, SystemActions
 from mm3.installer.venv import BuildError
 
 __all__ = ["MAX_BODY", "REFRESH_CHECK_S", "InstallerServer", "peer_uid"]
@@ -62,6 +67,7 @@ _VERSION = re.compile(r"^[A-Za-z0-9.+!_-]{1,64}$")
 _LENGTH = re.compile(r"[0-9]{1,6}")
 MAX_CLIENTS = 32
 """Connections served at once; more are closed at once (event streams count)."""
+_SYSTEM_PATH = re.compile(r"^/v1/system/(" + "|".join(ACTIONS) + ")$")
 _OP_PATH = re.compile(r"^/v1/operations/([0-9a-f]{16})(/events)?$")
 _BACKUP_PATH = re.compile(r"^/v1/backups/([A-Za-z0-9][A-Za-z0-9._-]{0,200}\.mm3backup)$")
 _REMOTE_PATH = re.compile(r"^/v1/backups/remotes/([^/]+)(/test)?$")
@@ -81,9 +87,11 @@ def peer_uid(sock: socket.socket) -> int:
 class HttpError(Exception):
     """An error answer: status and message."""
 
-    def __init__(self, status: int, message: str) -> None:
+    def __init__(self, status: int, message: str, code: str | None = None) -> None:
         super().__init__(message)
         self.status = status
+        self.code = code
+        """A machine-readable reason in the answer, such as ``busy`` or ``no_kiosk``."""
 
 
 @dataclass
@@ -123,6 +131,9 @@ class InstallerServer:
         auth: Re-authentication (CORE-132, CORE-369).
         socket_gid: Group of the socket (``mm3``), or None to keep ours.
         peer: Reads the peer's uid from a connection (``SO_PEERCRED``; a fake in tests).
+        scheduler: Scheduled backups (CORE-360).
+        system: Restart and reboot commands (CORE-382); without it the routes answer 404.
+        system_delay: Seconds between the 202 and the command (CORE-382).
     """
 
     def __init__(
@@ -133,8 +144,12 @@ class InstallerServer:
         socket_gid: int | None = None,
         peer: Callable[[socket.socket], int] = peer_uid,
         scheduler: BackupScheduler | None = None,
+        system: SystemActions | None = None,
+        system_delay: float = DELAY_S,
     ) -> None:
         self.scheduler = scheduler
+        self.system = system
+        self._system_delay = system_delay
         self.installer = installer
         self.auth = auth
         self.socket_gid = socket_gid
@@ -205,7 +220,10 @@ class InstallerServer:
             request = await asyncio.wait_for(self._read(reader, uid), READ_TIMEOUT_S)
             await self.dispatch(request, writer)
         except HttpError as exc:
-            await self._send(writer, exc.status, {"error": str(exc)})
+            body = {"error": str(exc)}
+            if exc.code is not None:
+                body["code"] = exc.code
+            await self._send(writer, exc.status, body)
         except (TimeoutError, ConnectionError, asyncio.IncompleteReadError):
             pass
         except Exception:
@@ -283,6 +301,8 @@ class InstallerServer:
         elif route == ("GET", "/v1/operations"):
             ops = [o.public() for o in self.installer.recent()]
             await self._send(writer, 200, {"operations": ops})
+        elif (m := _SYSTEM_PATH.match(req.path)) and req.method == "POST":
+            await self._system_action(m.group(1), req, writer)
         elif req.path == "/v1/backups" or req.path.startswith("/v1/backups/"):
             await self._backups(req, writer)
         elif req.path.startswith("/v1/auth/"):
@@ -297,6 +317,39 @@ class InstallerServer:
                 await self._send(writer, 200, found.public())
         else:
             raise HttpError(404, f"no route {req.method} {req.path}")
+
+    async def _system_action(
+        self, action: str, req: HttpRequest, writer: asyncio.StreamWriter
+    ) -> None:
+        """``POST /v1/system/<action>``: 202 now, the command after a short delay (CORE-382)."""
+        if self.system is None:
+            raise HttpError(404, "restart and reboot are not set up")
+        client = req.json().get("client", "")
+        if not isinstance(client, str) or len(client) > 200:
+            raise HttpError(400, "client must be a short string")
+        client = client or ("root" if req.uid == 0 else f"uid {req.uid}")
+        if action == "restart-kiosk" and not await asyncio.to_thread(self.system.kiosk_installed):
+            raise HttpError(409, "mm3-kiosk.service is not installed", "no_kiosk")
+        try:
+            self.installer.reserve_system(action)
+        except BusyError as exc:
+            raise HttpError(409, str(exc), "busy") from exc
+        requested_at = datetime.now(UTC).isoformat()
+        task = asyncio.ensure_future(self._run_system(action, client))
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+        await self._send(writer, 202, {"action": action, "requested_at": requested_at})
+
+    async def _run_system(self, action: str, client: str) -> None:
+        system = self.system
+        assert system is not None  # noqa: S101 - only started when set
+        try:
+            await asyncio.sleep(self._system_delay)
+            _log.warning("system_action", action=action, client=client)
+            if not await asyncio.to_thread(system.run, action):
+                _log.error("system_action_failed", action=action, client=client)
+        finally:
+            self.installer.release_system()
 
     def status(self) -> dict[str, Any]:
         """``GET /v1/status`` (CORE-355)."""
