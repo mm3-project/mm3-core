@@ -12,6 +12,7 @@ logged, stored or put in an answer, a frame or an error detail (CORE-356).
 Implements:
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
     CORE-356: Core spec 0.44, §10.7 Installer service.
+    CORE-358: Core spec 0.33, §10.7 Installer service.
 """
 
 from __future__ import annotations
@@ -227,6 +228,33 @@ class InstallerLink:
         if not isinstance(catalog, dict):
             raise ApiError("CORE_API_INSTALLER_UNAVAILABLE", "The installer sent no catalog")
         return catalog
+
+    async def require_free(self) -> None:
+        """Refuse when the installer cannot take an operation now (CORE-358).
+
+        A removal saves a configuration version before it is forwarded; when the installer is
+        unreachable, busy or locked the request would be refused anyway, so the engine says so
+        first and writes nothing. A refusal that only the installer can give (a wrong
+        passphrase or code) still comes after the version is saved.
+
+        Raises:
+            ApiError: 503 ``CORE_API_INSTALLER_UNAVAILABLE``, 423 ``CORE_API_INSTALLER_LOCKED``
+                (with ``locked_until``) or 409 ``CORE_API_INSTALLER_BUSY``.
+
+        Implements:
+            CORE-358: Core spec 0.33, §10.7 Installer service.
+        """
+        snap = await self.snapshot()
+        if not snap.available:
+            raise ApiError("CORE_API_INSTALLER_UNAVAILABLE", "The installer does not answer")
+        if snap.locked_until:
+            raise ApiError(
+                "CORE_API_INSTALLER_LOCKED",
+                "The installer is locked after failed re-authentication",
+                extra={"locked_until": snap.locked_until},
+            )
+        if snap.busy:
+            raise ApiError("CORE_API_INSTALLER_BUSY", "The installer is busy")
 
     async def submit(self, body: dict[str, Any], client: str) -> str:
         """Forward an operation to ``POST /v1/operations`` (CORE-356).

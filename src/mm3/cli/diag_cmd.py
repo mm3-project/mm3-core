@@ -102,6 +102,42 @@ class SocketClient:
         self.path = path
         self.timeout = timeout
 
+    def request(
+        self,
+        method: str,
+        target: str,
+        body: Any = None,
+        headers: dict[str, str] | None = None,
+    ) -> tuple[int, bytes]:
+        """Send a request; a ``body`` is sent as JSON.
+
+        Args:
+            method: ``GET``, ``POST`` or ``PUT``.
+            target: Path and query, such as ``/api/v1/status``.
+            body: A JSON-serializable body, or ``None`` for none.
+            headers: Further headers, such as ``If-Match`` (CORE-300).
+
+        Returns:
+            The status code and the body.
+
+        Raises:
+            OSError: The socket does not answer.
+        """
+        conn = _UnixConnection(self.path, self.timeout)
+        sent = dict(headers or {})
+        data: bytes | None = None
+        if body is not None:
+            data = json.dumps(body).encode("utf-8")
+            sent["Content-Type"] = "application/json"
+        try:
+            conn.request(method, target, body=data, headers=sent)
+            response = conn.getresponse()
+            return response.status, response.read()
+        except http.client.HTTPException as exc:
+            raise OSError(str(exc)) from exc
+        finally:
+            conn.close()
+
     def get(self, target: str) -> tuple[int, bytes]:
         """Send ``GET target``.
 
@@ -114,15 +150,7 @@ class SocketClient:
         Raises:
             OSError: The socket does not answer.
         """
-        conn = _UnixConnection(self.path, self.timeout)
-        try:
-            conn.request("GET", target)
-            response = conn.getresponse()
-            return response.status, response.read()
-        except http.client.HTTPException as exc:
-            raise OSError(str(exc)) from exc
-        finally:
-            conn.close()
+        return self.request("GET", target)
 
     def json(self, target: str) -> Any:
         """Send ``GET target`` and decode a 200 JSON body.

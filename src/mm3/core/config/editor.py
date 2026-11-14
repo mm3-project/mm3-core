@@ -15,12 +15,13 @@ Implements:
     CORE-321: Core spec 0.25, §6.8 Configuration history, undo and redo.
     CORE-301, CORE-302: Core spec 0.39, §6.4 Web configuration editor.
     CORE-324: Core spec 0.26, §6.8 Configuration history, undo and redo.
+    CORE-358: Core spec 0.33, §10.7 Installer service.
 """
 
 from __future__ import annotations
 
 import os
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Collection, Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
@@ -47,6 +48,7 @@ from mm3.core.config.loader import (
     rt_patch,
     rt_unmask,
 )
+from mm3.core.config.removal import disable_ops
 from mm3.core.config.validate import ConfigResult
 from mm3.core.diag.secrets import MASK, Masker
 
@@ -390,6 +392,72 @@ class ConfigEditor:
             )
         outcome = self.history.save(draft.config_set, author, expect=base_set.sha256())
         return self._answer(outcome)
+
+    # --- removal of a module (CORE-358) -----------------------------------------------
+
+    def instances_to_disable(self, modules: Collection[str]) -> list[str]:
+        """Return the ids of the enabled instances of ``modules`` in the files on disk.
+
+        Args:
+            modules: The module names (entry-point keys) a distribution provides.
+
+        Returns:
+            The instance ids a removal would disable, in configuration order; empty when
+            there is none (then no version is written).
+
+        Implements:
+            CORE-358: Core spec 0.33, §10.7 Installer service.
+        """
+        config_set, _ = self.history.disk()
+        return disable_ops(self.documents(config_set), config_set.main, modules)[1]
+
+    def disable_instances(self, modules: Collection[str], author: str) -> dict[str, Any] | None:
+        """Save a version that sets ``disabled: true`` on every enabled instance of ``modules``.
+
+        Done before a removal is forwarded to the installer, so that the instances are kept,
+        disabled, and not deleted. The version stays if the removal fails, and can be undone
+        (CORE-321).
+
+        Args:
+            modules: The module names (entry-point keys) a distribution provides.
+            author: The admin client that asked for the removal.
+
+        Returns:
+            ``{version, etag, instances}`` with the new version and the ids it disabled, or
+            ``None`` when no instance of the module is enabled and nothing was written.
+
+        Raises:
+            EditorError: The files on disk are invalid (409 ``CORE_API_DISK_INVALID``), changed
+                meanwhile (409 ``CORE_API_CONFLICT``), or the result does not validate (422
+                ``CORE_API_CONFIG_INVALID``); nothing is written.
+
+        Implements:
+            CORE-358: Core spec 0.33, §10.7 Installer service.
+        """
+        config_set, _ = self.history.disk()
+        ops, ids = disable_ops(self.documents(config_set), config_set.main, modules)
+        if not ops:
+            return None
+        target = config_set
+        for item in ops:
+            rel = self._rel(item["file"])
+            data = target.files.get(rel)
+            if data is None:
+                raise EditorError("CORE_API_PATCH_FAILED", f"{rel} is not a file of the set")
+            try:
+                text = rt_patch(data.decode("utf-8"), item["patch"])
+            except Exception as exc:
+                raise EditorError("CORE_API_PATCH_FAILED", f"{rel}: {exc}") from None
+            target = target.with_file(rel, text.encode("utf-8"))
+        checked = self.history.validate_set(target)
+        if not checked.ok:
+            raise EditorError(
+                "CORE_API_CONFIG_INVALID",
+                "The configuration is not valid; nothing was written",
+                errors=_records(checked),
+            )
+        outcome = self.history.save(target, author, expect=config_set.sha256())
+        return {**self._answer(outcome), "instances": ids}
 
     # --- history ----------------------------------------------------------------------
 

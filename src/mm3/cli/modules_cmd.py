@@ -1,9 +1,9 @@
-"""``mm3 modules``: search, info, list, refresh, install, update, restore-previous.
+"""``mm3 modules``: search, info, list, refresh, install, update, remove, restore-previous.
 
 ``search``, ``info`` and ``list`` read the engine's copy of the index, written
 by the installer, and work offline, saying when it is stale (CORE-125,
 CORE-351); they show only what is compatible with the running Module API
-(CORE-124). ``refresh``, ``install``, ``update`` and ``restore-previous`` send
+(CORE-124). ``refresh``, ``install``, ``update``, ``remove`` and ``restore-previous`` send
 their request to the installer socket; the CLI never writes a venv (CORE-353).
 A listed package needs the passphrase, and the TOTP code when enabled; an
 unlisted one (``--from-pypi`` or a local wheel) needs root and no passphrase;
@@ -12,12 +12,18 @@ never the engine venv's, so no module code runs as root (CORE-369).
 Before an install the requested capabilities and grant scopes are shown for
 confirmation (CORE-133).
 
+``remove`` first asks the running engine, on its admin socket (CORE-311), to save a
+configuration history version that sets ``disabled: true`` on every enabled instance of the
+module, and only then sends the removal to the installer; instances are disabled, never
+deleted. With no engine on the socket it stops with an error and changes nothing (CORE-358).
+
 Implements:
     CORE-353: Core spec 0.33, §10.6 Module catalog.
     CORE-124, CORE-125, CORE-126: Core spec 0.33, §10.6 Module catalog.
     CORE-351: Core spec 0.35, §10.6 Module catalog.
     CORE-369: Core spec 0.37, §10.7 Installer service.
     CORE-133: Core spec 0.33, §10.7 Installer service.
+    CORE-358: Core spec 0.33, §10.7 Installer service.
 """
 
 from __future__ import annotations
@@ -25,15 +31,18 @@ from __future__ import annotations
 import argparse
 import getpass
 import importlib.metadata
+import json
 import os
 import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any, TextIO
 
+from packaging.utils import canonicalize_name
 from packaging.version import Version
 
 from mm3.__about__ import MODULE_API_VERSION
+from mm3.cli.diag_cmd import SocketClient
 from mm3.core.catalog import (
     CachedCatalog,
     CatalogError,
@@ -44,7 +53,9 @@ from mm3.core.catalog import (
     read_cached,
     search,
 )
+from mm3.core.config.removal import disable_ops
 from mm3.core.services.storage import resolve_state_dir
+from mm3.core.web.kiosk import runtime_dir
 from mm3.installer.client import DEFAULT_SOCKET, InstallerClient, InstallerUnavailable
 
 __all__ = ["add_modules_parser", "run_modules"]
@@ -77,6 +88,12 @@ def add_modules_parser(sub: argparse._SubParsersAction) -> None:  # type: ignore
     upd = cmds.add_parser("update", help="update one module, or all with updates")
     upd.add_argument("name", nargs="?")
     upd.add_argument("--yes", action="store_true")
+    rm = cmds.add_parser(
+        "remove", help="remove a module through the installer; its instances are disabled"
+    )
+    rm.add_argument("name", help="the package to remove")
+    rm.add_argument("--yes", action="store_true", help="do not ask for confirmation")
+    rm.add_argument("--admin-socket", type=Path, default=None, help="the engine's admin socket")
     rp = cmds.add_parser("restore-previous", help="go back to the previous venv")
     rp.add_argument("--yes", action="store_true")
     for p in (s, i, cmds.choices["list"], ins, upd):
@@ -316,6 +333,119 @@ def _update(args: argparse.Namespace, out: TextIO, ask: Ask, secret: Ask) -> int
     return code
 
 
+def _engine(
+    admin: SocketClient,
+    method: str,
+    target: str,
+    body: Any = None,
+    headers: dict[str, str] | None = None,
+) -> tuple[int, Any]:
+    """Send a request to the engine's admin socket and decode the JSON answer.
+
+    Raises:
+        OSError: The socket does not answer.
+    """
+    status, raw = admin.request(method, target, body, headers)
+    try:
+        return status, json.loads(raw) if raw else None
+    except ValueError:
+        return status, None
+
+
+def _why(data: Any) -> str:
+    """The ``detail`` of a problem answer of the engine (CORE-298), or a placeholder."""
+    if isinstance(data, dict) and isinstance(data.get("detail"), str):
+        return str(data["detail"])
+    return "no reason given"
+
+
+def _remove(args: argparse.Namespace, out: TextIO, ask: Ask, secret: Ask) -> int:
+    """``mm3 modules remove <name>``: disable the instances, then remove (CORE-358)."""
+    client = InstallerClient(args.socket)
+    admin = SocketClient(args.admin_socket or runtime_dir() / "admin.sock")
+    name = str(args.name)
+    key = canonicalize_name(name)
+    try:
+        status, modules = _engine(admin, "GET", "/api/v1/installed-modules")
+    except OSError as exc:
+        out.write(
+            f"The engine does not answer on {admin.path} ({exc}). Removing a module first "
+            "disables its instances through the running engine; start it "
+            "(systemctl start mm3.service) and run this again. Nothing was changed.\n"
+        )
+        return EXIT_TOOL
+    if status != 200 or not isinstance(modules, list):
+        out.write(f"The engine refused the list of modules ({status}: {_why(modules)}).\n")
+        return EXIT_TOOL
+    reply = client.request("GET", "/v1/status")
+    state: dict[str, Any] = (
+        reply.body if reply.status == 200 and isinstance(reply.body, dict) else {}
+    )
+    if not any(canonicalize_name(str(r.get("name"))) == key for r in state.get("installed") or []):
+        out.write(f"{name} is not installed\n")
+        return EXIT_FAILED
+    if state.get("busy") or state.get("locked_until"):
+        why = (
+            "is locked until " + str(state["locked_until"])
+            if state.get("locked_until")
+            else "is busy"
+        )
+        out.write(f"The installer {why}; nothing was changed.\n")
+        return EXIT_FAILED
+    names = [
+        str(m["name"])
+        for m in modules
+        if isinstance(m, dict)
+        and isinstance(m.get("distribution"), str)
+        and canonicalize_name(m["distribution"]) == key
+    ]
+    ops: list[dict[str, Any]] = []
+    ids: list[str] = []
+    etag = ""
+    if names:
+        status, config = _engine(admin, "GET", "/api/v1/config")
+        if status != 200 or not isinstance(config, dict):
+            out.write(f"The engine refused the configuration ({status}: {_why(config)}).\n")
+            return EXIT_TOOL
+        etag = str(config["etag"])
+        main = next(f["path"] for f in config["files"] if f["role"] == "main")
+        status, draft = _engine(
+            admin, "POST", "/api/v1/config/patch", {"base": etag, "files": [], "ops": []}
+        )
+        if status != 200 or not isinstance(draft, dict):
+            out.write(f"The engine refused the configuration ({status}: {_why(draft)}).\n")
+            return EXIT_TOOL
+        ops, ids = disable_ops(draft["documents"], main, names)
+    if ids:
+        out.write(
+            f"{len(ids)} enabled instance(s) will be disabled, not deleted: {', '.join(ids)}\n"
+        )
+    if not _confirm(args, ask, f"Remove {name} and restart the engine?"):
+        return EXIT_FAILED
+    auth = _secrets(secret)
+    if ops:
+        status, draft = _engine(
+            admin, "POST", "/api/v1/config/patch", {"base": etag, "files": [], "ops": ops}
+        )
+        if status != 200 or not isinstance(draft, dict):
+            out.write(f"The engine refused the change ({status}: {_why(draft)}).\n")
+            return EXIT_FAILED
+        files = [{"path": f["path"], "content": f["content"]} for f in draft["files"]]
+        status, saved = _engine(
+            admin, "PUT", "/api/v1/config", {"base": etag, "files": files}, {"If-Match": etag}
+        )
+        if status != 200 or not isinstance(saved, dict):
+            out.write(
+                f"The instances were not disabled ({status}: {_why(saved)}); nothing was removed.\n"
+            )
+            return EXIT_FAILED
+        out.write(
+            f"Saved configuration version {saved.get('version')} with the instances disabled "
+            "(mm3 config undo restores them).\n"
+        )
+    return _send(client, {"action": "remove", "name": name, "client": "cli"} | auth, out)
+
+
 def _restore(args: argparse.Namespace, out: TextIO, ask: Ask, secret: Ask) -> int:
     if not _confirm(args, ask, "Switch back to the previous venv and restart the engine?"):
         return EXIT_FAILED
@@ -358,6 +488,8 @@ def run_modules(
             return _install(args, stream, ask, secret)
         if cmd == "update":
             return _update(args, stream, ask, secret)
+        if cmd == "remove":
+            return _remove(args, stream, ask, secret)
         return _restore(args, stream, ask, secret)
     except InstallerUnavailable as exc:
         stream.write(f"The installer does not answer ({exc}). Is mm3-installer.service running?\n")

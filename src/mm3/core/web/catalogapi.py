@@ -11,6 +11,7 @@ logged, stored or sent back; nothing here logs a request body.
 
 Implements:
     CORE-356: Core spec 0.44, §10.7 Installer service.
+    CORE-358: Core spec 0.33, §10.7 Installer service.
 """
 
 from __future__ import annotations
@@ -269,6 +270,9 @@ class CatalogRoutes:
         state_dir: The engine's state directory (``<state>/catalog/`` holds the index copy).
         now: The engine clock's wall time.
         language: The admin language of a request (CORE-309).
+        before_removal: Called with the package and the caller before a removal is forwarded;
+            saves the configuration version that disables the module's instances and returns
+            their ids (CORE-358). ``None`` forwards the removal as it is.
     """
 
     def __init__(
@@ -277,11 +281,13 @@ class CatalogRoutes:
         state_dir: Callable[[], Any],
         now: Callable[[], datetime],
         language: Callable[[Request], Awaitable[str]],
+        before_removal: Callable[[str, str], Awaitable[list[str]]] | None = None,
     ) -> None:
         self.installer = installer
         self.state_dir = state_dir
         self.now = now
         self.language = language
+        self.before_removal = before_removal
 
     def link(self) -> InstallerLink:
         """The installer link.
@@ -363,11 +369,25 @@ def register_catalog_routes(
 
     @router.post("/installer/operations", status_code=202, response_model=None)
     async def start_operation(body: OperationBody, request: Request) -> Response:
-        """Forward an install, update, removal or restore-previous to the installer (CORE-356)."""
+        """Forward an install, update, removal or restore-previous to the installer (CORE-356).
+
+        A removal first saves a configuration version that disables the module's enabled
+        instances (CORE-358).
+        """
         link = routes.link()
         client = str(request.state.caller)
+        disabled: list[str] = []
+        if body.action == "remove" and routes.before_removal is not None:
+            # CORE-358: the version that disables the instances comes before the removal.
+            disabled = await routes.before_removal(str(body.name), client)
         op_id = await link.submit(body.model_dump(exclude_none=True), client)
-        _log.warning("api_installer_operation", id=op_id, action=body.action, client=client)
+        _log.warning(
+            "api_installer_operation",
+            id=op_id,
+            action=body.action,
+            client=client,
+            disabled_instances=disabled,
+        )
         return Response(
             json.dumps({"id": op_id}),
             status_code=202,
