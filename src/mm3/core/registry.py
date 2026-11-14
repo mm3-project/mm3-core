@@ -6,6 +6,7 @@ import. A refused module is kept with its reason so the admin can show it.
 
 Implements:
     CORE-03: Core spec 0.4, §4 Module contract.
+    CORE-66: Core spec 0.43, §10.1 Security.
     -: Core spec 0.4, §7.1 Engine startup and shutdown.
     MOD-90: Module Contract 1.0 rev 4, §10 API versioning and deprecation.
 """

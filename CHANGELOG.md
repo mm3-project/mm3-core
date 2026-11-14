@@ -7,6 +7,19 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Tests (milestone 7: rules that had no test; CORE-50, CORE-66, CORE-122, CORE-123, CORE-126, CORE-130, CORE-349)
+
+- No new behaviour. Tests that name the requirement: the three catalog badges and the
+  refusal of any other (CORE-122), the entry's publisher is required and passed to the
+  verification (CORE-123), a failed verification installs nothing and unlisted modules are
+  marked in the CLI list (CORE-126), the engine reaches the installer only through its
+  client (CORE-130), only the installer imports `sigstore` and `pypi-attestations`
+  (CORE-349), no engine module runs `pip` or `uv` (CORE-66), the MQTT bridge talks through
+  ordinary bus notifications (CORE-50).
+- Not covered here because the code does not exist yet: CORE-120 and CORE-133 (admin
+  installation and the details before confirmation), CORE-358 (disabling the instances
+  before a removal), CORE-121 and MOD-96..99 (module-index).
+
 ### Changed (admin: the System card style on the whole admin interface; ENH-012; spec 0.43, CORE-384..387)
 
 - New shared module `adminui/ui.js` with the banner, the action row and the confirmation
