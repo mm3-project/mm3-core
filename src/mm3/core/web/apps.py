@@ -65,6 +65,7 @@ from mm3.core.web.extensions import (
     header_label,
 )
 from mm3.core.web.pages import (
+    admin_catalog_page,
     admin_config_page,
     admin_debug_page,
     admin_extension_page,
@@ -491,6 +492,13 @@ def admin_app(
         if check.outcome != "ok":
             return _login_redirect(request)
         return _html(admin_config_page(await extension_links(request, check.via)))
+
+    @app.get("/admin/catalog")
+    async def admin_catalog(request: Request) -> Response:
+        check = await auth.check_admin(request, request.method)
+        if check.outcome != "ok":
+            return _login_redirect(request)
+        return _html(admin_catalog_page(await extension_links(request, check.via)))
 
     @app.get("/admin/static/{path:path}")
     async def admin_static(path: str) -> Response:

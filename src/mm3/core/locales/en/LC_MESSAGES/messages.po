@@ -1708,3 +1708,267 @@ msgstr "Restart instance"
 
 msgid "CORE_ADMIN_RESTART_INSTANCE_EFFECT"
 msgstr "Stops and starts only this instance; its box on the mirror keeps its last render for a few seconds."
+
+msgid "CORE_WEB_NAV_CATALOG"
+msgstr "Catalog"
+
+msgid "CORE_ADMIN_CATALOG"
+msgstr "Module catalog"
+
+msgid "CORE_ADMIN_CATALOG_SEARCH"
+msgstr "Search"
+
+msgid "CORE_ADMIN_CATALOG_ALL_CATEGORIES"
+msgstr "All categories"
+
+msgid "CORE_ADMIN_CATALOG_VIEW"
+msgstr "Show"
+
+msgid "CORE_ADMIN_CATALOG_VIEW_ALL"
+msgstr "All modules"
+
+msgid "CORE_ADMIN_CATALOG_VIEW_INSTALLED"
+msgstr "Installed"
+
+msgid "CORE_ADMIN_CATALOG_VIEW_UPDATES"
+msgstr "Updates available"
+
+msgid "CORE_ADMIN_CATALOG_REFRESH"
+msgstr "Refresh index"
+
+msgid "CORE_ADMIN_CATALOG_REFRESHED"
+msgstr "The index was refreshed."
+
+msgid "CORE_ADMIN_CATALOG_INDEX"
+msgstr "Index {serial}, fetched {time}"
+
+msgid "CORE_ADMIN_CATALOG_STALE"
+msgstr "The copy of the index expired on {time}. Refresh it to see new releases."
+
+msgid "CORE_ADMIN_CATALOG_UPDATES"
+msgstr "Updates available: {count}"
+
+msgid "CORE_ADMIN_CATALOG_EMPTY"
+msgstr "No module matches."
+
+msgid "CORE_ADMIN_CATALOG_COL_MODULE"
+msgstr "Module"
+
+msgid "CORE_ADMIN_CATALOG_COL_BADGE"
+msgstr "Badge"
+
+msgid "CORE_ADMIN_CATALOG_COL_CATEGORY"
+msgstr "Category"
+
+msgid "CORE_ADMIN_CATALOG_COL_DESCRIPTION"
+msgstr "Description"
+
+msgid "CORE_ADMIN_CATALOG_COL_STATUS"
+msgstr "Status"
+
+msgid "CORE_ADMIN_CATALOG_COL_VERSION"
+msgstr "Version"
+
+msgid "CORE_ADMIN_CATALOG_COL_API"
+msgstr "Module API"
+
+msgid "CORE_ADMIN_CATALOG_COL_CHECK"
+msgstr "Check report"
+
+msgid "CORE_ADMIN_CATALOG_COL_CAPABILITIES"
+msgstr "Requested capabilities"
+
+msgid "CORE_ADMIN_CATALOG_COL_GRANTS"
+msgstr "Grant scopes"
+
+msgid "CORE_ADMIN_CATALOG_BADGE_OFFICIAL"
+msgstr "official"
+
+msgid "CORE_ADMIN_CATALOG_BADGE_VERIFIED"
+msgstr "verified"
+
+msgid "CORE_ADMIN_CATALOG_BADGE_COMMUNITY"
+msgstr "community"
+
+msgid "CORE_ADMIN_CATALOG_UNLISTED"
+msgstr "unlisted"
+
+msgid "CORE_ADMIN_CATALOG_STATUS_INSTALLED"
+msgstr "Installed {version}"
+
+msgid "CORE_ADMIN_CATALOG_STATUS_UPDATE"
+msgstr "Update to {version}"
+
+msgid "CORE_ADMIN_CATALOG_STATUS_AVAILABLE"
+msgstr "Available, {version}"
+
+msgid "CORE_ADMIN_CATALOG_STATUS_INCOMPATIBLE"
+msgstr "No release fits this engine"
+
+msgid "CORE_ADMIN_CATALOG_NONE"
+msgstr "none"
+
+msgid "CORE_ADMIN_CATALOG_LICENSE"
+msgstr "License"
+
+msgid "CORE_ADMIN_CATALOG_REPOSITORY"
+msgstr "Repository"
+
+msgid "CORE_ADMIN_CATALOG_PUBLISHER"
+msgstr "Publisher"
+
+msgid "CORE_ADMIN_CATALOG_CHECK_PASS"
+msgstr "Passed"
+
+msgid "CORE_ADMIN_CATALOG_CHECK_OTHER"
+msgstr "Result: {result}"
+
+msgid "CORE_ADMIN_CATALOG_OPEN_REPORT"
+msgstr "Open report"
+
+msgid "CORE_ADMIN_CATALOG_INCOMPATIBLE_RELEASE"
+msgstr "Not for this engine"
+
+msgid "CORE_ADMIN_CATALOG_INCOMPATIBLE_NOTE"
+msgstr "No release of this module declares a Module API range that contains this engine's, so it cannot be installed."
+
+msgid "CORE_ADMIN_CATALOG_ACTIONS"
+msgstr "Actions"
+
+msgid "CORE_ADMIN_CATALOG_ACTION_INSTALL"
+msgstr "Install"
+
+msgid "CORE_ADMIN_CATALOG_ACTION_UPDATE"
+msgstr "Update"
+
+msgid "CORE_ADMIN_CATALOG_ACTION_REMOVE"
+msgstr "Remove"
+
+msgid "CORE_ADMIN_CATALOG_ACTION_RESTORE_PREVIOUS"
+msgstr "Restore previous version"
+
+msgid "CORE_ADMIN_CATALOG_INSTALL_EFFECT"
+msgstr "Builds a new environment with release {version} and restarts the engine; it rolls back by itself if the engine does not come back."
+
+msgid "CORE_ADMIN_CATALOG_UPDATE_EFFECT"
+msgstr "Builds a new environment with release {version} and restarts the engine; the previous environment is kept for a rollback."
+
+msgid "CORE_ADMIN_CATALOG_REMOVE_EFFECT"
+msgstr "Uninstalls the module and first disables its instances in the configuration; they are not deleted."
+
+msgid "CORE_ADMIN_CATALOG_RESTORE_EFFECT"
+msgstr "Switches back to the previous environment and restarts the engine."
+
+msgid "CORE_ADMIN_CATALOG_INSTALLER"
+msgstr "Installer"
+
+msgid "CORE_ADMIN_CATALOG_OPERATION"
+msgstr "Last operation"
+
+msgid "CORE_ADMIN_CATALOG_REASON_CHECKING"
+msgstr "Checking the installer…"
+
+msgid "CORE_ADMIN_CATALOG_REASON_AWAY"
+msgstr "The installer cannot be reached, so modules cannot be changed from here."
+
+msgid "CORE_ADMIN_CATALOG_REASON_LOCKED"
+msgstr "The installer is locked until {time} after failed confirmations."
+
+msgid "CORE_ADMIN_CATALOG_REASON_BUSY"
+msgstr "The installer is busy with another operation."
+
+msgid "CORE_ADMIN_CATALOG_REASON_INSTALLED"
+msgstr "Already installed."
+
+msgid "CORE_ADMIN_CATALOG_REASON_INCOMPATIBLE"
+msgstr "No release fits this engine's Module API."
+
+msgid "CORE_ADMIN_CATALOG_REASON_NOT_INSTALLED"
+msgstr "Not installed."
+
+msgid "CORE_ADMIN_CATALOG_REASON_UP_TO_DATE"
+msgstr "Already at the newest compatible release."
+
+msgid "CORE_ADMIN_CATALOG_LOCKED_UNTIL"
+msgstr "Locked until {time}."
+
+msgid "CORE_ADMIN_CATALOG_DLG_INSTALL_TITLE"
+msgstr "Install {name} {version}?"
+
+msgid "CORE_ADMIN_CATALOG_DLG_UPDATE_TITLE"
+msgstr "Update {name} to {version}?"
+
+msgid "CORE_ADMIN_CATALOG_DLG_REMOVE_TITLE"
+msgstr "Remove {name}?"
+
+msgid "CORE_ADMIN_CATALOG_DLG_RESTORE_PREVIOUS_TITLE"
+msgstr "Restore the previous version?"
+
+msgid "CORE_ADMIN_CATALOG_DLG_INSTALL_TEXT"
+msgstr "The installer checks the release against the signed index, builds a new environment and restarts the engine, which interrupts this admin for a moment."
+
+msgid "CORE_ADMIN_CATALOG_DLG_UPDATE_TEXT"
+msgstr "The installer checks the release against the signed index, builds a new environment and restarts the engine, keeping the previous environment for a rollback."
+
+msgid "CORE_ADMIN_CATALOG_DLG_REMOVE_TEXT"
+msgstr "The module is uninstalled after its instances are disabled in a configuration version that you can undo from the history."
+
+msgid "CORE_ADMIN_CATALOG_DLG_RESTORE_PREVIOUS_TEXT"
+msgstr "The installer switches back to the previous environment and restarts the engine, which interrupts this admin for a moment."
+
+msgid "CORE_ADMIN_CATALOG_GRANTS_NOTE"
+msgstr "Granting scopes to instances stays a separate step in the configuration."
+
+msgid "CORE_ADMIN_CATALOG_REMOVE_INSTANCES"
+msgstr "These instances are disabled first: {ids}."
+
+msgid "CORE_ADMIN_CATALOG_REMOVE_NO_INSTANCES"
+msgstr "The module has no configured instance."
+
+msgid "CORE_ADMIN_CATALOG_PASSPHRASE"
+msgstr "Installer passphrase"
+
+msgid "CORE_ADMIN_CATALOG_TOTP"
+msgstr "Code (only if enabled)"
+
+msgid "CORE_ADMIN_CATALOG_CLI_ALTERNATIVE"
+msgstr "The same from the command line:"
+
+msgid "CORE_ADMIN_CATALOG_OP_RUNNING"
+msgstr "{action} {name}: {state}"
+
+msgid "CORE_ADMIN_CATALOG_OP_DONE"
+msgstr "{action} {name}: done."
+
+msgid "CORE_ADMIN_CATALOG_OP_ROLLED_BACK"
+msgstr "{action} {name}: rolled back to the previous version."
+
+msgid "CORE_ADMIN_CATALOG_OP_FAILED"
+msgstr "{action} {name} failed: {error}"
+
+msgid "CORE_ADMIN_CATALOG_STATE_QUEUED"
+msgstr "queued"
+
+msgid "CORE_ADMIN_CATALOG_STATE_VERIFYING"
+msgstr "verifying"
+
+msgid "CORE_ADMIN_CATALOG_STATE_BUILDING"
+msgstr "building the environment"
+
+msgid "CORE_ADMIN_CATALOG_STATE_SWITCHING"
+msgstr "switching"
+
+msgid "CORE_ADMIN_CATALOG_STATE_RESTARTING"
+msgstr "restarting the engine"
+
+msgid "CORE_ADMIN_CATALOG_STATE_CHECKING"
+msgstr "checking the engine"
+
+msgid "CORE_ADMIN_CATALOG_STATE_DONE"
+msgstr "done"
+
+msgid "CORE_ADMIN_CATALOG_STATE_ROLLED_BACK"
+msgstr "rolled back"
+
+msgid "CORE_ADMIN_CATALOG_STATE_FAILED"
+msgstr "failed"

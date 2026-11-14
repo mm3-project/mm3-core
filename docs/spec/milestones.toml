@@ -353,6 +353,12 @@ requirements = [
 #   module's enabled instances first is built (engine route, mm3 modules remove
 #   through the admin socket). No spec change. Still open in this milestone:
 #   CORE-120, CORE-133 (admin pages), CORE-121 and MOD-96..99 (module-index).
+# CORE-120, CORE-133 (closing step 4; Source: ENH-002): the Catalog admin page
+#   (/admin/catalog) is built on the CORE-356 routes: search and filters, detail
+#   with releases and check report link, install, update, remove and restore
+#   previous in a dialog with passphrase and TOTP, live progress on the installer
+#   topic. No spec change. Still open in this milestone: CORE-121 and MOD-96..99
+#   (module-index), the backup routes of CORE-361 and the Backups page.
 # CORE-333..337 (core 0.30): pages out of the cycle, timed jumps, idle
 #   return, pause holds and the previous page (MMM-pages and
 #   MMM-ProfileSwitcher). They extend CORE-230..237 of milestones 2, 3 and 6

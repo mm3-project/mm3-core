@@ -1708,3 +1708,267 @@ msgstr "Riavvia istanza"
 
 msgid "CORE_ADMIN_RESTART_INSTANCE_EFFECT"
 msgstr "Ferma e avvia solo questa istanza; il suo riquadro sullo specchio resta fermo sull'ultima immagine per qualche secondo."
+
+msgid "CORE_WEB_NAV_CATALOG"
+msgstr "Catalogo"
+
+msgid "CORE_ADMIN_CATALOG"
+msgstr "Catalogo dei moduli"
+
+msgid "CORE_ADMIN_CATALOG_SEARCH"
+msgstr "Cerca"
+
+msgid "CORE_ADMIN_CATALOG_ALL_CATEGORIES"
+msgstr "Tutte le categorie"
+
+msgid "CORE_ADMIN_CATALOG_VIEW"
+msgstr "Mostra"
+
+msgid "CORE_ADMIN_CATALOG_VIEW_ALL"
+msgstr "Tutti i moduli"
+
+msgid "CORE_ADMIN_CATALOG_VIEW_INSTALLED"
+msgstr "Installati"
+
+msgid "CORE_ADMIN_CATALOG_VIEW_UPDATES"
+msgstr "Aggiornamenti disponibili"
+
+msgid "CORE_ADMIN_CATALOG_REFRESH"
+msgstr "Aggiorna l'indice"
+
+msgid "CORE_ADMIN_CATALOG_REFRESHED"
+msgstr "L'indice è stato aggiornato."
+
+msgid "CORE_ADMIN_CATALOG_INDEX"
+msgstr "Indice {serial}, scaricato {time}"
+
+msgid "CORE_ADMIN_CATALOG_STALE"
+msgstr "La copia dell'indice è scaduta il {time}. Aggiornala per vedere le nuove versioni."
+
+msgid "CORE_ADMIN_CATALOG_UPDATES"
+msgstr "Aggiornamenti disponibili: {count}"
+
+msgid "CORE_ADMIN_CATALOG_EMPTY"
+msgstr "Nessun modulo corrisponde."
+
+msgid "CORE_ADMIN_CATALOG_COL_MODULE"
+msgstr "Modulo"
+
+msgid "CORE_ADMIN_CATALOG_COL_BADGE"
+msgstr "Distintivo"
+
+msgid "CORE_ADMIN_CATALOG_COL_CATEGORY"
+msgstr "Categoria"
+
+msgid "CORE_ADMIN_CATALOG_COL_DESCRIPTION"
+msgstr "Descrizione"
+
+msgid "CORE_ADMIN_CATALOG_COL_STATUS"
+msgstr "Stato"
+
+msgid "CORE_ADMIN_CATALOG_COL_VERSION"
+msgstr "Versione"
+
+msgid "CORE_ADMIN_CATALOG_COL_API"
+msgstr "API dei moduli"
+
+msgid "CORE_ADMIN_CATALOG_COL_CHECK"
+msgstr "Rapporto dei controlli"
+
+msgid "CORE_ADMIN_CATALOG_COL_CAPABILITIES"
+msgstr "Capacità richieste"
+
+msgid "CORE_ADMIN_CATALOG_COL_GRANTS"
+msgstr "Ambiti delle autorizzazioni"
+
+msgid "CORE_ADMIN_CATALOG_BADGE_OFFICIAL"
+msgstr "ufficiale"
+
+msgid "CORE_ADMIN_CATALOG_BADGE_VERIFIED"
+msgstr "verificato"
+
+msgid "CORE_ADMIN_CATALOG_BADGE_COMMUNITY"
+msgstr "della comunità"
+
+msgid "CORE_ADMIN_CATALOG_UNLISTED"
+msgstr "non in elenco"
+
+msgid "CORE_ADMIN_CATALOG_STATUS_INSTALLED"
+msgstr "Installato {version}"
+
+msgid "CORE_ADMIN_CATALOG_STATUS_UPDATE"
+msgstr "Aggiorna a {version}"
+
+msgid "CORE_ADMIN_CATALOG_STATUS_AVAILABLE"
+msgstr "Disponibile, {version}"
+
+msgid "CORE_ADMIN_CATALOG_STATUS_INCOMPATIBLE"
+msgstr "Nessuna versione adatta a questo motore"
+
+msgid "CORE_ADMIN_CATALOG_NONE"
+msgstr "nessuna"
+
+msgid "CORE_ADMIN_CATALOG_LICENSE"
+msgstr "Licenza"
+
+msgid "CORE_ADMIN_CATALOG_REPOSITORY"
+msgstr "Repository"
+
+msgid "CORE_ADMIN_CATALOG_PUBLISHER"
+msgstr "Editore"
+
+msgid "CORE_ADMIN_CATALOG_CHECK_PASS"
+msgstr "Superato"
+
+msgid "CORE_ADMIN_CATALOG_CHECK_OTHER"
+msgstr "Risultato: {result}"
+
+msgid "CORE_ADMIN_CATALOG_OPEN_REPORT"
+msgstr "Apri il rapporto"
+
+msgid "CORE_ADMIN_CATALOG_INCOMPATIBLE_RELEASE"
+msgstr "Non per questo motore"
+
+msgid "CORE_ADMIN_CATALOG_INCOMPATIBLE_NOTE"
+msgstr "Nessuna versione di questo modulo dichiara un intervallo di API dei moduli che comprenda quello di questo motore, quindi non si può installare."
+
+msgid "CORE_ADMIN_CATALOG_ACTIONS"
+msgstr "Azioni"
+
+msgid "CORE_ADMIN_CATALOG_ACTION_INSTALL"
+msgstr "Installa"
+
+msgid "CORE_ADMIN_CATALOG_ACTION_UPDATE"
+msgstr "Aggiorna"
+
+msgid "CORE_ADMIN_CATALOG_ACTION_REMOVE"
+msgstr "Rimuovi"
+
+msgid "CORE_ADMIN_CATALOG_ACTION_RESTORE_PREVIOUS"
+msgstr "Ripristina la versione precedente"
+
+msgid "CORE_ADMIN_CATALOG_INSTALL_EFFECT"
+msgstr "Crea un nuovo ambiente con la versione {version} e riavvia il motore; torna indietro da solo se il motore non riparte."
+
+msgid "CORE_ADMIN_CATALOG_UPDATE_EFFECT"
+msgstr "Crea un nuovo ambiente con la versione {version} e riavvia il motore; l'ambiente precedente resta per tornare indietro."
+
+msgid "CORE_ADMIN_CATALOG_REMOVE_EFFECT"
+msgstr "Disinstalla il modulo e prima disattiva le sue istanze nella configurazione; non vengono eliminate."
+
+msgid "CORE_ADMIN_CATALOG_RESTORE_EFFECT"
+msgstr "Torna all'ambiente precedente e riavvia il motore."
+
+msgid "CORE_ADMIN_CATALOG_INSTALLER"
+msgstr "Installatore"
+
+msgid "CORE_ADMIN_CATALOG_OPERATION"
+msgstr "Ultima operazione"
+
+msgid "CORE_ADMIN_CATALOG_REASON_CHECKING"
+msgstr "Verifica dell'installatore…"
+
+msgid "CORE_ADMIN_CATALOG_REASON_AWAY"
+msgstr "L'installatore non risponde, quindi da qui non si possono modificare i moduli."
+
+msgid "CORE_ADMIN_CATALOG_REASON_LOCKED"
+msgstr "L'installatore è bloccato fino a {time} dopo conferme non riuscite."
+
+msgid "CORE_ADMIN_CATALOG_REASON_BUSY"
+msgstr "L'installatore è occupato con un'altra operazione."
+
+msgid "CORE_ADMIN_CATALOG_REASON_INSTALLED"
+msgstr "Già installato."
+
+msgid "CORE_ADMIN_CATALOG_REASON_INCOMPATIBLE"
+msgstr "Nessuna versione è adatta all'API dei moduli di questo motore."
+
+msgid "CORE_ADMIN_CATALOG_REASON_NOT_INSTALLED"
+msgstr "Non installato."
+
+msgid "CORE_ADMIN_CATALOG_REASON_UP_TO_DATE"
+msgstr "Già all'ultima versione compatibile."
+
+msgid "CORE_ADMIN_CATALOG_LOCKED_UNTIL"
+msgstr "Bloccato fino a {time}."
+
+msgid "CORE_ADMIN_CATALOG_DLG_INSTALL_TITLE"
+msgstr "Installare {name} {version}?"
+
+msgid "CORE_ADMIN_CATALOG_DLG_UPDATE_TITLE"
+msgstr "Aggiornare {name} alla {version}?"
+
+msgid "CORE_ADMIN_CATALOG_DLG_REMOVE_TITLE"
+msgstr "Rimuovere {name}?"
+
+msgid "CORE_ADMIN_CATALOG_DLG_RESTORE_PREVIOUS_TITLE"
+msgstr "Ripristinare la versione precedente?"
+
+msgid "CORE_ADMIN_CATALOG_DLG_INSTALL_TEXT"
+msgstr "L'installatore verifica la versione con l'indice firmato, crea un nuovo ambiente e riavvia il motore, il che interrompe per un attimo questa amministrazione."
+
+msgid "CORE_ADMIN_CATALOG_DLG_UPDATE_TEXT"
+msgstr "L'installatore verifica la versione con l'indice firmato, crea un nuovo ambiente e riavvia il motore, conservando l'ambiente precedente per tornare indietro."
+
+msgid "CORE_ADMIN_CATALOG_DLG_REMOVE_TEXT"
+msgstr "Il modulo viene disinstallato dopo che le sue istanze sono state disattivate in una versione della configurazione che si può annullare dalla cronologia."
+
+msgid "CORE_ADMIN_CATALOG_DLG_RESTORE_PREVIOUS_TEXT"
+msgstr "L'installatore torna all'ambiente precedente e riavvia il motore, il che interrompe per un attimo questa amministrazione."
+
+msgid "CORE_ADMIN_CATALOG_GRANTS_NOTE"
+msgstr "Concedere gli ambiti alle istanze resta un passaggio separato nella configurazione."
+
+msgid "CORE_ADMIN_CATALOG_REMOVE_INSTANCES"
+msgstr "Queste istanze vengono prima disattivate: {ids}."
+
+msgid "CORE_ADMIN_CATALOG_REMOVE_NO_INSTANCES"
+msgstr "Il modulo non ha istanze configurate."
+
+msgid "CORE_ADMIN_CATALOG_PASSPHRASE"
+msgstr "Passphrase dell'installatore"
+
+msgid "CORE_ADMIN_CATALOG_TOTP"
+msgstr "Codice (solo se attivo)"
+
+msgid "CORE_ADMIN_CATALOG_CLI_ALTERNATIVE"
+msgstr "Lo stesso da riga di comando:"
+
+msgid "CORE_ADMIN_CATALOG_OP_RUNNING"
+msgstr "{action} {name}: {state}"
+
+msgid "CORE_ADMIN_CATALOG_OP_DONE"
+msgstr "{action} {name}: completato."
+
+msgid "CORE_ADMIN_CATALOG_OP_ROLLED_BACK"
+msgstr "{action} {name}: tornato alla versione precedente."
+
+msgid "CORE_ADMIN_CATALOG_OP_FAILED"
+msgstr "{action} {name} non riuscito: {error}"
+
+msgid "CORE_ADMIN_CATALOG_STATE_QUEUED"
+msgstr "in coda"
+
+msgid "CORE_ADMIN_CATALOG_STATE_VERIFYING"
+msgstr "verifica"
+
+msgid "CORE_ADMIN_CATALOG_STATE_BUILDING"
+msgstr "creazione dell'ambiente"
+
+msgid "CORE_ADMIN_CATALOG_STATE_SWITCHING"
+msgstr "cambio di ambiente"
+
+msgid "CORE_ADMIN_CATALOG_STATE_RESTARTING"
+msgstr "riavvio del motore"
+
+msgid "CORE_ADMIN_CATALOG_STATE_CHECKING"
+msgstr "controllo del motore"
+
+msgid "CORE_ADMIN_CATALOG_STATE_DONE"
+msgstr "completato"
+
+msgid "CORE_ADMIN_CATALOG_STATE_ROLLED_BACK"
+msgstr "ripristinato"
+
+msgid "CORE_ADMIN_CATALOG_STATE_FAILED"
+msgstr "non riuscito"
