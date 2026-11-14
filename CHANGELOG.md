@@ -7,6 +7,16 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Spec (Core 0.44: engine catalog and installer API; CORE-356, ENH-002)
+
+- No code change. CORE-356 now defines what the engine's catalog and installer routes answer:
+  `GET /api/v1/catalog` and `/catalog/{name}` (modules with no compatible release are listed with
+  the reason; the check result comes with a report link), `POST /api/v1/catalog/refresh`,
+  `GET /api/v1/installer` as `{available, busy, locked_until}`, the operation routes and object,
+  the mapping of the installer's answers to the `CORE_API_*` codes, and the polling and frames of
+  the `installer` topic of `/admin/ws`. The code PRs that follow review the three stale
+  citations of CORE-356 (`api.py`, `installer.py`, `problems.py`).
+
 ### Fixed (installer: ISS-017; CORE-355)
 
 - The installer is free as soon as an operation reaches a final state (`done`, `failed`,
