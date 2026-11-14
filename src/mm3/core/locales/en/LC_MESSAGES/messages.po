@@ -1565,6 +1565,15 @@ msgstr "The installer cannot be reached, so the action was not sent."
 msgid "CORE_API_INSTALLER_BUSY"
 msgstr "The installer is busy with another operation. Try again when it has finished."
 
+msgid "CORE_API_REAUTH_FAILED"
+msgstr "Re-authentication failed. Check the passphrase and the code, then try again."
+
+msgid "CORE_API_INSTALLER_LOCKED"
+msgstr "The installer is locked after too many failed attempts. Try again after the lock ends."
+
+msgid "CORE_API_CATALOG_UNAVAILABLE"
+msgstr "The module catalog is not available: there is no copy of the index, or it could not be fetched or verified."
+
 msgid "CORE_ADMIN_DISMISS"
 msgstr "Dismiss"
 

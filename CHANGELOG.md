@@ -7,6 +7,27 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (engine: catalog and installer API; CORE-356, ENH-002; spec 0.44)
+
+- `GET /api/v1/catalog` (`q`, `category`) and `GET /api/v1/catalog/{name}` read the engine's
+  copy of the index only and work from a stale one; a module with no compatible release is
+  listed with `compatible` false and the reason `api`; an installed module the index does not
+  list is `unlisted`; `GET /catalog/{name}` adds `publisher` and `releases` with the check result
+  and its report link. `POST /api/v1/catalog/refresh` asks the installer to fetch and verify the
+  index.
+- `POST /api/v1/installer/operations` (install, update, remove, restore previous; admin listener
+  only; always the catalog as source, passphrase on every action, TOTP when enabled),
+  `GET /api/v1/installer/operations` and `/operations/{id}`. The installer's answers map to
+  `CORE_API_REAUTH_FAILED`, `CORE_API_INSTALLER_LOCKED` (with `locked_until`),
+  `CORE_API_INSTALLER_BUSY`, 422 `CORE_API_INVALID_REQUEST` and `CORE_API_INSTALLER_UNAVAILABLE`;
+  `CORE_API_CATALOG_UNAVAILABLE` is new too (texts in the five languages). The passphrase and
+  the code are never logged or sent back.
+- `GET /api/v1/installer` now answers `{available, busy, locked_until}`.
+- `/admin/ws` has the topic `installer` (`{status, operation}` frames): the installer is read
+  every second (every 5 s while it cannot be reached) only while someone is subscribed.
+- This completes CORE-356. The backup routes (CORE-361) are not part of it. The admin pages
+  that use these routes (CORE-120, CORE-133) and CORE-358 are still to build.
+
 ### Spec (Core 0.44: engine catalog and installer API; CORE-356, ENH-002)
 
 - No code change. CORE-356 now defines what the engine's catalog and installer routes answer:
@@ -14,8 +35,8 @@ separately under **Module API** in each release (Module Contract, section 10).
   the reason; the check result comes with a report link), `POST /api/v1/catalog/refresh`,
   `GET /api/v1/installer` as `{available, busy, locked_until}`, the operation routes and object,
   the mapping of the installer's answers to the `CORE_API_*` codes, and the polling and frames of
-  the `installer` topic of `/admin/ws`. The code PRs that follow review the three stale
-  citations of CORE-356 (`api.py`, `installer.py`, `problems.py`).
+  the `installer` topic of `/admin/ws`. The code PR that follows reviews the stale
+  citations of CORE-356.
 
 ### Fixed (installer: ISS-017; CORE-355)
 

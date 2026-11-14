@@ -1567,6 +1567,15 @@ msgstr "Der Installer ist nicht erreichbar, die Aktion wurde nicht gesendet."
 msgid "CORE_API_INSTALLER_BUSY"
 msgstr "Der Installer ist mit einem anderen Vorgang beschäftigt. Versuche es erneut, wenn er fertig ist."
 
+msgid "CORE_API_REAUTH_FAILED"
+msgstr "Die erneute Authentifizierung ist fehlgeschlagen. Prüfe Passphrase und Code und versuche es erneut."
+
+msgid "CORE_API_INSTALLER_LOCKED"
+msgstr "Der Installer ist nach zu vielen Fehlversuchen gesperrt. Versuche es erneut, wenn die Sperre endet."
+
+msgid "CORE_API_CATALOG_UNAVAILABLE"
+msgstr "Der Modulkatalog ist nicht verfügbar: Es gibt keine Kopie des Index, oder er konnte nicht geladen oder geprüft werden."
+
 msgid "CORE_ADMIN_DISMISS"
 msgstr "Schließen"
 

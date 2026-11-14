@@ -31,7 +31,7 @@ Implements:
     CORE-332: Core spec 0.29, §9.1 Remote-control API.
     CORE-380: Core spec 0.40, §9.1 Remote-control API.
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
-    CORE-356: Core spec 0.33, §10.7 Installer service.
+    CORE-356: Core spec 0.44, §10.7 Installer service.
 """
 
 from __future__ import annotations
@@ -59,8 +59,9 @@ from mm3.core.i18n.catalogs import locale_chain
 from mm3.core.logging import get_logger, log_levels, numbered_records
 from mm3.core.pages import HOLDER_REST
 from mm3.core.web.auth import AdminCheck, WebAuth
+from mm3.core.web.catalogapi import CatalogRoutes, register_catalog_routes
 from mm3.core.web.extensions import header_label
-from mm3.core.web.installer import SYSTEM_ACTIONS, InstallerLink
+from mm3.core.web.installer import SYSTEM_ACTIONS, UNAVAILABLE, InstallerLink
 from mm3.core.web.kiosk import KioskStatus
 from mm3.core.web.modroutes import ModuleRoutes
 from mm3.core.web.modroutes import register as register_module_routes
@@ -858,11 +859,11 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
     # --- installer and system actions -----------------------------------------------
 
     @router.get("/installer")
-    async def get_installer() -> dict[str, bool]:
-        """Whether the installer can be reached and whether it is busy (CORE-356, CORE-383)."""
+    async def get_installer() -> dict[str, Any]:
+        """``{available, busy, locked_until}`` of the installer (CORE-356, CORE-383)."""
         link = services.installer
         if link is None:
-            return {"available": False, "busy": False}
+            return UNAVAILABLE.status()
         return await link.status()
 
     def system_route(action: str) -> None:
@@ -890,6 +891,19 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
     if auth is not None:
         for action in SYSTEM_ACTIONS:
             system_route(action)
+
+    # The catalog and the installer's operations (CORE-356); the operations are not on the admin
+    # socket, which has no token to name a caller by (CORE-311, CORE-353).
+    register_catalog_routes(
+        router,
+        CatalogRoutes(
+            lambda: services.installer,
+            lambda: sup.state_dir,
+            services.engine.clock.wall,
+            admin_language,
+        ),
+        operations=auth is not None,
+    )
 
     # Module routes last, so the engine's own routes answer first (CORE-332).
     register_module_routes(router, ModuleRoutes(sup))

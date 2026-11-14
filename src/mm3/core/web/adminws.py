@@ -7,6 +7,12 @@ engine sends ``status`` ``{status}``, ``log`` ``{record}``, ``bus``
 ``{entry}`` and ``dropped`` ``{topic, count}`` when an admin falls behind
 its queue of 1 000 frames per topic (CORE-304).
 
+``installer`` ``{status, operation}`` frames follow the installer service (CORE-356): at subscribe
+one frame with ``operation`` null, then one for each operation not yet ``done``, ``rolled_back`` or
+``failed``, oldest first; afterwards one for each operation whose state or steps changed and one
+when ``status`` changed. The engine reads the installer every second (every 5 s while it cannot be
+reached) while a subscription is open, never without one.
+
 ``status`` is sent at subscribe and then whenever a field other than
 ``uptime_s`` changes, compared at most once a second (CORE-317). ``logs``
 first sends the newest 200 matching records of the ring buffer, oldest
@@ -22,6 +28,7 @@ Implements:
     CORE-304, CORE-115: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-316, CORE-317: Core spec 0.24, §10.5 Diagnostics and debugging.
     CORE-307: Core spec 0.28, §6.6 Live layout preview.
+    CORE-356: Core spec 0.44, §10.7 Installer service.
 """
 
 from __future__ import annotations
@@ -40,10 +47,20 @@ from mm3.core.diag.inspector import BusFilter, BusInspector
 from mm3.core.diag.logfilter import LogFilter
 from mm3.core.logging import get_logger, numbered_records, observe
 from mm3.core.web.auth import WebAuth, origin_matches
+from mm3.core.web.installer import FINAL_STATES, UNAVAILABLE, InstallerLink
+from mm3.core.web.problems import ApiError
 from mm3.core.web.sessions import ADMIN_COOKIE
 from mm3.core.web.ws import MAX_FRAME_BYTES
 
-__all__ = ["CLOSE_FORBIDDEN", "INITIAL_LOGS", "QUEUE_FRAMES", "TOPICS", "AdminChannel"]
+__all__ = [
+    "CLOSE_FORBIDDEN",
+    "INITIAL_LOGS",
+    "INSTALLER_AWAY_INTERVAL_S",
+    "INSTALLER_INTERVAL_S",
+    "QUEUE_FRAMES",
+    "TOPICS",
+    "AdminChannel",
+]
 
 CLOSE_FORBIDDEN = 4403
 QUEUE_FRAMES = 1000
@@ -52,7 +69,11 @@ INITIAL_LOGS = 200
 """Ring buffer records sent at a ``logs`` subscribe (CORE-304)."""
 STATUS_INTERVAL_S = 1.0
 """How often the status object is compared (CORE-317)."""
-TOPICS = ("status", "logs", "bus")
+INSTALLER_INTERVAL_S = 1.0
+"""How often the installer is read while someone is subscribed (CORE-356)."""
+INSTALLER_AWAY_INTERVAL_S = 5.0
+"""The same while the installer cannot be reached (CORE-356)."""
+TOPICS = ("status", "logs", "bus", "installer")
 
 _log = get_logger(subsystem="admin")
 
@@ -122,10 +143,15 @@ class AdminChannel:
         status: Returns the status object of CORE-305.
         inspector: The bus inspector.
         interval: Seconds between status comparisons (CORE-317).
+        installer: The link to the installer service for the ``installer`` topic; without it
+            the installer counts as unavailable (CORE-356).
+        installer_interval: Seconds between readings of the installer (CORE-356).
+        installer_away_interval: The same while it cannot be reached (CORE-356).
 
     Implements:
         CORE-304: Core spec 0.22, §10.5 Diagnostics and debugging.
         CORE-317: Core spec 0.24, §10.5 Diagnostics and debugging.
+        CORE-356: Core spec 0.44, §10.7 Installer service.
     """
 
     def __init__(
@@ -135,11 +161,17 @@ class AdminChannel:
         inspector: BusInspector,
         *,
         interval: float = STATUS_INTERVAL_S,
+        installer: InstallerLink | None = None,
+        installer_interval: float = INSTALLER_INTERVAL_S,
+        installer_away_interval: float = INSTALLER_AWAY_INTERVAL_S,
     ) -> None:
         self.auth = auth
         self.status = status
         self.inspector = inspector
         self.interval = interval
+        self.installer = installer
+        self.installer_interval = installer_interval
+        self.installer_away_interval = installer_away_interval
         self._open: set[_Admin] = set()
         self.session_closed: list[Callable[[str], None]] = []
 
@@ -241,10 +273,11 @@ class AdminChannel:
             admin.topics[topic].stop = self.inspector.subscribe(on_entry)
         else:
             if raw:
-                raise ValueError("the status topic takes no filter")
+                raise ValueError(f"the {topic} topic takes no filter")
             admin.close_topic(topic)
             admin.topics[topic] = _Topic()
-            task = asyncio.create_task(self._status_loop(admin), name="mm3-admin-ws-status")
+            loop = self._installer_loop if topic == "installer" else self._status_loop
+            task = asyncio.create_task(loop(admin), name=f"mm3-admin-ws-{topic}")
 
             def stop() -> None:
                 task.cancel()
@@ -261,3 +294,56 @@ class AdminChannel:
                 last = compared
                 admin.push("status", _frame("status", {"status": current}))
             await asyncio.sleep(self.interval)
+
+    async def _installer_loop(self, admin: _Admin) -> None:
+        """Send ``installer`` frames: the start state, then every change (CORE-356).
+
+        At subscribe: one frame with ``operation`` null, then one for each operation not yet
+        final, oldest first. Then one frame for each operation whose state or steps changed
+        since the last reading (the newest state, so a burst of steps is one frame) and, when
+        only ``status`` changed, one with ``operation`` null. The installer is read every
+        ``installer_interval`` seconds, every ``installer_away_interval`` while it cannot be
+        reached; the loop ends with the subscription, so there is no reading without one.
+        """
+        seen: dict[str, tuple[Any, ...]] = {}
+        last: dict[str, Any] | None = None
+        first = True
+        while True:
+            snapshot = await self.installer.snapshot() if self.installer else UNAVAILABLE
+            status = snapshot.status()
+            operations: list[dict[str, Any]] = []
+            if snapshot.available and self.installer is not None:
+                try:
+                    operations = await self.installer.operations()
+                except ApiError:
+                    operations = []
+            oldest_first = list(reversed(operations))
+
+            if first:
+                _send_installer(admin, status, None)
+                for op in oldest_first:
+                    if op["state"] not in FINAL_STATES:
+                        _send_installer(admin, status, op)
+                first = False
+            else:
+                changed = [op for op in oldest_first if seen.get(str(op["id"])) != _signature(op)]
+                for op in changed:
+                    _send_installer(admin, status, op)
+                if status != last and not changed:
+                    _send_installer(admin, status, None)
+            seen.update({str(op["id"]): _signature(op) for op in operations})
+            last = status
+            wait = self.installer_interval if snapshot.available else self.installer_away_interval
+            await asyncio.sleep(wait)
+
+
+def _send_installer(
+    admin: _Admin, status: dict[str, Any], operation: dict[str, Any] | None
+) -> None:
+    """Queue one ``installer`` frame: ``{status, operation}`` (CORE-356)."""
+    admin.push("installer", _frame("installer", {"status": status, "operation": operation}))
+
+
+def _signature(op: dict[str, Any]) -> tuple[Any, ...]:
+    """What makes an operation's frame new: its state and how many steps it has."""
+    return (op.get("state"), len(op.get("steps") or []))

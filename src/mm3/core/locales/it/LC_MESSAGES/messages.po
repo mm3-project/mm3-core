@@ -1565,6 +1565,15 @@ msgstr "L'installer non è raggiungibile: l'azione non è stata inviata."
 msgid "CORE_API_INSTALLER_BUSY"
 msgstr "L'installer è occupato con un'altra operazione. Riprova quando ha finito."
 
+msgid "CORE_API_REAUTH_FAILED"
+msgstr "Riautenticazione non riuscita. Controlla la passphrase e il codice, poi riprova."
+
+msgid "CORE_API_INSTALLER_LOCKED"
+msgstr "L'installer è bloccato dopo troppi tentativi falliti. Riprova quando il blocco sarà terminato."
+
+msgid "CORE_API_CATALOG_UNAVAILABLE"
+msgstr "Il catalogo dei moduli non è disponibile: manca una copia dell'indice, oppure non è stato possibile scaricarlo o verificarlo."
+
 msgid "CORE_ADMIN_DISMISS"
 msgstr "Chiudi"
 
