@@ -431,6 +431,10 @@ class Installer:
         self._step(op, state, detail)
 
     def _step(self, op: Operation, state: State, detail: str) -> None:
+        if state in FINAL:
+            # Free the installer before the final state is visible: a client that
+            # sees it may start the next operation at once (CORE-355, ISS-017).
+            self._free(op)
         op.state = state
         step = {"at": self._now().isoformat(), "state": state, "detail": detail}
         op.steps.append(step)
@@ -476,11 +480,16 @@ class Installer:
             )
             self._freeze_cache = None
             shutil.rmtree(self.layout.tmp / f"op-{op.id}", ignore_errors=True)
-            with self._mutex:
-                self._running = None
+            self._free(op)
             for listener in list(self.listeners):
                 listener(op, None)
         return op
+
+    def _free(self, op: Operation) -> None:
+        """Stop counting ``op`` as the running operation (only if it still is)."""
+        with self._mutex:
+            if self._running is op:
+                self._running = None
 
     def _runner(self) -> BackupRunner:
         if self.backups is None:
@@ -752,8 +761,8 @@ class Installer:
                     f"mm3 diag check failed (exit {result.returncode}): {result.output.strip()}"
                 )
         if reason is None:
+            self.builder.prune()  # before the final state: the next operation may start at once
             self._step(op, "done", f"running venv {new.name}")
-            self.builder.prune()
             return
         self.builder.switch(old)
         back = self.engine.restart()

@@ -391,6 +391,23 @@ async def test_core_126_the_cli_list_marks_unlisted_modules(served: Served) -> N
     assert "pypi (unlisted)" in line
 
 
+def test_core_355_the_installer_is_free_when_an_operation_is_reported_final(
+    world: World,
+) -> None:
+    """A client that sees the last state may start the next operation at once (ISS-017)."""
+    busy_at_final: list[bool] = []
+
+    def listener(op: Operation, step: dict[str, Any] | None) -> None:
+        if step is not None and step["state"] in ("done", "failed"):
+            busy_at_final.append(world.installer.busy)
+
+    world.installer.listeners.append(listener)
+    world.publish(("mm3-news", "1.2.0"))
+    assert world.run(action="install", name="mm3-news").state == "done"
+    assert world.run(action="install", name="mm3-other").state == "failed"
+    assert busy_at_final == [False, False]
+
+
 def test_core_355_installed_modules_and_origin(world: World) -> None:
     world.publish(("mm3-news", "1.2.0"), ("mm3-clock", "1.0.0"))
     assert world.run(action="install", name="mm3-news").state == "done"

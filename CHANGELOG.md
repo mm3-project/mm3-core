@@ -7,6 +7,13 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (installer: ISS-017; CORE-355)
+
+- The installer is free as soon as an operation reaches a final state (`done`, `failed`,
+  `rolled_back`), before that state can be read. A client that polled the state and sent the
+  next request at once could get 409 (`test_core_361_restore_needs_the_passphrase_except_from_root`
+  failed at random). The pruning of old venvs now runs before the final `done` step.
+
 ### Tests (milestone 7: rules that had no test; CORE-50, CORE-66, CORE-122, CORE-123, CORE-126, CORE-130, CORE-349)
 
 - No new behaviour. Tests that name the requirement: the three catalog badges and the
