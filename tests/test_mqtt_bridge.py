@@ -1,4 +1,4 @@
-"""The MQTT bridge and Home Assistant discovery (CORE-338 to CORE-345, CORE-100)."""
+"""The MQTT bridge and Home Assistant discovery (CORE-338 to CORE-345, CORE-100, CORE-50)."""
 
 from __future__ import annotations
 
@@ -400,6 +400,19 @@ async def test_core_341_exported_names_are_published(start: Starter, broker: Fak
     assert envelope["payload"] == {"open": True}
     assert not broker.sent(f"{BASE}/event/OTHER")
     assert engine.mqtt.health()["exported"] == 1
+
+
+async def test_core_50_the_bridge_talks_through_ordinary_bus_notifications(
+    start: Starter, broker: FakeBroker, recorder: Recorder
+) -> None:
+    engine = await start(settings(**{"import": ["PING"], "export": ["PONG"]}))
+    broker.inject(f"{BASE}/notify/PING", json.dumps({"n": 1}))
+    await settle()
+    (ping,) = [n for n, _ in recorder.notifications if n.name == "PING"]
+    assert (ping.source, ping.payload) == ("mqtt", {"n": 1})  # an envelope like any other
+    engine.bus.publish(notification("PONG", n=2))
+    await settle()
+    assert json.loads(broker.sent(f"{BASE}/event/PONG")[0].payload)["payload"] == {"n": 2}
 
 
 async def test_core_341_messages_from_mqtt_are_not_echoed(

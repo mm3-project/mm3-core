@@ -3,7 +3,7 @@
 Implements:
 - CORE-131, CORE-134, CORE-135, CORE-136 (Core spec 0.33, §10.7 Installer service):
   listed packages only, staged build, rollback, operations logged and kept.
-- CORE-124, CORE-126, CORE-352, CORE-353 (Core spec 0.33, §10.6 Module catalog).
+- CORE-123, CORE-124, CORE-126, CORE-352, CORE-353 (Core spec 0.43, §10.6 Module catalog).
 - CORE-354 (Core spec 0.33, §10.7): frozen pins, conflicts, removal of packages
   only the module used.
 - CORE-355 (Core spec 0.35, §10.7): the protocol and its answers.
@@ -49,6 +49,7 @@ from installer_fakes import (
 from mm3.cli.installer_cmd import polkit_text, run_installer, unit_text
 from mm3.cli.main import build_parser
 from mm3.cli.modules_cmd import run_modules
+from mm3.core.catalog import Publisher
 from mm3.installer.auth import Auth
 from mm3.installer.client import InstallerClient
 from mm3.installer.files import make_read_only
@@ -348,6 +349,46 @@ def test_core_353_unlisted_from_pypi_is_recorded_as_pypi(world: World) -> None:
     op = world.run(action="install", name="mm3-extra", version="2.0.0", source="pypi")
     assert op.state == "done", op.error
     assert world.installer.records(world.builder.current())["mm3-extra"].origin == "pypi"
+
+
+def test_core_123_the_release_is_checked_against_the_publisher_of_its_entry(world: World) -> None:
+    world.publish(("mm3-news", "1.2.0"))
+    assert world.run(action="install", name="mm3-news").state == "done"
+    _wheel, publisher = world.verification.wheels[0]
+    assert publisher == Publisher(repository="example/mm3-news", workflow="release.yml")
+
+
+def test_core_126_a_failed_verification_installs_nothing(world: World) -> None:
+    world.publish(("mm3-news", "1.2.0"))
+    world.verification.wheel_ok = False
+    assert world.run(action="install", name="mm3-news").state == "failed"
+    assert world.builder.current() == world.old
+    assert world.installer.records(world.old) == {}
+    assert world.engine.restarts == 0
+
+
+def test_core_126_nothing_outside_the_index_is_installed_unless_asked(world: World) -> None:
+    world.publish(("mm3-news", "1.2.0"))
+    assert world.run(action="install", name="mm3-other").state == "failed"
+    assert world.builder.current() == world.old
+    assert world.builder.requirements == []
+
+
+async def test_core_126_the_cli_list_marks_unlisted_modules(served: Served) -> None:
+    world = served.world
+    world.publish(("mm3-news", "1.2.0"))
+    current = world.builder.current()
+    assert current is not None
+    world.builder.freezes[current.name]["mm3-local"] = Dist("mm3-local", "1.0.0", (), True)
+    out = io.StringIO()
+    args = argparse.Namespace(
+        modules_command="list",
+        state_dir=str(world.layout.engine_state),
+        socket=served.path,
+    )
+    assert await asyncio.to_thread(run_modules, args, out=out) == 0
+    line = next(x for x in out.getvalue().splitlines() if x.startswith("mm3-local"))
+    assert "pypi (unlisted)" in line
 
 
 def test_core_355_installed_modules_and_origin(world: World) -> None:

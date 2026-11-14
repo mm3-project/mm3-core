@@ -7,10 +7,12 @@ connection status. :class:`InstanceMqtt` is one instance's ``ctx.mqtt``:
 publish and subscribe need the capability and a topic matching one of the
 instance's grant globs, the engine's own topics are never publishable
 (CORE-342), and ``ha_entity()`` registers a Home Assistant entity (CORE-344).
+The bridge sends and receives ordinary bus notifications (CORE-50).
 Messages for a subscription are queued in the instance inbox as
 :class:`MqttDelivery`, so the supervisor handles them like notifications.
 
 Implements:
+    CORE-50: Core spec 0.43, §9 Built-in services.
     CORE-100: Core spec 0.34, §11.1 Engine additions.
     CORE-339: Core spec 0.34, §9.3 MQTT bridge.
     CORE-342: Core spec 0.34, §9.3 MQTT bridge.
