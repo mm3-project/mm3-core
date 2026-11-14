@@ -2,11 +2,13 @@
 
 The socket is ``/run/mm3-install/installer.sock`` (mode 0660, group ``mm3``),
 in the unit's own runtime directory. Only HTTP/1.1 requests with a
-``Content-Length`` body of at most 64 KiB are read, one per connection. The
-peer's uid comes from ``SO_PEERCRED``: unlisted sources and the passphrase and
-TOTP setup are accepted only from root (CORE-353, CORE-369); every listed
-operation needs the passphrase, and the TOTP code when enabled (CORE-132). A
-failed re-authentication answers 403, a locked installer 423 and a second
+``Content-Length`` body of at most 64 KiB are read, one per connection; the
+one exception is ``POST /v1/backups/upload`` (CORE-361), whose archive of at
+most 2 GiB is streamed to a file and never held in memory. The peer's uid
+comes from ``SO_PEERCRED``: unlisted sources and the passphrase and TOTP setup
+are accepted only from root (CORE-353, CORE-369); every listed operation needs
+the passphrase, and the TOTP code when enabled (CORE-132). A failed
+re-authentication answers 403, a locked installer 423 and a second
 operation while one runs 409. ``POST /v1/system/<action>`` (restart the engine
 or the kiosk, reboot, CORE-382) needs no passphrase: it answers 202, waits
 :data:`~mm3.installer.system.DELAY_S` and runs the command. Bodies are never
@@ -18,7 +20,7 @@ Implements:
     CORE-369: Core spec 0.37, §10.7 Installer service.
     CORE-132: Core spec 0.33, §10.7 Installer service.
     CORE-351: Core spec 0.35, §10.6 Module catalog.
-    CORE-361: Core spec 0.37, §10.8 Backup and restore (installer side).
+    CORE-361: Core spec 0.45, §10.8 Backup and restore (installer side).
     CORE-364: Core spec 0.37, §10.8 Backup and restore.
     CORE-365: Core spec 0.37, §10.8 Backup and restore.
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
@@ -50,6 +52,7 @@ from mm3.installer.operations import FINAL, BusyError, Installer, Operation, Req
 from mm3.installer.remotes import REMOTE_NAME, RemoteError
 from mm3.installer.schedule import BackupScheduler
 from mm3.installer.system import ACTIONS, DELAY_S, SystemActions
+from mm3.installer.uploads import MAX_UPLOAD
 from mm3.installer.venv import BuildError
 
 __all__ = ["MAX_BODY", "REFRESH_CHECK_S", "InstallerServer", "peer_uid"]
@@ -65,6 +68,10 @@ _SOURCES = {"catalog", "pypi", "local"}
 _NAME = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,99}$")
 _VERSION = re.compile(r"^[A-Za-z0-9.+!_-]{1,64}$")
 _LENGTH = re.compile(r"[0-9]{1,6}")
+_UPLOAD_LENGTH = re.compile(r"[0-9]{1,12}")
+UPLOAD_PATH = "/v1/backups/upload"
+"""The one route whose body is streamed to a file instead of read into memory (CORE-361)."""
+CHUNK = 1 << 20
 MAX_CLIENTS = 32
 """Connections served at once; more are closed at once (event streams count)."""
 _SYSTEM_PATH = re.compile(r"^/v1/system/(" + "|".join(ACTIONS) + ")$")
@@ -102,6 +109,10 @@ class HttpRequest:
     path: str
     body: bytes
     uid: int
+    length: int = 0
+    """The announced size of a streamed body (the upload route)."""
+    stream: asyncio.StreamReader | None = None
+    """The connection to read a streamed body from."""
 
     def json(self) -> dict[str, Any]:
         """The body as a JSON object (empty body = ``{}``).
@@ -176,6 +187,10 @@ class InstallerServer:
     async def serve(self, path: Path, *, refresh: bool = True) -> None:
         """Listen on ``path`` until cancelled."""
         self._loop = asyncio.get_running_loop()
+        backups = self.installer.backups
+        if backups is not None:
+            # CORE-361: a temporary file left by a crash is deleted before the first upload.
+            await asyncio.to_thread(backups.uploads.cleanup, crashed=True)
         await asyncio.to_thread(_prepare_socket_path, path)
         server = await asyncio.start_unix_server(self._client, path=str(path))
         os.chmod(path, 0o660)
@@ -257,6 +272,13 @@ class InstallerServer:
         if "transfer-encoding" in headers:
             raise HttpError(411, "send a Content-Length body")
         length = headers.get("content-length", "0")
+        if method.upper() == "POST" and target.split("?", 1)[0] == UPLOAD_PATH:
+            # CORE-361: the archive is streamed to a file; nothing is read here.
+            if not _UPLOAD_LENGTH.fullmatch(length) or int(length) == 0:
+                raise HttpError(400, "send a Content-Length body")
+            if int(length) > MAX_UPLOAD:
+                raise HttpError(413, "the archive is larger than 2 GiB", code="too_large")
+            return HttpRequest("POST", UPLOAD_PATH, b"", uid, int(length), reader)
         if not _LENGTH.fullmatch(length):
             raise HttpError(400, "bad Content-Length")
         if int(length) > MAX_BODY:
@@ -488,6 +510,9 @@ class InstallerServer:
     def _source(self, body: dict[str, Any], uid: int) -> dict[str, Any]:
         name = self._text(body, "name", 256)
         path = self._text(body, "path", 1024)
+        upload = self._text(body, "upload", 64)
+        if upload is not None:
+            return {"upload": upload}
         if path is not None:
             if uid != 0:
                 raise HttpError(403, "a backup file by path needs root (sudo)")
@@ -514,6 +539,8 @@ class InstallerServer:
                 )
             elif route == ("POST", "/v1/backups"):
                 await self._create_backup(req, writer)
+            elif route == ("POST", UPLOAD_PATH):
+                await self._upload(req, writer)
             elif route == ("GET", "/v1/backups/remote"):
                 listing = await asyncio.to_thread(runner.remote_listing)
                 await self._send(writer, 200, {"backups": listing})
@@ -541,6 +568,30 @@ class InstallerServer:
             raise HttpError(502 if "rclone" in str(exc) else 400, str(exc)) from exc
         except BackupError as exc:
             raise HttpError(400, str(exc)) from exc
+
+    async def _upload(self, req: HttpRequest, writer: asyncio.StreamWriter) -> None:
+        """Stage an uploaded archive; no re-authentication, it only waits for a restore (CORE-361).
+
+        The body is written to a temporary file as it arrives, so 2 GiB never sit in memory;
+        a connection that stalls for :data:`READ_TIMEOUT_S` or ends early leaves nothing.
+        """
+        if req.stream is None:
+            raise HttpError(400, "send a Content-Length body")
+        staging = await asyncio.to_thread(self._runner().uploads.begin)
+        try:
+            left = req.length
+            while left:
+                chunk = await asyncio.wait_for(req.stream.read(min(CHUNK, left)), READ_TIMEOUT_S)
+                if not chunk:
+                    raise HttpError(400, "the upload ended before Content-Length bytes")
+                await asyncio.to_thread(staging.write, chunk)
+                left -= len(chunk)
+            upload_id = await asyncio.to_thread(staging.commit)
+        except BaseException:
+            await asyncio.to_thread(staging.abort)
+            raise
+        _log.info("installer_backup_uploaded", size=staging.size, client_uid=req.uid)
+        await self._send(writer, 201, {"upload": upload_id, "size": staging.size})
 
     async def _create_backup(self, req: HttpRequest, writer: asyncio.StreamWriter) -> None:
         body = req.json()

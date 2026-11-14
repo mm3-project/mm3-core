@@ -7,20 +7,22 @@ never writes a venv itself.
 Implements:
     CORE-353: Core spec 0.33, §10.6 Module catalog.
     CORE-355: Core spec 0.35, §10.7 Installer service.
+    CORE-361: Core spec 0.45, §10.8 Backup and restore.
 """
 
 from __future__ import annotations
 
+import contextlib
 import http.client
 import json
 import socket
-from collections.abc import Iterator
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 from typing import Any
 
 from mm3.installer.paths import Layout
 
-__all__ = ["DEFAULT_SOCKET", "InstallerClient", "InstallerUnavailable", "Reply"]
+__all__ = ["DEFAULT_SOCKET", "InstallerClient", "InstallerUnavailable", "Reply", "Stream"]
 
 DEFAULT_SOCKET = Layout().socket
 
@@ -42,6 +44,54 @@ class Reply:
         if isinstance(self.body, dict):
             return str(self.body.get("error", ""))
         return ""
+
+
+class Stream:
+    """An open answer whose body is read in pieces (a backup download, CORE-361).
+
+    Attributes:
+        status: The HTTP status.
+        headers: The answer's headers.
+        body: For an error status, the decoded JSON body (``{}`` when empty); ``None`` for 200.
+    """
+
+    def __init__(
+        self,
+        conn: http.client.HTTPConnection,
+        response: http.client.HTTPResponse,
+    ) -> None:
+        self._conn = conn
+        self._response = response
+        self.status = response.status
+        self.headers = response.headers
+        self.body: Any = None
+        if response.status != 200:
+            raw = response.read()
+            try:
+                self.body = json.loads(raw) if raw else {}
+            except ValueError:
+                self.body = {"error": raw.decode(errors="replace")}
+            self.close()
+
+    @property
+    def error(self) -> str:
+        """The ``error`` message of an error answer."""
+        return str(self.body.get("error", "")) if isinstance(self.body, dict) else ""
+
+    def read(self, size: int) -> bytes:
+        """Read up to ``size`` bytes; ``b""`` at the end.
+
+        Raises:
+            InstallerUnavailable: The socket failed in the middle of the body.
+        """
+        try:
+            return self._response.read(size)
+        except (OSError, http.client.HTTPException) as exc:
+            raise InstallerUnavailable(f"installer socket: {exc}") from exc
+
+    def close(self) -> None:
+        """Close the connection."""
+        self._conn.close()
 
 
 class _UnixConnection(http.client.HTTPConnection):
@@ -97,6 +147,66 @@ class InstallerClient:
         headers = {"Content-Type": "application/json"} if data is not None else {}
         try:
             conn.request(method, target, body=data, headers=headers)
+            response = conn.getresponse()
+            raw = response.read()
+        except (OSError, http.client.HTTPException) as exc:
+            raise InstallerUnavailable(f"installer socket {self.path}: {exc}") from exc
+        finally:
+            conn.close()
+        try:
+            decoded = json.loads(raw) if raw else {}
+        except ValueError:
+            decoded = {"error": raw.decode(errors="replace")}
+        return Reply(response.status, decoded)
+
+    def stream(self, method: str, target: str, *, timeout: float = 60.0) -> Stream:
+        """Send a request and return the answer to be read in pieces.
+
+        Args:
+            method: The HTTP method.
+            target: The path.
+            timeout: Seconds a read may wait for the next piece.
+
+        Raises:
+            InstallerUnavailable: The socket does not answer.
+        """
+        conn = _UnixConnection(self.path, timeout)
+        try:
+            conn.request(method, target)
+            return Stream(conn, conn.getresponse())
+        except (OSError, http.client.HTTPException) as exc:
+            conn.close()
+            raise InstallerUnavailable(f"installer socket {self.path}: {exc}") from exc
+
+    def upload(
+        self,
+        target: str,
+        chunks: Iterable[bytes],
+        length: int,
+        *,
+        timeout: float = 60.0,
+    ) -> Reply:
+        """Send a raw body of ``length`` bytes taken from ``chunks`` (a backup upload, CORE-361).
+
+        Args:
+            target: The path.
+            chunks: The body, in pieces; read once, as they are sent.
+            length: The size of the body, sent as ``Content-Length``.
+            timeout: Seconds a send or the answer may wait.
+
+        Returns:
+            The status and the decoded JSON body. When the installer answers and closes before
+            the whole body is sent, its answer is returned, not a broken pipe.
+
+        Raises:
+            InstallerUnavailable: The socket does not answer.
+        """
+        conn = _UnixConnection(self.path, timeout)
+        headers = {"Content-Type": "application/octet-stream", "Content-Length": str(length)}
+        try:
+            # The installer may refuse early; its answer is read below.
+            with contextlib.suppress(BrokenPipeError, ConnectionResetError):
+                conn.request("POST", target, body=chunks, headers=headers)
             response = conn.getresponse()
             raw = response.read()
         except (OSError, http.client.HTTPException) as exc:
