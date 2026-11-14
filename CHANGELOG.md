@@ -7,6 +7,16 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Spec (Core 0.45: backup routes of the engine; CORE-361, ENH-002)
+
+- No code change. CORE-361 now defines the backup routes the engine forwards to the installer, on
+  the admin listener only: the local and remote lists, create, download, upload, verify,
+  preview, keygen, the rclone remotes and restore. An upload is a raw body of at most 2 GiB
+  (413 `CORE_API_UPLOAD_TOO_LARGE`) that a new installer route stages; a restore names it as
+  `{upload}`. A restore and a change of a remote ask for the passphrase; everything else does
+  not. The code PR that follows builds the routes and the Backups page and reviews the stale
+  citations of CORE-361.
+
 ### Added (admin Catalog page; CORE-120, CORE-133, CORE-132, CORE-135, ENH-002; spec 0.44)
 
 - `/admin/catalog` (nav link "Catalog") lists the catalog with search, category filter, an
