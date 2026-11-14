@@ -10,7 +10,7 @@ root only; others name an entry of the local list or, with ``--remote``, of
 the remote.
 
 Implements:
-    CORE-361: Core spec 0.37, §10.8 Backup and restore.
+    CORE-361: Core spec 0.45, §10.8 Backup and restore.
     CORE-364: Core spec 0.37, §10.8 Backup and restore.
     CORE-162: Core spec 0.37, §10.8 Backup and restore.
 """

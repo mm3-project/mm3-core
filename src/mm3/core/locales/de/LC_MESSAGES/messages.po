@@ -1974,3 +1974,399 @@ msgstr "zurückgesetzt"
 
 msgid "CORE_ADMIN_CATALOG_STATE_FAILED"
 msgstr "fehlgeschlagen"
+
+msgid "CORE_WEB_NAV_BACKUPS"
+msgstr "Sicherungen"
+
+msgid "CORE_API_UPLOAD_TOO_LARGE"
+msgstr "Die Sicherungsdatei ist größer als 2 GiB."
+
+msgid "CORE_ADMIN_BACKUPS"
+msgstr "Sicherungen"
+
+msgid "CORE_ADMIN_BACKUPS_ACTION_BACKUP"
+msgstr "Sicherung"
+
+msgid "CORE_ADMIN_BACKUPS_ACTION_RESTORE"
+msgstr "Wiederherstellung"
+
+msgid "CORE_ADMIN_BACKUPS_ARCHIVE_PASSPHRASE"
+msgstr "Passphrase für das Archiv"
+
+msgid "CORE_ADMIN_BACKUPS_CLI_ALTERNATIVE"
+msgstr "Oder auf der Kommandozeile:"
+
+msgid "CORE_ADMIN_BACKUPS_COL_CREATED"
+msgstr "Erstellt"
+
+msgid "CORE_ADMIN_BACKUPS_COL_ENCRYPTED"
+msgstr "Verschlüsselt"
+
+msgid "CORE_ADMIN_BACKUPS_COL_HOST"
+msgstr "Rechner"
+
+msgid "CORE_ADMIN_BACKUPS_COL_KIND"
+msgstr "Art"
+
+msgid "CORE_ADMIN_BACKUPS_COL_PARTS"
+msgstr "Teile"
+
+msgid "CORE_ADMIN_BACKUPS_COL_SIZE"
+msgstr "Größe"
+
+msgid "CORE_ADMIN_BACKUPS_CREATE"
+msgstr "Neue Sicherung"
+
+msgid "CORE_ADMIN_BACKUPS_CREATE_EFFECT"
+msgstr "Packt die gewählten Teile in ein Archiv auf diesem Spiegel. Eine Passphrase ist nicht nötig."
+
+msgid "CORE_ADMIN_BACKUPS_CREATE_NOW"
+msgstr "Jetzt sichern"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_KEYGEN_TEXT"
+msgstr "Erzeugt ein neues age-Schlüsselpaar zum Verschlüsseln der Sicherungen. Die geheime Identität wird nur einmal angezeigt und kann nicht erneut gelesen werden."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_KEYGEN_TITLE"
+msgstr "Neuer age-Schlüssel"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_ADD_TITLE"
+msgstr "Remote hinzufügen"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_DELETE_TEXT"
+msgstr "Das Remote wird aus der rclone-Konfiguration des Installers entfernt. Die Dateien darauf bleiben erhalten."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_DELETE_TITLE"
+msgstr "Das Remote {name} löschen?"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_EDIT_TITLE"
+msgstr "Remote {name} bearbeiten"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_RESTORE_KEY"
+msgstr "Dieses Archiv ist möglicherweise verschlüsselt. Geben Sie seinen Schlüssel oder seine Passphrase ein und zeigen Sie die Vorschau an."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_RESTORE_TEXT"
+msgstr "Die Wiederherstellung ersetzt Konfiguration, Daten und Module durch die des Archivs. Zuerst wird der aktuelle Stand gesichert und bei einem Fehlschlag zurückgespielt."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_RESTORE_TITLE"
+msgstr "{name} wiederherstellen?"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_VERIFY_TEXT"
+msgstr "Prüft, ob das Archiv vollständig ist, und zeigt seinen Inhalt. Bei einem verschlüsselten Archiv Schlüssel oder Passphrase eingeben."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_VERIFY_TITLE"
+msgstr "{name} prüfen"
+
+msgid "CORE_ADMIN_BACKUPS_DOWNLOAD"
+msgstr "Herunterladen"
+
+msgid "CORE_ADMIN_BACKUPS_EMPTY"
+msgstr "Keine Sicherungen."
+
+msgid "CORE_ADMIN_BACKUPS_ENCRYPTION"
+msgstr "Verschlüsselung"
+
+msgid "CORE_ADMIN_BACKUPS_ENGINE"
+msgstr "Engine-Version"
+
+msgid "CORE_ADMIN_BACKUPS_FILES"
+msgstr "Dateien"
+
+msgid "CORE_ADMIN_BACKUPS_IDENTITY"
+msgstr "Geheime Identität"
+
+msgid "CORE_ADMIN_BACKUPS_IDENTITY_ONCE"
+msgstr "Kopieren Sie die geheime Identität jetzt: Sie wird nicht erneut angezeigt, und ohne sie lässt sich ein für diesen Schlüssel verschlüsseltes Archiv nicht öffnen."
+
+msgid "CORE_ADMIN_BACKUPS_INSTANCE"
+msgstr "Nur diese Modulinstanz (optional)"
+
+msgid "CORE_ADMIN_BACKUPS_KEEP_KEY"
+msgstr "Identität auf diesem Spiegel als Sicherungsschlüssel behalten"
+
+msgid "CORE_ADMIN_BACKUPS_KEPT"
+msgstr "Die Identität bleibt auf diesem Spiegel für geplante Sicherungen und Wiederherstellungen."
+
+msgid "CORE_ADMIN_BACKUPS_KEY"
+msgstr "Schlüssel oder Passphrase des Archivs"
+
+msgid "CORE_ADMIN_BACKUPS_KEYGEN"
+msgstr "Schlüssel erzeugen"
+
+msgid "CORE_ADMIN_BACKUPS_KEYGEN_EFFECT"
+msgstr "Erzeugt ein age-Schlüsselpaar zum Verschlüsseln der Sicherungen, damit sie die Geheimnisse enthalten können."
+
+msgid "CORE_ADMIN_BACKUPS_KEYS"
+msgstr "Schlüssel"
+
+msgid "CORE_ADMIN_BACKUPS_KEY_NOTE"
+msgstr "Nur für ein verschlüsseltes Archiv; sie wird einmal gesendet und nicht gespeichert."
+
+msgid "CORE_ADMIN_BACKUPS_KIND_MANUAL"
+msgstr "manuell"
+
+msgid "CORE_ADMIN_BACKUPS_KIND_PRE"
+msgstr "vor einer Änderung"
+
+msgid "CORE_ADMIN_BACKUPS_KIND_SCHEDULED"
+msgstr "geplant"
+
+msgid "CORE_ADMIN_BACKUPS_LAST_REMOTE"
+msgstr "Letzte Remote-Kopie"
+
+msgid "CORE_ADMIN_BACKUPS_LAST_SCHEDULED"
+msgstr "Letzte geplante Sicherung"
+
+msgid "CORE_ADMIN_BACKUPS_LIST"
+msgstr "Sicherungen auf diesem Spiegel"
+
+msgid "CORE_ADMIN_BACKUPS_LOCKED_UNTIL"
+msgstr "Gesperrt bis {time}."
+
+msgid "CORE_ADMIN_BACKUPS_MODE_CONFIGURED"
+msgstr "Der Schlüssel aus den Einstellungen"
+
+msgid "CORE_ADMIN_BACKUPS_MODE_KEY"
+msgstr "Ein öffentlicher age-Schlüssel"
+
+msgid "CORE_ADMIN_BACKUPS_MODE_NONE"
+msgstr "Nicht verschlüsselt"
+
+msgid "CORE_ADMIN_BACKUPS_MODE_PASSPHRASE"
+msgstr "Eine Passphrase"
+
+msgid "CORE_ADMIN_BACKUPS_NEED_KEY"
+msgstr "Geben Sie den öffentlichen age-Schlüssel ein."
+
+msgid "CORE_ADMIN_BACKUPS_NEED_PASSPHRASE"
+msgstr "Geben Sie eine Passphrase für das Archiv ein."
+
+msgid "CORE_ADMIN_BACKUPS_NO"
+msgstr "Nein"
+
+msgid "CORE_ADMIN_BACKUPS_NONE"
+msgstr "keine"
+
+msgid "CORE_ADMIN_BACKUPS_NOTHING_TO_CHANGE"
+msgstr "Es würde sich nichts ändern."
+
+msgid "CORE_ADMIN_BACKUPS_NO_PARTS"
+msgstr "Wählen Sie mindestens einen Teil."
+
+msgid "CORE_ADMIN_BACKUPS_OMITTED"
+msgstr "Ausgelassen"
+
+msgid "CORE_ADMIN_BACKUPS_ON_REMOTE"
+msgstr "Sicherungen auf dem Remote"
+
+msgid "CORE_ADMIN_BACKUPS_ON_REMOTE_TEXT"
+msgstr "Die Archive auf dem Remote aus den Sicherungseinstellungen."
+
+msgid "CORE_ADMIN_BACKUPS_OPERATION"
+msgstr "Vorgang"
+
+msgid "CORE_ADMIN_BACKUPS_OP_DONE"
+msgstr "{action} {name}: fertig."
+
+msgid "CORE_ADMIN_BACKUPS_OP_FAILED"
+msgstr "{action} {name} fehlgeschlagen: {error}"
+
+msgid "CORE_ADMIN_BACKUPS_OP_ROLLED_BACK"
+msgstr "{action} {name}: auf den vorherigen Stand zurückgesetzt. {error}"
+
+msgid "CORE_ADMIN_BACKUPS_OP_RUNNING"
+msgstr "{action} {name}: {state}"
+
+msgid "CORE_ADMIN_BACKUPS_PARTS"
+msgstr "Teile"
+
+msgid "CORE_ADMIN_BACKUPS_PART_CONFIG"
+msgstr "Konfiguration"
+
+msgid "CORE_ADMIN_BACKUPS_PART_DATA"
+msgstr "Daten"
+
+msgid "CORE_ADMIN_BACKUPS_PART_MODULES"
+msgstr "Module"
+
+msgid "CORE_ADMIN_BACKUPS_PART_SECRETS"
+msgstr "Geheimnisse"
+
+msgid "CORE_ADMIN_BACKUPS_PASSPHRASE"
+msgstr "Passphrase des Installers"
+
+msgid "CORE_ADMIN_BACKUPS_PREVIEW"
+msgstr "Vorschau"
+
+msgid "CORE_ADMIN_BACKUPS_PUBLIC_KEY"
+msgstr "Öffentlicher Schlüssel"
+
+msgid "CORE_ADMIN_BACKUPS_REASON_AWAY"
+msgstr "Der Installer ist nicht erreichbar, daher können von hier keine Sicherungen erstellt oder wiederhergestellt werden."
+
+msgid "CORE_ADMIN_BACKUPS_REASON_BUSY"
+msgstr "Der Installer ist mit einem anderen Vorgang beschäftigt."
+
+msgid "CORE_ADMIN_BACKUPS_REASON_CHECKING"
+msgstr "Der Installer wird geprüft …"
+
+msgid "CORE_ADMIN_BACKUPS_REASON_LOCKED"
+msgstr "Der Installer ist nach fehlgeschlagenen Bestätigungen bis {time} gesperrt."
+
+msgid "CORE_ADMIN_BACKUPS_RECIPIENT"
+msgstr "Öffentlicher age-Schlüssel (age1…)"
+
+msgid "CORE_ADMIN_BACKUPS_RELOAD"
+msgstr "Neu laden"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTES"
+msgstr "Remotes"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTES_EMPTY"
+msgstr "Es ist kein Remote eingerichtet."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTES_NOTE"
+msgstr "Ein Remote ist das Ziel, an das Kopien der Sicherungen gesendet werden (in der Konfiguration unter backup festlegen). Geheime Parameter erscheinen als !masked und bleiben erhalten, wenn sie nicht geändert werden."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_ADD"
+msgstr "Remote hinzufügen"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_BAD_LINE"
+msgstr "Zeile {line} hat nicht die Form „Name=Wert“."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_DELETE"
+msgstr "Löschen"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_DELETED"
+msgstr "Remote {name} gelöscht."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_EDIT"
+msgstr "Bearbeiten"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_NAME"
+msgstr "Name"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_PARAMS"
+msgstr "Parameter"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_PARAMS_NOTE"
+msgstr "Ein „Name=Wert“ pro Zeile. Bekannte Parameter: {names}."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_SAVED"
+msgstr "Remote {name} gespeichert."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TEST"
+msgstr "Testen"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TEST_FAILED"
+msgstr "Das Remote {name} antwortet nicht: {error}"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TEST_OK"
+msgstr "Das Remote {name} antwortet."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TYPE"
+msgstr "Typ"
+
+msgid "CORE_ADMIN_BACKUPS_RESTORE"
+msgstr "Wiederherstellen"
+
+msgid "CORE_ADMIN_BACKUPS_RESTORE_PARTS"
+msgstr "Wiederherzustellende Teile"
+
+msgid "CORE_ADMIN_BACKUPS_RESULT_FAILED"
+msgstr "{time}: fehlgeschlagen: {error}"
+
+msgid "CORE_ADMIN_BACKUPS_RESULT_OK"
+msgstr "{time}: {name}"
+
+msgid "CORE_ADMIN_BACKUPS_SAVE"
+msgstr "Speichern"
+
+msgid "CORE_ADMIN_BACKUPS_SECRETS_NOTE"
+msgstr "Geheimnisse werden nur in einem verschlüsselten Archiv gesichert."
+
+msgid "CORE_ADMIN_BACKUPS_SHOW_REMOTE"
+msgstr "Sicherungen auf dem Remote anzeigen"
+
+msgid "CORE_ADMIN_BACKUPS_STAGED"
+msgstr "{name} ({size}) ist hochgeladen und wartet auf eine Wiederherstellung. Es wird nach 24 Stunden oder nach einer Wiederherstellung gelöscht."
+
+msgid "CORE_ADMIN_BACKUPS_STATE_BACKING_UP"
+msgstr "Sicherung wird erstellt"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_BUILDING"
+msgstr "Umgebung wird aufgebaut"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_CHECKING"
+msgstr "Engine wird geprüft"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_DONE"
+msgstr "fertig"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_FAILED"
+msgstr "fehlgeschlagen"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_QUEUED"
+msgstr "in der Warteschlange"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_RESTARTING"
+msgstr "Engine wird neu gestartet"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_RESTORING"
+msgstr "Wiederherstellung läuft"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_ROLLED_BACK"
+msgstr "zurückgesetzt"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_SWITCHING"
+msgstr "Umschaltung"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_VERIFYING"
+msgstr "Archiv wird geprüft"
+
+msgid "CORE_ADMIN_BACKUPS_STATUS"
+msgstr "Geplante Sicherungen"
+
+msgid "CORE_ADMIN_BACKUPS_THE_UPLOAD"
+msgstr "die hochgeladene Datei"
+
+msgid "CORE_ADMIN_BACKUPS_TOTP"
+msgstr "TOTP-Code (falls aktiviert)"
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD"
+msgstr "Sicherung hochladen"
+
+msgid "CORE_ADMIN_BACKUPS_UPLOADED"
+msgstr "{name} hochgeladen ({size})."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_EMPTY"
+msgstr "Die Datei ist leer."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_FILE"
+msgstr "Sicherungsdatei (.mm3backup)"
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_LARGE"
+msgstr "Die Datei ist größer als {size}."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_NAME"
+msgstr "Wählen Sie eine Datei, die auf .mm3backup endet."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_NONE"
+msgstr "Keine Datei gewählt."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_TEXT"
+msgstr "Sendet eine anderswo erstellte Sicherung an diesen Spiegel, damit sie geprüft oder wiederhergestellt werden kann. Höchstens {size}."
+
+msgid "CORE_ADMIN_BACKUPS_VERIFY"
+msgstr "Prüfen"
+
+msgid "CORE_ADMIN_BACKUPS_VERIFY_BAD"
+msgstr "Das Archiv ist beschädigt."
+
+msgid "CORE_ADMIN_BACKUPS_VERIFY_OK"
+msgstr "Das Archiv ist vollständig."
+
+msgid "CORE_ADMIN_BACKUPS_WOULD_CHANGE"
+msgstr "Was eine Wiederherstellung ändern würde"
+
+msgid "CORE_ADMIN_BACKUPS_YES"
+msgstr "Ja"

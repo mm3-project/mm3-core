@@ -1972,3 +1972,399 @@ msgstr "rolled back"
 
 msgid "CORE_ADMIN_CATALOG_STATE_FAILED"
 msgstr "failed"
+
+msgid "CORE_WEB_NAV_BACKUPS"
+msgstr "Backups"
+
+msgid "CORE_API_UPLOAD_TOO_LARGE"
+msgstr "The backup file is larger than 2 GiB."
+
+msgid "CORE_ADMIN_BACKUPS"
+msgstr "Backups"
+
+msgid "CORE_ADMIN_BACKUPS_ACTION_BACKUP"
+msgstr "Backup"
+
+msgid "CORE_ADMIN_BACKUPS_ACTION_RESTORE"
+msgstr "Restore"
+
+msgid "CORE_ADMIN_BACKUPS_ARCHIVE_PASSPHRASE"
+msgstr "Passphrase for the archive"
+
+msgid "CORE_ADMIN_BACKUPS_CLI_ALTERNATIVE"
+msgstr "Or on the command line:"
+
+msgid "CORE_ADMIN_BACKUPS_COL_CREATED"
+msgstr "Created"
+
+msgid "CORE_ADMIN_BACKUPS_COL_ENCRYPTED"
+msgstr "Encrypted"
+
+msgid "CORE_ADMIN_BACKUPS_COL_HOST"
+msgstr "Host"
+
+msgid "CORE_ADMIN_BACKUPS_COL_KIND"
+msgstr "Kind"
+
+msgid "CORE_ADMIN_BACKUPS_COL_PARTS"
+msgstr "Parts"
+
+msgid "CORE_ADMIN_BACKUPS_COL_SIZE"
+msgstr "Size"
+
+msgid "CORE_ADMIN_BACKUPS_CREATE"
+msgstr "New backup"
+
+msgid "CORE_ADMIN_BACKUPS_CREATE_EFFECT"
+msgstr "Packs the chosen parts into an archive on this mirror. No passphrase is needed."
+
+msgid "CORE_ADMIN_BACKUPS_CREATE_NOW"
+msgstr "Back up now"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_KEYGEN_TEXT"
+msgstr "Makes a new age key pair for encrypting backups. The secret identity is shown once and cannot be read again."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_KEYGEN_TITLE"
+msgstr "New age key"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_ADD_TITLE"
+msgstr "Add a remote"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_DELETE_TEXT"
+msgstr "The remote is removed from the installer's rclone configuration. The files on it stay."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_DELETE_TITLE"
+msgstr "Delete the remote {name}?"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_EDIT_TITLE"
+msgstr "Edit the remote {name}"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_RESTORE_KEY"
+msgstr "This archive may be encrypted. Enter its key or passphrase, then preview it."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_RESTORE_TEXT"
+msgstr "A restore replaces the current configuration, data and modules with those of the archive. A backup of the current state is made first and put back if the restore fails."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_RESTORE_TITLE"
+msgstr "Restore {name}?"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_VERIFY_TEXT"
+msgstr "Checks that the archive is whole and shows what it holds. For an encrypted archive enter its key or passphrase."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_VERIFY_TITLE"
+msgstr "Verify {name}"
+
+msgid "CORE_ADMIN_BACKUPS_DOWNLOAD"
+msgstr "Download"
+
+msgid "CORE_ADMIN_BACKUPS_EMPTY"
+msgstr "No backups."
+
+msgid "CORE_ADMIN_BACKUPS_ENCRYPTION"
+msgstr "Encryption"
+
+msgid "CORE_ADMIN_BACKUPS_ENGINE"
+msgstr "Engine version"
+
+msgid "CORE_ADMIN_BACKUPS_FILES"
+msgstr "Files"
+
+msgid "CORE_ADMIN_BACKUPS_IDENTITY"
+msgstr "Secret identity"
+
+msgid "CORE_ADMIN_BACKUPS_IDENTITY_ONCE"
+msgstr "Copy the secret identity now: it is not shown again, and without it an archive encrypted to this key cannot be opened."
+
+msgid "CORE_ADMIN_BACKUPS_INSTANCE"
+msgstr "Only this module instance (optional)"
+
+msgid "CORE_ADMIN_BACKUPS_KEEP_KEY"
+msgstr "Keep the identity on this mirror as the backup key"
+
+msgid "CORE_ADMIN_BACKUPS_KEPT"
+msgstr "The identity is kept on this mirror for scheduled backups and restores."
+
+msgid "CORE_ADMIN_BACKUPS_KEY"
+msgstr "Key or passphrase of the archive"
+
+msgid "CORE_ADMIN_BACKUPS_KEYGEN"
+msgstr "Make a key"
+
+msgid "CORE_ADMIN_BACKUPS_KEYGEN_EFFECT"
+msgstr "Makes an age key pair to encrypt backups, so that they can hold the secrets."
+
+msgid "CORE_ADMIN_BACKUPS_KEYS"
+msgstr "Keys"
+
+msgid "CORE_ADMIN_BACKUPS_KEY_NOTE"
+msgstr "Only for an encrypted archive; it is sent once and not kept."
+
+msgid "CORE_ADMIN_BACKUPS_KIND_MANUAL"
+msgstr "manual"
+
+msgid "CORE_ADMIN_BACKUPS_KIND_PRE"
+msgstr "before a change"
+
+msgid "CORE_ADMIN_BACKUPS_KIND_SCHEDULED"
+msgstr "scheduled"
+
+msgid "CORE_ADMIN_BACKUPS_LAST_REMOTE"
+msgstr "Last remote copy"
+
+msgid "CORE_ADMIN_BACKUPS_LAST_SCHEDULED"
+msgstr "Last scheduled backup"
+
+msgid "CORE_ADMIN_BACKUPS_LIST"
+msgstr "Backups on this mirror"
+
+msgid "CORE_ADMIN_BACKUPS_LOCKED_UNTIL"
+msgstr "Locked until {time}."
+
+msgid "CORE_ADMIN_BACKUPS_MODE_CONFIGURED"
+msgstr "The key from the settings"
+
+msgid "CORE_ADMIN_BACKUPS_MODE_KEY"
+msgstr "An age public key"
+
+msgid "CORE_ADMIN_BACKUPS_MODE_NONE"
+msgstr "Not encrypted"
+
+msgid "CORE_ADMIN_BACKUPS_MODE_PASSPHRASE"
+msgstr "A passphrase"
+
+msgid "CORE_ADMIN_BACKUPS_NEED_KEY"
+msgstr "Enter the age public key."
+
+msgid "CORE_ADMIN_BACKUPS_NEED_PASSPHRASE"
+msgstr "Enter a passphrase for the archive."
+
+msgid "CORE_ADMIN_BACKUPS_NO"
+msgstr "No"
+
+msgid "CORE_ADMIN_BACKUPS_NONE"
+msgstr "none"
+
+msgid "CORE_ADMIN_BACKUPS_NOTHING_TO_CHANGE"
+msgstr "Nothing would change."
+
+msgid "CORE_ADMIN_BACKUPS_NO_PARTS"
+msgstr "Choose at least one part."
+
+msgid "CORE_ADMIN_BACKUPS_OMITTED"
+msgstr "Left out"
+
+msgid "CORE_ADMIN_BACKUPS_ON_REMOTE"
+msgstr "Backups on the remote"
+
+msgid "CORE_ADMIN_BACKUPS_ON_REMOTE_TEXT"
+msgstr "The archives on the remote set in the backup settings."
+
+msgid "CORE_ADMIN_BACKUPS_OPERATION"
+msgstr "Operation"
+
+msgid "CORE_ADMIN_BACKUPS_OP_DONE"
+msgstr "{action} {name}: done."
+
+msgid "CORE_ADMIN_BACKUPS_OP_FAILED"
+msgstr "{action} {name} failed: {error}"
+
+msgid "CORE_ADMIN_BACKUPS_OP_ROLLED_BACK"
+msgstr "{action} {name}: rolled back to the previous state. {error}"
+
+msgid "CORE_ADMIN_BACKUPS_OP_RUNNING"
+msgstr "{action} {name}: {state}"
+
+msgid "CORE_ADMIN_BACKUPS_PARTS"
+msgstr "Parts"
+
+msgid "CORE_ADMIN_BACKUPS_PART_CONFIG"
+msgstr "configuration"
+
+msgid "CORE_ADMIN_BACKUPS_PART_DATA"
+msgstr "data"
+
+msgid "CORE_ADMIN_BACKUPS_PART_MODULES"
+msgstr "modules"
+
+msgid "CORE_ADMIN_BACKUPS_PART_SECRETS"
+msgstr "secrets"
+
+msgid "CORE_ADMIN_BACKUPS_PASSPHRASE"
+msgstr "Installer passphrase"
+
+msgid "CORE_ADMIN_BACKUPS_PREVIEW"
+msgstr "Preview"
+
+msgid "CORE_ADMIN_BACKUPS_PUBLIC_KEY"
+msgstr "Public key"
+
+msgid "CORE_ADMIN_BACKUPS_REASON_AWAY"
+msgstr "The installer cannot be reached, so backups cannot be made or restored from here."
+
+msgid "CORE_ADMIN_BACKUPS_REASON_BUSY"
+msgstr "The installer is busy with another operation."
+
+msgid "CORE_ADMIN_BACKUPS_REASON_CHECKING"
+msgstr "Checking the installer…"
+
+msgid "CORE_ADMIN_BACKUPS_REASON_LOCKED"
+msgstr "The installer is locked until {time} after failed confirmations."
+
+msgid "CORE_ADMIN_BACKUPS_RECIPIENT"
+msgstr "Age public key (age1…)"
+
+msgid "CORE_ADMIN_BACKUPS_RELOAD"
+msgstr "Reload"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTES"
+msgstr "Remotes"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTES_EMPTY"
+msgstr "No remote is set up."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTES_NOTE"
+msgstr "A remote is where copies of the backups are sent (choose it under backup in the configuration). Secret parameters are shown as !masked and kept when saved unchanged."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_ADD"
+msgstr "Add a remote"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_BAD_LINE"
+msgstr "Line {line} is not \"name=value\"."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_DELETE"
+msgstr "Delete"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_DELETED"
+msgstr "Remote {name} deleted."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_EDIT"
+msgstr "Edit"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_NAME"
+msgstr "Name"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_PARAMS"
+msgstr "Parameters"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_PARAMS_NOTE"
+msgstr "One \"name=value\" per line. Known parameters: {names}."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_SAVED"
+msgstr "Remote {name} saved."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TEST"
+msgstr "Test"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TEST_FAILED"
+msgstr "Remote {name} does not answer: {error}"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TEST_OK"
+msgstr "Remote {name} answers."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TYPE"
+msgstr "Type"
+
+msgid "CORE_ADMIN_BACKUPS_RESTORE"
+msgstr "Restore"
+
+msgid "CORE_ADMIN_BACKUPS_RESTORE_PARTS"
+msgstr "Parts to restore"
+
+msgid "CORE_ADMIN_BACKUPS_RESULT_FAILED"
+msgstr "{time}: failed: {error}"
+
+msgid "CORE_ADMIN_BACKUPS_RESULT_OK"
+msgstr "{time}: {name}"
+
+msgid "CORE_ADMIN_BACKUPS_SAVE"
+msgstr "Save"
+
+msgid "CORE_ADMIN_BACKUPS_SECRETS_NOTE"
+msgstr "Secrets are only backed up in an encrypted archive."
+
+msgid "CORE_ADMIN_BACKUPS_SHOW_REMOTE"
+msgstr "Show the backups on the remote"
+
+msgid "CORE_ADMIN_BACKUPS_STAGED"
+msgstr "{name} ({size}) is uploaded and waits for a restore. It is deleted after 24 hours or after a restore."
+
+msgid "CORE_ADMIN_BACKUPS_STATE_BACKING_UP"
+msgstr "making the backup"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_BUILDING"
+msgstr "building the environment"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_CHECKING"
+msgstr "checking the engine"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_DONE"
+msgstr "done"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_FAILED"
+msgstr "failed"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_QUEUED"
+msgstr "queued"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_RESTARTING"
+msgstr "restarting the engine"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_RESTORING"
+msgstr "restoring"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_ROLLED_BACK"
+msgstr "rolled back"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_SWITCHING"
+msgstr "switching"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_VERIFYING"
+msgstr "checking the archive"
+
+msgid "CORE_ADMIN_BACKUPS_STATUS"
+msgstr "Scheduled backups"
+
+msgid "CORE_ADMIN_BACKUPS_THE_UPLOAD"
+msgstr "the uploaded file"
+
+msgid "CORE_ADMIN_BACKUPS_TOTP"
+msgstr "TOTP code (if enabled)"
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD"
+msgstr "Upload a backup"
+
+msgid "CORE_ADMIN_BACKUPS_UPLOADED"
+msgstr "{name} uploaded ({size})."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_EMPTY"
+msgstr "The file is empty."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_FILE"
+msgstr "Backup file (.mm3backup)"
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_LARGE"
+msgstr "The file is larger than {size}."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_NAME"
+msgstr "Choose a file that ends in .mm3backup."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_NONE"
+msgstr "No file chosen."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_TEXT"
+msgstr "Sends a backup made elsewhere to this mirror so that it can be verified or restored. At most {size}."
+
+msgid "CORE_ADMIN_BACKUPS_VERIFY"
+msgstr "Verify"
+
+msgid "CORE_ADMIN_BACKUPS_VERIFY_BAD"
+msgstr "The archive is damaged."
+
+msgid "CORE_ADMIN_BACKUPS_VERIFY_OK"
+msgstr "The archive is whole."
+
+msgid "CORE_ADMIN_BACKUPS_WOULD_CHANGE"
+msgstr "What a restore would change"
+
+msgid "CORE_ADMIN_BACKUPS_YES"
+msgstr "Yes"

@@ -10,6 +10,8 @@
 // indicator in the header of every admin page, fed by one shared `status` subscription.
 // Implements CORE-35, CORE-206 (Core spec 0.38, §6.4 Web configuration editor):
 // validation records are shown with the localized text of their CORE_CFG_* code.
+// Implements CORE-361 (Core spec 0.45, §10.8 Backup and restore): `upload` sends a backup
+// archive as the raw body of POST /api/v1/backups/upload.
 
 let messages = {};
 let locale = "en";
@@ -197,6 +199,37 @@ export async function api(method, path, body) {
     throw new ApiError(problem);
   }
   return type.includes("json") ? r.json() : r.text();
+}
+
+/**
+ * Send `file` as the raw body of `POST /api/v1{path}` (a backup upload, CORE-361) and read the
+ * JSON answer. `onProgress(sent, total)` follows the upload. The promise has `abort()`.
+ * Errors are `ApiError`s like those of `api`.
+ */
+export function upload(path, file, onProgress = () => {}) {
+  const xhr = new XMLHttpRequest();
+  const promise = new Promise((resolve, reject) => {
+    xhr.open("POST", `/api/v1${path}`);
+    xhr.withCredentials = true;
+    xhr.setRequestHeader("Content-Type", "application/octet-stream");
+    xhr.upload.onprogress = (ev) => ev.lengthComputable && onProgress(ev.loaded, ev.total);
+    xhr.onload = () => {
+      let body = null;
+      try {
+        body = JSON.parse(xhr.responseText);
+      } catch {
+        body = null;
+      }
+      if (xhr.status >= 200 && xhr.status < 300) return resolve(body);
+      if (xhr.status === 401) window.location.assign("/admin/login");
+      reject(new ApiError(body || { detail: xhr.statusText }));
+    };
+    xhr.onerror = () => reject(new ApiError({ code: "CORE_API_UNAVAILABLE", detail: "network error" }));
+    xhr.onabort = () => reject(new ApiError({ detail: "aborted" }));
+    xhr.send(file);
+  });
+  promise.abort = () => xhr.abort();
+  return promise;
 }
 
 export function download(name, text, type = "application/x-ndjson") {

@@ -13,22 +13,34 @@ Implements:
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
     CORE-356: Core spec 0.44, §10.7 Installer service.
     CORE-358: Core spec 0.33, §10.7 Installer service.
+    CORE-361: Core spec 0.45, §10.8 Backup and restore.
 """
 
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import queue
 import re
+from collections.abc import AsyncIterator, Iterator
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
 from mm3.core.catalog import CatalogError, CatalogMeta
 from mm3.core.web.problems import ApiError
-from mm3.installer.client import DEFAULT_SOCKET, InstallerClient, InstallerUnavailable, Reply
+from mm3.installer.client import (
+    DEFAULT_SOCKET,
+    InstallerClient,
+    InstallerUnavailable,
+    Reply,
+    Stream,
+)
 
 __all__ = [
+    "DOWNLOAD_CHUNK",
     "FINAL_STATES",
+    "MAX_UPLOAD",
     "OPERATION_ACTIONS",
     "OPERATION_FIELDS",
     "OPERATION_ID",
@@ -67,6 +79,12 @@ OPERATION_ID = re.compile(r"^[0-9a-f]{16}$")
 
 FINAL_STATES = ("done", "rolled_back", "failed")
 """States an operation does not leave (CORE-355)."""
+
+MAX_UPLOAD = 2 * 1024**3
+"""The largest backup upload, 2 GiB (CORE-361)."""
+
+DOWNLOAD_CHUNK = 1 << 20
+"""Bytes of an archive read from the installer at a time."""
 
 SLOW_TIMEOUT = 120.0
 """Seconds a catalog refresh may take: it downloads and verifies the index (CORE-351)."""
@@ -299,6 +317,114 @@ class InstallerLink:
             raise ApiError("CORE_API_NO_KIOSK", reply.error or "No kiosk unit is installed")
         raise await self._problem(reply)
 
+    # --- backups (CORE-361) -----------------------------------------------------------
+
+    async def backup(self, method: str, target: str, body: dict[str, Any] | None = None) -> Any:
+        """Forward a backup request and return the installer's JSON answer (CORE-361).
+
+        Args:
+            method: ``GET``, ``POST``, ``PUT`` or ``DELETE``.
+            target: The installer path, ``/v1/backups...``.
+            body: The JSON body, already checked; ``None`` for no body.
+
+        Returns:
+            The decoded body, ``None`` for a 204.
+
+        Raises:
+            ApiError: The installer's refusal as in CORE-356, 404 ``CORE_API_NOT_FOUND`` for
+                an unknown archive or remote, or 503 ``CORE_API_INSTALLER_UNAVAILABLE``.
+        """
+        reply = await self._call(method, target, body, seconds=SLOW_TIMEOUT, accept=(404, 413))
+        if reply.status in (404, 413):
+            raise await self._backup_problem(reply)
+        return None if reply.status == 204 else reply.body
+
+    async def _backup_problem(self, reply: Reply) -> ApiError:
+        """Map an installer answer to a problem, with the 404 and 413 of the backup routes."""
+        if reply.status == 404:
+            return ApiError("CORE_API_NOT_FOUND", reply.error or "The installer has no such item")
+        if reply.status == 413:
+            return ApiError("CORE_API_UPLOAD_TOO_LARGE", reply.error or "The upload is too large")
+        return await self._problem(reply)
+
+    async def upload(self, chunks: AsyncIterator[bytes], length: int) -> dict[str, Any]:
+        """Stream a backup archive to ``POST /v1/backups/upload`` (CORE-361).
+
+        Args:
+            chunks: The request body as it arrives; read once.
+            length: Its size from ``Content-Length``, at most :data:`MAX_UPLOAD`.
+
+        Returns:
+            ``{upload, size}``.
+
+        Raises:
+            ApiError: 413 ``CORE_API_UPLOAD_TOO_LARGE`` or 503 ``CORE_API_INSTALLER_UNAVAILABLE``.
+        """
+        if length > MAX_UPLOAD:
+            raise ApiError("CORE_API_UPLOAD_TOO_LARGE", "A backup upload is at most 2 GiB")
+        pipe: queue.Queue[bytes | None] = queue.Queue(maxsize=8)
+
+        def pieces() -> Iterator[bytes]:
+            while (item := pipe.get()) is not None:
+                yield item
+
+        sender = asyncio.create_task(
+            asyncio.to_thread(self._client.upload, "/v1/backups/upload", pieces(), length)
+        )
+        try:
+            async for chunk in chunks:
+                await self._feed(pipe, chunk, sender)
+                if sender.done():
+                    break
+            else:
+                await self._feed(pipe, None, sender)
+        except BaseException:
+            sender.cancel()
+            self._end(pipe)
+            raise
+        try:
+            reply = await sender
+        except InstallerUnavailable as exc:
+            raise ApiError("CORE_API_INSTALLER_UNAVAILABLE", str(exc)) from exc
+        if reply.status != 201 or not isinstance(reply.body, dict):
+            raise await self._backup_problem(reply)
+        return {"upload": reply.body.get("upload"), "size": reply.body.get("size")}
+
+    @staticmethod
+    async def _feed(
+        pipe: queue.Queue[bytes | None], item: bytes | None, sender: asyncio.Task[Reply]
+    ) -> None:
+        """Put ``item`` on the pipe without blocking the loop; give up when the sender ended."""
+        while not sender.done():
+            try:
+                pipe.put_nowait(item)
+                return
+            except queue.Full:
+                await asyncio.sleep(0.01)
+
+    @staticmethod
+    def _end(pipe: queue.Queue[bytes | None]) -> None:
+        """Unblock the sending thread after an abort."""
+        with contextlib.suppress(queue.Full):
+            pipe.put_nowait(None)
+
+    async def download(self, name: str) -> Stream:
+        """Open ``GET /v1/backups/{name}`` for streaming (CORE-361).
+
+        Returns:
+            The open answer; the caller reads it with ``Stream.read`` and closes it.
+
+        Raises:
+            ApiError: 404 ``CORE_API_NOT_FOUND`` or 503 ``CORE_API_INSTALLER_UNAVAILABLE``.
+        """
+        try:
+            stream = await asyncio.to_thread(self._client.stream, "GET", f"/v1/backups/{name}")
+        except InstallerUnavailable as exc:
+            raise ApiError("CORE_API_INSTALLER_UNAVAILABLE", str(exc)) from exc
+        if stream.status != 200:
+            raise await self._backup_problem(Reply(stream.status, stream.body))
+        return stream
+
     # --- the installer's answers ------------------------------------------------------
 
     async def _call(
@@ -346,6 +472,7 @@ class InstallerLink:
             return ApiError("CORE_API_INSTALLER_BUSY", reply.error or "The installer is busy")
         if status == 400:
             return ApiError("CORE_API_INVALID_REQUEST", reply.error or "The installer refused it")
+
         return ApiError(
             "CORE_API_INSTALLER_UNAVAILABLE",
             f"The installer answered {status}: {reply.error}".rstrip(": "),

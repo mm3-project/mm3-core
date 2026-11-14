@@ -16,7 +16,7 @@ the configuration when its files change or on SIGHUP.
 Implements:
     -: Core spec 0.8, §10.2 Packaging and deployment.
     CORE-30: Core spec 0.8, §6 Configuration.
-    CORE-361: Core spec 0.37, §10.8 Backup and restore.
+    CORE-361: Core spec 0.45, §10.8 Backup and restore.
     CORE-207: Core spec 0.8, §6.2 Rules.
     -: Core spec 0.8, §7.2 Error reporting.
     CORE-208: Core spec 0.11, §6.3 Hot reload.
