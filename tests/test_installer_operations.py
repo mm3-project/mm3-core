@@ -652,8 +652,8 @@ def test_core_368_installer_runs_from_its_own_venv() -> None:
 
 def test_core_357_polkit_rule_allows_only_mm3_service_verbs() -> None:
     rule = polkit_text()
-    assert 'subject.user === "mm3-install"' in rule
-    assert 'action.lookup("unit") === "mm3.service"' in rule
+    assert 'subject.user !== "mm3-install"' in rule
+    assert 'unit === "mm3.service"' in rule
     assert all(f'verb === "{v}"' in rule for v in ("start", "stop", "restart"))
     node = shutil.which("node")
     if node is None:

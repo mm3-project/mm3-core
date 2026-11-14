@@ -5,6 +5,7 @@ Implements:
     CORE-367: Core spec 0.37, §10.7 Installer service.
     CORE-368: Core spec 0.35, §10.7 Installer service.
     CORE-360, CORE-365: Core spec 0.37, §10.8 Backup and restore.
+    CORE-382: Core spec 0.42, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from mm3.installer.schedule import AdminSettings, BackupScheduler, StatusFile
 from mm3.installer.server import InstallerServer, group_id
 from mm3.installer.service import SystemdEngine
 from mm3.installer.store import CatalogStore
+from mm3.installer.system import SystemdActions
 from mm3.installer.venv import VenvBuilder
 from mm3.installer.verify import SigstoreVerification
 
@@ -79,4 +81,10 @@ def build_server(layout: Layout | None = None) -> InstallerServer:
         return True
 
     scheduler = BackupScheduler(reader, runner_.last_scheduled, submit_scheduled)
-    return InstallerServer(installer, Auth(layout), socket_gid=group_id(), scheduler=scheduler)
+    return InstallerServer(
+        installer,
+        Auth(layout),
+        socket_gid=group_id(),
+        scheduler=scheduler,
+        system=SystemdActions(),
+    )

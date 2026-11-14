@@ -29,6 +29,7 @@ Implements:
     CORE-367: Core spec 0.37, §10.7 Installer service.
     CORE-371, CORE-372: Core spec 0.36, §10.7 Installer service.
     CORE-363, CORE-366: Core spec 0.37, §10.8 Backup and restore.
+    CORE-382: Core spec 0.42, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -251,6 +252,7 @@ class Installer:
         self._now = now
         self._mutex = threading.Lock()
         self._running: Operation | None = None
+        self._system: str | None = None
         self.listeners: list[Callable[[Operation, dict[str, Any] | None], None]] = []
         self.backups: BackupRunner | None = None
         """Set by the assembly; None disables pre-operation backups (tests of venvs)."""
@@ -304,8 +306,28 @@ class Installer:
 
     @property
     def busy(self) -> bool:
-        """Whether an operation is running."""
-        return self._running is not None
+        """Whether an operation runs or a system action waits to run (CORE-382)."""
+        return self._running is not None or self._system is not None
+
+    def reserve_system(self, action: str) -> None:
+        """Take the installer for a restart or reboot that runs shortly (CORE-382).
+
+        While it is held, no operation, restore or second system action starts.
+
+        Raises:
+            BusyError: An operation runs or a system action is waiting.
+        """
+        with self._mutex:
+            if self._running is not None:
+                raise BusyError(f"operation {self._running.id} is running")
+            if self._system is not None:
+                raise BusyError(f"{self._system} is waiting to run")
+            self._system = action
+
+    def release_system(self) -> None:
+        """Give the installer back after the system action ran or failed."""
+        with self._mutex:
+            self._system = None
 
     # --- modules.json ---------------------------------------------------------------
 
@@ -382,11 +404,13 @@ class Installer:
         refuses a second operation while one runs.
 
         Raises:
-            BusyError: An operation is running.
+            BusyError: An operation is running or a system action is waiting.
         """
         with self._mutex:
             if self._running is not None:
                 raise BusyError(f"operation {self._running.id} is running")
+            if self._system is not None:
+                raise BusyError(f"{self._system} is waiting to run")
             op = Operation(
                 id=secrets.token_hex(8),
                 action=request.action,

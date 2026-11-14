@@ -24,7 +24,7 @@ from typing import Protocol
 from mm3.installer.paths import ENGINE_USER, Layout
 from mm3.installer.runner import Completed, Runner
 
-__all__ = ["ENGINE_UNIT", "READY_TIMEOUT_S", "Engine", "SystemdEngine"]
+__all__ = ["ENGINE_UNIT", "READY_TIMEOUT_S", "SYSTEMCTL", "Engine", "SystemdEngine"]
 
 ENGINE_UNIT = "mm3.service"
 READY_TIMEOUT_S = 60.0
