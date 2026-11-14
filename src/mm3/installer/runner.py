@@ -13,7 +13,7 @@ also without capabilities. After each build the installer ends every process
 
 Implements:
     CORE-367: Core spec 0.37, §10.7 Installer service.
-    CORE-357: Core spec 0.33, §10.7 Installer service.
+    CORE-357: Core spec 0.42, §10.7 Installer service.
 """
 
 from __future__ import annotations
