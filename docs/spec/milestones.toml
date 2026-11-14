@@ -170,7 +170,7 @@ requirements = [
 number = 6
 name = "Admin: REST API, config editor, preview, debug page"
 status = "done"
-done_at = { core = "0.41", contract = "1.0 rev 15" }
+done_at = { core = "0.43", contract = "1.0 rev 15" }
 # CORE-290..292 (sd_notify, loop watchdog, mm3.service) come from the first
 #   manual install; the unit already carries the CORE-65 hardening directives,
 #   which stays in milestone 10 and is closed there by the install test.

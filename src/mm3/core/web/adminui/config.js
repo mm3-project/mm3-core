@@ -27,8 +27,13 @@
 // localized messages inline on the field, a section's own errors at its top, and the
 // error count of the save bar opens the list of errors with a link to each (ISS-010).
 
+// Implements CORE-384 (Core spec 0.43, §9.1 Remote-control API): opening a version over an
+// unsaved draft asks in a dialog, never in the browser's own box.
+// Implements CORE-385 (Core spec 0.43, §9.1 Remote-control API): the Review changes dialog.
+// Implements CORE-387 (Core spec 0.43, §9.1 Remote-control API): its message line.
 import { html, nothing, render } from "/admin/static/lit-html.js";
 import { loadTexts, recordText, t } from "/admin/static/admin.js";
+import { Messages, banner, confirmDialog } from "/admin/static/ui.js";
 import {
   Draft,
   TOP_SECTIONS,
@@ -58,7 +63,7 @@ class AdminConfig extends HTMLElement {
     this.forms = {};
     this.section = "engine";
     this.file = null;
-    this.message = "";
+    this.messages = new Messages(() => this.update());
     this.preview = null;
     this.busy = false;
     this.yaml = null;
@@ -85,8 +90,14 @@ class AdminConfig extends HTMLElement {
 
   problem(err) {
     const p = (err && err.problem) || {};
-    this.message = err && err.message ? err.message : String(err);
-    this.conflict = p.code === "CORE_API_CONFLICT" || p.code === "CORE_API_DISK_INVALID";
+    const text = err && err.message ? err.message : String(err);
+    const conflict = p.code === "CORE_API_CONFLICT" || p.code === "CORE_API_DISK_INVALID";
+    // A conflict is a warning with its Reload button; any other failure is an error (CORE-387).
+    this.messages.set(
+      conflict ? "warn" : "error",
+      text,
+      conflict ? { label: t("CORE_ADMIN_RELOAD"), onClick: () => this.reloadDraft() } : null,
+    );
     this.update();
   }
 
@@ -111,8 +122,7 @@ class AdminConfig extends HTMLElement {
     this.update();
     try {
       await fn();
-      this.message = "";
-      this.conflict = false;
+      this.messages.clear();
     } catch (err) {
       this.problem(err);
     }
@@ -383,7 +393,7 @@ class AdminConfig extends HTMLElement {
   /** The draft's errors under the save bar, each with a link to its Form section (ISS-010). */
   errorList() {
     const list = this.draft.records.filter((r) => r.severity === "error");
-    return html`<section class="card errors" role="alert"><ul>${list.map((r) => {
+    return banner("error", html`<ul>${list.map((r) => {
       const section = this.sectionOf(r.path);
       return html`<li>${section
         ? html`<button type="button" class="link mono" @click=${() => {
@@ -393,7 +403,7 @@ class AdminConfig extends HTMLElement {
           }}>${r.path}</button>`
         : html`<span class="mono">${r.file || ""}${r.line ? `:${r.line}` : ""} ${r.path || "/"}</span>`}
         ${recordText(r)}</li>`;
-    })}</ul></section>`;
+    })}</ul>`, null, "errors");
   }
 
   // --- save ---------------------------------------------------------------------------
@@ -413,7 +423,7 @@ class AdminConfig extends HTMLElement {
     await this.run(async () => {
       saved = await this.draft.save();
     });
-    if (saved) this.message = t("CORE_ADMIN_SAVED_VERSION", { version: saved.version });
+    if (saved) this.messages.set("ok", t("CORE_ADMIN_SAVED_VERSION", { version: saved.version }));
     this.preview = null;
     this.yaml?.destroy();
     this.yaml = null;
@@ -431,16 +441,17 @@ class AdminConfig extends HTMLElement {
   reviewDialog() {
     const p = this.preview;
     if (!p) return html`<dialog class="review"></dialog>`;
-    return html`<dialog class="review">
-      <h2>${t("CORE_ADMIN_REVIEW_CHANGES")}</h2>
+    return html`<dialog class="review" aria-labelledby="review-title">
+      <h2 id="review-title">${t("CORE_ADMIN_REVIEW_CHANGES")}</h2>
+      <p>${t("CORE_ADMIN_REVIEW_SENTENCE", { count: p.diff.length })}</p>
       ${this.recordList(p.records)}
       ${p.diff.length
         ? html`<div class="diff">${p.diff.map(
             (d) => html`<h3>${d.section}</h3><pre>${d.before}</pre><pre>${d.after}</pre>`,
           )}</div>`
         : html`<p class="muted">${t("CORE_ADMIN_NO_CHANGES")}</p>`}
-      <div class="toolbar">
-        <button @click=${() => this.querySelector("dialog.review")?.close()}>${t("CORE_ADMIN_CLOSE")}</button>
+      <div class="dialog-actions">
+        <button type="button" class="cancel" autofocus @click=${() => this.querySelector("dialog.review")?.close()}>${t("CORE_ADMIN_CLOSE")}</button>
       </div>
     </dialog>`;
   }
@@ -479,10 +490,7 @@ class AdminConfig extends HTMLElement {
                 ${t("CORE_ADMIN_REDO")}</button>`
           : nothing}
       </nav>
-      ${this.message
-        ? html`<p class="alert warn" role="status">${this.message}
-            ${this.conflict ? html` <button @click=${() => this.reloadDraft()}>${t("CORE_ADMIN_RELOAD")}</button>` : nothing}</p>`
-        : nothing}
+      ${this.messages.view()}
       ${d.dirty
         ? html`<div class="savebar">
             <span>${t("CORE_ADMIN_UNSAVED")}</span>
@@ -510,7 +518,15 @@ class AdminConfig extends HTMLElement {
   }
 
   async openVersion(version) {
-    if (this.draft.dirty && !window.confirm(t("CORE_ADMIN_REPLACE_DRAFT"))) return;
+    if (this.draft.dirty) {
+      const ok = await confirmDialog({
+        title: t("CORE_ADMIN_REPLACE_DRAFT_TITLE", { version }),
+        text: t("CORE_ADMIN_REPLACE_DRAFT"),
+        action: t("CORE_ADMIN_REPLACE_DRAFT_ACTION"),
+        danger: true,
+      });
+      if (!ok) return;
+    }
     await this.run(() => this.draft.openVersion(version));
     this.setTab("form");
   }

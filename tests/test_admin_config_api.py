@@ -677,9 +677,10 @@ async def test_core_322_history_tab_in_chromium(tmp_path: Path) -> None:
                 await rows.nth(1).locator("input").first.check()
                 await page.click("text=Compare")
                 await page.wait_for_selector("text=Changes from version 1 to version 2")
-                await page.click("mm3-config-history >> text=Restore all")
+                await page.click("tr:has(button.link:text-is('1')) button.link")
+                await page.click(".action-row:has-text('Restore all') >> button")
                 await page.wait_for_selector("dialog >> text=Restore version 1?")
-                await page.click("dialog >> text=Confirm")
+                await page.click("dialog.confirm button.confirm")
                 await page.wait_for_selector("text=Version 3 created.")
             finally:
                 await browser.close()

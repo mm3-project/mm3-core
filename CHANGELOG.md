@@ -7,6 +7,28 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (admin: the System card style on the whole admin interface; ENH-012; spec 0.43, CORE-384..387)
+
+- New shared module `adminui/ui.js` with the banner, the action row and the confirmation
+  dialog, used by every admin page (CORE-384..387).
+- Confirmation dialogs (CORE-384): Cancel has the focus, Escape and the backdrop cancel,
+  the confirm button is red only where the action is destructive (reboot, replacing the
+  draft). Restoring a version and replacing the draft no longer use the browser's own
+  boxes.
+- Form and preview dialogs (CORE-385): title, one sentence that says where the change
+  lands and what is saved, the first field focused (Add module, Add page) or Close focused
+  (Review changes), actions in a row at the end.
+- Banners (CORE-387): four kinds, error, warning, information and done, with `role="alert"`
+  for errors and `role="status"` for the rest; a done banner clears after 8 s. The editor
+  error list, the layout refusals, the debug page and the extensions notices use them.
+- Action rows (CORE-386): each action is a row with its effect; when it cannot run the
+  button is disabled with the reason as the tooltip and next to it (restore on the current
+  version, history, debug instance controls).
+- 24 new catalog keys in five languages. Tests: `tests/test_admin_ui.py` (banner kinds and
+  the 8 s clear under node) and new Chromium tests in `test_admin_editor.py`,
+  `test_admin_layout.py` and `test_admin_debug_page.py`; selectors of existing tests moved
+  from `p.alert` to `div.alert`.
+
 ### Added (admin: restart the engine or the kiosk and reboot from the admin; ENH-002; spec 0.42, CORE-382, CORE-383)
 
 - The admin home has a System card (one row per action, with its effect): "Restart engine",

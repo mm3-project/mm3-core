@@ -577,7 +577,7 @@ msgid "CORE_ADMIN_REMOVE"
 msgstr "Rimuovi"
 
 msgid "CORE_ADMIN_REPLACE_DRAFT"
-msgstr "Sostituire le modifiche non salvate con questa versione?"
+msgstr "I passi non salvati della bozza vanno persi e non si possono recuperare."
 
 msgid "CORE_ADMIN_SAVE"
 msgstr "Salva"
@@ -1636,3 +1636,66 @@ msgstr "Il sistema si è riavviato."
 
 msgid "CORE_ADMIN_SYSTEM_UNSEEN"
 msgstr "«{action}» è stato richiesto 120 s fa; non se ne è visto l'effetto."
+
+msgid "CORE_ADMIN_RESTORE"
+msgstr "Ripristina"
+
+msgid "CORE_ADMIN_RESTORE_ELLIPSIS"
+msgstr "Ripristina…"
+
+msgid "CORE_ADMIN_RESTORE_EFFECT"
+msgstr "Il ripristino crea la versione {created}, uguale alla versione {version}, e il motore la applica a caldo. La configurazione attuale resta nella cronologia."
+
+msgid "CORE_ADMIN_RESTORE_SECTION_EFFECT"
+msgstr "Il ripristino crea la versione {created} con {section} come nella versione {version}; le altre sezioni restano come sono."
+
+msgid "CORE_ADMIN_RESTORE_SECTION_ROW"
+msgstr "Cambia solo la sezione scelta; le altre restano come sono."
+
+msgid "CORE_ADMIN_OPEN_IN_EDITOR_EFFECT"
+msgstr "Carica questa versione come bozza. Non si scrive nulla finché non salvi."
+
+msgid "CORE_ADMIN_OPEN"
+msgstr "Apri"
+
+msgid "CORE_ADMIN_ALREADY_CURRENT"
+msgstr "Questa è già la versione attuale."
+
+msgid "CORE_ADMIN_NO_SECTIONS_IN_VERSION"
+msgstr "Questa versione non ha cambiato nessuna sezione."
+
+msgid "CORE_ADMIN_WORKING"
+msgstr "Un'altra azione è in corso."
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_TITLE"
+msgstr "Sostituire la bozza con la versione {version}?"
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_ACTION"
+msgstr "Sostituisci la bozza"
+
+msgid "CORE_ADMIN_REVIEW_SENTENCE"
+msgstr "Sezioni che cambiano rispetto alla versione attuale: {count}. Non è stato scritto nulla; usa Salva per applicarle."
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE"
+msgstr "Aggiunge un'istanza alla pagina {page} della bozza, in {file}. Il passo si può annullare; non si salva nulla finché non salvi."
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE_NOPAGE"
+msgstr "Aggiunge un'istanza alla bozza, in {file}. Il passo si può annullare; non si salva nulla finché non salvi."
+
+msgid "CORE_ADMIN_NEW_PAGE_SENTENCE"
+msgstr "Crea una pagina nella bozza. Il suo id non si può cambiare dopo; il titolo sì."
+
+msgid "CORE_ADMIN_RENAME_PAGE_SENTENCE"
+msgstr "Cambia il titolo della pagina {page} nella bozza; il suo id resta lo stesso."
+
+msgid "CORE_ADMIN_LOG_LEVEL_EFFECT"
+msgstr "Cambia quanto questa istanza scrive nei log; un livello alzato torna al predefinito dopo un po'."
+
+msgid "CORE_ADMIN_SET"
+msgstr "Imposta"
+
+msgid "CORE_ADMIN_RESTART_INSTANCE"
+msgstr "Riavvia istanza"
+
+msgid "CORE_ADMIN_RESTART_INSTANCE_EFFECT"
+msgstr "Ferma e avvia solo questa istanza; il suo riquadro sullo specchio resta fermo sull'ultima immagine per qualche secondo."

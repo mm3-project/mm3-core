@@ -577,7 +577,7 @@ msgid "CORE_ADMIN_REMOVE"
 msgstr "Remove"
 
 msgid "CORE_ADMIN_REPLACE_DRAFT"
-msgstr "Replace the unsaved changes with this version?"
+msgstr "The unsaved steps of the draft are lost and cannot be recovered."
 
 msgid "CORE_ADMIN_SAVE"
 msgstr "Save"
@@ -1636,3 +1636,66 @@ msgstr "The system rebooted."
 
 msgid "CORE_ADMIN_SYSTEM_UNSEEN"
 msgstr "“{action}” was requested 120 s ago; its effect was not seen."
+
+msgid "CORE_ADMIN_RESTORE"
+msgstr "Restore"
+
+msgid "CORE_ADMIN_RESTORE_ELLIPSIS"
+msgstr "Restore…"
+
+msgid "CORE_ADMIN_RESTORE_EFFECT"
+msgstr "The restore creates version {created}, equal to version {version}, and the engine applies it live. The current configuration stays in the history."
+
+msgid "CORE_ADMIN_RESTORE_SECTION_EFFECT"
+msgstr "The restore creates version {created} with {section} as in version {version}; the other sections stay as they are."
+
+msgid "CORE_ADMIN_RESTORE_SECTION_ROW"
+msgstr "Changes only the chosen section; the others stay as they are."
+
+msgid "CORE_ADMIN_OPEN_IN_EDITOR_EFFECT"
+msgstr "Loads this version as the draft. Nothing is written until you save."
+
+msgid "CORE_ADMIN_OPEN"
+msgstr "Open"
+
+msgid "CORE_ADMIN_ALREADY_CURRENT"
+msgstr "This is already the current version."
+
+msgid "CORE_ADMIN_NO_SECTIONS_IN_VERSION"
+msgstr "This version changed no section."
+
+msgid "CORE_ADMIN_WORKING"
+msgstr "Another action is running."
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_TITLE"
+msgstr "Replace the draft with version {version}?"
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_ACTION"
+msgstr "Replace the draft"
+
+msgid "CORE_ADMIN_REVIEW_SENTENCE"
+msgstr "Sections that change from the current version: {count}. Nothing has been written; use Save to apply them."
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE"
+msgstr "Adds an instance to page {page} of the draft, in {file}. You can undo the step; nothing is saved until you save."
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE_NOPAGE"
+msgstr "Adds an instance to the draft, in {file}. You can undo the step; nothing is saved until you save."
+
+msgid "CORE_ADMIN_NEW_PAGE_SENTENCE"
+msgstr "Creates a page in the draft. Its id cannot be changed later; its title can."
+
+msgid "CORE_ADMIN_RENAME_PAGE_SENTENCE"
+msgstr "Changes the title of page {page} in the draft; its id stays the same."
+
+msgid "CORE_ADMIN_LOG_LEVEL_EFFECT"
+msgstr "Changes how much this instance writes to the logs; a raised level returns to the default after a while."
+
+msgid "CORE_ADMIN_SET"
+msgstr "Set"
+
+msgid "CORE_ADMIN_RESTART_INSTANCE"
+msgstr "Restart instance"
+
+msgid "CORE_ADMIN_RESTART_INSTANCE_EFFECT"
+msgstr "Stops and starts only this instance; its box on the mirror keeps its last render for a few seconds."

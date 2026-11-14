@@ -1629,3 +1629,66 @@ msgstr ""
 
 msgid "CORE_ADMIN_SYSTEM_UNSEEN"
 msgstr ""
+
+msgid "CORE_ADMIN_RESTORE"
+msgstr ""
+
+msgid "CORE_ADMIN_RESTORE_ELLIPSIS"
+msgstr ""
+
+msgid "CORE_ADMIN_RESTORE_EFFECT"
+msgstr ""
+
+msgid "CORE_ADMIN_RESTORE_SECTION_EFFECT"
+msgstr ""
+
+msgid "CORE_ADMIN_RESTORE_SECTION_ROW"
+msgstr ""
+
+msgid "CORE_ADMIN_OPEN_IN_EDITOR_EFFECT"
+msgstr ""
+
+msgid "CORE_ADMIN_OPEN"
+msgstr ""
+
+msgid "CORE_ADMIN_ALREADY_CURRENT"
+msgstr ""
+
+msgid "CORE_ADMIN_NO_SECTIONS_IN_VERSION"
+msgstr ""
+
+msgid "CORE_ADMIN_WORKING"
+msgstr ""
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_TITLE"
+msgstr ""
+
+msgid "CORE_ADMIN_REPLACE_DRAFT_ACTION"
+msgstr ""
+
+msgid "CORE_ADMIN_REVIEW_SENTENCE"
+msgstr ""
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE"
+msgstr ""
+
+msgid "CORE_ADMIN_ADD_MODULE_SENTENCE_NOPAGE"
+msgstr ""
+
+msgid "CORE_ADMIN_NEW_PAGE_SENTENCE"
+msgstr ""
+
+msgid "CORE_ADMIN_RENAME_PAGE_SENTENCE"
+msgstr ""
+
+msgid "CORE_ADMIN_LOG_LEVEL_EFFECT"
+msgstr ""
+
+msgid "CORE_ADMIN_SET"
+msgstr ""
+
+msgid "CORE_ADMIN_RESTART_INSTANCE"
+msgstr ""
+
+msgid "CORE_ADMIN_RESTART_INSTANCE_EFFECT"
+msgstr ""

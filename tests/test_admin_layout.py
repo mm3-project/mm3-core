@@ -1207,3 +1207,17 @@ async def test_core_375_delete_from_the_services_lane(running: Running) -> None:
         await page.keyboard.press("Control+z")
         await wait_steps(page, 1)
         assert await module_ids(page) == ["a", "svc"]
+
+
+async def test_core_385_add_module_dialog_says_where_and_the_first_field_has_the_focus(
+    running: Running,
+) -> None:
+    async with layout_tab(running) as (page, _frame, _scale):
+        await open_add_dialog(page)
+        dialog = page.locator("dialog.module")
+        sentence = await dialog.locator("form > p").first.inner_text()
+        assert "page home" in sentence
+        assert "nothing is saved until you save" in sentence
+        assert await page.evaluate("document.activeElement.name") == "module"
+        assert await dialog.locator(".dialog-actions button").all_inner_texts() == ["Cancel", "Add"]
+        assert await dialog.locator(".alert.refused[role=status]").count() == 1  # a warning banner

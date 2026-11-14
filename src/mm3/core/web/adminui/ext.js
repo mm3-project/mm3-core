@@ -6,7 +6,8 @@
 // module, instances, locale and t() before it is connected.
 // Implements CORE-331 (Core spec 0.29, §11.1 Engine additions): the API helper.
 // Implements CORE-102 (Core spec 0.1, §11.1 Engine additions): admin extensions.
-
+// Implements CORE-387 (Core spec 0.43, §9.1 Remote-control API): the warning banner when
+// the module's element fails.
 import { loadTexts, t as coreText } from "/admin/static/admin.js";
 
 /** A failed API call: the status, the problem code (CORE-298) and the body. */
@@ -83,10 +84,14 @@ class AdminExt extends HTMLElement {
       this.replaceChildren(el);
     } catch (err) {
       console.error(err);
-      const p = document.createElement("p");
-      p.className = "alert warn";
-      p.textContent = coreText("CORE_ADMIN_EXT_FAILED", { module: data.module || "" });
-      this.replaceChildren(p);
+      const box = document.createElement("div");
+      box.className = "alert warn";
+      box.setAttribute("role", "status");
+      const text = document.createElement("span");
+      text.className = "text";
+      text.textContent = coreText("CORE_ADMIN_EXT_FAILED", { module: data.module || "" });
+      box.append(text);
+      this.replaceChildren(box);
     }
   }
 }

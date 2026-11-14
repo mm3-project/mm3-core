@@ -24,8 +24,12 @@
 // Implements CORE-375 (Core spec 0.40, §6.6 Live layout preview): Delete on the cards of
 // the Services lane.
 
+// Implements CORE-385 (Core spec 0.43, §9.1 Remote-control API): the Add module, New page
+// and Rename page dialogs.
+// Implements CORE-387 (Core spec 0.43, §9.1 Remote-control API): banners of the dialogs.
 import { html, nothing, render } from "/admin/static/lit-html.js";
 import { AdminChannel, api, sessionLocale, t } from "/admin/static/admin.js";
+import { banner } from "/admin/static/ui.js";
 import { clone, diffOps, equal, getAt, instanceId, isTag, pointer, sectionLocation, sectionValues, setOp } from "/admin/static/draft.js";
 
 export const PRESETS = [
@@ -367,6 +371,17 @@ class LayoutView extends HTMLElement {
     this.querySelector("dialog.module")?.close();
   }
 
+  /** One sentence for the Add module dialog: where the instance goes (CORE-385). */
+  addSentence() {
+    const where = sectionLocation(this.draft.documents, this.draft.main, "modules/_order");
+    const block = this.pagesBlock();
+    const onPage = block && isObject(block.value) && this.page !== null;
+    return t(onPage ? "CORE_ADMIN_ADD_MODULE_SENTENCE" : "CORE_ADMIN_ADD_MODULE_SENTENCE_NOPAGE", {
+      page: this.page,
+      file: where ? where.file : "",
+    });
+  }
+
   /**
    * Add module: one draft step appending the instance to `modules` with its id written, a
    * front-end one on the chosen preset, `config: {}`, and `pages: [<selected page>]` when a
@@ -421,10 +436,11 @@ class LayoutView extends HTMLElement {
         e.preventDefault();
         this.submitAddDialog();
       }}>
-        <h3>${t("CORE_ADMIN_ADD_MODULE")}</h3>
+        <h2>${t("CORE_ADMIN_ADD_MODULE")}</h2>
+        <p>${this.addSentence()}</p>
         ${usable.length
           ? html`<label>${t("CORE_ADMIN_MODULE")}
-              <select name="module" @change=${(e) => {
+              <select name="module" autofocus @change=${(e) => {
                 d.module = e.target.value;
                 this.update();
               }}>
@@ -432,7 +448,7 @@ class LayoutView extends HTMLElement {
                   (m) => html`<option value=${m.name} ?selected=${m.name === d.module}>${m.header} (${m.name}) · ${t(m.kind === "frontend" ? "CORE_ADMIN_KIND_FRONTEND" : "CORE_ADMIN_KIND_BACKEND")}</option>`,
                 )}
               </select></label>`
-          : html`<p class="alert no-modules">${t("CORE_ADMIN_NO_USABLE_MODULES")}</p>`}
+          : banner("warn", t("CORE_ADMIN_NO_USABLE_MODULES"), null, "no-modules")}
         ${info && info.kind === "frontend"
           ? html`<label>${t("CORE_ADMIN_PRESET")}
               <select name="preset" @change=${(e) => {
@@ -442,11 +458,10 @@ class LayoutView extends HTMLElement {
               </select></label>`
           : nothing}
         ${refused.length
-          ? html`<div class="refused muted"><p>${t("CORE_ADMIN_REFUSED_MODULES")}</p>
-              <ul>${refused.map((m) => html`<li><span class="mono">${m.name}</span>: ${m.error}</li>`)}</ul></div>`
+          ? banner("warn", html`${t("CORE_ADMIN_REFUSED_MODULES")}
+              <ul>${refused.map((m) => html`<li><span class="mono">${m.name}</span>: ${m.error}</li>`)}</ul>`, null, "refused")
           : nothing}
-        <div class="row">
-          <span class="spacer"></span>
+        <div class="dialog-actions">
           <button type="button" name="cancel" @click=${() => this.closeAddDialog()}>${t("CORE_ADMIN_CANCEL")}</button>
           <button type="submit" class="primary" name="ok" ?disabled=${!info}>${t("CORE_ADMIN_ADD")}</button>
         </div>
@@ -569,10 +584,11 @@ class LayoutView extends HTMLElement {
         e.preventDefault();
         if (valid) this.submitPageDialog();
       }}>
-        <h3>${t(d.mode === "new" ? "CORE_ADMIN_NEW_PAGE" : "CORE_ADMIN_RENAME_PAGE")}</h3>
+        <h2>${t(d.mode === "new" ? "CORE_ADMIN_NEW_PAGE" : "CORE_ADMIN_RENAME_PAGE")}</h2>
+        <p>${t(d.mode === "new" ? "CORE_ADMIN_NEW_PAGE_SENTENCE" : "CORE_ADMIN_RENAME_PAGE_SENTENCE", { page: this.page })}</p>
         ${d.mode === "new"
           ? html`<label>${t("CORE_ADMIN_PAGE_ID")}
-              <input type="text" name="page-id" maxlength="32" autocomplete="off" .value=${d.id}
+              <input type="text" name="page-id" maxlength="32" autocomplete="off" autofocus .value=${d.id}
                 @input=${(e) => {
                   d.id = e.target.value;
                   this.update();
@@ -580,13 +596,12 @@ class LayoutView extends HTMLElement {
               <p class="alert page-id-problem" ?hidden=${!problem}>${problem ? t(problem) : ""}</p>`
           : html`<p class="muted mono">${this.page}</p>`}
         <label>${t("CORE_ADMIN_PAGE_TITLE", { language: sessionLocale() })}
-          <input type="text" name="page-title" autocomplete="off" .value=${d.title}
+          <input type="text" name="page-title" autocomplete="off" ?autofocus=${d.mode === "rename"} .value=${d.title}
             @input=${(e) => {
               d.title = e.target.value;
               this.update();
             }}></label>
-        <div class="row">
-          <span class="spacer"></span>
+        <div class="dialog-actions">
           <button type="button" name="cancel" @click=${() => this.closePageDialog()}>${t("CORE_ADMIN_CANCEL")}</button>
           <button type="submit" class="primary" name="ok" ?disabled=${!valid}>${t(d.mode === "new" ? "CORE_ADMIN_ADD" : "CORE_ADMIN_RENAME")}</button>
         </div>
