@@ -30,6 +30,8 @@ Implements:
     CORE-307: Core spec 0.28, §6.6 Live layout preview.
     CORE-332: Core spec 0.29, §9.1 Remote-control API.
     CORE-380: Core spec 0.40, §9.1 Remote-control API.
+    CORE-382: Core spec 0.42, §9.1 Remote-control API.
+    CORE-356: Core spec 0.33, §10.7 Installer service.
 """
 
 from __future__ import annotations
@@ -56,8 +58,9 @@ from mm3.core.diag.secrets import Masker
 from mm3.core.i18n.catalogs import locale_chain
 from mm3.core.logging import get_logger, log_levels, numbered_records
 from mm3.core.pages import HOLDER_REST
-from mm3.core.web.auth import WebAuth
+from mm3.core.web.auth import AdminCheck, WebAuth
 from mm3.core.web.extensions import header_label
+from mm3.core.web.installer import SYSTEM_ACTIONS, InstallerLink
 from mm3.core.web.kiosk import KioskStatus
 from mm3.core.web.modroutes import ModuleRoutes
 from mm3.core.web.modroutes import register as register_module_routes
@@ -97,6 +100,8 @@ class ApiServices:
             (CORE-116, CORE-319).
         editor: The configuration editor and history (CORE-301, CORE-321).
         mirror: Show on mirror (CORE-307).
+        installer: The link to the installer service (CORE-356, CORE-382); without it the
+            installer counts as unavailable.
     """
 
     engine: Engine
@@ -108,6 +113,7 @@ class ApiServices:
     masker: Callable[[], Masker] = field(default=Masker)
     editor: ConfigEditor | None = None
     mirror: MirrorPreview | None = None
+    installer: InstallerLink | None = None
 
 
 # --- request bodies ---------------------------------------------------------------------
@@ -233,12 +239,15 @@ class RequestBody(NotifyBody):
 # --- authentication -----------------------------------------------------------------
 
 
-async def check_api_auth(auth: WebAuth, request: Request) -> None:
+async def check_api_auth(auth: WebAuth, request: Request) -> AdminCheck:
     """Refuse a request without an admin token or session (CORE-298).
 
     Args:
         auth: Token store and sessions.
         request: The request.
+
+    Returns:
+        The check, with the token behind the request.
 
     Raises:
         ApiError: 401 ``CORE_API_UNAUTHORIZED`` or 403 ``CORE_API_FORBIDDEN``.
@@ -255,6 +264,23 @@ async def check_api_auth(auth: WebAuth, request: Request) -> None:
             "An admin token or session is required",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    return check
+
+
+def caller_name(check: AdminCheck, request: Request) -> str:
+    """Return who made a request, for the installer's log (CORE-382).
+
+    Args:
+        check: The authentication of the request.
+        request: The request.
+
+    Returns:
+        The token's name, how it was used and the client address, for example
+        ``ci (bearer) 10.0.0.9``.
+    """
+    name = check.token.name if check.token is not None else "unknown"
+    address = request.client.host if request.client is not None else "unknown"
+    return f"{name} ({check.via}) {address}"
 
 
 # --- the router ---------------------------------------------------------------------
@@ -277,7 +303,7 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
 
     async def authenticated(request: Request) -> None:
         if auth is not None:
-            await check_api_auth(auth, request)
+            request.state.caller = caller_name(await check_api_auth(auth, request), request)
         engine = services.engine
         if not engine.running or engine.stopping:
             raise ApiError("CORE_API_UNAVAILABLE", "The engine is starting or stopping")
@@ -828,6 +854,42 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
             return {"clients": 0}
         hub.control("reload", {"scope": "page"})
         return {"clients": len(hub.clients())}
+
+    # --- installer and system actions -----------------------------------------------
+
+    @router.get("/installer")
+    async def get_installer() -> dict[str, bool]:
+        """Whether the installer can be reached and whether it is busy (CORE-356, CORE-383)."""
+        link = services.installer
+        if link is None:
+            return {"available": False, "busy": False}
+        return await link.status()
+
+    def system_route(action: str) -> None:
+        async def run(request: Request) -> Response:
+            link = services.installer
+            if link is None:
+                raise ApiError("CORE_API_INSTALLER_UNAVAILABLE", "No installer is configured")
+            caller = str(request.state.caller)
+            answer = await link.system(action, caller)
+            _log.warning("api_system_action", action=action, client=caller)
+            return Response(json.dumps(answer), status_code=202, media_type="application/json")
+
+        router.add_api_route(
+            f"/system/{action}",
+            run,
+            methods=["POST"],
+            status_code=202,
+            response_model=None,
+            name=f"system_{action.replace('-', '_')}",
+            summary=f"{action}: forwarded to the installer (CORE-382)",
+        )
+
+    # Not on the admin socket: the installer is not reached on behalf of a local process
+    # without a token (CORE-382).
+    if auth is not None:
+        for action in SYSTEM_ACTIONS:
+            system_route(action)
 
     # Module routes last, so the engine's own routes answer first (CORE-332).
     register_module_routes(router, ModuleRoutes(sup))

@@ -29,6 +29,7 @@ Implements:
     CORE-290, CORE-291: Core spec 0.20, §7.1 Engine startup and shutdown.
     CORE-292: Core spec 0.20, §10.2 Packaging and deployment.
     CORE-307: Core spec 0.28, §6.6 Live layout preview.
+    CORE-382: Core spec 0.42, §9.1 Remote-control API.
 """
 
 from __future__ import annotations
@@ -235,6 +236,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.web.api import ApiServices, status_object
     from mm3.core.web.auth import WebAuth
     from mm3.core.web.gateway import WebGateway
+    from mm3.core.web.installer import InstallerLink
     from mm3.core.web.kiosk import runtime_dir
     from mm3.core.web.mirrorpreview import MirrorPreview
     from mm3.core.web.shell import STATIC_DIR, ShellSources
@@ -304,7 +306,16 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     channel.session_closed.append(mirror.session_closed)
     manager.layout_listeners.append(mirror.reloaded)
     api = ApiServices(
-        engine, manager, pages, hub, agents, build, masker, editor=editor, mirror=mirror
+        engine,
+        manager,
+        pages,
+        hub,
+        agents,
+        build,
+        masker,
+        editor=editor,
+        mirror=mirror,
+        installer=InstallerLink(),
     )
     gateway = WebGateway(
         result.config.engine,

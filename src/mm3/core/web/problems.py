@@ -8,6 +8,7 @@ the core catalog text of ``code``. Routes a module registers on
 
 Implements:
     CORE-298: Core spec 0.25, §9.1 Remote-control API.
+    CORE-356: Core spec 0.33, §10.7 Installer service.
 """
 
 from __future__ import annotations
@@ -39,6 +40,8 @@ CODES: dict[str, tuple[int, str]] = {
     "CORE_API_UNAVAILABLE": (503, "Engine unavailable"),
     "CORE_API_REQUEST_TIMEOUT": (504, "Request timed out"),
     "CORE_API_NOTHING_TO_DO": (409, "Nothing to undo or redo"),
+    "CORE_API_INSTALLER_UNAVAILABLE": (503, "Installer unavailable"),
+    "CORE_API_INSTALLER_BUSY": (409, "Installer busy"),
 }
 """Every code of CORE-298 with its HTTP status and English title; a new code is a spec change."""
 
