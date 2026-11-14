@@ -133,9 +133,6 @@ msgstr ""
 msgid "CORE_SHELL_UNAVAILABLE"
 msgstr ""
 
-msgid "CORE_WEB_ADMIN_PENDING"
-msgstr ""
-
 msgid "CORE_WEB_ADMIN_TITLE"
 msgstr ""
 
@@ -1523,4 +1520,34 @@ msgid "CFG_BACKUP_REMOTE_PATH"
 msgstr ""
 
 msgid "CFG_BACKUP_REMOTE_PATH_HELP"
+msgstr ""
+
+msgid "CORE_ADMIN_MQTT"
+msgstr ""
+
+msgid "CORE_ADMIN_MQTT_OFF"
+msgstr ""
+
+msgid "CORE_ADMIN_MQTT_CONNECTED"
+msgstr ""
+
+msgid "CORE_ADMIN_MQTT_CONNECTING"
+msgstr ""
+
+msgid "CORE_ADMIN_MQTT_ERROR"
+msgstr ""
+
+msgid "CORE_ADMIN_MQTT_UNAVAILABLE"
+msgstr ""
+
+msgid "CORE_ADMIN_MQTT_SINCE"
+msgstr ""
+
+msgid "CORE_ADMIN_MQTT_SINCE_LABEL"
+msgstr ""
+
+msgid "CORE_ADMIN_MQTT_ERROR_LABEL"
+msgstr ""
+
+msgid "CORE_ADMIN_STATUS"
 msgstr ""

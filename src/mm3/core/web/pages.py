@@ -1,4 +1,4 @@
-"""Engine pages of the listeners: admin login, pairing, and the admin placeholder.
+"""Engine pages of the listeners: admin login, pairing, and the admin pages.
 
 The pages carry no inline script or style (CORE-63): the pairing page loads
 ``/core/pair.js``. Their text comes from the ``CORE_WEB_*`` keys of the engine catalog
@@ -9,6 +9,7 @@ Implements:
     CORE-63: Core spec 0.38, §10.1 Security.
     CORE-253: Core spec 0.38, §10.1 Security.
     CORE-378: Core spec 0.40, §10.1 Security.
+    CORE-381: Core spec 0.41, §9.1 Remote-control API.
     CORE-254: Core spec 0.12, §10.1 Security.
     -: Core spec 0.24, §10.5 Diagnostics and debugging.
     CORE-322: Core spec 0.25, §6.4 Web configuration editor.
@@ -279,18 +280,22 @@ def login_page(error_key: str | None = None, next_path: str | None = None) -> st
     return _page("CORE_WEB_LOGIN_TITLE", body)
 
 
-def admin_home_page() -> str:
-    """Render ``/admin`` until the admin UI of milestone 6 replaces it.
+def admin_home_page(extensions: Sequence[tuple[str, str]] = ()) -> str:
+    """Render ``/admin``: the status view of the admin home (CORE-378, CORE-381).
+
+    ``home.js`` fills the page from the ``status`` topic of the admin channel.
+
+    Args:
+        extensions: Links to the module pages (CORE-329).
 
     Returns:
         The HTML.
+
+    Implements:
+        CORE-378: Core spec 0.40, §10.1 Security.
+        CORE-381: Core spec 0.41, §9.1 Remote-control API.
     """
-    body = (
-        f"<h1>{t('CORE_WEB_ADMIN_TITLE')}</h1>\n<p>{t('CORE_WEB_ADMIN_PENDING')}</p>\n"
-        '<form method="post" action="/admin/logout">'
-        f'<button type="submit">{t("CORE_WEB_LOGOUT")}</button></form>'
-    )
-    return _page("CORE_WEB_ADMIN_TITLE", body)
+    return _admin_page("mm3-admin-home", "home.js", "/admin", extensions)
 
 
 def pair_page() -> str:

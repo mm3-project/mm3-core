@@ -6,6 +6,8 @@
 // shown with the catalog text of their code.
 // Implements CORE-304 (Core spec 0.22, §10.5 Diagnostics and debugging): one
 // /admin/ws connection with subscribe and unsubscribe per topic, reconnecting.
+// Implements CORE-381 (Core spec 0.41, §9.1 Remote-control API): the MQTT connection
+// indicator in the header of every admin page, fed by one shared `status` subscription.
 // Implements CORE-35, CORE-206 (Core spec 0.38, §6.4 Web configuration editor):
 // validation records are shown with the localized text of their CORE_CFG_* code.
 
@@ -24,6 +26,7 @@ export function loadTexts() {
       locale = data.locale || "en";
       document.documentElement.lang = locale;
       languagePicker(data);
+      connectionIndicator();
       return data;
     })();
   }
@@ -57,6 +60,81 @@ function languagePicker(data) {
   });
   const logout = bar.querySelector("form");
   bar.insertBefore(select, logout);
+}
+
+/** Catalog key of each state of the MQTT indicator (CORE-381). */
+export const MQTT_KEYS = {
+  off: "CORE_ADMIN_MQTT_OFF",
+  connected: "CORE_ADMIN_MQTT_CONNECTED",
+  connecting: "CORE_ADMIN_MQTT_CONNECTING",
+  error: "CORE_ADMIN_MQTT_ERROR",
+  unavailable: "CORE_ADMIN_MQTT_UNAVAILABLE",
+};
+
+/**
+ * The state of the MQTT bridge from the `mqtt` object of the status (CORE-381):
+ * `off` without a bridge, `connected`, `connecting` (not connected, no error yet or
+ * between retries) and `error`.
+ */
+export function mqttState(mqtt) {
+  if (!mqtt) return "off";
+  if (mqtt.connected) return "connected";
+  return mqtt.error ? "error" : "connecting";
+}
+
+const statusListeners = new Set();
+let statusChannel = null;
+let statusNow = { live: false, status: null };
+
+function publishStatus(next) {
+  statusNow = next;
+  for (const listener of statusListeners) listener(statusNow);
+}
+
+/**
+ * Call `listener({live, status})` now and on every change of the shared admin
+ * channel's `status` topic (CORE-304, CORE-317); returns the function that stops it.
+ * One channel per page serves the header indicator and the page's own status view.
+ */
+export function onStatus(listener) {
+  if (!statusChannel) {
+    statusChannel = new AdminChannel(
+      (frame) => {
+        if (frame.kind === "status") publishStatus({ ...statusNow, status: frame.data.status });
+      },
+      (on) => publishStatus({ ...statusNow, live: on }),
+    );
+    statusChannel.subscribe("status");
+  }
+  statusListeners.add(listener);
+  listener(statusNow);
+  return () => statusListeners.delete(listener);
+}
+
+function connectionIndicator() {
+  const bar = document.querySelector("header.bar");
+  if (!bar || bar.querySelector(".conn")) return;
+  const box = document.createElement("span");
+  box.className = "conn";
+  box.setAttribute("role", "status");
+  const dot = document.createElement("span");
+  dot.className = "dot";
+  dot.setAttribute("aria-hidden", "true");
+  const label = document.createElement("span");
+  label.className = "label";
+  box.append(dot, label);
+  bar.insertBefore(box, bar.querySelector("select.lang") || bar.querySelector("form"));
+  onStatus(({ live, status }) => {
+    const known = live && status;
+    const mqtt = known ? status.mqtt : null;
+    const state = known ? mqttState(mqtt) : "unavailable";
+    box.dataset.state = state;
+    label.textContent = t(MQTT_KEYS[state]);
+    const tips = [];
+    if (mqtt && mqtt.since) tips.push(t("CORE_ADMIN_MQTT_SINCE", { time: fmtTime(mqtt.since) }));
+    if (state === "error") tips.push(mqtt.error);
+    box.title = tips.join(" — ");
+  });
 }
 
 /** The language of this admin session (CORE-309); `en` until the texts are loaded. */

@@ -1,7 +1,8 @@
 // The admin debug page /admin/debug (core spec 10.5): overview, live logs and
 // bus inspector, fed by /admin/ws and the REST API.
 // Implements CORE-305 (Core spec 0.22, §9.1 Remote-control API): status with
-// mismatches and failures highlighted.
+// mismatches and failures highlighted (the cards are in status.js).
+// Implements CORE-381 (Core spec 0.41, §9.1 Remote-control API): the MQTT line of the overview.
 // Implements CORE-112 (Core spec 0.23, §10.5 Diagnostics and debugging): the
 // log-level control of each instance.
 // Implements CORE-114, CORE-115 (Core spec 0.22, §10.5 Diagnostics and debugging):
@@ -9,7 +10,8 @@
 // Implements CORE-316 (Core spec 0.24, §10.5 Diagnostics and debugging): the log
 // filters of the live view.
 import { html, nothing, render } from "/admin/static/lit-html.js";
-import { AdminChannel, api, download, fmtDuration, fmtTime, loadTexts, t } from "/admin/static/admin.js";
+import { AdminChannel, api, download, fmtTime, loadTexts, t } from "/admin/static/admin.js";
+import { statusAlerts, statusCards } from "/admin/static/status.js";
 
 const MAX_ROWS = 2000;
 const LEVELS = ["debug", "info", "warning", "error"];
@@ -217,16 +219,7 @@ class AdminDebug extends HTMLElement {
   }
 
   alerts(s) {
-    const out = [];
-    if (s.config && s.config.disk_valid === false) out.push(t("CORE_ADMIN_DISK_INVALID"));
-    const k = s.kiosk;
-    if (k) {
-      if (!k.connected) out.push(t("CORE_ADMIN_KIOSK_DISCONNECTED"));
-      if (k.display && k.display.mismatch) out.push(t("CORE_ADMIN_DISPLAY_MISMATCH"));
-      if (k.chromium && k.chromium.failed) out.push(t("CORE_ADMIN_CHROMIUM_FAILED"));
-      if (k.audio && k.audio.mismatch) out.push(t("CORE_ADMIN_AUDIO_MISMATCH"));
-      if (k.audio && k.audio.failure) out.push(`${t("CORE_ADMIN_AUDIO_FAILURE")}: ${k.audio.failure}`);
-    }
+    const out = statusAlerts(s);
     for (const m of this.modules) {
       if (m.state === "FAILED" || m.state === "DISABLED") out.push(`${m.id}: ${m.state} ${m.reason || ""}`);
     }
@@ -236,38 +229,9 @@ class AdminDebug extends HTMLElement {
   overview() {
     const s = this.status;
     if (!s) return html`<p class="muted">…</p>`;
-    const k = s.kiosk;
-    const stat = (key, value) => html`<dt>${t(key)}</dt><dd>${value}</dd>`;
     return html`
       ${this.alerts(s).map((a) => html`<p class="alert" role="alert">${a}</p>`)}
-      <div class="grid">
-        <section class="card"><h2>${t("CORE_ADMIN_ENGINE")}</h2>
-          <dl class="stat">
-            ${stat("CORE_ADMIN_VERSION", `${s.version} (${s.engine_build})`)}
-            ${stat("CORE_ADMIN_UPTIME", fmtDuration(s.uptime_s))}
-            ${stat("CORE_ADMIN_CONFIG_VERSION", s.config ? s.config.version : "–")}
-            ${stat("CORE_ADMIN_PAGE", `${s.page.id} (${s.page.index + 1}/${s.page.count})`)}
-            ${s.suspended ? stat("CORE_ADMIN_SUSPENDED", "✓") : nothing}
-          </dl>
-          <a class="button" href="/api/v1/debug/bundle" download>${t("CORE_ADMIN_DOWNLOAD_BUNDLE")}</a>
-        </section>
-        <section class="card"><h2>${t("CORE_ADMIN_CLIENTS")}</h2>
-          ${s.clients.length
-            ? html`<table><tbody>${s.clients.map(
-                (c) => html`<tr><td>${c.role}</td><td class="mono">${c.address || ""}</td><td>${fmtTime(c.since)}</td></tr>`,
-              )}</tbody></table>`
-            : html`<p class="muted">${t("CORE_ADMIN_NONE")}</p>`}
-        </section>
-        <section class="card"><h2>${t("CORE_ADMIN_KIOSK")}</h2>
-          ${k
-            ? html`<dl class="stat">
-                ${stat("CORE_ADMIN_STATE", k.connected ? t("CORE_ADMIN_LIVE") : t("CORE_ADMIN_KIOSK_DISCONNECTED"))}
-                ${k.display && k.display.viewport ? stat("CORE_ADMIN_VIEWPORT", k.display.viewport.join(" × ")) : nothing}
-                ${k.chromium ? stat("CORE_ADMIN_CHROMIUM", `${k.chromium.state || "–"} · ${k.chromium.restarts}`) : nothing}
-              </dl>`
-            : html`<p class="muted">${t("CORE_ADMIN_KIOSK_NONE")}</p>`}
-        </section>
-      </div>
+      ${statusCards(s)}
       <section class="card"><h2>${t("CORE_ADMIN_INSTANCES")}</h2>
         <table>
           <thead><tr>

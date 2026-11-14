@@ -21,12 +21,14 @@ from mm3.core.config import load_config
 from mm3.core.config.editor import ConfigEditor
 from mm3.core.config.history import ConfigHistory
 from mm3.core.config.manager import ConfigManager
+from mm3.core.diag.inspector import BusInspector
 from mm3.core.engine import Engine
 from mm3.core.i18n import compile_locales
 from mm3.core.logging import configure_logging, recent_records
 from mm3.core.registry import Registry
 from mm3.core.settings import AdminSettings, EngineSettings, ServerSettings, Timeouts
-from mm3.core.web.api import ApiServices
+from mm3.core.web.adminws import AdminChannel
+from mm3.core.web.api import ApiServices, status_object
 from mm3.core.web.apps import admin_app, mirror_app, protect
 from mm3.core.web.auth import WebAuth
 from mm3.core.web.gateway import WebGateway
@@ -313,8 +315,16 @@ async def test_core_331_admin_element_with_api_and_texts(world: World, tmp_path:
             "admin": AdminSettings.model_construct(host="127.0.0.1", port=0, allow=[]),
         }
     )
+    channel = AdminChannel(
+        world.auth, lambda: status_object(world.services), BusInspector(), interval=0.1
+    )
     gateway = WebGateway(
-        settings, tmp_path / "gw", auth=world.auth, api=world.services, sources=world.sources
+        settings,
+        tmp_path / "gw",
+        auth=world.auth,
+        api=world.services,
+        sources=world.sources,
+        channel=channel,
     )
     await gateway.start()
     rec = world.auth.tokens.verify(world.token, "admin")

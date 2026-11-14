@@ -90,6 +90,8 @@ async def test_admin_static_files_only_on_the_admin_listener(auth: WebAuth) -> N
     async with client(admin) as c:
         for name, kind in (
             ("debug.js", "javascript"),
+            ("home.js", "javascript"),
+            ("status.js", "javascript"),
             ("admin.js", "javascript"),
             ("admin.css", "css"),
             ("lit-html.js", "javascript"),
@@ -300,3 +302,115 @@ async def test_debug_page_renders_in_chromium(
         finally:
             await browser.close()
     assert not problems, problems
+
+
+# --- CORE-381: the connection indicator and the admin home -----------------------------
+
+
+async def test_core_381_admin_home_is_the_status_view_without_inline_code(auth: WebAuth) -> None:
+    app = protect(admin_app(auth), lambda: [], "admin")
+    async with client(app) as c:
+        c.cookies.update(session_cookie(auth))
+        page = await c.get("/admin")
+    assert page.status_code == 200
+    text = page.text
+    assert '<script type="module" src="/admin/static/home.js"></script>' in text
+    assert "<mm3-admin-home>" in text
+    assert '<header class="bar">' in text  # the indicator is added to this header by admin.js
+    assert not re.search(r"<script(?![^>]*\bsrc=)[^>]*>", text)
+    assert "<style" not in text
+    assert " style=" not in text
+
+
+def test_core_381_indicator_texts_are_in_five_languages() -> None:
+    keys = [
+        "CORE_ADMIN_MQTT",
+        "CORE_ADMIN_MQTT_OFF",
+        "CORE_ADMIN_MQTT_CONNECTED",
+        "CORE_ADMIN_MQTT_CONNECTING",
+        "CORE_ADMIN_MQTT_ERROR",
+        "CORE_ADMIN_MQTT_UNAVAILABLE",
+        "CORE_ADMIN_MQTT_SINCE",
+        "CORE_ADMIN_STATUS",
+    ]
+    labels = {k: set() for k in keys[1:6]}
+    for lang in LANGS:
+        table = admin_texts(lang)
+        for key in keys:
+            assert table[key], (lang, key)
+        assert "{time}" in table["CORE_ADMIN_MQTT_SINCE"], lang
+        for key in labels:
+            labels[key].add(table[key])
+    # Each state has its own text in every language: colour is never the only signal.
+    assert len({table for values in labels.values() for table in values}) >= 5 * 4
+
+
+async def test_core_381_indicator_and_home_follow_the_mqtt_status_in_chromium(
+    running: tuple[WebGateway, WebAuth, Engine],
+) -> None:
+    exe = chromium()
+    if exe is None:
+        pytest.skip("Chromium is not available")
+    from playwright.async_api import async_playwright
+
+    gateway, auth, engine = running
+    base = f"http://127.0.0.1:{gateway.admin.port}"
+    cookie = session_cookie(auth)[ADMIN_COOKIE]
+    problems: list[str] = []
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(executable_path=exe or None)
+        try:
+            context = await browser.new_context()
+            await context.add_cookies(
+                [{"name": ADMIN_COOKIE, "value": cookie, "url": base, "httpOnly": True}]
+            )
+            page = await context.new_page()
+            page.on("console", lambda m: problems.append(m.text) if m.type == "error" else None)
+            page.on("pageerror", lambda e: problems.append(str(e)))
+            page.on(
+                "response",
+                lambda r: problems.append(f"{r.status} {r.url}") if r.status >= 400 else None,
+            )
+            await page.goto(f"{base}/admin")
+            conn = page.locator("header.bar .conn")
+            # No bridge: grey, with its own text.
+            await page.wait_for_selector('header.bar .conn[data-state="off"]')
+            assert await conn.inner_text() == "MQTT off"
+            # The status view of the home (CORE-305): engine, clients, kiosk and MQTT cards.
+            await page.wait_for_selector("mm3-admin-home .card >> text=Engine")
+            await page.wait_for_selector("mm3-admin-home .card.mqtt[data-state='off']")
+
+            def set_mqtt(value: dict[str, Any] | None) -> None:
+                engine.mqtt.status = lambda: value  # type: ignore[method-assign]
+
+            # Configured, not connected, no error: amber.
+            set_mqtt({"connected": False, "since": None, "error": None})
+            await page.wait_for_selector('header.bar .conn[data-state="connecting"]')
+            assert await conn.inner_text() == "MQTT connecting"
+            # An error: red, the reason in the tooltip and highlighted on the home.
+            set_mqtt({"connected": False, "since": None, "error": "refused"})
+            await page.wait_for_selector('header.bar .conn[data-state="error"]')
+            assert await conn.inner_text() == "MQTT error"
+            assert "refused" in (await conn.get_attribute("title") or "")
+            await page.wait_for_selector("mm3-admin-home .alert >> text=MQTT error: refused")
+            # Connected: green, with `since` in the tooltip.
+            set_mqtt({"connected": True, "since": "2026-11-14T10:00:00+00:00", "error": None})
+            await page.wait_for_selector('header.bar .conn[data-state="connected"]')
+            assert await conn.inner_text() == "MQTT connected"
+            assert (await conn.get_attribute("title") or "").startswith("Since ")
+            await page.wait_for_selector("mm3-admin-home .alert", state="detached")
+            # The same indicator is in the header of the other admin pages.
+            await page.goto(f"{base}/admin/debug")
+            await page.wait_for_selector('header.bar .conn[data-state="connected"]')
+            await page.wait_for_selector("text=MQTT connected")  # the MQTT card of the overview
+            await page.goto(f"{base}/admin/config")
+            await page.wait_for_selector('header.bar .conn[data-state="connected"]')
+            # The admin channel closes (the engine restarts): grey, "status unavailable".
+            await gateway.stop()
+            await page.wait_for_selector('header.bar .conn[data-state="unavailable"]')
+            assert await conn.inner_text() == "MQTT status unavailable"
+        finally:
+            await browser.close()
+    # The editor page asks for /api/v1/config, which this fixture does not serve.
+    ignored = ("WebSocket", "ERR_", "Failed to load resource", "/api/v1/config")
+    assert not [p for p in problems if not any(i in p for i in ignored)], problems

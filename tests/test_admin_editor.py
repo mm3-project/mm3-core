@@ -21,12 +21,14 @@ from mm3.core.config import load_config
 from mm3.core.config.editor import ConfigEditor
 from mm3.core.config.history import ConfigHistory
 from mm3.core.config.manager import ConfigManager
+from mm3.core.diag.inspector import BusInspector
 from mm3.core.diag.secrets import Masker, config_secrets
 from mm3.core.engine import Engine
 from mm3.core.logging import configure_logging
 from mm3.core.registry import Registry
 from mm3.core.settings import AdminSettings, EngineSettings, ServerSettings, Timeouts
-from mm3.core.web.api import ApiServices
+from mm3.core.web.adminws import AdminChannel
+from mm3.core.web.api import ApiServices, status_object
 from mm3.core.web.apps import ADMIN_STATIC_DIR, admin_app, mirror_app, protect
 from mm3.core.web.auth import WebAuth
 from mm3.core.web.gateway import WebGateway
@@ -339,7 +341,9 @@ async def page_world(tmp_path: Path) -> AsyncIterator[tuple[str, str, Path, Conf
     engine = Engine(settings, registry=reg, clock=VirtualClock(), state_dir=tmp_path / "state")
     manager = ConfigManager(engine, result, registry=reg, env_file=env, environ={})
     services = ApiServices(engine, manager, editor=editor)
-    gateway = WebGateway(settings, tmp_path, api=services)
+    auth = WebAuth.open(tmp_path / "web")
+    channel = AdminChannel(auth, lambda: status_object(services), BusInspector(), interval=0.1)
+    gateway = WebGateway(settings, tmp_path, auth=auth, api=services, channel=channel)
     await engine.start(result.instance_specs())
     await gateway.start()
     rec = gateway.auth.tokens.verify(gateway.auth.tokens.new("ui"), "admin")

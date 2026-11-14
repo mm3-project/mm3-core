@@ -7,6 +7,23 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (admin: MQTT connection indicator and the admin home status view; ENH-007; spec 0.41, CORE-381)
+
+- Every admin page except the login has an MQTT indicator in its header: a coloured dot
+  and a text label from the `mqtt` object of the status (CORE-305, CORE-339): grey "MQTT
+  off" without a bridge, green "MQTT connected", amber "MQTT connecting" (not connected,
+  no error), red "MQTT error" (the reason in the tooltip, with `since`), and grey "MQTT
+  status unavailable" while the admin channel is closed. It follows the `status` topic of
+  `/admin/ws` (CORE-304, CORE-317) through one channel per page and does not poll.
+- `/admin` is now the status view that CORE-305 and CORE-378 describe, not the placeholder
+  page: engine, clients, kiosk and MQTT cards, with mismatches, kiosk failures and an MQTT
+  error highlighted, live from the same topic. `/admin/debug` shows the same cards (the
+  code is shared in `status.js`), so its overview now has the MQTT line too.
+- Ten `CORE_ADMIN_*` texts in five languages; the unused `CORE_WEB_ADMIN_PENDING` is removed.
+- Tests: `test_core_381_*` in `tests/test_admin_debug_page.py` (page without inline code,
+  the texts in five languages, and a Chromium test that walks the five states on the home,
+  the debug page and the editor page).
+
 ### Fixed (test kit and tests: three intermittent failures; ISS-015, ISS-016; no spec change)
 
 - `mm3.testing` virtual clock (`LoopClock`, CORE-278): a job due exactly at the end of

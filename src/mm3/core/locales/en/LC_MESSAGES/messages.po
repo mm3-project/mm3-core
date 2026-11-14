@@ -135,9 +135,6 @@ msgstr "Tag {tag} is not allowed; use !env or !include"
 msgid "CORE_SHELL_UNAVAILABLE"
 msgstr "Unavailable"
 
-msgid "CORE_WEB_ADMIN_PENDING"
-msgstr "The administration interface is not available yet."
-
 msgid "CORE_WEB_ADMIN_TITLE"
 msgstr "MM3 admin"
 
@@ -1531,3 +1528,33 @@ msgstr "Path"
 
 msgid "CFG_BACKUP_REMOTE_PATH_HELP"
 msgstr "Folder on the remote; empty uses its root."
+
+msgid "CORE_ADMIN_MQTT"
+msgstr "MQTT"
+
+msgid "CORE_ADMIN_MQTT_OFF"
+msgstr "MQTT off"
+
+msgid "CORE_ADMIN_MQTT_CONNECTED"
+msgstr "MQTT connected"
+
+msgid "CORE_ADMIN_MQTT_CONNECTING"
+msgstr "MQTT connecting"
+
+msgid "CORE_ADMIN_MQTT_ERROR"
+msgstr "MQTT error"
+
+msgid "CORE_ADMIN_MQTT_UNAVAILABLE"
+msgstr "MQTT status unavailable"
+
+msgid "CORE_ADMIN_MQTT_SINCE"
+msgstr "Since {time}"
+
+msgid "CORE_ADMIN_MQTT_SINCE_LABEL"
+msgstr "Since"
+
+msgid "CORE_ADMIN_MQTT_ERROR_LABEL"
+msgstr "Error"
+
+msgid "CORE_ADMIN_STATUS"
+msgstr "Status"
