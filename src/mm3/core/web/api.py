@@ -32,6 +32,7 @@ Implements:
     CORE-380: Core spec 0.40, §9.1 Remote-control API.
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
     CORE-356: Core spec 0.44, §10.7 Installer service.
+    CORE-358: Core spec 0.33, §10.7 Installer service.
 """
 
 from __future__ import annotations
@@ -48,6 +49,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, Header, Request
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import Response
+from packaging.utils import canonicalize_name
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, ValidationError
 
 from mm3.__about__ import __version__
@@ -894,6 +896,29 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
 
     # The catalog and the installer's operations (CORE-356); the operations are not on the admin
     # socket, which has no token to name a caller by (CORE-311, CORE-353).
+    async def disable_before_removal(package: str, who: str) -> list[str]:
+        """Save the version that disables the module's enabled instances (CORE-358).
+
+        ``package`` is the distribution the installer removes; the instances are those of every
+        module the engine loaded from it. Nothing is written when there is none, or when the
+        installer would refuse the removal before it starts (unreachable, busy, locked).
+        """
+        key = canonicalize_name(package)
+        names = [
+            m.name
+            for m in sup.registry.entries()
+            if m.distribution is not None and canonicalize_name(m.distribution) == key
+        ]
+        if not names or services.editor is None:
+            return []
+        ids: list[str] = await run(lambda: editor().instances_to_disable(names))
+        if not ids:
+            return []
+        if services.installer is not None:
+            await services.installer.require_free()
+        saved = await run(lambda: editor().disable_instances(names, who))
+        return list(saved["instances"]) if saved else []
+
     register_catalog_routes(
         router,
         CatalogRoutes(
@@ -901,6 +926,7 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
             lambda: sup.state_dir,
             services.engine.clock.wall,
             admin_language,
+            disable_before_removal,
         ),
         operations=auth is not None,
     )

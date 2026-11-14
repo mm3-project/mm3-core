@@ -7,6 +7,27 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (removal disables the instances first; CORE-358, CORE-31, ENH-002; spec 0.44)
+
+- Before a removal is forwarded to the installer, the engine saves a configuration history
+  version that sets `disabled: true` on every enabled instance of the module
+  (`POST /api/v1/installer/operations` with `action: remove`). The instances are kept, not
+  deleted, so the configuration stays valid once the module is gone (CORE-203). The instances
+  are those of every module the engine loaded from the package; package names are compared
+  as PEP 503 names. An instance may be inline, in an `!include` of the
+  whole `modules` list or in an `!include` of one instance file (CORE-31). Comments, order and
+  secrets of the files are kept. Without an enabled instance no version is written. The version
+  stays if the installer refuses the removal and `POST /api/v1/config/undo` restores the instances.
+- `mm3 modules remove <name> [--yes] [--socket] [--admin-socket]` is new. It asks the running
+  engine on the admin socket (CORE-311) to save the version, then sends the removal to the
+  installer. Without an engine on the socket it stops with exit code 2 and changes nothing.
+- The installer is checked before the version is saved: if it cannot be reached, is busy or is
+  locked, the request ends with the code of CORE-356 (`CORE_API_INSTALLER_UNAVAILABLE`,
+  `CORE_API_INSTALLER_BUSY`, `CORE_API_INSTALLER_LOCKED`) and nothing is written.
+- `mm3.core.config.removal` holds the one rule that the engine and the CLI share
+  (`module_instances`, `disable_ops`). `SocketClient.request` can send JSON requests.
+- The admin pages that use the catalog routes (CORE-120, CORE-133) are still to build.
+
 ### Added (engine: catalog and installer API; CORE-356, ENH-002; spec 0.44)
 
 - `GET /api/v1/catalog` (`q`, `category`) and `GET /api/v1/catalog/{name}` read the engine's
@@ -26,7 +47,8 @@ separately under **Module API** in each release (Module Contract, section 10).
 - `/admin/ws` has the topic `installer` (`{status, operation}` frames): the installer is read
   every second (every 5 s while it cannot be reached) only while someone is subscribed.
 - This completes CORE-356. The backup routes (CORE-361) are not part of it. The admin pages
-  that use these routes (CORE-120, CORE-133) and CORE-358 are still to build.
+  that use these routes (CORE-120, CORE-133) are still to build; CORE-358 follows in its own
+  entry.
 
 ### Spec (Core 0.44: engine catalog and installer API; CORE-356, ENH-002)
 
@@ -56,7 +78,7 @@ separately under **Module API** in each release (Module Contract, section 10).
   ordinary bus notifications (CORE-50).
 - Not covered here because the code does not exist yet: CORE-120 and CORE-133 (admin
   installation and the details before confirmation), CORE-358 (disabling the instances
-  before a removal), CORE-121 and MOD-96..99 (module-index).
+  before a removal; built later, see its own entry), CORE-121 and MOD-96..99 (module-index).
 
 ### Changed (admin: the System card style on the whole admin interface; ENH-012; spec 0.43, CORE-384..387)
 

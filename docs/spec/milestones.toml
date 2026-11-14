@@ -349,6 +349,10 @@ requirements = [
 #   and object, the mapping of the installer's answers to CORE_API_* codes, the
 #   polling and frames of the installer topic). Only CORE-356 changed. The
 #   backup routes of CORE-361 are not part of this step; the milestone stays in_progress.
+# CORE-358 (closing step 3; Source: ENH-002): the removal that disables the
+#   module's enabled instances first is built (engine route, mm3 modules remove
+#   through the admin socket). No spec change. Still open in this milestone:
+#   CORE-120, CORE-133 (admin pages), CORE-121 and MOD-96..99 (module-index).
 # CORE-333..337 (core 0.30): pages out of the cycle, timed jumps, idle
 #   return, pause holds and the previous page (MMM-pages and
 #   MMM-ProfileSwitcher). They extend CORE-230..237 of milestones 2, 3 and 6
