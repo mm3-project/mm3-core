@@ -25,6 +25,7 @@ Implements:
     CORE-381: Core spec 0.41, §9.1 Remote-control API.
     CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-298: Core spec 0.25, §9.1 Remote-control API.
+    CORE-361: Core spec 0.45, §10.8 Backup and restore.
     CORE-313: Core spec 0.22, §9.1 Remote-control API.
     CORE-304, CORE-311: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
@@ -65,6 +66,7 @@ from mm3.core.web.extensions import (
     header_label,
 )
 from mm3.core.web.pages import (
+    admin_backups_page,
     admin_catalog_page,
     admin_config_page,
     admin_debug_page,
@@ -499,6 +501,13 @@ def admin_app(
         if check.outcome != "ok":
             return _login_redirect(request)
         return _html(admin_catalog_page(await extension_links(request, check.via)))
+
+    @app.get("/admin/backups")
+    async def admin_backups(request: Request) -> Response:
+        check = await auth.check_admin(request, request.method)
+        if check.outcome != "ok":
+            return _login_redirect(request)
+        return _html(admin_backups_page(await extension_links(request, check.via)))
 
     @app.get("/admin/static/{path:path}")
     async def admin_static(path: str) -> Response:

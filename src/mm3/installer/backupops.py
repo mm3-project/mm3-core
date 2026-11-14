@@ -27,6 +27,7 @@ Implements:
     CORE-164: Core spec 0.37, §10.8 Backup and restore.
     CORE-165: Core spec 0.37, §10.8 Backup and restore.
     CORE-360: Core spec 0.37, §10.8 Backup and restore.
+    CORE-361: Core spec 0.45, §10.8 Backup and restore.
     CORE-363: Core spec 0.37, §10.8 Backup and restore.
     CORE-364: Core spec 0.37, §10.8 Backup and restore.
     CORE-365: Core spec 0.37, §10.8 Backup and restore.
@@ -61,6 +62,7 @@ from mm3.installer.remotes import RemoteError, Remotes
 from mm3.installer.restore import Restorer, Selection, describe
 from mm3.installer.schedule import SettingsReader, StatusFile
 from mm3.installer.sections import SectionError
+from mm3.installer.uploads import Uploads
 
 __all__ = ["BackupRunner", "default_parts"]
 
@@ -109,6 +111,7 @@ class BackupRunner:
         self.status = status
         self._hostname = hostname
         self._now = now
+        self.uploads = Uploads(layout)
 
     # --- small helpers --------------------------------------------------------------
 
@@ -126,8 +129,16 @@ class BackupRunner:
     # --- inspecting an archive ------------------------------------------------------
 
     def _source(self, source: dict[str, Any], work: Path) -> Path:
-        """The archive file for a source: a local name, a root-given path or a remote name."""
+        """Return the archive file for a source (CORE-361).
+
+        A source is a local name, a root-given path, a remote name or a staged upload.
+        """
         name = source.get("name")
+        if source.get("upload") is not None:
+            staged = self.uploads.path(str(source["upload"]))
+            if staged is None:
+                raise BackupError("the uploaded backup is gone; upload it again")
+            return staged
         if source.get("path"):
             path = Path(str(source["path"]))
             if not path.is_absolute() or not path.is_file():
@@ -425,6 +436,9 @@ class BackupRunner:
             raise OperationError(str(exc)) from exc
         finally:
             remove_work(work)
+            staged = opts["source"].get("upload")
+            if staged is not None:
+                self.uploads.discard(str(staged))  # CORE-361: a staged file ends with its restore
 
     def _restore(self, inst: Installer, op: Operation, opts: dict[str, Any], work: Path) -> None:
         inst.step(op, "verifying", "opening the backup")

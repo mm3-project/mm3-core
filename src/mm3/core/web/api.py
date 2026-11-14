@@ -61,6 +61,7 @@ from mm3.core.i18n.catalogs import locale_chain
 from mm3.core.logging import get_logger, log_levels, numbered_records
 from mm3.core.pages import HOLDER_REST
 from mm3.core.web.auth import AdminCheck, WebAuth
+from mm3.core.web.backupapi import register_backup_routes
 from mm3.core.web.catalogapi import CatalogRoutes, register_catalog_routes
 from mm3.core.web.extensions import header_label
 from mm3.core.web.installer import SYSTEM_ACTIONS, UNAVAILABLE, InstallerLink
@@ -930,6 +931,10 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
         ),
         operations=auth is not None,
     )
+
+    # The backup routes forward to the installer; not on the admin socket either (CORE-361).
+    if auth is not None:
+        register_backup_routes(router, lambda: services.installer)
 
     # Module routes last, so the engine's own routes answer first (CORE-332).
     register_module_routes(router, ModuleRoutes(sup))

@@ -29,6 +29,7 @@ from mm3.core.i18n.catalogs import CORE_CATALOG, Table
 __all__ = [
     "ADMIN_PREFIXES",
     "TEXT",
+    "admin_backups_page",
     "admin_catalog_page",
     "admin_config_page",
     "admin_debug_page",
@@ -182,6 +183,7 @@ def _admin_page(
     items = [
         ("/admin/config", t("CORE_WEB_NAV_CONFIG")),
         ("/admin/catalog", t("CORE_WEB_NAV_CATALOG")),
+        ("/admin/backups", t("CORE_WEB_NAV_BACKUPS")),
         ("/admin/debug", t("CORE_WEB_NAV_DEBUG")),
         *extensions,
     ]
@@ -250,6 +252,24 @@ def admin_catalog_page(extensions: Sequence[tuple[str, str]] = ()) -> str:
         CORE-133: Core spec 0.44, §10.7 Installer service.
     """
     return _admin_page("mm3-admin-catalog", "catalog.js", "/admin/catalog", extensions)
+
+
+def admin_backups_page(extensions: Sequence[tuple[str, str]] = ()) -> str:
+    """Render ``/admin/backups``, the page of the backups and their restore (CORE-361).
+
+    ``backups.js`` reads and writes the backup routes of the REST API and follows the
+    ``installer`` topic of the admin channel; the page itself holds no data.
+
+    Args:
+        extensions: Links to the module pages (CORE-329).
+
+    Returns:
+        The HTML.
+
+    Implements:
+        CORE-361: Core spec 0.45, §10.8 Backup and restore.
+    """
+    return _admin_page("mm3-admin-backups", "backups.js", "/admin/backups", extensions)
 
 
 def admin_extension_page(href: str, extensions: Sequence[tuple[str, str]], attrs: str) -> str:
