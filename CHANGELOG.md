@@ -7,6 +7,14 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (milestone 7 closed; CORE-121, CORE-361, MOD-96..99, ENH-002; spec 0.45)
+
+- `docs/spec/milestones.toml` closes milestone 7 at Core 0.45 with Module Contract 1.0 rev 15.
+  CORE-121 and MOD-96..99 are built in `mm3-project/module-index` (the index CI of core
+  spec 10.6: only releases with a PEP 740 attestation from the entry's repository that pass
+  `mm3 module check` are listed), so they are waived here with the reason and the pull request;
+  the coverage report counts all 81 requirements of the milestone as implemented and tested.
+
 ### Spec (Core 0.45: backup routes of the engine; CORE-361, ENH-002)
 
 - No code change. CORE-361 now defines the backup routes the engine forwards to the installer, on
