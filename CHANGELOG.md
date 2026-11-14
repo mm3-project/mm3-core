@@ -17,6 +17,31 @@ separately under **Module API** in each release (Module Contract, section 10).
   not. The code PR that follows builds the routes and the Backups page and reviews the stale
   citations of CORE-361.
 
+### Added (backup routes and the admin Backups page; CORE-361, CORE-162, CORE-161, CORE-364, CORE-365, ENH-002; spec 0.45)
+
+- The engine forwards the backup routes of CORE-361 to the installer on the admin listener only:
+  `GET /api/v1/backups`, `/backups/remote`, `POST /backups` (manual, never `pre`),
+  `GET /backups/{name}` (streamed download), `POST /backups/upload`, `/backups/verify`,
+  `/backups/preview`, `/backups/keygen`, `/backups/restore` and the remotes under
+  `/backups/remotes`. A restore and a change of a remote ask for the passphrase and the TOTP code,
+  passed on and never logged; a restore refuses `path`. New problem code
+  `CORE_API_UPLOAD_TOO_LARGE` (413), also returned when the installer refuses the size.
+- An upload is a raw body of at most 2 GiB, refused from `Content-Length` before any byte is read
+  and streamed to the installer, never held in memory. The installer's new
+  `POST /v1/backups/upload` writes it to `uploads/` in its state directory (mode 0600, temporary
+  file and rename), keeps at most two files for at most 24 hours, deletes leftovers of a crash
+  at start and the file a restore used when the restore ends. A restore or a verify names it as
+  `{upload}`. A second upload no longer deletes one that is still being written.
+- `/admin/backups` (nav link "Backups"): the list with download, verify and restore, a new
+  backup with the choice of parts and encryption (secrets only when encrypted), the archives on
+  the remote, an upload with progress, a new age key whose identity is shown once, the remotes
+  with their test, and the status of the last scheduled backup and remote copy. A restore
+  shows what it would change before it asks for the passphrase; progress follows the `installer`
+  topic. Backup and restore operations are shown there like the others.
+- 132 new texts (`CORE_ADMIN_BACKUPS_*`, `CORE_WEB_NAV_BACKUPS`, `CORE_API_UPLOAD_TOO_LARGE`) in en,
+  it, fr, es, de.
+- The citations of CORE-361 in the CLI were reviewed against spec 0.45 and updated.
+
 ### Added (admin Catalog page; CORE-120, CORE-133, CORE-132, CORE-135, ENH-002; spec 0.44)
 
 - `/admin/catalog` (nav link "Catalog") lists the catalog with search, category filter, an
@@ -31,7 +56,6 @@ separately under **Module API** in each release (Module Contract, section 10).
 - Progress follows the `installer` topic of `/admin/ws` with a read of the operation after a
   reconnect; the result ends as a done, rolled back or failed banner and the list is reloaded.
 - 88 new texts (`CORE_ADMIN_CATALOG_*`, `CORE_WEB_NAV_CATALOG`) in en, it, fr, es, de.
-- The backup routes of CORE-361 and the Backups page are still to build.
 
 ### Added (removal disables the instances first; CORE-358, CORE-31, ENH-002; spec 0.44)
 

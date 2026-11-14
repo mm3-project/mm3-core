@@ -1972,3 +1972,399 @@ msgstr "revertido"
 
 msgid "CORE_ADMIN_CATALOG_STATE_FAILED"
 msgstr "fallido"
+
+msgid "CORE_WEB_NAV_BACKUPS"
+msgstr "Copias de seguridad"
+
+msgid "CORE_API_UPLOAD_TOO_LARGE"
+msgstr "El archivo de copia supera los 2 GiB."
+
+msgid "CORE_ADMIN_BACKUPS"
+msgstr "Copias de seguridad"
+
+msgid "CORE_ADMIN_BACKUPS_ACTION_BACKUP"
+msgstr "Copia de seguridad"
+
+msgid "CORE_ADMIN_BACKUPS_ACTION_RESTORE"
+msgstr "Restauración"
+
+msgid "CORE_ADMIN_BACKUPS_ARCHIVE_PASSPHRASE"
+msgstr "Frase de paso del archivo"
+
+msgid "CORE_ADMIN_BACKUPS_CLI_ALTERNATIVE"
+msgstr "O desde la línea de comandos:"
+
+msgid "CORE_ADMIN_BACKUPS_COL_CREATED"
+msgstr "Creada"
+
+msgid "CORE_ADMIN_BACKUPS_COL_ENCRYPTED"
+msgstr "Cifrada"
+
+msgid "CORE_ADMIN_BACKUPS_COL_HOST"
+msgstr "Equipo"
+
+msgid "CORE_ADMIN_BACKUPS_COL_KIND"
+msgstr "Tipo"
+
+msgid "CORE_ADMIN_BACKUPS_COL_PARTS"
+msgstr "Partes"
+
+msgid "CORE_ADMIN_BACKUPS_COL_SIZE"
+msgstr "Tamaño"
+
+msgid "CORE_ADMIN_BACKUPS_CREATE"
+msgstr "Nueva copia de seguridad"
+
+msgid "CORE_ADMIN_BACKUPS_CREATE_EFFECT"
+msgstr "Reúne las partes elegidas en un archivo en este espejo. No hace falta la frase de paso."
+
+msgid "CORE_ADMIN_BACKUPS_CREATE_NOW"
+msgstr "Hacer la copia ahora"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_KEYGEN_TEXT"
+msgstr "Crea un nuevo par de claves age para cifrar las copias. La identidad secreta se muestra una sola vez y no se puede volver a leer."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_KEYGEN_TITLE"
+msgstr "Nueva clave age"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_ADD_TITLE"
+msgstr "Añadir un destino remoto"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_DELETE_TEXT"
+msgstr "El destino se quita de la configuración rclone del instalador. Los archivos que contiene se conservan."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_DELETE_TITLE"
+msgstr "¿Eliminar el destino remoto {name}?"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_REMOTE_EDIT_TITLE"
+msgstr "Editar el destino remoto {name}"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_RESTORE_KEY"
+msgstr "Este archivo puede estar cifrado. Introduce su clave o frase de paso y mira la vista previa."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_RESTORE_TEXT"
+msgstr "La restauración sustituye la configuración, los datos y los módulos actuales por los del archivo. Antes se hace una copia del estado actual, que se devuelve si la restauración falla."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_RESTORE_TITLE"
+msgstr "¿Restaurar {name}?"
+
+msgid "CORE_ADMIN_BACKUPS_DLG_VERIFY_TEXT"
+msgstr "Comprueba que el archivo está íntegro y muestra lo que contiene. Para un archivo cifrado introduce su clave o frase de paso."
+
+msgid "CORE_ADMIN_BACKUPS_DLG_VERIFY_TITLE"
+msgstr "Verificar {name}"
+
+msgid "CORE_ADMIN_BACKUPS_DOWNLOAD"
+msgstr "Descargar"
+
+msgid "CORE_ADMIN_BACKUPS_EMPTY"
+msgstr "No hay copias de seguridad."
+
+msgid "CORE_ADMIN_BACKUPS_ENCRYPTION"
+msgstr "Cifrado"
+
+msgid "CORE_ADMIN_BACKUPS_ENGINE"
+msgstr "Versión del motor"
+
+msgid "CORE_ADMIN_BACKUPS_FILES"
+msgstr "Archivos"
+
+msgid "CORE_ADMIN_BACKUPS_IDENTITY"
+msgstr "Identidad secreta"
+
+msgid "CORE_ADMIN_BACKUPS_IDENTITY_ONCE"
+msgstr "Copia ahora la identidad secreta: no se vuelve a mostrar y sin ella no se puede abrir un archivo cifrado para esta clave."
+
+msgid "CORE_ADMIN_BACKUPS_INSTANCE"
+msgstr "Solo esta instancia de módulo (opcional)"
+
+msgid "CORE_ADMIN_BACKUPS_KEEP_KEY"
+msgstr "Guardar la identidad en este espejo como clave de las copias"
+
+msgid "CORE_ADMIN_BACKUPS_KEPT"
+msgstr "La identidad se guarda en este espejo para las copias programadas y las restauraciones."
+
+msgid "CORE_ADMIN_BACKUPS_KEY"
+msgstr "Clave o frase de paso del archivo"
+
+msgid "CORE_ADMIN_BACKUPS_KEYGEN"
+msgstr "Crear una clave"
+
+msgid "CORE_ADMIN_BACKUPS_KEYGEN_EFFECT"
+msgstr "Crea un par de claves age para cifrar las copias, de modo que puedan incluir los secretos."
+
+msgid "CORE_ADMIN_BACKUPS_KEYS"
+msgstr "Claves"
+
+msgid "CORE_ADMIN_BACKUPS_KEY_NOTE"
+msgstr "Solo para un archivo cifrado; se envía una vez y no se guarda."
+
+msgid "CORE_ADMIN_BACKUPS_KIND_MANUAL"
+msgstr "manual"
+
+msgid "CORE_ADMIN_BACKUPS_KIND_PRE"
+msgstr "antes de un cambio"
+
+msgid "CORE_ADMIN_BACKUPS_KIND_SCHEDULED"
+msgstr "programada"
+
+msgid "CORE_ADMIN_BACKUPS_LAST_REMOTE"
+msgstr "Última copia remota"
+
+msgid "CORE_ADMIN_BACKUPS_LAST_SCHEDULED"
+msgstr "Última copia programada"
+
+msgid "CORE_ADMIN_BACKUPS_LIST"
+msgstr "Copias en este espejo"
+
+msgid "CORE_ADMIN_BACKUPS_LOCKED_UNTIL"
+msgstr "Bloqueado hasta {time}."
+
+msgid "CORE_ADMIN_BACKUPS_MODE_CONFIGURED"
+msgstr "La clave de los ajustes"
+
+msgid "CORE_ADMIN_BACKUPS_MODE_KEY"
+msgstr "Una clave pública age"
+
+msgid "CORE_ADMIN_BACKUPS_MODE_NONE"
+msgstr "Sin cifrar"
+
+msgid "CORE_ADMIN_BACKUPS_MODE_PASSPHRASE"
+msgstr "Una frase de paso"
+
+msgid "CORE_ADMIN_BACKUPS_NEED_KEY"
+msgstr "Introduce la clave pública age."
+
+msgid "CORE_ADMIN_BACKUPS_NEED_PASSPHRASE"
+msgstr "Introduce una frase de paso para el archivo."
+
+msgid "CORE_ADMIN_BACKUPS_NO"
+msgstr "No"
+
+msgid "CORE_ADMIN_BACKUPS_NONE"
+msgstr "ninguno"
+
+msgid "CORE_ADMIN_BACKUPS_NOTHING_TO_CHANGE"
+msgstr "No cambiaría nada."
+
+msgid "CORE_ADMIN_BACKUPS_NO_PARTS"
+msgstr "Elige al menos una parte."
+
+msgid "CORE_ADMIN_BACKUPS_OMITTED"
+msgstr "Omitidos"
+
+msgid "CORE_ADMIN_BACKUPS_ON_REMOTE"
+msgstr "Copias en el destino remoto"
+
+msgid "CORE_ADMIN_BACKUPS_ON_REMOTE_TEXT"
+msgstr "Los archivos del destino remoto indicado en los ajustes de copia."
+
+msgid "CORE_ADMIN_BACKUPS_OPERATION"
+msgstr "Operación"
+
+msgid "CORE_ADMIN_BACKUPS_OP_DONE"
+msgstr "{action} {name}: hecho."
+
+msgid "CORE_ADMIN_BACKUPS_OP_FAILED"
+msgstr "{action} {name} ha fallado: {error}"
+
+msgid "CORE_ADMIN_BACKUPS_OP_ROLLED_BACK"
+msgstr "{action} {name}: devuelto al estado anterior. {error}"
+
+msgid "CORE_ADMIN_BACKUPS_OP_RUNNING"
+msgstr "{action} {name}: {state}"
+
+msgid "CORE_ADMIN_BACKUPS_PARTS"
+msgstr "Partes"
+
+msgid "CORE_ADMIN_BACKUPS_PART_CONFIG"
+msgstr "configuración"
+
+msgid "CORE_ADMIN_BACKUPS_PART_DATA"
+msgstr "datos"
+
+msgid "CORE_ADMIN_BACKUPS_PART_MODULES"
+msgstr "módulos"
+
+msgid "CORE_ADMIN_BACKUPS_PART_SECRETS"
+msgstr "secretos"
+
+msgid "CORE_ADMIN_BACKUPS_PASSPHRASE"
+msgstr "Frase de paso del instalador"
+
+msgid "CORE_ADMIN_BACKUPS_PREVIEW"
+msgstr "Vista previa"
+
+msgid "CORE_ADMIN_BACKUPS_PUBLIC_KEY"
+msgstr "Clave pública"
+
+msgid "CORE_ADMIN_BACKUPS_REASON_AWAY"
+msgstr "No se puede contactar con el instalador, así que desde aquí no se pueden hacer ni restaurar copias."
+
+msgid "CORE_ADMIN_BACKUPS_REASON_BUSY"
+msgstr "El instalador está ocupado con otra operación."
+
+msgid "CORE_ADMIN_BACKUPS_REASON_CHECKING"
+msgstr "Comprobando el instalador…"
+
+msgid "CORE_ADMIN_BACKUPS_REASON_LOCKED"
+msgstr "El instalador está bloqueado hasta {time} tras confirmaciones fallidas."
+
+msgid "CORE_ADMIN_BACKUPS_RECIPIENT"
+msgstr "Clave pública age (age1…)"
+
+msgid "CORE_ADMIN_BACKUPS_RELOAD"
+msgstr "Recargar"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTES"
+msgstr "Destinos remotos"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTES_EMPTY"
+msgstr "No hay ningún destino remoto configurado."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTES_NOTE"
+msgstr "Un destino remoto es donde se envían las copias de las copias de seguridad (se elige en la configuración, en backup). Los parámetros secretos aparecen como !masked y se conservan si no se cambian."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_ADD"
+msgstr "Añadir un destino"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_BAD_LINE"
+msgstr "La línea {line} no tiene la forma «nombre=valor»."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_DELETE"
+msgstr "Eliminar"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_DELETED"
+msgstr "Destino {name} eliminado."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_EDIT"
+msgstr "Editar"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_NAME"
+msgstr "Nombre"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_PARAMS"
+msgstr "Parámetros"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_PARAMS_NOTE"
+msgstr "Un «nombre=valor» por línea. Parámetros conocidos: {names}."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_SAVED"
+msgstr "Destino {name} guardado."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TEST"
+msgstr "Probar"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TEST_FAILED"
+msgstr "El destino {name} no responde: {error}"
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TEST_OK"
+msgstr "El destino {name} responde."
+
+msgid "CORE_ADMIN_BACKUPS_REMOTE_TYPE"
+msgstr "Tipo"
+
+msgid "CORE_ADMIN_BACKUPS_RESTORE"
+msgstr "Restaurar"
+
+msgid "CORE_ADMIN_BACKUPS_RESTORE_PARTS"
+msgstr "Partes que restaurar"
+
+msgid "CORE_ADMIN_BACKUPS_RESULT_FAILED"
+msgstr "{time}: falló: {error}"
+
+msgid "CORE_ADMIN_BACKUPS_RESULT_OK"
+msgstr "{time}: {name}"
+
+msgid "CORE_ADMIN_BACKUPS_SAVE"
+msgstr "Guardar"
+
+msgid "CORE_ADMIN_BACKUPS_SECRETS_NOTE"
+msgstr "Los secretos solo se guardan en un archivo cifrado."
+
+msgid "CORE_ADMIN_BACKUPS_SHOW_REMOTE"
+msgstr "Mostrar las copias del destino remoto"
+
+msgid "CORE_ADMIN_BACKUPS_STAGED"
+msgstr "{name} ({size}) está subido y espera una restauración. Se elimina tras 24 horas o tras una restauración."
+
+msgid "CORE_ADMIN_BACKUPS_STATE_BACKING_UP"
+msgstr "haciendo la copia"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_BUILDING"
+msgstr "creando el entorno"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_CHECKING"
+msgstr "comprobando el motor"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_DONE"
+msgstr "hecho"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_FAILED"
+msgstr "falló"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_QUEUED"
+msgstr "en cola"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_RESTARTING"
+msgstr "reiniciando el motor"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_RESTORING"
+msgstr "restaurando"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_ROLLED_BACK"
+msgstr "devuelto al estado anterior"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_SWITCHING"
+msgstr "cambiando"
+
+msgid "CORE_ADMIN_BACKUPS_STATE_VERIFYING"
+msgstr "comprobando el archivo"
+
+msgid "CORE_ADMIN_BACKUPS_STATUS"
+msgstr "Copias programadas"
+
+msgid "CORE_ADMIN_BACKUPS_THE_UPLOAD"
+msgstr "el archivo subido"
+
+msgid "CORE_ADMIN_BACKUPS_TOTP"
+msgstr "Código TOTP (si está activado)"
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD"
+msgstr "Subir una copia"
+
+msgid "CORE_ADMIN_BACKUPS_UPLOADED"
+msgstr "{name} subido ({size})."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_EMPTY"
+msgstr "El archivo está vacío."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_FILE"
+msgstr "Archivo de copia (.mm3backup)"
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_LARGE"
+msgstr "El archivo supera {size}."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_NAME"
+msgstr "Elige un archivo que termine en .mm3backup."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_NONE"
+msgstr "No se ha elegido ningún archivo."
+
+msgid "CORE_ADMIN_BACKUPS_UPLOAD_TEXT"
+msgstr "Envía a este espejo una copia hecha en otro sitio para verificarla o restaurarla. Como máximo {size}."
+
+msgid "CORE_ADMIN_BACKUPS_VERIFY"
+msgstr "Verificar"
+
+msgid "CORE_ADMIN_BACKUPS_VERIFY_BAD"
+msgstr "El archivo está dañado."
+
+msgid "CORE_ADMIN_BACKUPS_VERIFY_OK"
+msgstr "El archivo está íntegro."
+
+msgid "CORE_ADMIN_BACKUPS_WOULD_CHANGE"
+msgstr "Qué cambiaría la restauración"
+
+msgid "CORE_ADMIN_BACKUPS_YES"
+msgstr "Sí"

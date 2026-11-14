@@ -9,6 +9,7 @@ the core catalog text of ``code``. Routes a module registers on
 Implements:
     CORE-298: Core spec 0.25, §9.1 Remote-control API.
     CORE-356: Core spec 0.44, §10.7 Installer service.
+    CORE-361: Core spec 0.45, §10.8 Backup and restore.
 """
 
 from __future__ import annotations
@@ -45,6 +46,7 @@ CODES: dict[str, tuple[int, str]] = {
     "CORE_API_REAUTH_FAILED": (403, "Re-authentication failed"),
     "CORE_API_INSTALLER_LOCKED": (423, "Installer locked"),
     "CORE_API_CATALOG_UNAVAILABLE": (503, "Catalog unavailable"),
+    "CORE_API_UPLOAD_TOO_LARGE": (413, "Upload too large"),
 }
 """Every code of CORE-298 with its HTTP status and English title; a new code is a spec change."""
 
