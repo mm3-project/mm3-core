@@ -289,12 +289,25 @@ requirements = [
 [[milestone]]
 number = 7
 name = "Services: MQTT/HA, presence, installer, catalog, backup"
-status = "in_progress"
+status = "done"
+done_at = { core = "0.45", contract = "1.0 rev 15" }
 requirements = [
   "CORE-50..53", "CORE-66", "CORE-100", "CORE-120..126", "CORE-130..136",
   "CORE-160..165", "CORE-333..337", "CORE-338..373", "CORE-382..383", "PRS-01..08",
   "MOD-96..99",
 ]
+[milestone.waive]
+"CORE-121" = "Implemented in mm3-project/module-index (PR #6, scripts/build_index.py); the index CI lists only releases that pass mm3 module check"
+"MOD-96" = "Implemented in mm3-project/module-index (PR #6, scripts/build_index.py): a release without a PEP 740 attestation is not listed"
+"MOD-97" = "Implemented in mm3-project/module-index (scripts/validate_entries.py, PR #6 scripts/build_index.py): public repository, OSI license, README sections"
+"MOD-98" = "Implemented in mm3-project/module-index (scripts/entry_model.py, validate_entries.py): entry fields and the five-language description"
+"MOD-99" = "Implemented in mm3-project/module-index (PR #6, scripts/build_index.py): a release that fails mm3 module check is not listed"
+[milestone.waive_tests]
+"CORE-121" = "Tested in mm3-project/module-index (tests/test_build_index.py, test_core_121_*)"
+"MOD-96" = "Tested in mm3-project/module-index (tests/test_build_index.py, test_mod_96_*)"
+"MOD-97" = "Tested in mm3-project/module-index (tests/test_validate.py and test_build_index.py, test_mod_97_*)"
+"MOD-98" = "Tested in mm3-project/module-index (tests/test_validate.py, test_mod_98_*)"
+"MOD-99" = "Tested in mm3-project/module-index (tests/test_build_index.py and test_mm3_adapter.py, test_mod_99_*)"
 # CORE-338..345 (core 0.31): MQTT bridge and Home Assistant. CORE-339 extends
 #   CORE-305 (status, milestone 6) and CORE-342 extends CORE-100 without
 #   changing them; CORE-343 adds the holder mqtt to the pause holds of CORE-336.
@@ -359,6 +372,12 @@ requirements = [
 #   previous in a dialog with passphrase and TOTP, live progress on the installer
 #   topic. No spec change. Still open in this milestone: CORE-121 and MOD-96..99
 #   (module-index), the backup routes of CORE-361 and the Backups page.
+# CORE-361 and the Backups page (closing step 5a; Source: ENH-002, core 0.45):
+#   the engine's backup routes (all of them, forwarded to the installer; the
+#   upload is a streamed route of its own, CORE-365) and /admin/backups.
+# CORE-121, MOD-96..99 (closing step 5b): built in mm3-project/module-index, not in
+#   this repository, so they are waived here with the reason and the PR. Milestone 7
+#   closes at Core 0.45 with Contract 1.0 rev 15 (closing step 5c).
 # CORE-333..337 (core 0.30): pages out of the cycle, timed jumps, idle
 #   return, pause holds and the previous page (MMM-pages and
 #   MMM-ProfileSwitcher). They extend CORE-230..237 of milestones 2, 3 and 6
