@@ -344,6 +344,11 @@ requirements = [
 #   engine's forwarding layer), CORE-304, CORE-378 and CORE-381 (milestone 6)
 #   without changing them; CORE-357 and CORE-359 changed (the polkit rule now
 #   covers the kiosk unit and the reboot). The milestone stays in_progress.
+# CORE-356 (core 0.44; Source: ENH-002): the engine's catalog and installer API
+#   settled (item and detail shapes, refresh, installer status, operation routes
+#   and object, the mapping of the installer's answers to CORE_API_* codes, the
+#   polling and frames of the installer topic). Only CORE-356 changed. The
+#   backup routes of CORE-361 are not part of this step; the milestone stays in_progress.
 # CORE-333..337 (core 0.30): pages out of the cycle, timed jumps, idle
 #   return, pause holds and the previous page (MMM-pages and
 #   MMM-ProfileSwitcher). They extend CORE-230..237 of milestones 2, 3 and 6
