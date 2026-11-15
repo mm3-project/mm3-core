@@ -17,7 +17,7 @@ jobs:
     # A hung step fails the job after this long (GitHub's default is 6 h).
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # merge base for the stale-citation check (CORE-77)
       - uses: astral-sh/setup-uv@v6
@@ -58,7 +58,7 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: ${{ matrix.python-version }}
@@ -83,7 +83,7 @@ jobs:
       matrix:
         module: [mm3-greeting, mm3-clock, mm3-weather, mm3-presence]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: "3.13"
@@ -105,7 +105,7 @@ jobs:
     # A hung step fails the job after this long (GitHub's default is 6 h).
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       # Workspace members (mm3-core, mm3-build) are built here, not downloaded.
       - run: uv export --frozen --all-extras --no-emit-workspace --format requirements-txt -o requirements.lock.txt
@@ -120,7 +120,7 @@ jobs:
     timeout-minutes: 20
     needs: [lint, test, audit]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v6
       # Implements CORE-280 (Core spec 0.17, §10.2 Packaging and deployment):
       # mm3-build is built with the engine; the core wheel compiles its
@@ -151,7 +151,7 @@ jobs:
       matrix:
         debian: ["12", "13"]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/download-artifact@v4
         with:
           name: dist
