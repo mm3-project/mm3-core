@@ -7,6 +7,15 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (ISS-002; CORE-275, spec 0.46)
+
+- Changed module settings now reach the mirror and the preview after a save. The engine already
+  reconfigured or restarted the instance (CORE-210), but on `reload` `resync` the shell kept the
+  element and never gave it the new public config, so only a disable and an enable showed the
+  change. The shell now re-creates an element whose public config changed, with the config of the
+  new `welcome`, and still keeps every element whose instance, module, version and config are
+  unchanged (CORE-275, Core spec 0.46). Test: `test_core_275_changed_config_recreates_the_element`.
+
 ### Changed (milestone 7 closed; CORE-121, CORE-361, MOD-96..99, ENH-002; spec 0.45)
 
 - `docs/spec/milestones.toml` closes milestone 7 at Core 0.45 with Module Contract 1.0 rev 15.
