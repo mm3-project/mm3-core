@@ -7,6 +7,16 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (issue log in the repository; CORE-75)
+
+- The issue and enhancement log (`ISS-nnn`, `ENH-nnn`) moved from the claude.ai project documents into
+  `docs/log/`: one file per entry in `docs/log/entries/`, with the table columns as YAML front matter,
+  so an entry is edited in place instead of rewriting a whole document. `docs/log/README.md` holds how
+  the log works, the entry template and the table, which `tools/log_index.py` generates; CI runs it
+  with `--check` (lint job). The round 1 plan and the log history up to the move (log 2.55) are in
+  `docs/log/round-1-plan.md` and `docs/log/HISTORY.md`. ISS-002 records that its fix reached main in
+  the squash commit of PR #130. Tests: `tests/test_log_index.py`.
+
 ### Fixed (ISS-002; CORE-275, spec 0.46)
 
 - Changed module settings now reach the mirror and the preview after a save. The engine already

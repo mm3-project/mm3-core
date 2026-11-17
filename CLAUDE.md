@@ -18,3 +18,6 @@
   `coverage.md`). After a spec change open a spec sync PR (CONTRIBUTING.md).
   Coverage: `uv run python tools/trace_report.py`.
 - Update `CHANGELOG.md` under *Unreleased* and cite requirement ids.
+- The issue and enhancement log (ISS-nnn, ENH-nnn) lives in `docs/log/`: one
+  file per entry in `docs/log/entries/`; after a change run
+  `uv run python tools/log_index.py` (CI checks it). How it works: `docs/log/README.md`.
