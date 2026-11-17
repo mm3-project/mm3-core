@@ -1,6 +1,8 @@
 // The shell: connects to the engine, builds the grid from `welcome`, creates one
 // element per instance, and follows `state`, `client`, `notify`, `reply` and `control`.
-// Implements CORE-250, CORE-275, CORE-276 (Core spec 0.14, §5.6 WebSocket protocol)
+// Implements CORE-250, CORE-276 (Core spec 0.14, §5.6 WebSocket protocol)
+// Implements CORE-275 (Core spec 0.46, §5.6 WebSocket protocol): a resync keeps an element
+// only while its public config is unchanged too, and re-creates it otherwise.
 // Implements CORE-95, CORE-255, CORE-256, CORE-257, CORE-258, CORE-259 (Core spec 0.14, §6.5 Screen layout)
 // Implements CORE-260 (Core spec 0.14, §6.9 Pages and visibility)
 // Implements CORE-262 (Core spec 0.14, §6.10 Theme and custom CSS)
@@ -224,7 +226,8 @@ async function onWelcome(data) {
   const wanted = new Set(data.instances.map((i) => i.id));
   for (const [id, cell] of cells) {
     const info = data.instances.find((i) => i.id === id);
-    if (!info || cell.key !== keyOf(info)) removeCell(id);
+    // CORE-275: a changed public config re-creates the element; a kept one never gets a new config.
+    if (!info || cell.key !== keyOf(info) || !sameConfig(cell.info.config, info.config)) removeCell(id);
   }
   for (const info of data.instances) {
     const old = cells.get(info.id);
@@ -262,6 +265,7 @@ function onPreviewMessage(ev) {
 if (mode === "preview") window.addEventListener("message", onPreviewMessage);
 
 const keyOf = (info) => `${info.module}|${info.element}|${info.scripts.join(",")}`;
+const sameConfig = (a, b) => JSON.stringify(a ?? {}) === JSON.stringify(b ?? {});
 
 function applyLayout(layout) {
   welcome.layout = layout;

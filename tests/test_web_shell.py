@@ -36,12 +36,18 @@ from test_i18n import write_catalog
 
 PACKAGE = """
 from typing import Any
+from mm3.config import ModuleConfig
 from mm3.messages import ClientMessage
 from mm3.module import MirrorModule
 
 
+class ShellTestConfig(ModuleConfig):
+    label: str = ""
+
+
 class ShellTest(MirrorModule):
     name = "shelltest"
+    config_model = ShellTestConfig
     element = "mm3-shelltest"
     scripts = ["element.js"]
     styles = ["element.css"]
@@ -658,6 +664,32 @@ async def test_core_250_resync_keeps_unchanged_elements(mirror: Mirror, shell: A
     await asyncio.sleep(0.5)
     await shell.wait_for_function(f"() => {HOME} === window.__home")
     assert len(mirror.hub.clients()) == 1
+
+
+@pytest.mark.browser
+async def test_core_275_changed_config_recreates_the_element(mirror: Mirror, shell: Any) -> None:
+    both = f"{cell('both')}.querySelector('mm3-shelltest')"
+    await shell.evaluate(f"() => {{ window.__home = {HOME}; window.__both = {both}; }}")
+    old = mirror.holder["result"]
+    text = CONFIG.replace(
+        "    id: home\n    position: top_left\n",
+        "    id: home\n    position: top_left\n    config:\n      label: changed\n",
+    )
+    new = mirror.reload(text)
+    plan = plan_reload(old, new)
+    assert list(plan.reconfigure) == ["home"]
+    await mirror.hub.reloaded(new, plan)
+    # The changed instance gets a new element with the new config and its state again ...
+    await shell.wait_for_function(
+        f"() => {HOME} && {HOME} !== window.__home && {HOME}.config.label === 'changed'"
+        f" && {HOME}.shadowRoot.querySelector('.temp')?.textContent === '21'"
+    )
+    # ... while an instance whose config did not change keeps its element (CORE-250).
+    assert await shell.evaluate(f"() => {both} === window.__both")
+    count = await shell.evaluate(
+        "() => document.querySelectorAll('[data-instance=\"home\"]').length"
+    )
+    assert count == 1
 
 
 @pytest.mark.browser
