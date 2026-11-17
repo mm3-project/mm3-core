@@ -14,7 +14,8 @@ Implements:
     CORE-288: Core spec 0.19, §6.2 Rules.
     CORE-247, CORE-248, CORE-249, CORE-251: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
-    CORE-275, CORE-276: Core spec 0.14, §5.6 WebSocket protocol.
+    CORE-276: Core spec 0.14, §5.6 WebSocket protocol.
+    CORE-275: Core spec 0.46, §5.6 WebSocket protocol.
     CORE-117: Core spec 0.14, §10.5 Diagnostics and debugging.
     CORE-21: Core spec 0.9, §5.3 Routing rules.
     CORE-223: Core spec 0.13, §5.4 Request and reply.
@@ -226,7 +227,8 @@ class ClientHub:
         hello_timeout: Seconds to wait for ``hello`` (CORE-273).
 
     Implements:
-        CORE-246, CORE-271, CORE-275, CORE-276: Core spec 0.19, §5.6 WebSocket protocol.
+        CORE-246, CORE-271, CORE-276: Core spec 0.19, §5.6 WebSocket protocol.
+        CORE-275: Core spec 0.46, §5.6 WebSocket protocol.
         CORE-247, CORE-248, CORE-249: Core spec 0.13, §5.6 WebSocket protocol.
         CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     """
@@ -297,7 +299,7 @@ class ClientHub:
             instance: The instance it concerns, if any.
 
         Implements:
-            CORE-275: Core spec 0.14, §5.6 WebSocket protocol.
+            CORE-275: Core spec 0.46, §5.6 WebSocket protocol.
         """
         frame = _frame("control", {"action": action, **data}, instance)
         for c in self._clients.values():
@@ -381,7 +383,7 @@ class ClientHub:
             plan: What changed.
 
         Implements:
-            CORE-275: Core spec 0.14, §5.6 WebSocket protocol.
+            CORE-275: Core spec 0.46, §5.6 WebSocket protocol.
             CORE-267: Core spec 0.15, §8.5 Catalogs at run time.
         """
         if self.pages is not None:
