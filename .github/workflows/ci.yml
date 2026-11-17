@@ -37,6 +37,8 @@ jobs:
       # Implements CORE-75, CORE-76 (Core spec 0.6, §10.3 Documentation and quality)
       - name: Spec sync up to date (CORE-75, CORE-76)
         run: uv run python tools/spec_sync.py --check
+      - name: Issue log table up to date
+        run: uv run python tools/log_index.py --check
       # Implements CORE-74, CORE-77 (Core spec 0.6, §10.3 Documentation and quality)
       - name: Spec references (CORE-74, CORE-77)
         run: |

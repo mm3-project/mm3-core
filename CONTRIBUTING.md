@@ -55,6 +55,9 @@ Implements:
   run `uv run python tools/spec_sync.py`, assign new requirements to a
   milestone in `docs/spec/milestones.toml`, and regenerate
   `docs/spec/coverage.md` with `uv run python tools/trace_report.py --out docs/spec/coverage.md`.
+- The issue and enhancement log is in `docs/log/` (one file per entry, see
+  `docs/log/README.md`); after changing an entry run
+  `uv run python tools/log_index.py`, which CI checks with `--check`.
 - `spec_sync.py` writes `requirements.toml` (one record per requirement with
   `changed_in`) and `versions.toml`. It fails if a requirement changed
   without being listed in a Document history row (CORE-76).
