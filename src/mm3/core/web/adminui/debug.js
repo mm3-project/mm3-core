@@ -5,6 +5,7 @@
 // Implements CORE-381 (Core spec 0.41, §9.1 Remote-control API): the MQTT line of the overview.
 // Implements CORE-393 (Core spec 0.47, §6.11 Camera devices): the overview lists each device with
 // its owner.
+// Implements CORE-412 (Core spec 0.51, §9.7 Media service): the overview shows the media state.
 // Implements CORE-112 (Core spec 0.23, §10.5 Diagnostics and debugging): the
 // log-level control of each instance.
 // Implements CORE-114, CORE-115 (Core spec 0.22, §10.5 Diagnostics and debugging):
@@ -18,6 +19,7 @@ import { AdminChannel, api, download, fmtTime, loadTexts, t } from "/admin/stati
 import { statusAlerts, statusCards } from "/admin/static/status.js";
 import { actionRow, banner } from "/admin/static/ui.js";
 import { devicesCard } from "/admin/static/devices.js";
+import { mediaCard } from "/admin/static/media.js";
 
 const MAX_ROWS = 2000;
 const LEVELS = ["debug", "info", "warning", "error"];
@@ -41,6 +43,7 @@ class AdminDebug extends HTMLElement {
     this.status = null;
     this.modules = [];
     this.devices = [];
+    this.media = null;
     this.openRow = null;
     this.detail = null;
     this.browserErrors = [];
@@ -78,6 +81,7 @@ class AdminDebug extends HTMLElement {
     try {
       this.modules = await api("GET", "/modules");
       this.devices = await api("GET", "/devices");
+      this.media = await api("GET", "/media");
       const page = await api("GET", "/debug/logs?limit=500&level=warning");
       this.browserErrors = page.items.filter((r) => r.source === "browser").slice(0, 20);
       if (this.openRow) await this.loadDetail(this.openRow);
@@ -251,6 +255,7 @@ class AdminDebug extends HTMLElement {
         </table>
       </section>
       ${devicesCard(this.devices)}
+      ${mediaCard(this.media)}
       <section class="card"><h2>${t("CORE_ADMIN_BROWSER_ERRORS")}</h2>
         ${this.browserErrors.length
           ? html`<table><tbody>${this.browserErrors.map(

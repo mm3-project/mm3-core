@@ -230,6 +230,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.diag.inspector import BusInspector
     from mm3.core.diag.secrets import Masker, config_secrets
     from mm3.core.engine import Engine
+    from mm3.core.media import MediaService
     from mm3.core.pages import PageService
     from mm3.core.services.hass import HaControls
     from mm3.core.services.power import PowerService
@@ -302,6 +303,12 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         mk: Masker = masks["masker"]
         return mk
 
+    # CORE-397 (Core spec 0.51, §9.7 Media service): the media service; ``media`` is live.
+    media = MediaService(
+        runtime_dir(), state_dir, engine.clock, engine.supervisor.emit, masker=masker
+    )
+    media.configure(result)
+    manager.layout_listeners.append(media.reloaded)
     inspector = BusInspector(masker)
     engine.bus.add_endpoint(inspector)
     hub.frame_observer = inspector.frame
@@ -323,6 +330,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         editor=editor,
         mirror=mirror,
         installer=installer,
+        media=media,
     )
     gateway = WebGateway(
         result.config.engine,
@@ -335,6 +343,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         channel=channel,
         socket_path=runtime_dir() / "admin.sock",
         locale=lambda: manager.current.config.engine.locale if manager.current.config else "en",
+        media=media,
     )
     await engine.start(result.instance_specs())
     await manager.start()
@@ -351,6 +360,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
             with contextlib.suppress(asyncio.CancelledError):
                 await watchdog
         await gateway.stop()
+        await media.close()
         await pages.close()
         await manager.close()
         await engine.stop()

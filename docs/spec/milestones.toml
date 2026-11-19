@@ -387,7 +387,7 @@ requirements = [
 [[milestone]]
 number = 8
 name = "Media: media service, sources, takeover, mm3-media"
-status = "not_started"
+status = "in_progress"
 # Inserted in core 0.21 (1 Nov 2026) before Extensions and Release, which moved
 #   to 9 and 10. Its requirements are settled in its own defining chat (media
 #   service with ffmpeg, sources, capabilities, full-screen takeover, the
@@ -407,6 +407,11 @@ status = "not_started"
 #   CORE-398 (details settled while building step 1).
 # Core 0.51 changes CORE-397, CORE-400 and CORE-412 (details settled while building
 #   step 2).
+# Development: step 1 (PR #141) the config base (CORE-388..393, 398, 399, 416);
+#   step 2 the media service and delivery (CORE-397, 400, 401, 403, 404, 412: ffmpeg
+#   children, limits and backoff, MJPEG, HLS and file routes, remux and transcode, TLS,
+#   the media folder, CORE_MEDIA_CHANGED and GET /api/v1/media). Camera sources and the
+#   local feed (CORE-394..396, 402) come next; a camera source is unavailable until then.
 requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]

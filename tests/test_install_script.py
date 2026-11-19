@@ -315,3 +315,36 @@ def test_core_348_a_failed_group_change_is_logged_not_fatal(tmp_path: Path) -> N
     assert result.returncode == 0
     assert "done" in result.stdout
     assert "could not add mm3 to the group i2c" in result.stderr
+
+
+def test_core_397_ffmpeg_is_installed_with_or_without_the_kiosk(tmp_path: Path) -> None:
+    for kiosk in ("yes", "no"):
+        result = call(f"WANT_KIOSK={kiosk}; install_packages", {"MM3_SKIP_PACKAGES": "yes"})
+        assert result.returncode == 0
+        packages = (result.stdout + result.stderr).split("(")[1].split(")")[0].split()
+        assert "ffmpeg" in packages
+
+
+def test_core_401_mm3_joins_render_and_video_on_kiosk_systems(tmp_path: Path) -> None:
+    env = fake_group_tools(tmp_path, existing="render video")
+    result = call("WANT_KIOSK=yes; ensure_media_groups", env)
+    assert result.returncode == 0
+    lines = (tmp_path / "usermod.log").read_text().splitlines()
+    assert lines == ["--append --groups render mm3", "--append --groups video mm3"]
+
+
+def test_core_401_media_groups_only_where_they_exist_and_with_the_kiosk(tmp_path: Path) -> None:
+    env = fake_group_tools(tmp_path, existing="video")
+    assert call("WANT_KIOSK=yes; ensure_media_groups", env).returncode == 0
+    assert (tmp_path / "usermod.log").read_text().splitlines() == ["--append --groups video mm3"]
+    (tmp_path / "usermod.log").unlink()
+    assert call("WANT_KIOSK=no; ensure_media_groups", env).returncode == 0
+    assert not (tmp_path / "usermod.log").exists()
+
+
+def test_core_401_a_failed_media_group_change_is_not_fatal(tmp_path: Path) -> None:
+    env = fake_group_tools(tmp_path, existing="render", usermod_status=1)
+    result = call("WANT_KIOSK=yes; ensure_media_groups; echo done", env)
+    assert result.returncode == 0
+    assert "done" in result.stdout
+    assert "could not add mm3 to the group render" in result.stderr
