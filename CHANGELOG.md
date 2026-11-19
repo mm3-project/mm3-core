@@ -7,7 +7,7 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
-### Added (milestone 8 step 1: config base; CORE-388..393, CORE-398, CORE-399, CORE-416, spec 0.49)
+### Added (milestone 8 step 1: config base; CORE-388..393, CORE-398, CORE-399, CORE-416, spec 0.50)
 
 - `devices` top-level key (CORE-388): cameras (`path` under `/dev/v4l/by-id/` or
   `/dev/v4l/by-path/`) and Kinects (optional `serial`), with `owner` and `images`.
@@ -30,6 +30,12 @@ separately under **Module API** in each release (Module Contract, section 10).
 - Nine `CORE_CFG_*` codes in the code table and the engine catalog (EN, IT, FR, ES, DE), with form
   labels for every new field (CORE-310).
 - `devices` and `media` are history sections after `backup` and reload-plan flags (CORE-416).
+
+### Changed (spec 0.50; CORE-388 and CORE-398 changed)
+
+- Core spec 0.50: a field that does not belong to the kind (a camera's `serial`, a kinect's
+  `path`, a source's `url`, `device` or `path`) is `CORE_CFG_INVALID`; share names follow the
+  source name pattern; `takeover.max_duration` is at least `duration`. Rules 1.77.
 
 ### Changed (spec 0.49; CORE-416 added, CORE-390, CORE-399, CORE-406, CORE-407 changed)
 

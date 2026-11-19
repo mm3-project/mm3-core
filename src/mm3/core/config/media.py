@@ -8,7 +8,7 @@ is not checked here: it lives in the installer's ``rclone.conf``, and the
 installer checks it when it runs the share (CORE-406, CORE-407).
 
 Implements:
-    CORE-398: Core spec 0.48, §9.7 Media service.
+    CORE-398: Core spec 0.50, §9.7 Media service.
     CORE-399: Core spec 0.49, §9.7 Media service.
 """
 
@@ -91,7 +91,7 @@ class MediaSource(_Model):
         width: Output width, at most 1920; the source's width when unset.
 
     Implements:
-        CORE-398: Core spec 0.48, §9.7 Media service.
+        CORE-398: Core spec 0.50, §9.7 Media service.
         CORE-399: Core spec 0.49, §9.7 Media service.
     """
 
@@ -215,7 +215,7 @@ class SyncShare(_Model):
     """A share copied by ``rclone sync`` (CORE-406; settings only here).
 
     Implements:
-        CORE-398: Core spec 0.48, §9.7 Media service.
+        CORE-398: Core spec 0.50, §9.7 Media service.
     """
 
     method: Literal["sync"] = Field(
@@ -247,7 +247,7 @@ class MountShare(_Model):
     """A share mounted read-only by a systemd mount unit (CORE-407; settings only here).
 
     Implements:
-        CORE-398: Core spec 0.48, §9.7 Media service.
+        CORE-398: Core spec 0.50, §9.7 Media service.
     """
 
     method: Literal["mount"] = Field(
@@ -298,7 +298,7 @@ class MediaLimits(_Model):
     """``media.limits`` (CORE-397, CORE-401, CORE-405; settings only here).
 
     Implements:
-        CORE-398: Core spec 0.48, §9.7 Media service.
+        CORE-398: Core spec 0.50, §9.7 Media service.
     """
 
     processes: int = Field(
@@ -328,7 +328,7 @@ class MediaTakeover(_Model):
     """``media.takeover``: durations in seconds (CORE-410; settings only here).
 
     Implements:
-        CORE-398: Core spec 0.48, §9.7 Media service.
+        CORE-398: Core spec 0.50, §9.7 Media service.
     """
 
     duration: int = Field(
@@ -361,7 +361,7 @@ class MediaConfig(_Model):
     """The ``media`` key (CORE-398).
 
     Implements:
-        CORE-398: Core spec 0.48, §9.7 Media service.
+        CORE-398: Core spec 0.50, §9.7 Media service.
     """
 
     sources: dict[MediaName, MediaSource] = Field(

@@ -7,7 +7,7 @@ entries, resolves ``owner: auto`` and checks the entries against each other
 :mod:`mm3.core.devices`.
 
 Implements:
-    CORE-388: Core spec 0.47, §6.11 Camera devices.
+    CORE-388: Core spec 0.50, §6.11 Camera devices.
     CORE-389: Core spec 0.47, §6.11 Camera devices.
     CORE-390: Core spec 0.49, §6.11 Camera devices.
 """
@@ -63,7 +63,7 @@ class DeviceConfig(ModuleConfig):
             browser (CORE-392).
 
     Implements:
-        CORE-388: Core spec 0.47, §6.11 Camera devices.
+        CORE-388: Core spec 0.50, §6.11 Camera devices.
         CORE-389: Core spec 0.47, §6.11 Camera devices.
     """
 

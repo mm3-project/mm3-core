@@ -16,8 +16,8 @@ Implements:
     CORE-213: Core spec 0.9, §6.5 Screen layout.
     CORE-230: Core spec 0.9, §6.9 Pages and visibility.
     CORE-333, CORE-334, CORE-335: Core spec 0.34, §6.9 Pages and visibility.
-    CORE-388: Core spec 0.47, §6.11 Camera devices.
-    CORE-398: Core spec 0.48, §9.7 Media service.
+    CORE-388: Core spec 0.50, §6.11 Camera devices.
+    CORE-398: Core spec 0.50, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -636,8 +636,8 @@ class MirrorConfig(_Model):
 
     Implements:
         CORE-201: Core spec 0.21, §6.2 Rules.
-        CORE-388: Core spec 0.47, §6.11 Camera devices.
-        CORE-398: Core spec 0.48, §9.7 Media service.
+        CORE-388: Core spec 0.50, §6.11 Camera devices.
+        CORE-398: Core spec 0.50, §9.7 Media service.
     """
 
     config_version: Annotated[int, Field(ge=1)] = Field(
