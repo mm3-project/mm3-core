@@ -33,6 +33,7 @@ Implements:
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
     CORE-356: Core spec 0.44, §10.7 Installer service.
     CORE-358: Core spec 0.33, §10.7 Installer service.
+    CORE-393: Core spec 0.47, §6.11 Camera devices.
 """
 
 from __future__ import annotations
@@ -518,6 +519,17 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
             raise ApiError("CORE_API_NO_KIOSK", "The kiosk agent did not take the values")
         _log.info("api_kiosk_audio", volume=body.volume, mute=body.mute)
         return kiosk()
+
+    # --- devices (CORE-393) -----------------------------------------------------------
+
+    @router.get("/devices")
+    async def get_devices() -> list[dict[str, Any]]:
+        """The configured devices with their resolved owners, sorted by name (CORE-393)."""
+        from mm3.core.devices import device_list, resolved
+
+        if services.manager is None:
+            return []
+        return device_list(resolved(services.manager.current))
 
     # --- Show on mirror (CORE-307) -----------------------------------------------------
 

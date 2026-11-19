@@ -2368,3 +2368,267 @@ msgstr "What a restore would change"
 
 msgid "CORE_ADMIN_BACKUPS_YES"
 msgstr "Yes"
+
+msgid "CORE_CFG_DEVICE_PATH"
+msgstr "A camera needs an absolute path under /dev/v4l/by-id/ or /dev/v4l/by-path/ (got {path})"
+
+msgid "CORE_CFG_DEVICE_OWNER"
+msgstr "A kinect cannot have owner media"
+
+msgid "CORE_CFG_DEVICE_DUPLICATE"
+msgstr "Device {device} is the same device as {other}"
+
+msgid "CORE_CFG_DEVICE_OWNER_ABSENT"
+msgstr "Device {device} has owner vision, but no instance of the module vision is enabled"
+
+msgid "CORE_CFG_MEDIA_URL"
+msgstr "A source of kind {kind} needs a URL with the scheme {allowed}"
+
+msgid "CORE_CFG_MEDIA_DEVICE"
+msgstr "Source {source}: {device} is not a camera in devices"
+
+msgid "CORE_CFG_MEDIA_PATH"
+msgstr "The path {path} must be relative, without .., and start with files/ or shares/<share>/"
+
+msgid "CORE_CFG_MEDIA_SHARE"
+msgstr "Source {source}: share {share} is not in media.shares"
+
+msgid "CORE_CFG_MEDIA_DELIVERY"
+msgstr "Source {source}: a camera is delivered as MJPEG; delivery hls is ignored"
+
+msgid "CFG_DEVICES"
+msgstr "Devices"
+
+msgid "CFG_DEVICES_HELP"
+msgstr "Cameras and Kinects, each with the one service that may open it."
+
+msgid "CFG_DEVICES_KIND"
+msgstr "Kind"
+
+msgid "CFG_DEVICES_KIND_HELP"
+msgstr "camera (a V4L2 device) or kinect (a Kinect v1)."
+
+msgid "CFG_DEVICES_PATH"
+msgstr "Path"
+
+msgid "CFG_DEVICES_PATH_HELP"
+msgstr "For a camera: its path under /dev/v4l/by-id/ or /dev/v4l/by-path/."
+
+msgid "CFG_DEVICES_SERIAL"
+msgstr "Serial"
+
+msgid "CFG_DEVICES_SERIAL_HELP"
+msgstr "For a Kinect: its serial. Empty uses the first Kinect found."
+
+msgid "CFG_DEVICES_OWNER"
+msgstr "Owner"
+
+msgid "CFG_DEVICES_OWNER_HELP"
+msgstr "The service that opens the device: auto (vision when it runs, otherwise media for a camera), vision, media or none."
+
+msgid "CFG_DEVICES_IMAGES"
+msgstr "Camera images"
+
+msgid "CFG_DEVICES_IMAGES_HELP"
+msgstr "Allow views of this camera in browsers. Every client admitted by server.allow can see them. Frames are never stored."
+
+msgid "CFG_MEDIA"
+msgstr "Media"
+
+msgid "CFG_MEDIA_HELP"
+msgstr "Media sources, network shares, limits and full-screen takeover."
+
+msgid "CFG_MEDIA_SOURCES"
+msgstr "Sources"
+
+msgid "CFG_MEDIA_SOURCES_HELP"
+msgstr "Named sources that modules and the admin can play."
+
+msgid "CFG_MEDIA_SOURCE_KIND"
+msgstr "Kind"
+
+msgid "CFG_MEDIA_SOURCE_KIND_HELP"
+msgstr "rtsp (a camera stream), stream (HLS or an audio stream), camera (a local camera from devices) or files."
+
+msgid "CFG_MEDIA_SOURCE_URL"
+msgstr "URL"
+
+msgid "CFG_MEDIA_SOURCE_URL_HELP"
+msgstr "For rtsp: rtsp:// or rtsps://. For stream: https:// or http://. Put credentials in an !env value."
+
+msgid "CFG_MEDIA_SOURCE_DEVICE"
+msgstr "Device"
+
+msgid "CFG_MEDIA_SOURCE_DEVICE_HELP"
+msgstr "For camera: the name of a camera in devices."
+
+msgid "CFG_MEDIA_SOURCE_PATH"
+msgstr "Path"
+
+msgid "CFG_MEDIA_SOURCE_PATH_HELP"
+msgstr "For files: a folder or file under the media folder, starting with files/ or shares/<share>/."
+
+msgid "CFG_MEDIA_SOURCE_DELIVERY"
+msgstr "Delivery"
+
+msgid "CFG_MEDIA_SOURCE_DELIVERY_HELP"
+msgstr "auto, mjpeg (low latency, no sound) or hls (with sound)."
+
+msgid "CFG_MEDIA_SOURCE_TRANSCODE"
+msgstr "Transcode"
+
+msgid "CFG_MEDIA_SOURCE_TRANSCODE_HELP"
+msgstr "Encode to H.264 when the source is not playable in a browser. Uses more CPU or the GPU."
+
+msgid "CFG_MEDIA_SOURCE_AUDIO"
+msgstr "Sound"
+
+msgid "CFG_MEDIA_SOURCE_AUDIO_HELP"
+msgstr "Whether the source has sound. Always off for a camera."
+
+msgid "CFG_MEDIA_SOURCE_FPS"
+msgstr "Frames per second"
+
+msgid "CFG_MEDIA_SOURCE_FPS_HELP"
+msgstr "MJPEG frame rate, 1 to 30."
+
+msgid "CFG_MEDIA_SOURCE_WIDTH"
+msgstr "Width"
+
+msgid "CFG_MEDIA_SOURCE_WIDTH_HELP"
+msgstr "Output width in pixels, at most 1920; empty keeps the source's width."
+
+msgid "CFG_MEDIA_SHARES"
+msgstr "Shares"
+
+msgid "CFG_MEDIA_SHARES_HELP"
+msgstr "Network folders copied by sync or mounted read-only, under shares/<name>/."
+
+msgid "CFG_MEDIA_SHARE_METHOD"
+msgstr "Method"
+
+msgid "CFG_MEDIA_SHARE_METHOD_HELP"
+msgstr "sync (a copy made by rclone) or mount (a read-only mount)."
+
+msgid "CFG_MEDIA_SHARE_REMOTE"
+msgstr "Remote"
+
+msgid "CFG_MEDIA_SHARE_REMOTE_HELP"
+msgstr "The name of an rclone remote of the installer; the installer checks it when it runs the share."
+
+msgid "CFG_MEDIA_SHARE_PATH"
+msgstr "Path"
+
+msgid "CFG_MEDIA_SHARE_PATH_HELP"
+msgstr "The folder on the remote or the server."
+
+msgid "CFG_MEDIA_SHARE_INTERVAL"
+msgstr "Interval (minutes)"
+
+msgid "CFG_MEDIA_SHARE_INTERVAL_HELP"
+msgstr "How often the copy is refreshed, at least 5 minutes."
+
+msgid "CFG_MEDIA_SHARE_MAX_SIZE_GB"
+msgstr "Maximum size (GB)"
+
+msgid "CFG_MEDIA_SHARE_MAX_SIZE_GB_HELP"
+msgstr "The copy stops with an error above this size."
+
+msgid "CFG_MEDIA_SHARE_TYPE"
+msgstr "Type"
+
+msgid "CFG_MEDIA_SHARE_TYPE_HELP"
+msgstr "smb (credentials from an rclone remote) or nfs."
+
+msgid "CFG_MEDIA_SHARE_HOST"
+msgstr "Host"
+
+msgid "CFG_MEDIA_SHARE_HOST_HELP"
+msgstr "The server's name or address."
+
+msgid "CFG_MEDIA_LIMITS"
+msgstr "Limits"
+
+msgid "CFG_MEDIA_LIMITS_HELP"
+msgstr "How many players run at once and how large an upload may be."
+
+msgid "CFG_MEDIA_LIMITS_PROCESSES"
+msgstr "Players at once"
+
+msgid "CFG_MEDIA_LIMITS_PROCESSES_HELP"
+msgstr "1 to 8."
+
+msgid "CFG_MEDIA_LIMITS_TRANSCODE"
+msgstr "Transcodes at once"
+
+msgid "CFG_MEDIA_LIMITS_TRANSCODE_HELP"
+msgstr "0 to 4."
+
+msgid "CFG_MEDIA_LIMITS_UPLOAD_MAX_MB"
+msgstr "Largest upload (MB)"
+
+msgid "CFG_MEDIA_LIMITS_UPLOAD_MAX_MB_HELP"
+msgstr "1 to 8192."
+
+msgid "CFG_MEDIA_TAKEOVER"
+msgstr "Full screen"
+
+msgid "CFG_MEDIA_TAKEOVER_HELP"
+msgstr "How long a full-screen takeover lasts when the request names no duration."
+
+msgid "CFG_MEDIA_TAKEOVER_DURATION"
+msgstr "Duration (seconds)"
+
+msgid "CFG_MEDIA_TAKEOVER_DURATION_HELP"
+msgstr "The default duration."
+
+msgid "CFG_MEDIA_TAKEOVER_MAX_DURATION"
+msgstr "Longest duration (seconds)"
+
+msgid "CFG_MEDIA_TAKEOVER_MAX_DURATION_HELP"
+msgstr "No takeover lasts longer."
+
+msgid "CFG_MEDIA_BROWSER_AUDIO"
+msgstr "Sound in browsers"
+
+msgid "CFG_MEDIA_BROWSER_AUDIO_HELP"
+msgstr "Play sound in other browsers too, not only on the kiosk."
+
+msgid "CORE_ADMIN_DEVICES_IMAGES_WARNING"
+msgstr "Camera images are on: every client admitted by server.allow can see them."
+
+msgid "CORE_ADMIN_DEVICES"
+msgstr "Devices"
+
+msgid "CORE_ADMIN_DEVICE"
+msgstr "Device"
+
+msgid "CORE_ADMIN_DEVICE_KIND"
+msgstr "Kind"
+
+msgid "CORE_ADMIN_DEVICE_ID"
+msgstr "Path or serial"
+
+msgid "CORE_ADMIN_DEVICE_FIRST_FOUND"
+msgstr "first one found"
+
+msgid "CORE_ADMIN_DEVICE_OWNER"
+msgstr "Owner"
+
+msgid "CORE_ADMIN_DEVICE_OWNER_AUTO"
+msgstr "auto"
+
+msgid "CORE_ADMIN_DEVICE_OWNER_EXPLICIT"
+msgstr "set in config"
+
+msgid "CORE_ADMIN_DEVICE_PRESENT"
+msgstr "Present"
+
+msgid "CORE_ADMIN_DEVICE_IMAGES"
+msgstr "Images"
+
+msgid "CORE_ADMIN_DEVICE_YES"
+msgstr "Yes"
+
+msgid "CORE_ADMIN_DEVICE_NO"
+msgstr "No"

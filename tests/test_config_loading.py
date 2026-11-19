@@ -496,8 +496,17 @@ def test_core_206_yaml_problems(
 def _spec_code_table() -> dict[str, str]:
     text = SPEC.read_text()
     start = text.index("- CORE-243:")
-    rows = re.findall(r"^\| `(CORE_CFG_[A-Z0-9_]+)` \| (error|warning) \|", text[start:], re.M)
-    return dict(rows)
+    rows = dict(
+        re.findall(r"^\| `(CORE_CFG_[A-Z0-9_]+)` \| (error|warning) \|", text[start:], re.M)
+    )
+    # CORE-388..390 and CORE-399 add their codes to the list of CORE-243 in their own text.
+    for req in ("- CORE-388:", "- CORE-389:", "- CORE-390:", "- CORE-399:"):
+        line = text[text.index(req) :].split("\n", 1)[0]
+        rows.update(
+            (code, sev)
+            for sev, code in re.findall(r"(error|warning) `(CORE_CFG_[A-Z0-9_]+)`", line)
+        )
+    return rows
 
 
 def test_core_243_codes_match_spec_table() -> None:

@@ -661,3 +661,37 @@ async def test_shell_reload(api: Api) -> None:
     r = await api.post("/api/v1/shell/reload")
     assert r.status_code == 200
     assert r.json() == {"clients": 0}
+
+
+# --- CORE-393: devices -------------------------------------------------------------------
+
+
+async def test_core_393_get_devices(api: Api, tmp_path: Path) -> None:
+    r = await api.get("/api/v1/devices")
+    assert (r.status_code, r.json()) == (200, [])
+    cam = "/dev/v4l/by-id/usb-cam"
+    (tmp_path / "config.yaml").write_text(
+        CONFIG
+        + "devices:\n  z_kin: {kind: kinect, serial: A1}\n"
+        + f"  a_cam: {{kind: camera, path: {cam}}}\n"
+    )
+    result = load_config(
+        tmp_path / "config.yaml", registry=api.engine.registry, env_file=tmp_path / "x.env"
+    )
+    assert result.ok, result.records
+    assert api.services.manager is not None
+    api.services.manager.current = result
+    body = (await api.get("/api/v1/devices")).json()
+    assert [d["name"] for d in body] == ["a_cam", "z_kin"]
+    assert body[0] == {
+        "name": "a_cam",
+        "kind": "camera",
+        "path": cam,
+        "serial": None,
+        "owner": "media",
+        "reason": "auto",
+        "present": False,
+        "images": False,
+    }
+    assert (body[1]["present"], body[1]["serial"], body[1]["owner"]) == (None, "A1", "none")
+    assert (await api.client.get("/api/v1/devices")).status_code == 401

@@ -31,6 +31,11 @@
 // unsaved draft asks in a dialog, never in the browser's own box.
 // Implements CORE-385 (Core spec 0.43, §9.1 Remote-control API): the Review changes dialog.
 // Implements CORE-387 (Core spec 0.43, §9.1 Remote-control API): its message line.
+// Implements CORE-392 (Core spec 0.47, §6.11 Camera devices): the Form shows the camera
+// images warning while a device of the draft has `images: true`.
+// Implements CORE-393 (Core spec 0.47, §6.11 Camera devices): the Form lists `devices` like
+// every other section; `devices` and `media` are top-level sections (CORE-416, Core spec
+// 0.49, §6.8 Configuration history, undo and redo).
 import { html, nothing, render } from "/admin/static/lit-html.js";
 import { loadTexts, recordText, t } from "/admin/static/admin.js";
 import { Messages, banner, confirmDialog } from "/admin/static/ui.js";
@@ -45,6 +50,7 @@ import {
   sectionValues,
   setOp,
 } from "/admin/static/draft.js";
+import { imagesOn, imagesWarning } from "/admin/static/devices.js";
 import "/admin/static/schemaform.js";
 import "/admin/static/history.js";
 import { YamlView } from "/admin/static/yamlview.js";
@@ -257,7 +263,8 @@ class AdminConfig extends HTMLElement {
     const last = this.draft.lastStepFor(section);
     const top = TOP_SECTIONS.includes(section);
     const absent = top && value === undefined;
-    return html`<div class="editor">
+    const values = sectionValues(this.draft.documents, this.draft.main);
+    return html`${imagesWarning(imagesOn(values.devices))}<div class="editor">
       <nav class="sections">
         ${sections.map(
           (s) => html`<button class=${[s.id === section ? "active" : "", this.hasError(s.id) ? "has-error" : ""].join(" ")}

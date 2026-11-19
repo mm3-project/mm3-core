@@ -16,6 +16,8 @@ Implements:
     CORE-213: Core spec 0.9, §6.5 Screen layout.
     CORE-230: Core spec 0.9, §6.9 Pages and visibility.
     CORE-333, CORE-334, CORE-335: Core spec 0.34, §6.9 Pages and visibility.
+    CORE-388: Core spec 0.50, §6.11 Camera devices.
+    CORE-398: Core spec 0.50, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -36,6 +38,8 @@ from pydantic import (
 from pydantic_core import PydanticCustomError
 
 from mm3.config import LocaleTag, LocalizedText, ModuleConfig
+from mm3.core.config.devices import DeviceConfig, DeviceName
+from mm3.core.config.media import MediaConfig
 from mm3.core.settings import EngineSettings
 
 __all__ = [
@@ -627,10 +631,13 @@ def _check_version(value: int) -> int:
 class MirrorConfig(_Model):
     """The whole configuration file (CORE-201, CORE-230).
 
-    ``audio`` is ``None`` when the block is absent (CORE-296).
+    ``audio`` is ``None`` when the block is absent (CORE-296). ``devices``
+    and ``media`` extend the top-level keys of CORE-201 (CORE-388, CORE-398).
 
     Implements:
         CORE-201: Core spec 0.21, §6.2 Rules.
+        CORE-388: Core spec 0.50, §6.11 Camera devices.
+        CORE-398: Core spec 0.50, §9.7 Media service.
     """
 
     config_version: Annotated[int, Field(ge=1)] = Field(
@@ -652,6 +659,12 @@ class MirrorConfig(_Model):
     )
     backup: BackupConfig = Field(
         default=BackupConfig(), title="CFG_BACKUP", description="CFG_BACKUP_HELP"
+    )
+    devices: dict[DeviceName, DeviceConfig] = Field(
+        default_factory=dict, title="CFG_DEVICES", description="CFG_DEVICES_HELP"
+    )
+    media: MediaConfig = Field(
+        default=MediaConfig(), title="CFG_MEDIA", description="CFG_MEDIA_HELP"
     )
 
     @field_validator("config_version")

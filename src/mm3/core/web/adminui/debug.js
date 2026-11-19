@@ -3,6 +3,8 @@
 // Implements CORE-305 (Core spec 0.22, §9.1 Remote-control API): status with
 // mismatches and failures highlighted (the cards are in status.js).
 // Implements CORE-381 (Core spec 0.41, §9.1 Remote-control API): the MQTT line of the overview.
+// Implements CORE-393 (Core spec 0.47, §6.11 Camera devices): the overview lists each device with
+// its owner.
 // Implements CORE-112 (Core spec 0.23, §10.5 Diagnostics and debugging): the
 // log-level control of each instance.
 // Implements CORE-114, CORE-115 (Core spec 0.22, §10.5 Diagnostics and debugging):
@@ -15,6 +17,7 @@ import { html, nothing, render } from "/admin/static/lit-html.js";
 import { AdminChannel, api, download, fmtTime, loadTexts, t } from "/admin/static/admin.js";
 import { statusAlerts, statusCards } from "/admin/static/status.js";
 import { actionRow, banner } from "/admin/static/ui.js";
+import { devicesCard } from "/admin/static/devices.js";
 
 const MAX_ROWS = 2000;
 const LEVELS = ["debug", "info", "warning", "error"];
@@ -37,6 +40,7 @@ class AdminDebug extends HTMLElement {
     this.tab = "overview";
     this.status = null;
     this.modules = [];
+    this.devices = [];
     this.openRow = null;
     this.detail = null;
     this.browserErrors = [];
@@ -73,6 +77,7 @@ class AdminDebug extends HTMLElement {
   async refresh() {
     try {
       this.modules = await api("GET", "/modules");
+      this.devices = await api("GET", "/devices");
       const page = await api("GET", "/debug/logs?limit=500&level=warning");
       this.browserErrors = page.items.filter((r) => r.source === "browser").slice(0, 20);
       if (this.openRow) await this.loadDetail(this.openRow);
@@ -245,6 +250,7 @@ class AdminDebug extends HTMLElement {
           <tbody>${this.modules.map((m) => this.instanceRows(m))}</tbody>
         </table>
       </section>
+      ${devicesCard(this.devices)}
       <section class="card"><h2>${t("CORE_ADMIN_BROWSER_ERRORS")}</h2>
         ${this.browserErrors.length
           ? html`<table><tbody>${this.browserErrors.map(

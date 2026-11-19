@@ -2361,3 +2361,267 @@ msgstr ""
 
 msgid "CORE_ADMIN_BACKUPS_YES"
 msgstr ""
+
+msgid "CORE_CFG_DEVICE_PATH"
+msgstr ""
+
+msgid "CORE_CFG_DEVICE_OWNER"
+msgstr ""
+
+msgid "CORE_CFG_DEVICE_DUPLICATE"
+msgstr ""
+
+msgid "CORE_CFG_DEVICE_OWNER_ABSENT"
+msgstr ""
+
+msgid "CORE_CFG_MEDIA_URL"
+msgstr ""
+
+msgid "CORE_CFG_MEDIA_DEVICE"
+msgstr ""
+
+msgid "CORE_CFG_MEDIA_PATH"
+msgstr ""
+
+msgid "CORE_CFG_MEDIA_SHARE"
+msgstr ""
+
+msgid "CORE_CFG_MEDIA_DELIVERY"
+msgstr ""
+
+msgid "CFG_DEVICES"
+msgstr ""
+
+msgid "CFG_DEVICES_HELP"
+msgstr ""
+
+msgid "CFG_DEVICES_KIND"
+msgstr ""
+
+msgid "CFG_DEVICES_KIND_HELP"
+msgstr ""
+
+msgid "CFG_DEVICES_PATH"
+msgstr ""
+
+msgid "CFG_DEVICES_PATH_HELP"
+msgstr ""
+
+msgid "CFG_DEVICES_SERIAL"
+msgstr ""
+
+msgid "CFG_DEVICES_SERIAL_HELP"
+msgstr ""
+
+msgid "CFG_DEVICES_OWNER"
+msgstr ""
+
+msgid "CFG_DEVICES_OWNER_HELP"
+msgstr ""
+
+msgid "CFG_DEVICES_IMAGES"
+msgstr ""
+
+msgid "CFG_DEVICES_IMAGES_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA"
+msgstr ""
+
+msgid "CFG_MEDIA_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCES"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCES_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_KIND"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_KIND_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_URL"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_URL_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_DEVICE"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_DEVICE_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_PATH"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_PATH_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_DELIVERY"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_DELIVERY_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_TRANSCODE"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_TRANSCODE_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_AUDIO"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_AUDIO_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_FPS"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_FPS_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_WIDTH"
+msgstr ""
+
+msgid "CFG_MEDIA_SOURCE_WIDTH_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARES"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARES_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_METHOD"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_METHOD_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_REMOTE"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_REMOTE_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_PATH"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_PATH_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_INTERVAL"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_INTERVAL_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_MAX_SIZE_GB"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_MAX_SIZE_GB_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_TYPE"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_TYPE_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_HOST"
+msgstr ""
+
+msgid "CFG_MEDIA_SHARE_HOST_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_LIMITS"
+msgstr ""
+
+msgid "CFG_MEDIA_LIMITS_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_LIMITS_PROCESSES"
+msgstr ""
+
+msgid "CFG_MEDIA_LIMITS_PROCESSES_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_LIMITS_TRANSCODE"
+msgstr ""
+
+msgid "CFG_MEDIA_LIMITS_TRANSCODE_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_LIMITS_UPLOAD_MAX_MB"
+msgstr ""
+
+msgid "CFG_MEDIA_LIMITS_UPLOAD_MAX_MB_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_TAKEOVER"
+msgstr ""
+
+msgid "CFG_MEDIA_TAKEOVER_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_TAKEOVER_DURATION"
+msgstr ""
+
+msgid "CFG_MEDIA_TAKEOVER_DURATION_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_TAKEOVER_MAX_DURATION"
+msgstr ""
+
+msgid "CFG_MEDIA_TAKEOVER_MAX_DURATION_HELP"
+msgstr ""
+
+msgid "CFG_MEDIA_BROWSER_AUDIO"
+msgstr ""
+
+msgid "CFG_MEDIA_BROWSER_AUDIO_HELP"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICES_IMAGES_WARNING"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICES"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE_KIND"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE_ID"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE_FIRST_FOUND"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE_OWNER"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE_OWNER_AUTO"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE_OWNER_EXPLICIT"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE_PRESENT"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE_IMAGES"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE_YES"
+msgstr ""
+
+msgid "CORE_ADMIN_DEVICE_NO"
+msgstr ""

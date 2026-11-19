@@ -12,6 +12,9 @@
 // errors inline on the field and, for the section itself, at the top of the form.
 // Implements CORE-379 (Core spec 0.39, §6.4 Web configuration editor): in a section that is
 // not in the config the fields show their defaults (placeholders; a toggle its default).
+// Implements CORE-393 (Core spec 0.47, §6.11 Camera devices): a map of models (the
+// `devices` key, media sources and shares, an instance's `positions`) shows one form per
+// entry, with Add and Remove, instead of one text line per entry.
 //
 // Properties: schema (the root, for $refs), node (this form's schema), value,
 // texts ({key: text}: the module's catalog over the core catalog, CORE-264), records
@@ -163,6 +166,7 @@ export class SchemaForm extends HTMLElement {
     }
     if (node.anyOf) return wrap(this.choice(path, names, node, value));
     if (type === "object" && node.properties) return this.object(parts, names, node, value, root);
+    if (type === "object" && this.isModelMap(node)) return this.modelMap(parts, names, node, value);
     if (type === "object") return wrap(this.mapping(path, names, node, value));
     if (type === "array") return this.array(parts, names, node, value);
     if (type === "boolean") {
@@ -248,6 +252,42 @@ export class SchemaForm extends HTMLElement {
       </div>`)}
       <button type="button" @click=${() => this.emit(value === undefined ? path : `${path}/-`, value === undefined ? [blank] : blank, undefined, names)}>
         ${t("CORE_ADMIN_ADD")}</button>
+      ${this.errors(path)}
+    </fieldset>`;
+  }
+
+  /** The schema of a map's values: `additionalProperties`, or the one `patternProperties` entry. */
+  mapItem(node) {
+    if (node.additionalProperties && typeof node.additionalProperties === "object") return node.additionalProperties;
+    const pattern = node.patternProperties ? Object.values(node.patternProperties) : [];
+    return pattern.length === 1 ? pattern[0] : null;
+  }
+
+  /** A map whose values are models or unions of them (`dict[str, Model]`). */
+  isModelMap(node) {
+    const add = this.mapItem(node);
+    if (!add) return false;
+    const n = this.unwrap(add).node;
+    return Boolean(n.properties || n.anyOf || n.oneOf);
+  }
+
+  modelMap(parts, names, node, value) {
+    const path = parts.map((p) => `/${escapePart(p)}`).join("");
+    const v = value && typeof value === "object" ? value : {};
+    const item = this.mapItem(node);
+    return html`<fieldset class="nested map" data-path=${path}><legend>${this.label(names, node)}</legend>
+      ${Object.entries(v).map(([k, entry]) => html`<div class="list-item map-entry" data-key=${k}>
+        <h4 class="mono">${k}</h4>
+        ${this.field([...parts, k], [...names, k], item, entry)}
+        <button type="button" class="link" @click=${() => this.emit(`${path}/${escapePart(k)}`, undefined, entry, [...names, k], true)}>
+          ${t("CORE_ADMIN_REMOVE")}</button>
+      </div>`)}
+      <button type="button" @click=${() => {
+        const k = (window.prompt(t("CORE_ADMIN_KEY")) || "").trim();
+        // A name that breaks the key pattern is added and reported by validation inline.
+        if (!k || k in v) return;
+        this.emit(value === undefined ? path : `${path}/${escapePart(k)}`, value === undefined ? { [k]: {} } : {}, undefined, [...names, k]);
+      }}>${t("CORE_ADMIN_ADD")}</button>
       ${this.errors(path)}
     </fieldset>`;
   }
