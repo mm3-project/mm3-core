@@ -1,6 +1,6 @@
 # MM3 Module Contract v1.0
 
-Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 15 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 16 (draft)
 
 ## 1. Scope and conformance
 
@@ -160,6 +160,7 @@ class ModuleContext(Protocol):
                                       # async set_display_power(on) (core CORE-346)
     router: fastapi.APIRouter         # mounted at /api/v1/modules/{instance_id}/
     layout: Layout                    # hide(instance_id), show(instance_id); layout.control
+    media: Media                      # sources(), url(), files(), takeover(), stop() (section 4.5)
 ```
 
 ### 4.1 Exceptions raised by the context
@@ -250,6 +251,26 @@ Without an MQTT bridge in the configuration every call raises `ConfigurationErro
 
 - A mapping payload is published as JSON, a string as UTF-8, bytes as they are.
 - Messages for a subscription are queued in the instance inbox and handled like notifications: one at a time, in arrival order, under the handler budget (3.2, core CORE-28). An exception in the handler has the same effect as one in `on_notification`.
+
+### 4.5 Media
+
+`ctx.media` lets a module play the media sources of the core media service (core 9.7) and start a full-screen takeover. Sources are configured by the user in the `media` key of the configuration, never by a module.
+
+```python
+class Media(Protocol):                # capability media.play (core CORE-397..409)
+    def sources(self) -> Sequence[MediaSource]: ...    # granted sources: name, kind, delivery, audio, state
+    def url(self, source: str, *, file: str | None = None) -> MediaUrl: ...
+                                      # {kind: "mjpeg" | "hls" | "file", url}: a path on the engine's origin
+    async def files(self, source: str, path: str = "") -> Sequence[MediaFile]: ...  # name, kind, size, modified
+    async def takeover(self, source: str, *, file: str | None = None,
+                       duration: float | None = None) -> str: ...  # media.takeover; returns the takeover id
+    async def stop(self, takeover_id: str | None = None) -> None: ...  # media.takeover
+```
+
+- MOD-100: `ctx.media` needs the capability `media.play` and a grant `media: [source names]` (or `["*"]`) in the instance config. `sources()` lists only granted sources; `url()` and `files()` on a source outside the grant raise `PermissionError`, and on an unknown source or file `ValueError`. A URL is a path on the engine's origin (core CORE-400), valid while the source exists; a module passes it to its front-end in its state and never builds one itself.
+- MOD-101: `takeover()` and `stop()` need the capability `media.takeover` and the same grant; they are the same as sending `MEDIA_TAKEOVER` and `MEDIA_STOP` (core CORE-411). `stop()` without an id stops the takeover the instance started last, and never one started by another instance, REST or MQTT; a takeover replaced by a newer one is already over.
+- MOD-102: A front-end shows media only through the elements `mm3-player` and `mm3-youtube` from `/core/mm3.js` (core CORE-409, CORE-413), with URLs from `ctx.media`, and never sets a media URL of its own. It handles `mm3-media-error` with a localized message (MOD-72) and stops its players in `onSuspend` (MOD-27).
+- MOD-103: `mm3-youtube` needs the capability `media.youtube` and the grant `youtube: true` (core CORE-413). The test kit gives `ModuleHarness` a fake media service (`h.media`: sources, files and URLs set by the test, recorded takeovers and stops), and the browser harness serves local fixture files as sources (§12.2).
 
 ## 5. Front-end contract
 
@@ -390,6 +411,9 @@ Privileged context members work only if the module declares the capability in `c
 | `admin.extension` | `admin_element`, `admin_scripts` | none | Admin pages added |
 | `input.touch` | Receiving pointer input on the kiosk | none | Module reacts to touch |
 | layout.control | ctx.layout.hide / show on other instances (core CORE-241) | none | Module can hide or show other modules |
+| `media.play` | `ctx.media.sources` / `url` / `files`; playing them with `mm3-player` (section 4.5, core CORE-409) | `media: [source names]` or `["*"]` | Sources the instance may play |
+| `media.takeover` | `ctx.media.takeover` / `stop`, MEDIA\_TAKEOVER and MEDIA\_STOP from the module (core CORE-411) | the `media` grant of `media.play` | Module can take over the whole screen |
+| `media.youtube` | `mm3-youtube`, with the CSP exception for youtube-nocookie.com (core CORE-413) | `youtube: true` | Module embeds YouTube videos |
 
 ```yaml
 - module: widget
@@ -515,6 +539,10 @@ A module is compliant when every MUST below passes; `mm3 module check` runs all 
 | MOD-25 | No requests from on\_request | MUST | test kit |
 | MOD-26 | Request errors handled | MUST | test kit (no responder, failing responder) |
 | MOD-27 | Frequent hide/show tolerated | MUST | test kit (rapid suspend/resume) |
+| MOD-100 | ctx.media only on granted sources; URLs only from ctx.media | MUST | test kit |
+| MOD-101 | Takeover only with media.takeover; stop only its own | MUST | test kit |
+| MOD-102 | Media only through mm3-player and mm3-youtube; errors handled; players stopped on suspend | MUST | static + browser harness |
+| MOD-103 | mm3-youtube only with media.youtube and the grant | MUST | static |
 
 ## 12. Conformance tooling
 
@@ -719,6 +747,7 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
+| 1.0 rev 16 | 2026-11-19 | Aligned with core spec 0.48 (media service, milestone 8): ctx.media with sources, URLs, files and the takeover (§4, §4.5); the capabilities media.play, media.takeover and media.youtube with their grants (§8); front-ends play media only through mm3-player and mm3-youtube; the fake media service of the test kit (MOD-100, MOD-101, MOD-102, MOD-103 added; §11 rows added). No MOD ids changed or removed |
 | 1.0 rev 15 | 2026-11-06 | Aligned with core spec 0.32: ctx.system.set\_display\_power(on) under the capability system.power (§4; core CORE-346). No MOD ids added, changed or removed |
 | 1.0 rev 14 | 2026-11-06 | Aligned with core spec 0.31: ctx.mqtt.ha\_entity() and HaEntity defined, errors without a bridge or connection, engine-owned topics (§4, §4.4; core CORE-342 to CORE-345). No MOD ids added, changed or removed |
 | 1.0 rev 13 | 2026-11-05 | Aligned with core spec 0.29: the admin element and its rules (MOD-38, MOD-39 added, §5.3, §11) and module routes on ctx.router (MOD-74 added, §8, §11); /core/mm3.js also exports render |

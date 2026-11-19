@@ -7,6 +7,17 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 8 defining; CORE-397..415, MED-01..08, MOD-100..103, spec 0.48 / rev 16)
+
+- Core spec 0.48: the media service (9.7, CORE-397..414) and the migration of MM² media
+  modules (CORE-415, milestone 9); the reference module `mm3-media` (9.4, MED-01..08);
+  `MEDIA_TAKEOVER`, `MEDIA_STOP` and `CORE_MEDIA_CHANGED` in the notification registry
+  (`mm3.notifications.REGISTRY`, CORE-224); ffmpeg, hls.js, cifs-utils and nfs-common in 1.2.
+- Module Contract 1.0 rev 16: `ctx.media` and the capabilities `media.play`, `media.takeover`
+  and `media.youtube` (§4.5, §8, MOD-100..103). **Module API:** additions only (draft 1.0).
+- Spec tooling knows the `MED` prefix. Spec only: the engine does not implement the new
+  requirements yet.
+
 ### Added (ENH-006; CORE-388..396, spec 0.47)
 
 - Core spec 0.47: camera devices (6.11, CORE-388..393) and the local camera feed (9.5, CORE-394..396),

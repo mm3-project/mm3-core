@@ -3,14 +3,14 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.47"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32", "0.33", "0.34", "0.35", "0.36", "0.37", "0.38", "0.39", "0.40", "0.41", "0.42", "0.43", "0.44", "0.45", "0.46", "0.47"]
+version = "0.48"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32", "0.33", "0.34", "0.35", "0.36", "0.37", "0.38", "0.39", "0.40", "0.41", "0.42", "0.43", "0.44", "0.45", "0.46", "0.47", "0.48"]
 
 [[spec]]
 name = "Module Contract"
 file = "contract.md"
-version = "1.0 rev 15"
-versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7", "1.0 rev 8", "1.0 rev 9", "1.0 rev 10", "1.0 rev 11", "1.0 rev 12", "1.0 rev 13", "1.0 rev 14", "1.0 rev 15"]
+version = "1.0 rev 16"
+versions = ["1.0 rev 1", "1.0 rev 2", "1.0 rev 3", "1.0 rev 4", "1.0 rev 5", "1.0 rev 6", "1.0 rev 7", "1.0 rev 8", "1.0 rev 9", "1.0 rev 10", "1.0 rev 11", "1.0 rev 12", "1.0 rev 13", "1.0 rev 14", "1.0 rev 15", "1.0 rev 16"]
 
 [[requirement]]
 id = "CORE-01"
@@ -3373,6 +3373,196 @@ changed_in = "0.47"
 status = "active"
 
 [[requirement]]
+id = "CORE-397"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "8b880018cf02"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-398"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "2713928adba1"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-399"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "3203474f2c12"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-400"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "7f3f99bbecc4"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-401"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "2bdf9e5c7343"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-402"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "7fed6a3c0921"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-403"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "f5a0e839e10f"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-404"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "bae4f0c0aa03"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-405"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "c7bb62a471c0"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-406"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "6f8fb431e12e"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-407"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "ee043169fca3"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-408"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "af17bb0e2e61"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-409"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "717a6f1accb7"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-410"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "8245c70326a9"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-411"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "c6894b8c916a"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-412"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "fce852eecac0"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-413"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "472eb10f8f2f"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-414"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "a52c2ae2bba9"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "CORE-415"
+spec = "Core spec"
+section = "9.7"
+title = "Media service"
+hash = "fda2c2ba485e"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
 id = "WGT-01"
 spec = "Core spec"
 section = "11.2"
@@ -3810,6 +4000,86 @@ title = "Presence and power: module boundary"
 hash = "04bf9422d801"
 introduced_in = "0.32"
 changed_in = "0.32"
+status = "active"
+
+[[requirement]]
+id = "MED-01"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "1505e8a79786"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "MED-02"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "70cf56328149"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "MED-03"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "b6316964a8d5"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "MED-04"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "84406220e5da"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "MED-05"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "2d5de04040ec"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "MED-06"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "388a83c17d1c"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "MED-07"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "3839a475849c"
+introduced_in = "0.48"
+changed_in = "0.48"
+status = "active"
+
+[[requirement]]
+id = "MED-08"
+spec = "Core spec"
+section = "9.4"
+title = "Reference modules"
+hash = "6eabc422305d"
+introduced_in = "0.48"
+changed_in = "0.48"
 status = "active"
 
 [[requirement]]
@@ -4640,4 +4910,44 @@ title = "Publishing to the module catalog"
 hash = "f6163a578f3c"
 introduced_in = "1.0 rev 2"
 changed_in = "1.0 rev 2"
+status = "active"
+
+[[requirement]]
+id = "MOD-100"
+spec = "Module Contract"
+section = "4.5"
+title = "Media"
+hash = "59a91f2786e3"
+introduced_in = "1.0 rev 16"
+changed_in = "1.0 rev 16"
+status = "active"
+
+[[requirement]]
+id = "MOD-101"
+spec = "Module Contract"
+section = "4.5"
+title = "Media"
+hash = "8b90ae0a52d0"
+introduced_in = "1.0 rev 16"
+changed_in = "1.0 rev 16"
+status = "active"
+
+[[requirement]]
+id = "MOD-102"
+spec = "Module Contract"
+section = "4.5"
+title = "Media"
+hash = "ae3e80c524ef"
+introduced_in = "1.0 rev 16"
+changed_in = "1.0 rev 16"
+status = "active"
+
+[[requirement]]
+id = "MOD-103"
+spec = "Module Contract"
+section = "4.5"
+title = "Media"
+hash = "e70bcd36f2bb"
+introduced_in = "1.0 rev 16"
+changed_in = "1.0 rev 16"
 status = "active"
