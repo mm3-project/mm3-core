@@ -10,6 +10,7 @@ them (MOD-43).
 Implements:
     CORE-224, CORE-225, CORE-226: Core spec 0.19, §5.5 Shared notification registry.
     -: Core spec 0.32, §5.5 Shared notification registry.
+    -: Core spec 0.48, §5.5 Shared notification registry.
     CORE-245: Core spec 0.9, §6.3 Hot reload.
     CORE-336, CORE-337: Core spec 0.34, §6.9 Pages and visibility.
     MOD-40: Module Contract 1.0 rev 6, §6.1 Messaging.
@@ -377,6 +378,76 @@ class CoreInteraction(_Payload):
     kind: Literal["touch"]
 
 
+class MediaTakeover(_Payload):
+    """Payload of ``MEDIA_TAKEOVER`` (core spec 5.5, CORE-411).
+
+    Attributes:
+        source: A source name of the ``media`` key (CORE-398).
+        file: Optional file of a ``files`` source.
+        duration: Optional duration in seconds.
+        id: Optional takeover id chosen by the sender.
+    """
+
+    source: str
+    file: str | None = None
+    duration: float | None = None
+    id: str | None = None
+
+
+class MediaStop(_Payload):
+    """Payload of ``MEDIA_STOP`` (core spec 5.5, CORE-411).
+
+    Attributes:
+        id: Optional id of the takeover to stop.
+    """
+
+    id: str | None = None
+
+
+class MediaTakeoverState(_Payload):
+    """The running takeover in ``CORE_MEDIA_CHANGED`` (CORE-412).
+
+    Attributes:
+        id: Takeover id.
+        source: Source name.
+        file: Optional file.
+        started: Start time (ISO 8601).
+        until: Optional end time (ISO 8601).
+    """
+
+    id: str
+    source: str
+    file: str | None = None
+    started: str
+    until: str | None = None
+
+
+class MediaSourceState(_Payload):
+    """One source in ``CORE_MEDIA_CHANGED`` (CORE-412).
+
+    Attributes:
+        name: Source name.
+        state: ``idle``, ``running``, ``error`` or ``unavailable``.
+        viewers: Number of viewers.
+    """
+
+    name: str
+    state: Literal["idle", "running", "error", "unavailable"]
+    viewers: int
+
+
+class CoreMediaChanged(_Payload):
+    """Payload of ``CORE_MEDIA_CHANGED`` (core spec 5.5, CORE-412).
+
+    Attributes:
+        takeover: The running takeover, or None.
+        sources: The state of every source.
+    """
+
+    takeover: MediaTakeoverState | None
+    sources: list[MediaSourceState]
+
+
 REGISTRY: Mapping[str, RegisteredName] = _rows(
     RegisteredName("PRESENCE_DETECTED", "event", PresenceEvent),
     RegisteredName("PRESENCE_CLEARED", "event", PresenceEvent),
@@ -396,6 +467,9 @@ REGISTRY: Mapping[str, RegisteredName] = _rows(
     RegisteredName("WEATHER_CURRENT", "event", WeatherCurrent),
     RegisteredName("VISION_POSE", "event", VisionPose),
     RegisteredName("VISION_GESTURE", "event", VisionGesture),
+    RegisteredName("MEDIA_TAKEOVER", "command", MediaTakeover),
+    RegisteredName("MEDIA_STOP", "command", MediaStop),
+    RegisteredName("CORE_MEDIA_CHANGED", "event", CoreMediaChanged, engine_only=True),
 )
 """Registered names, as in the core spec §5.5 table (CORE-224)."""
 

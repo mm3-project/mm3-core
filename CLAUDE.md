@@ -1,7 +1,7 @@
 # Notes for Claude
 
 - Specs are authoritative: `docs/spec/README.md` links the Core Engine
-  Specification (CORE-xx, WGT-xx, CLK-xx, WTH-xx, PRS-xx) and the Module Contract (MOD-xx).
+  Specification (CORE-xx, WGT-xx, CLK-xx, WTH-xx, PRS-xx, MED-xx) and the Module Contract (MOD-xx).
 - The full project rules are `docs/rules.md` in this repository (the master since
   2026-11-17; the claude.ai Project document `claude/mm3-rules.md` only points
   here); follow them. Change them in place, through a pull request.

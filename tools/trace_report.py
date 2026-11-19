@@ -38,6 +38,7 @@ SPEC_KEYS = {
     "CLK": "core",
     "WTH": "core",
     "PRS": "core",
+    "MED": "core",
     "MOD": "contract",
 }
 COMMENT_GLOBS = [

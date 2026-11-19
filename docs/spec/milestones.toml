@@ -397,7 +397,11 @@ status = "not_started"
 #   feed (CORE-388..396), settled in the vision defining phase because Media is a
 #   consumer of the device owner; the rest of the media requirements are still
 #   settled in its own defining chat.
-requirements = ["CORE-388..396"]
+# Core 0.48 / Contract 1.0 rev 16 (19 Nov 2026, milestone 8 defining chat) add
+#   the media service (9.7, CORE-397..414), the reference module mm3-media
+#   (MED-01..08) and ctx.media (MOD-100..103). CORE-415 (migration of MM2 media
+#   modules) belongs to milestone 9, where mm3 migrate is built.
+requirements = ["CORE-388..396", "CORE-397..414", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]
 number = 9
@@ -405,7 +409,7 @@ name = "Extensions: widget builder, MM2 migration, default modules"
 status = "not_started"
 requirements = [
   "CORE-80..83", "WGT-01..05", "WGT-10..12", "WGT-20..23", "WGT-30", "WGT-31",
-  "WGT-40", "WGT-41",
+  "WGT-40", "WGT-41", "CORE-415",
 ]
 
 [[milestone]]
