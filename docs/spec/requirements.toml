@@ -3,8 +3,8 @@
 [[spec]]
 name = "Core spec"
 file = "core.md"
-version = "0.46"
-versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32", "0.33", "0.34", "0.35", "0.36", "0.37", "0.38", "0.39", "0.40", "0.41", "0.42", "0.43", "0.44", "0.45", "0.46"]
+version = "0.47"
+versions = ["0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "0.10", "0.11", "0.12", "0.13", "0.14", "0.15", "0.16", "0.17", "0.18", "0.19", "0.20", "0.21", "0.22", "0.23", "0.24", "0.25", "0.26", "0.27", "0.28", "0.29", "0.30", "0.31", "0.32", "0.33", "0.34", "0.35", "0.36", "0.37", "0.38", "0.39", "0.40", "0.41", "0.42", "0.43", "0.44", "0.45", "0.46", "0.47"]
 
 [[spec]]
 name = "Module Contract"
@@ -3280,6 +3280,96 @@ title = "Remote-control API"
 hash = "e878315b72ac"
 introduced_in = "0.43"
 changed_in = "0.43"
+status = "active"
+
+[[requirement]]
+id = "CORE-388"
+spec = "Core spec"
+section = "6.11"
+title = "Camera devices"
+hash = "a139b446f17d"
+introduced_in = "0.47"
+changed_in = "0.47"
+status = "active"
+
+[[requirement]]
+id = "CORE-389"
+spec = "Core spec"
+section = "6.11"
+title = "Camera devices"
+hash = "51ba06c26303"
+introduced_in = "0.47"
+changed_in = "0.47"
+status = "active"
+
+[[requirement]]
+id = "CORE-390"
+spec = "Core spec"
+section = "6.11"
+title = "Camera devices"
+hash = "46d42c7c44fa"
+introduced_in = "0.47"
+changed_in = "0.47"
+status = "active"
+
+[[requirement]]
+id = "CORE-391"
+spec = "Core spec"
+section = "6.11"
+title = "Camera devices"
+hash = "91c0281b1343"
+introduced_in = "0.47"
+changed_in = "0.47"
+status = "active"
+
+[[requirement]]
+id = "CORE-392"
+spec = "Core spec"
+section = "6.11"
+title = "Camera devices"
+hash = "7fc8492b6316"
+introduced_in = "0.47"
+changed_in = "0.47"
+status = "active"
+
+[[requirement]]
+id = "CORE-393"
+spec = "Core spec"
+section = "6.11"
+title = "Camera devices"
+hash = "8e4e2941a159"
+introduced_in = "0.47"
+changed_in = "0.47"
+status = "active"
+
+[[requirement]]
+id = "CORE-394"
+spec = "Core spec"
+section = "9.5"
+title = "Local camera feed"
+hash = "3d8fb5da64b8"
+introduced_in = "0.47"
+changed_in = "0.47"
+status = "active"
+
+[[requirement]]
+id = "CORE-395"
+spec = "Core spec"
+section = "9.5"
+title = "Local camera feed"
+hash = "68199e8760e4"
+introduced_in = "0.47"
+changed_in = "0.47"
+status = "active"
+
+[[requirement]]
+id = "CORE-396"
+spec = "Core spec"
+section = "9.5"
+title = "Local camera feed"
+hash = "42b7715c0b82"
+introduced_in = "0.47"
+changed_in = "0.47"
 status = "active"
 
 [[requirement]]

@@ -393,7 +393,11 @@ status = "not_started"
 #   service with ffmpeg, sources, capabilities, full-screen takeover, the
 #   reference module mm3-media). The kiosk audio base it builds on (CORE-295..297)
 #   belongs to milestone 3.
-requirements = []
+# Core 0.47 (19 Nov 2026) adds the camera devices registry and the local camera
+#   feed (CORE-388..396), settled in the vision defining phase because Media is a
+#   consumer of the device owner; the rest of the media requirements are still
+#   settled in its own defining chat.
+requirements = ["CORE-388..396"]
 
 [[milestone]]
 number = 9

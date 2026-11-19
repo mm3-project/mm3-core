@@ -7,6 +7,13 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (ENH-006; CORE-388..396, spec 0.47)
+
+- Core spec 0.47: camera devices (6.11, CORE-388..393) and the local camera feed (9.5, CORE-394..396),
+  assigned to milestone 8, plus `VISION_POSE` and `VISION_GESTURE` in the notification registry
+  (`mm3.notifications.REGISTRY`, CORE-224). Spec only: the engine does not implement the new
+  requirements yet.
+
 ### Added (issue log in the repository; CORE-75)
 
 - The issue and enhancement log (`ISS-nnn`, `ENH-nnn`) moved from the claude.ai project documents into
