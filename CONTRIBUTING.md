@@ -106,6 +106,9 @@ The workflow needs the repository secret `RESTACK_TOKEN`: a fine-grained
 personal access token (or GitHub App token) for this repository with
 **Contents: Read and write** and **Pull requests: Read and write**. A push
 made with the default `GITHUB_TOKEN` would not start CI on the PR.
+When a push or a comment is refused (a missing permission gives HTTP 403), the
+workflow log shows the error output of `git push` or `gh` as an `::error::` or
+`::warning::` line; a failed comment does not stop the other PRs, but the run fails.
 
 By hand, the same steps are:
 

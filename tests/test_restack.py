@@ -163,3 +163,32 @@ def test_core_75_cli_reports_each_pr(
         os.chdir(cwd)
     assert code == 0
     assert '"status": "rebased"' in capsys.readouterr().out
+
+
+def test_core_75_failed_comment_is_a_warning_with_gh_output(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    def gh(*_a: object, **_k: object) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            ["gh"], 1, "", "gh: Resource not accessible (HTTP 403)\n"
+        )
+
+    monkeypatch.setattr(restack.subprocess, "run", gh)
+    assert restack.post_comment("o/r", 7, "hello") is False
+    err = capsys.readouterr().err
+    assert "::warning::could not comment on #7: gh: Resource not accessible (HTTP 403)" in err
+
+
+def test_core_75_refused_push_reports_git_output(
+    repos: tuple[Path, Path], capsys: pytest.CaptureFixture[str]
+) -> None:
+    origin, work = repos
+    spec_head = (work.parent / "spec_head").read_text()
+    hook = origin / "hooks" / "pre-receive"
+    hook.write_text("#!/bin/sh\necho 'denied by test hook' >&2\nexit 1\n")
+    hook.chmod(0o755)
+    o = restack.restack(restack.Git(work), 2, "code", spec_head, push=True, regen=fake_regen)
+    assert o.status == "push_failed"
+    assert o.error is not None
+    assert "denied by test hook" in o.error
+    assert "::error::push of code (#2) refused:" in capsys.readouterr().err

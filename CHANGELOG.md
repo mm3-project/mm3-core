@@ -7,6 +7,12 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (CORE-75)
+
+- `tools/restack.py` reports a refused push and a comment that cannot be posted with the error
+  output of `git push` or `gh` (workflow `::error::` and `::warning::` lines) instead of a bare
+  traceback; a failed comment no longer stops the other pull requests, and the run still fails.
+
 ### Added (milestone 8 step 2: media service and delivery; CORE-397, CORE-400, CORE-401, CORE-403, CORE-404, CORE-412, spec 0.51)
 
 - Media service `mm3.core.media` (CORE-397), the only code that starts `ffmpeg`: a child starts
