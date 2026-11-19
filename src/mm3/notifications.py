@@ -252,6 +252,67 @@ class WeatherCurrent(_Payload):
     observed_at: AwareDatetime
 
 
+class VisionPoint(_Payload):
+    """A point over the mirror screen (``VISION_POSE``).
+
+    Attributes:
+        x: 0 to 1, left to right.
+        y: 0 to 1, top to bottom.
+        z: Optional depth.
+    """
+
+    x: float = Field(ge=0, le=1)
+    y: float = Field(ge=0, le=1)
+    z: float | None = None
+
+
+class VisionPerson(_Payload):
+    """One tracked person of a ``VISION_POSE`` payload.
+
+    Attributes:
+        id: Tracking id.
+        head: Optional head point.
+        left_hand: Optional left hand point.
+        right_hand: Optional right hand point.
+    """
+
+    id: int
+    head: VisionPoint | None = None
+    left_hand: VisionPoint | None = None
+    right_hand: VisionPoint | None = None
+
+
+class VisionPose(_Payload):
+    """Payload of ``VISION_POSE`` (core spec 5.5, CORE-224).
+
+    Attributes:
+        device: The device name (6.11).
+        people: The tracked people.
+    """
+
+    device: str
+    people: list[VisionPerson]
+
+
+class VisionGesture(_Payload):
+    """Payload of ``VISION_GESTURE`` (core spec 5.5, CORE-224).
+
+    The gesture names are fixed with the vision requirements, so any
+    string is accepted for now.
+
+    Attributes:
+        gesture: Gesture name.
+        hand: Optional ``left`` or ``right``.
+        confidence: Optional confidence.
+        device: Optional device name.
+    """
+
+    gesture: str
+    hand: Literal["left", "right"] | None = None
+    confidence: float | None = None
+    device: str | None = None
+
+
 class ConfigChanged(_Payload):
     """Payload of ``CORE_CONFIG_CHANGED`` (core spec 6.3).
 
@@ -333,6 +394,8 @@ REGISTRY: Mapping[str, RegisteredName] = _rows(
     RegisteredName("CORE_LOCALE_CHANGED", "event", LocaleChanged, engine_only=True),
     RegisteredName("CORE_INTERACTION", "event", CoreInteraction, engine_only=True),
     RegisteredName("WEATHER_CURRENT", "event", WeatherCurrent),
+    RegisteredName("VISION_POSE", "event", VisionPose),
+    RegisteredName("VISION_GESTURE", "event", VisionGesture),
 )
 """Registered names, as in the core spec §5.5 table (CORE-224)."""
 

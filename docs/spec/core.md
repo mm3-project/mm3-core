@@ -1,6 +1,6 @@
 # MagicMirror 3 — Core Engine Specification
 
-Oct 27, 2026 · @Nicola Reina · Version 0.46 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 0.47 (draft)
 
 ## 1. Scope and requirements baseline
 
@@ -358,6 +358,8 @@ Names used by more than one module are registered here with their payload, and t
 | `CORE_CONFIG_ERROR` | event, engine only | `{count: int, errors: [{file, line, path, code}]}` (the first 20 errors) | engine → any (6.3) |
 | `CORE_LOCALE_CHANGED` | event, engine only | `{locale: str}` | engine → any, or one instance (CORE-245) |
 | WEATHER\_CURRENT | event | {location: {lat, lon, name?}, condition, is\_day, temperature, feels\_like?, humidity?, wind\_speed?, units, observed\_at} (fields: WTH-11) | weather → any (9.4) |
+| VISION\_POSE | event | {device: str, people: \[{id: int, head?: Point, left\_hand?: Point, right\_hand?: Point}\]}, Point = {x, y, z?} with x and y from 0 to 1 over the mirror screen, left to right and top to bottom | vision → any |
+| VISION\_GESTURE | event | {gesture: str, hand?: "left" \| "right", confidence?: number, device?: str}; the gesture names are fixed with the vision requirements | vision → any |
 
 `LocalizedText` in a payload is a string or a map from BCP 47 tags to strings (CORE-101).
 
@@ -863,6 +865,17 @@ The shell looks like MagicMirror² by default, and every colour, size and font i
 - CORE-261: The shell defines the theme variables on `:root`; they are inherited into every shadow root. Font: `--mm3-font-family` (Roboto Condensed, vendored, then `sans-serif`). Sizes, all multiplied by the instance's `--mm3-scale`: `--mm3-size-xsmall` 15px, `--mm3-size-small` 20px, `--mm3-size-medium` 30px, `--mm3-size-large` 65px, `--mm3-size-xlarge` 75px, with `--mm3-font-size` equal to small. Colours: `--mm3-color-bg` #000, `--mm3-color-fg` #aaa, `--mm3-color-bright` #fff, `--mm3-color-dimmed` #666, and the state tokens `--mm3-color-good`, `--mm3-color-warning`, `--mm3-color-critical`, `--mm3-color-accent`, `--mm3-color-muted` (also used by WGT-11). Spacing: `--mm3-gap` (from `layout.gap`). The list is part of the Module API (Contract MOD-33): adding a variable is a minor change, removing or renaming one is a major change.
 - CORE-262: The optional file `custom.css` next to the main config file (`/etc/mm3/custom.css`) is served at `/custom.css` and loaded after the theme. It may set theme variables for the whole mirror or for one instance (`[data-instance="weather_home"]`), and style the shell: page background, cells, headers. It cannot reach inside shadow roots. It follows the limits of CORE-214 except that it may be up to 64 KiB, and a file that breaks them is a validation error `CORE_CFG_CSS` with path `/custom_css`. It belongs to the config set as the history section `custom_css` (CORE-153, CORE-216) and is watched for hot reload (CORE-208).
 
+### 6.11 Camera devices
+
+A camera or a Kinect can be opened by one process at a time. The configuration says which process it is; the engine resolves the owner, checks the entries and publishes the result. These requirements extend CORE-201 (the top-level keys) and CORE-243 (the validation codes) and change neither.
+
+- CORE-388: `devices` is an optional top-level key (default empty; live on hot reload, 6.3). It maps a device name (`[a-z][a-z0-9_]{0,31}`) to `{kind, path, serial, owner, images}`. `kind` is `camera` (a V4L2 device; `path` is required, absolute, and under `/dev/v4l/by-id/` or `/dev/v4l/by-path/`, otherwise the error `CORE_CFG_DEVICE_PATH`) or `kinect` (a Kinect v1; `serial` is optional, and without it the first one found is used). `owner` is `auto`, `vision`, `media` or `none` (default `auto`). `images` is a boolean (default `false`, CORE-392).
+- CORE-389: Owner resolution. `auto` resolves to `vision` when an enabled instance of the module `vision` exists; otherwise to `media` for a `camera` and to `none` for a `kinect`. `owner: media` on a `kinect` is the validation error `CORE_CFG_DEVICE_OWNER`. The owner is resolved at start and on every hot reload. A device whose owner is `none` is opened by nobody.
+- CORE-390: Checks. The same device listed twice (the same `path` or `serial`, compared after resolving symbolic links where the path exists) is the error `CORE_CFG_DEVICE_DUPLICATE`, naming both entries. `owner: vision` while no instance of the module `vision` is enabled is the warning `CORE_CFG_DEVICE_OWNER_ABSENT` (CORE-206), not an error. The four codes are added to the list of CORE-243 and to the engine catalog (8.3) with English messages that use their `params`.
+- CORE-391: Registry file. At start and after every hot reload the engine writes `/run/mm3/devices.json` atomically (a temporary file in the same directory, then a rename), with mode 0644: `{devices: {<name>: {kind, path?, serial?, owner, images, feed}}}`, where `owner` is the resolved owner and `feed` is the socket path of CORE-394. A service opens only the devices whose owner is itself and reads the file again when it changes. No capability and no Module API call is involved.
+- CORE-392: Camera images. A camera image is any view of a frame in a browser (the debug view of Vision, the camera view of Media). It is shown only while its device has `images: true`; an owner or a consumer MUST NOT send frames to a browser while it is `false`. No frame is ever stored. While any device has `images: true`, the admin home and the Form show a warning banner (CORE-387), core catalog key `CORE_ADMIN_DEVICES_IMAGES_WARNING`, saying that every client admitted by `server.allow` can see the images.
+- CORE-393: Admin. `GET /api/v1/devices` (admin listener, read-only) returns `[{name, kind, path, serial, owner, reason, present, images}]` sorted by `name`: `owner` is the resolved owner, `reason` is `explicit` or `auto`, and `present` says whether the path exists (null for a `kinect`). The Form shows the `devices` section like every other section (6.4), and the debug overview lists each device with its owner.
+
 ## 7. Lifecycle and error handling
 
 Each module instance follows one state machine owned by the Supervisor; a fault in one instance never stops the engine or other instances (CORE-04).
@@ -1084,6 +1097,14 @@ MM3 ships three reference modules that prove the Module Contract end to end: `mm
 - WTH-10: Views: `current` shows icon, temperature, the localized condition text and the optional fields; `daily` lists `days` entries (weekday, icon, minimum and maximum, optional probability); `hourly` lists `hours` entries every `hour_step` hours. Condition texts are catalog keys `WEATHER_<CONDITION>` (with `_NIGHT` variants for `clear` and `partly_cloudy`); numbers and units use `fmtNumber`; the `HEADER` key is provided (MOD-67).
 - WTH-11: With `emit` on, every instance sends `WEATHER_CURRENT` after each successful refresh (the current block is always fetched), with the registered payload (CORE-224, 5.5): `location` `{lat, lon, name?}`, `condition` (WTH-05), `is_day`, `temperature`, optional `feels_like`, `humidity`, `wind_speed`, `units` (`metric` or `imperial`) and `observed_at` (aware ISO 8601). The JSON Schema is published in `mm3.notifications` (CORE-225).
 - WTH-12: Tests: `ModuleHarness` with HTTP mocks of Open-Meteo responses (fixtures for each condition group and for a response without optional fields); virtual-clock tests for the refresh cycle, stale marking and restart with stored data; `check_contract()`; browser harness renders of the three views in five languages.
+
+### 9.5 Local camera feed
+
+A service that owns a device may offer its picture to other local services, so that the device is opened and decoded once. Camera images in a browser are governed by CORE-392.
+
+- CORE-394: Socket. The owner of a device MAY offer a feed on the Unix stream socket `/run/mm3/feed/<device name>.sock`, created by the owner with mode 0660 and group `mm3`. The feed uses no network and no storage. Its path is given in the registry file (CORE-391).
+- CORE-395: Stream. On connect the owner sends one JSON line `{"device", "width", "height", "fps", "format": "jpeg"}`, then frames: a 4-byte big-endian length followed by that many bytes of one JPEG. The size is at most 640 × 480 and the rate at most 30 frames a second; the default is 320 × 240 at 15. A slow reader gets the newest frame, older ones are dropped and never queued. The owner sends frames only while at least one reader is connected.
+- CORE-396: Change of owner. When the owner of a device is `media` (Vision absent), Media opens the device itself; when it is `vision`, Media reads the feed. After a hot reload that changes the owner, the previous owner releases the device within 5 s and the new one opens it afterwards.
 
 ## 10. Security, packaging, deployment, quality
 
@@ -1532,6 +1553,7 @@ After approval: repository scaffold and `mm3.core` skeleton with tests for CORE-
 
 | Version | Date | Changes |
 | --- | --- | --- |
+| 0.47 | 2026-11-19 | Camera devices and the local camera feed, settled before the Media milestone: the devices key with one owner per device (auto, vision, media or none) resolved at start and on reload, the checks and their codes, the registry file, camera images off by default with the admin warning, the devices route and the Form section (6.11, CORE-388–393); the local feed socket, its stream format and the change of owner (9.5, CORE-394–396); VISION\_POSE and VISION\_GESTURE in the registry (5.5). Source: ENH-006 |
 | 0.46 | 2026-11-17 | Hot reload of module settings in the shells: on reload resync the shell keeps an element only when its public config is unchanged too, and re-creates an element whose public config changed with the config of the new welcome, as a disable and an enable did (CORE-275 changed). Source: ISS-002 |
 | 0.45 | 2026-11-14 | Backup routes of the engine settled before the end of milestone 7: the routes it forwards (list, remote list, create, download, upload, verify, preview, keygen, remotes and restore, on the admin listener only), upload as a raw body of at most 2 GiB staged by a new installer route and used by a restore as {upload}, the shapes of the answers, and which routes need re-authentication (CORE-361 changed); 9.1 table updated. Source: ENH-002 |
 | 0.44 | 2026-11-14 | Engine catalog and installer API settled before the end of milestone 7: item and detail shapes of the catalog (a module with no compatible release is listed with the reason; check result and report link), the answer of the refresh, the installer status with the lock, the operation routes and object, the mapping of the installer's answers to the CORE\_API\_\* codes, and the polling and frames of the installer topic (CORE-356 changed). Source: ENH-002 |
