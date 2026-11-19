@@ -401,7 +401,10 @@ status = "not_started"
 #   the media service (9.7, CORE-397..414), the reference module mm3-media
 #   (MED-01..08) and ctx.media (MOD-100..103). CORE-415 (migration of MM2 media
 #   modules) belongs to milestone 9, where mm3 migrate is built.
-requirements = ["CORE-388..396", "CORE-397..414", "MED-01..08", "MOD-100..103"]
+# Core 0.49 (19 Nov 2026, start of milestone 8 development) adds CORE-416
+#   (devices and media as history sections) and changes CORE-390, CORE-399,
+#   CORE-406 and CORE-407 of this milestone.
+requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]
 number = 9
