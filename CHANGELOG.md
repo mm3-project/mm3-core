@@ -7,6 +7,37 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 8 step 2: media service and delivery; CORE-397, CORE-400, CORE-401, CORE-403, CORE-404, CORE-412, spec 0.51)
+
+- Media service `mm3.core.media` (CORE-397), the only code that starts `ffmpeg`: a child starts
+  on the first viewer and stops 30 s after the last; at most `media.limits.processes` children,
+  and a request beyond the limit is 503 with `Retry-After: 5`; children run with `nice` 10; a
+  child that fails is restarted with backoff (1, 2, 4 … 60 s) and five failures in ten minutes
+  give the state `error` until the next hot reload; `ffmpeg`'s standard error is logged at debug
+  level with URL credentials masked. `media` applies on hot reload: changed and removed sources
+  stop.
+- Delivery routes (CORE-400) on the mirror listener, and under `/admin/preview/media/` behind an
+  admin session: `/media/<source>/stream.mjpg` (multipart JPEG, newest frame wins),
+  `/media/<source>/hls/index.m3u8` with 2 s fragmented-MP4 segments and a list of 6 in
+  `/run/mm3/media/<source>/` (deleted when the child stops), and `/media/files/<path>` with
+  range requests. `auto` picks MJPEG for cameras and for `rtsp` without audio, HLS otherwise. A
+  `camera` source is 403 while its device has `images: false`.
+- Remux and transcode (CORE-401): codecs are copied by default; a copied HLS source that is not
+  H.264 with AAC, MP3 or Opus gets the state `error` with the reason `codec`; with
+  `transcode: true` H.264 comes from VA-API (`h264_vaapi`) or `libx264` `veryfast`, audio AAC, at
+  most `media.limits.transcode` at once. ADTS AAC from MPEG-TS and RTSP is copied through
+  `aac_adtstoasc`. `mm3-install.sh` puts `mm3` in the groups `render` and `video` on kiosk
+  systems; the engine warns `media_group` when it is not a member.
+- Remote streams (CORE-403): `https` and `rtsps` are verified against the system CA store; a
+  protocol whitelist per scheme means no redirect to another scheme; credentials written in a
+  source URL count as secrets for logs and diagnostic bundles.
+- Media folder (CORE-404): `<state>/media/` with `files/` and `shares/`, only the listed
+  extensions, never through a symbolic link.
+- Media state (CORE-412): `CORE_MEDIA_CHANGED` on change, at most once a second;
+  `GET /api/v1/media` (sources with `reason`, running children); a Media card on the debug
+  overview, its texts in EN, IT, FR, ES, DE. The takeover is null until its step.
+- `mm3 diag check` fails when media sources are configured and `ffmpeg` is missing (CORE-397);
+  `mm3-install.sh` installs the package `ffmpeg`.
 ### Changed (spec 0.51; CORE-397, CORE-400 and CORE-412 changed)
 
 - Core spec 0.51: an HLS viewer is a client address seen in the last 10 s, a child that exits with

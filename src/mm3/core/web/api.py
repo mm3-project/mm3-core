@@ -34,6 +34,7 @@ Implements:
     CORE-356: Core spec 0.44, §10.7 Installer service.
     CORE-358: Core spec 0.33, §10.7 Installer service.
     CORE-393: Core spec 0.47, §6.11 Camera devices.
+    CORE-412: Core spec 0.51, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -77,6 +78,7 @@ if TYPE_CHECKING:
     from mm3.core.config.editor import ConfigEditor
     from mm3.core.config.manager import ConfigManager
     from mm3.core.engine import Engine
+    from mm3.core.media import MediaService
     from mm3.core.pages import PageService
     from mm3.core.supervisor import ManagedInstance
     from mm3.core.web.kiosk import KioskAgents
@@ -107,6 +109,7 @@ class ApiServices:
         mirror: Show on mirror (CORE-307).
         installer: The link to the installer service (CORE-356, CORE-382); without it the
             installer counts as unavailable.
+        media: The media service (CORE-412); without it there are no sources.
     """
 
     engine: Engine
@@ -119,6 +122,7 @@ class ApiServices:
     editor: ConfigEditor | None = None
     mirror: MirrorPreview | None = None
     installer: InstallerLink | None = None
+    media: MediaService | None = None
 
 
 # --- request bodies ---------------------------------------------------------------------
@@ -530,6 +534,15 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
         if services.manager is None:
             return []
         return device_list(resolved(services.manager.current))
+
+    # --- media (CORE-412) ---------------------------------------------------------------
+
+    @router.get("/media")
+    async def get_media() -> dict[str, Any]:
+        """The media state: takeover, every source and the running children (CORE-412)."""
+        if services.media is None:
+            return {"takeover": None, "sources": [], "children": []}
+        return services.media.status()
 
     # --- Show on mirror (CORE-307) -----------------------------------------------------
 

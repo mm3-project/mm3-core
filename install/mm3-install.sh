@@ -33,6 +33,10 @@
 # own venv and the user mm3-build.
 # Implements CORE-366 (Core spec 0.37, §10.8 Backup and restore): the backup
 # of kind pre before an upgrade, and the packages age and rclone.
+# Implements CORE-397 (Core spec 0.51, §9.7 Media service): the package ffmpeg,
+# which the media service runs.
+# Implements CORE-401 (Core spec 0.48, §9.7 Media service): on kiosk systems mm3
+# in the groups render and video (VA-API and a camera the engine owns).
 set -Eeuo pipefail
 
 readonly EXIT_UNSUPPORTED=1
@@ -44,6 +48,9 @@ readonly KIOSK_DEVICE_GROUPS=(video input render)
 # CORE-348: the engine user reaches the I2C bus (ddcutil) and the CEC adapter
 # (cec-client) through these groups, where they exist.
 readonly DISPLAY_CONTROL_GROUPS=(i2c dialout)
+# CORE-401: the media service transcodes with VA-API on the render node and may
+# open a camera, through these groups, where they exist.
+readonly MEDIA_GROUPS=(render video)
 
 # Locations and names. The environment overrides them for the tests of this
 # script only; a real installation uses the defaults.
@@ -249,6 +256,28 @@ ensure_display_control_groups() {
   done
 }
 
+# CORE-401: on kiosk systems mm3 joins the groups render and video that exist. A
+# failed change is logged, not fatal; the engine warns at start (media_group).
+ensure_media_groups() {
+  local group
+  if [[ $WANT_KIOSK != yes ]]; then
+    return 0
+  fi
+  for group in "${MEDIA_GROUPS[@]}"; do
+    if ! getent group "$group" >/dev/null; then
+      continue
+    fi
+    if in_group "$SVC_USER" "$group"; then
+      continue
+    fi
+    if usermod --append --groups "$group" "$SVC_USER"; then
+      say "added $SVC_USER to the group $group"
+    else
+      warn "could not add $SVC_USER to the group $group; media transcoding may not reach the GPU"
+    fi
+  done
+}
+
 display_manager_enabled() {
   [[ -d /run/systemd/system ]] && systemctl is-enabled --quiet display-manager.service 2>/dev/null
 }
@@ -269,7 +298,7 @@ decide_kiosk() {
 }
 
 install_packages() {
-  local packages=(python3 python3-venv ca-certificates polkitd age rclone)
+  local packages=(python3 python3-venv ca-certificates polkitd age rclone ffmpeg)
   if [[ $WANT_KIOSK == yes ]]; then
     packages+=(cage chromium wlr-randr ddcutil cec-utils)
   fi
@@ -546,6 +575,7 @@ main() {
   install_packages
   ensure_kiosk_groups
   ensure_display_control_groups
+  ensure_media_groups
   verify_cage
   pre_upgrade_backup
   build_venv

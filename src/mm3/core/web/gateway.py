@@ -39,6 +39,7 @@ from mm3.core.web.shell import ShellSources
 from mm3.core.web.ws import MAX_FRAME_BYTES, PING_INTERVAL_S, PING_TIMEOUT_S, ClientHub
 
 if TYPE_CHECKING:
+    from mm3.core.media import MediaService
     from mm3.core.web.adminws import AdminChannel
     from mm3.core.web.api import ApiServices
     from mm3.core.web.kiosk import KioskAgents
@@ -182,6 +183,7 @@ class WebGateway:
         channel: The admin channel ``/admin/ws`` (CORE-304).
         socket_path: The local admin socket; it is served only with ``api`` (CORE-311).
         locale: Returns the language of the admin pages.
+        media: The media service, for the delivery routes (CORE-400).
 
     Implements:
         CORE-60: Core spec 0.12, §10 Security, packaging, deployment, quality.
@@ -202,6 +204,7 @@ class WebGateway:
         channel: AdminChannel | None = None,
         socket_path: Path | None = None,
         locale: Callable[[], str] = lambda: "en",
+        media: MediaService | None = None,
     ) -> None:
         self.auth = auth or (hub.auth if hub is not None else WebAuth.open(state_dir))
         self.hub = hub
@@ -210,7 +213,7 @@ class WebGateway:
         self.mirror = Listener(
             "mirror",
             protect(
-                mirror_app(self.auth, hub, sources, agents),
+                mirror_app(self.auth, hub, sources, agents, media),
                 server_allow or (lambda: start_allow),
                 "mirror",
             ),
@@ -220,7 +223,7 @@ class WebGateway:
         self.admin = Listener(
             "admin",
             protect(
-                admin_app(self.auth, hub, sources, api, channel, locale),
+                admin_app(self.auth, hub, sources, api, channel, locale, media),
                 lambda: admin_allow,
                 "admin",
             ),

@@ -2632,3 +2632,57 @@ msgstr "Sì"
 
 msgid "CORE_ADMIN_DEVICE_NO"
 msgstr "No"
+
+msgid "CORE_ADMIN_MEDIA"
+msgstr "Media"
+
+msgid "CORE_ADMIN_MEDIA_SOURCE"
+msgstr "Sorgente"
+
+msgid "CORE_ADMIN_MEDIA_STATE"
+msgstr "Stato"
+
+msgid "CORE_ADMIN_MEDIA_VIEWERS"
+msgstr "Spettatori"
+
+msgid "CORE_ADMIN_MEDIA_REASON"
+msgstr "Motivo"
+
+msgid "CORE_ADMIN_MEDIA_CHILDREN"
+msgstr "Processi in esecuzione"
+
+msgid "CORE_ADMIN_MEDIA_PID"
+msgstr "PID"
+
+msgid "CORE_ADMIN_MEDIA_TRANSCODE"
+msgstr "Transcodifica"
+
+msgid "CORE_ADMIN_MEDIA_STARTED"
+msgstr "Avviato"
+
+msgid "CORE_ADMIN_MEDIA_STATE_IDLE"
+msgstr "Inattiva"
+
+msgid "CORE_ADMIN_MEDIA_STATE_RUNNING"
+msgstr "In esecuzione"
+
+msgid "CORE_ADMIN_MEDIA_STATE_ERROR"
+msgstr "Errore"
+
+msgid "CORE_ADMIN_MEDIA_STATE_UNAVAILABLE"
+msgstr "Non disponibile"
+
+msgid "CORE_ADMIN_MEDIA_REASON_CODEC"
+msgstr "I codec non sono riproducibili in un browser; imposta transcode: true"
+
+msgid "CORE_ADMIN_MEDIA_REASON_FAILED"
+msgstr "ffmpeg è fallito 5 volte in 10 minuti; si riprova dopo il prossimo ricaricamento"
+
+msgid "CORE_ADMIN_MEDIA_REASON_FFMPEG"
+msgstr "ffmpeg non è installato"
+
+msgid "CORE_ADMIN_MEDIA_REASON_CAMERA"
+msgstr "Le sorgenti camera non sono ancora disponibili"
+
+msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
+msgstr "Riavvio dopo un errore"

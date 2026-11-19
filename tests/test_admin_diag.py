@@ -686,6 +686,7 @@ def test_core_312_engine_down(tmp_path: Path) -> None:
         "MQTT broker",
         "display driver",
         "locale catalogs",
+        "ffmpeg",
     ]
     o = outcomes(checks)
     assert o["config valid"] == "pass"
@@ -695,6 +696,7 @@ def test_core_312_engine_down(tmp_path: Path) -> None:
     assert o["MQTT broker"] == "skip"
     assert o["display driver"] == "skip"
     assert o["locale catalogs"] == "pass"
+    assert o["ffmpeg"] == "skip"  # CORE-397: no media sources
     busy = run_checks(result, FakeClient(None), reg, port_free=lambda h, p: False)
     assert outcomes(busy)["listener ports"] == "fail"
     assert all(c.line().startswith(c.outcome) for c in checks)

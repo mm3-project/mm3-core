@@ -12,6 +12,7 @@ Implements:
     CORE-311: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-312: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-318: Core spec 0.24, §10.5 Diagnostics and debugging.
+    CORE-397: Core spec 0.51, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ import contextlib
 import http.client
 import importlib.metadata
 import json
+import shutil
 import socket
 import subprocess
 import sys
@@ -393,12 +395,35 @@ def _display_driver_check(
     return Check(name, "pass", str(driver) if driver else "")
 
 
+def ffmpeg_check(result: ConfigResult | None, which: Callable[[str], str | None]) -> Check:
+    """Fail when media sources are configured and ``ffmpeg`` is missing (CORE-397).
+
+    Args:
+        result: The loaded configuration, or ``None``.
+        which: Finds a program on ``PATH`` (``shutil.which``).
+
+    Returns:
+        The check: skipped without sources, passed with the path of ``ffmpeg``.
+
+    Implements:
+        CORE-397: Core spec 0.51, §9.7 Media service.
+    """
+    config = result.config if result is not None else None
+    if config is None or not config.media.sources:
+        return Check("ffmpeg", "skip", "no media sources are configured")
+    path = which("ffmpeg")
+    if path is None:
+        return Check("ffmpeg", "fail", "media sources are configured; install the package ffmpeg")
+    return Check("ffmpeg", "pass", path)
+
+
 def run_checks(
     result: ConfigResult | None,
     client: SocketClient,
     registry: Registry,
     *,
     port_free: Callable[[str, int], bool] = _port_free,
+    which: Callable[[str], str | None] = shutil.which,
 ) -> list[Check]:
     """Run the self-test of CORE-312.
 
@@ -407,14 +432,16 @@ def run_checks(
         client: The admin socket.
         registry: Installed modules.
         port_free: Tells whether a listener address is free (tests replace it).
+        which: Finds a program on ``PATH`` (tests replace it).
 
     Returns:
-        The checks in the order of CORE-312.
+        The checks in the order of CORE-312, then ``ffmpeg`` (CORE-397).
 
     Implements:
         CORE-312: Core spec 0.22, §10.5 Diagnostics and debugging.
         CORE-339: Core spec 0.34, §9.3 MQTT bridge.
         PRS-06: Core spec 0.34, §9.2 Presence and power: module boundary.
+        CORE-397: Core spec 0.51, §9.7 Media service.
     """
     checks: list[Check] = []
     config = result.config if result is not None and result.ok else None
@@ -512,6 +539,7 @@ def run_checks(
         checks.append(Check("locale catalogs", "fail", "; ".join(problems[:5])))
     else:
         checks.append(Check("locale catalogs", "pass"))
+    checks.append(ffmpeg_check(result, which))
     return checks
 
 

@@ -36,6 +36,10 @@ bash "$INSTALL" --find-links "$DIST"
 
 check "mm3 is a member of mm3-kiosk (CORE-268)" in_group mm3 mm3-kiosk
 check "mm3-kiosk is not a member of mm3" not_in_group mm3-kiosk mm3
+check "ffmpeg is installed (CORE-397)" command -v ffmpeg
+if [[ -f /etc/systemd/system/mm3-kiosk.service ]] && getent group video >/dev/null; then
+  check "mm3 is a member of video on a kiosk system (CORE-401)" in_group mm3 video
+fi
 check "/etc/mm3 is 0750 mm3:mm3" mode_is /etc/mm3 "750 mm3:mm3"
 check "config.yaml is 0640 mm3:mm3" mode_is /etc/mm3/config.yaml "640 mm3:mm3"
 check "mm3.env is 0640 mm3:mm3 (CORE-200)" mode_is /etc/mm3/mm3.env "640 mm3:mm3"

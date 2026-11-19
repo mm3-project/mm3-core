@@ -30,6 +30,7 @@ Implements:
     CORE-304, CORE-311: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
     CORE-329, CORE-330: Core spec 0.29, §11.1 Engine additions.
+    CORE-400: Core spec 0.51, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -65,6 +66,7 @@ from mm3.core.web.extensions import (
     extension_page_data,
     header_label,
 )
+from mm3.core.web.media import add_media_routes
 from mm3.core.web.pages import (
     admin_backups_page,
     admin_catalog_page,
@@ -94,6 +96,7 @@ from mm3.core.web.shell import (
 from mm3.core.web.ws import DISPLAY_COOKIE_MAX_AGE
 
 if TYPE_CHECKING:
+    from mm3.core.media import MediaService
     from mm3.core.web.adminws import AdminChannel
     from mm3.core.web.kiosk import KioskAgents
     from mm3.core.web.ws import ClientHub
@@ -204,6 +207,7 @@ def mirror_app(
     hub: ClientHub | None = None,
     sources: ShellSources | None = None,
     agents: KioskAgents | None = None,
+    media: MediaService | None = None,
 ) -> FastAPI:
     """Build the mirror listener's application (without the protection wrappers).
 
@@ -212,6 +216,7 @@ def mirror_app(
         hub: Connected shells; ``/ws`` exists only with a hub.
         sources: The shell's files; without them only ``/core`` is served.
         agents: The kiosk agent; ``/ws/kiosk-agent`` exists only with it (CORE-268).
+        media: The media service; ``/media/…`` exists only with it (CORE-400).
 
     Returns:
         The application.
@@ -219,8 +224,12 @@ def mirror_app(
     Implements:
         CORE-254: Core spec 0.12, §10.1 Security.
         CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
+        CORE-400: Core spec 0.51, §9.7 Media service.
     """
     app = _bare()
+
+    if media is not None:
+        add_media_routes(app, media, "/media")
 
     if hub is not None:
         shells = hub
@@ -310,6 +319,7 @@ def admin_app(
     api: ApiServices | None = None,
     channel: AdminChannel | None = None,
     locale: Callable[[], str] = lambda: "en",
+    media: MediaService | None = None,
 ) -> FastAPI:
     """Build the admin listener's application (without the protection wrappers).
 
@@ -321,6 +331,8 @@ def admin_app(
             authenticated ``/api`` request is 404.
         channel: The admin channel ``/admin/ws`` (CORE-304).
         locale: Returns the language of the admin pages (``engine.locale``).
+        media: The media service; ``/admin/preview/media/…`` exists only with it
+            (CORE-400).
 
     Returns:
         The application.
@@ -333,9 +345,17 @@ def admin_app(
         CORE-298: Core spec 0.25, §9.1 Remote-control API.
         CORE-313: Core spec 0.22, §9.1 Remote-control API.
         CORE-304: Core spec 0.22, §10.5 Diagnostics and debugging.
+        CORE-400: Core spec 0.51, §9.7 Media service.
     """
     app = _bare()
     _api_errors(app)
+
+    if media is not None:
+
+        async def admin_session(request: Request) -> bool:
+            return (await auth.check_admin(request, request.method)).outcome == "ok"
+
+        add_media_routes(app, media, "/admin/preview/media", admin_session)
 
     if channel is not None:
         admin_channel = channel

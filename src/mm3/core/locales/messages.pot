@@ -2625,3 +2625,57 @@ msgstr ""
 
 msgid "CORE_ADMIN_DEVICE_NO"
 msgstr ""
+
+msgid "CORE_ADMIN_MEDIA"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SOURCE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_STATE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_VIEWERS"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_CHILDREN"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PID"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_TRANSCODE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_STARTED"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_STATE_IDLE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_STATE_RUNNING"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_STATE_ERROR"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_STATE_UNAVAILABLE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_CODEC"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_FAILED"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_FFMPEG"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_CAMERA"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
+msgstr ""
