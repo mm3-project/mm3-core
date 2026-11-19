@@ -7,6 +7,14 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (spec 0.51; CORE-397, CORE-400 and CORE-412 changed)
+
+- Core spec 0.51: an HLS viewer is a client address seen in the last 10 s, a child that exits with
+  code 0 is not a failure, and 60 s of running resets the backoff (CORE-397); the first playlist
+  request waits up to 10 s, then 503 with `Retry-After: 5`, and under `/media/files/` only paths
+  starting with `files/` or `shares/` are files (CORE-400); `GET /api/v1/media` gives each source
+  a `reason` (CORE-412). Rules 1.78.
+
 ### Added (milestone 8 step 1: config base; CORE-388..393, CORE-398, CORE-399, CORE-416, spec 0.50)
 
 - `devices` top-level key (CORE-388): cameras (`path` under `/dev/v4l/by-id/` or

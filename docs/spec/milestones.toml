@@ -405,6 +405,8 @@ status = "not_started"
 #   (devices and media as history sections) and changes CORE-390, CORE-399,
 #   CORE-406 and CORE-407 of this milestone. Core 0.50 changes CORE-388 and
 #   CORE-398 (details settled while building step 1).
+# Core 0.51 changes CORE-397, CORE-400 and CORE-412 (details settled while building
+#   step 2).
 requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]
