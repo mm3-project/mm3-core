@@ -42,7 +42,9 @@ Severity = Literal["error", "warning"]
 
 # Implements CORE-243 (Core spec 0.15, §6.2 Rules): the code table, with the
 # English message of each code from the engine catalog (CORE-263);
-# placeholders name the code's params.
+# placeholders name the code's params. The codes of CORE-390 (Core spec 0.49,
+# §6.11 Camera devices) and CORE-399 (Core spec 0.49, §9.7 Media service) are
+# added to it, two of them warnings.
 MESSAGES: dict[str, str] = {
     key: text
     for key, text in Table(CORE_CATALOG).get("en").items()
@@ -55,6 +57,8 @@ WARNING_CODES = frozenset(
         "CORE_CFG_LOCALIZED_NO_EN",
         "CORE_CFG_MODULE_UNAVAILABLE",
         "CORE_CFG_MIN_SIZE",
+        "CORE_CFG_DEVICE_OWNER_ABSENT",
+        "CORE_CFG_MEDIA_DELIVERY",
     }
 )
 

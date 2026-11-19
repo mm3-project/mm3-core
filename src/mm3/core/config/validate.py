@@ -11,6 +11,8 @@ Implements:
     CORE-202, CORE-203, CORE-204, CORE-206: Core spec 0.8, §6.2 Rules.
     CORE-262: Core spec 0.11, §6.10 Theme and custom CSS.
     CORE-338: Core spec 0.34, §9.3 MQTT bridge.
+    CORE-390: Core spec 0.49, §6.11 Camera devices.
+    CORE-399: Core spec 0.49, §9.7 Media service.
     MOD-49: Module Contract 1.0 rev 6, §6.2 Configuration.
 """
 
@@ -28,9 +30,11 @@ from pydantic import BaseModel, ValidationError
 
 from mm3.config import ModuleConfig, iter_localized
 from mm3.core.config.assets import ConfigAssets, read_assets
+from mm3.core.config.devices import check_devices
 from mm3.core.config.envfile import DEFAULT_ENV_FILE, EnvFile, read_env_file
 from mm3.core.config.layout import LayoutResult, check_layout
 from mm3.core.config.loader import LoadedConfig, load_yaml
+from mm3.core.config.media import check_media
 from mm3.core.config.model import INSTANCE_ID_PATTERN, InstanceConfig, MirrorConfig
 from mm3.core.config.records import (
     SourceMap,
@@ -121,6 +125,11 @@ class ConfigResult:
     def ok(self) -> bool:
         """True when there is no error; warnings never block loading."""
         return not self.errors
+
+    @property
+    def enabled_modules(self) -> frozenset[str]:
+        """Module names with at least one enabled instance (CORE-389)."""
+        return frozenset(i.module for i in self.instances if i.enabled)
 
     def instance_specs(self) -> list[InstanceSpec]:
         """Return what the supervisor runs: every enabled instance, in file order.
@@ -397,6 +406,8 @@ def load_config(
         CORE-30: Core spec 0.8, §6 Configuration.
         CORE-232: Core spec 0.9, §6.9 Pages and visibility.
         CORE-262: Core spec 0.11, §6.10 Theme and custom CSS.
+        CORE-390: Core spec 0.49, §6.11 Camera devices.
+        CORE-399: Core spec 0.49, §9.7 Media service.
     """
     env = read_env_file(env_file)
     loaded = load_yaml(
@@ -415,6 +426,9 @@ def load_config(
     result.records.extend(check_mqtt_ca_file(config, path.parent, loaded.sources))
     layout = None
     if config is not None:
+        enabled = {i.module for i in instances if i.enabled}
+        result.records.extend(check_devices(config.devices, enabled, loaded.sources))
+        result.records.extend(check_media(config.media, config.devices, loaded.sources))
         layout = check_layout(config, instances, registry, loaded.sources, applied=applied)
         result.records.extend(layout.records)
         result.geometry = layout

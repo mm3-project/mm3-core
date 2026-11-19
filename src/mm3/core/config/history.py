@@ -12,6 +12,7 @@ Implements:
     CORE-150, CORE-154, CORE-156: Core spec 0.10, §6.8 Configuration history, undo and redo.
     CORE-153: Core spec 0.11, §6.8 Configuration history, undo and redo.
     CORE-155, CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
+    CORE-416: Core spec 0.49, §6.8 Configuration history, undo and redo.
     CORE-217, CORE-218: Core spec 0.10, §6.8 Configuration history, undo and redo.
     CORE-300: Core spec 0.22, §6.4 Web configuration editor.
     CORE-302: Core spec 0.39, §6.4 Web configuration editor.
@@ -872,7 +873,8 @@ class ConfigHistory:
             version: The version to restore from.
             author: ``cli:<user>`` or the admin client address.
             section: ``engine``, ``display``, ``audio``, ``layout``, ``pages``,
-                ``backup``, ``modules/<id>``, ``modules/_order``, ``custom_css``
+                ``backup``, ``devices``, ``media`` (CORE-416), ``modules/<id>``,
+                ``modules/_order``, ``custom_css``
                 or ``widget_templates/<name>``; ``None`` restores everything.
                 When the chosen version has no such section it is removed from
                 the current configuration; when the current section lives in an

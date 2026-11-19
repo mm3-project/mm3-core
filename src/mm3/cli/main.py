@@ -17,6 +17,7 @@ Implements:
     -: Core spec 0.8, §10.2 Packaging and deployment.
     CORE-30: Core spec 0.8, §6 Configuration.
     CORE-361: Core spec 0.45, §10.8 Backup and restore.
+    CORE-391: Core spec 0.47, §6.11 Camera devices.
     CORE-207: Core spec 0.8, §6.2 Rules.
     -: Core spec 0.8, §7.2 Error reporting.
     CORE-208: Core spec 0.11, §6.3 Hot reload.
@@ -225,6 +226,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.config.editor import ConfigEditor
     from mm3.core.config.history import ConfigHistory, HistoryRecorder
     from mm3.core.config.manager import ConfigManager
+    from mm3.core.devices import DeviceRegistry
     from mm3.core.diag.inspector import BusInspector
     from mm3.core.diag.secrets import Masker, config_secrets
     from mm3.core.engine import Engine
@@ -252,6 +254,10 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     manager = ConfigManager(
         engine, result, registry=registry, env_file=env_file, recorder=HistoryRecorder(history)
     )
+    # CORE-391 (Core spec 0.47, §6.11 Camera devices): devices.json at start and after reloads.
+    devices = DeviceRegistry(runtime_dir())
+    devices.write(result)
+    manager.layout_listeners.append(devices.reloaded)
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):

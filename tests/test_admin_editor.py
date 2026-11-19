@@ -1055,3 +1055,40 @@ async def test_core_386_restore_rows_are_disabled_for_the_current_version(
         await browser.close()
         await pw.stop()
     assert not problems, problems
+
+
+async def test_core_393_devices_section_in_the_form_with_the_images_warning(
+    page_world: tuple[str, str, Path, ConfigHistory],
+) -> None:
+    """CORE-393: the Form edits the `devices` map; CORE-392: images on shows the warning."""
+    base, sid, root, _history = page_world
+    pw, browser, page, problems = await browse(base, sid)
+    page.on("dialog", lambda d: asyncio.ensure_future(d.accept("usb_cam")))
+    try:
+        await page.goto(f"{base}/admin/config")
+        await page.wait_for_selector("mm3-schema-form .field")
+        await page.click("nav.sections >> text=devices")
+        assert await page.locator(".devices-images").count() == 0
+        await page.click('mm3-schema-form fieldset.map > button:has-text("Add")')
+        entry = '[data-path="/usb_cam/kind"]'
+        await page.wait_for_selector(f"mm3-schema-form {entry} select")
+        await page.select_option(f"mm3-schema-form {entry} select", label="camera")
+        await page.wait_for_selector("button:has-text('Undo') >> text=devices.usb_cam.kind")
+        path = page.locator('mm3-schema-form [data-path="/usb_cam/path"] input')
+        await path.fill("/dev/v4l/by-id/usb-cam-video-index0")
+        await path.press("Tab")
+        await page.wait_for_selector("button:has-text('Undo') >> text=devices.usb_cam.path")
+        await page.check('mm3-schema-form [data-path="/usb_cam/images"] input[type=checkbox]')
+        await page.wait_for_selector(".devices-images >> text=server.allow")
+        await page.wait_for_function(
+            "() => !document.querySelector('.savebar button.primary').disabled"
+        )
+        await page.click(".savebar >> button.primary")
+        await page.wait_for_selector("text=Saved as version 2.")
+    finally:
+        await browser.close()
+        await pw.stop()
+    text = (root / "config.yaml").read_text()
+    assert "devices:\n  usb_cam:" in text
+    assert "images: true" in text
+    assert not problems, problems

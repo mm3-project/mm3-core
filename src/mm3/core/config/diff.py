@@ -10,6 +10,7 @@ Implements:
     -: Core spec 0.21, §6.3 Hot reload.
     CORE-201: Core spec 0.21, §6.2 Rules.
     CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
+    CORE-416: Core spec 0.49, §6.8 Configuration history, undo and redo.
 """
 
 from __future__ import annotations
@@ -42,8 +43,8 @@ afterwards, and is reported as the live key ``server.allow``.
 LIVE_SUBKEYS = {"server": frozenset({"allow"})}
 """Sub-keys of restart keys that apply live (CORE-201)."""
 
-TOP_SECTIONS = ("engine", "display", "audio", "layout", "pages", "backup")
-"""Top-level sections of the history, in the order of the file (CORE-201, CORE-216)."""
+TOP_SECTIONS = ("engine", "display", "audio", "layout", "pages", "backup", "devices", "media")
+"""Top-level sections of the history, in the order of the file (CORE-201, CORE-216, CORE-416)."""
 
 _LAYOUT_KEYS = ("position", "positions", "pages", "appearance")
 
@@ -93,12 +94,14 @@ def changed_sections(old: ConfigResult, new: ConfigResult) -> list[str]:
 
     Returns:
         Changed sections in a stable order: ``engine``, ``display``,
-        ``audio``, ``layout``, ``pages``, ``backup``, then ``modules/<id>`` in
+        ``audio``, ``layout``, ``pages``, ``backup``, ``devices``, ``media``
+        (CORE-416), then ``modules/<id>`` in
         file order (removed ones last), then ``modules/_order``, ``custom_css``
         and ``widget_templates/<name>`` in name order.
 
     Implements:
         CORE-216: Core spec 0.21, §6.8 Configuration history, undo and redo.
+        CORE-416: Core spec 0.49, §6.8 Configuration history, undo and redo.
     """
     a, b = unsubstituted(old.loaded), unsubstituted(new.loaded)
     am = a if isinstance(a, Mapping) else {}
@@ -144,6 +147,8 @@ class ReloadPlan:
         layout: Whether the ``layout`` block changed.
         pages: Whether the ``pages`` block changed.
         custom_css: Whether custom.css changed (CORE-262).
+        devices: Whether the ``devices`` key changed (CORE-416).
+        media: Whether the ``media`` key changed (CORE-416).
         sections: Changed sections (CORE-216).
     """
 
@@ -161,6 +166,8 @@ class ReloadPlan:
     layout: bool = False
     pages: bool = False
     custom_css: bool = False
+    devices: bool = False
+    media: bool = False
     sections: list[str] = field(default_factory=list)
 
     @property
@@ -181,12 +188,18 @@ class ReloadPlan:
             or self.layout
             or self.pages
             or self.custom_css
+            or self.devices
+            or self.media
             or self.sections
         )
 
 
 def _dump(value: Any) -> Any:
     return value.model_dump(mode="json", by_alias=True) if hasattr(value, "model_dump") else value
+
+
+def _dump_map(value: Mapping[str, Any]) -> dict[str, Any]:
+    return {k: _dump(v) for k, v in value.items()}
 
 
 def plan_reload(old: ConfigResult, new: ConfigResult) -> ReloadPlan:
@@ -205,6 +218,7 @@ def plan_reload(old: ConfigResult, new: ConfigResult) -> ReloadPlan:
     Implements:
         -: Core spec 0.21, §6.3 Hot reload.
         CORE-201: Core spec 0.21, §6.2 Rules.
+        CORE-416: Core spec 0.49, §6.8 Configuration history, undo and redo.
     """
     if old.config is None or new.config is None:
         raise ValueError("both configurations must be valid")
@@ -230,6 +244,8 @@ def plan_reload(old: ConfigResult, new: ConfigResult) -> ReloadPlan:
     plan.layout = _dump(old.config.layout) != _dump(new.config.layout)
     plan.pages = _dump(old.config.pages) != _dump(new.config.pages)
     plan.custom_css = old.assets.custom_css != new.assets.custom_css
+    plan.devices = _dump_map(old.config.devices) != _dump_map(new.config.devices)
+    plan.media = _dump(old.config.media) != _dump(new.config.media)
 
     old_by_id = {i.id: i for i in old.instances}
     for inst in new.instances:

@@ -7,6 +7,36 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 8 step 1: config base; CORE-388..393, CORE-398, CORE-399, CORE-416, spec 0.49)
+
+- `devices` top-level key (CORE-388): cameras (`path` under `/dev/v4l/by-id/` or
+  `/dev/v4l/by-path/`) and Kinects (optional `serial`), with `owner` and `images`.
+- Owner resolution at start and on every reload (CORE-389): `auto` becomes `vision` while an
+  enabled `vision` instance exists, otherwise `media` for a camera and `none` for a Kinect.
+- Device checks (CORE-390): duplicates by path (links resolved where the path exists) or serial,
+  two Kinects without a serial included; `owner: vision` without Vision is a warning.
+- `/run/mm3/devices.json` (CORE-391), written atomically with mode 0644 at start and after every
+  reload, with the resolved owner and the feed socket path of each device.
+- Camera images warning (CORE-392): a banner on the admin home and in the Form while a device has
+  `images: true`.
+- `GET /api/v1/devices` (CORE-393) and a Devices card on the debug overview; the Form edits
+  `devices` like every other section, and a map of models (devices, media sources and shares,
+  instance `positions`) now shows one form per entry.
+- `media` top-level key (CORE-398): sources (`rtsp`, `stream`, `camera`, `files`), shares (sync or
+  mount), limits, takeover defaults and `browser_audio`; settings only, no `ffmpeg` yet.
+- Media checks (CORE-399): `CORE_CFG_MEDIA_URL`, `_DEVICE`, `_PATH`, `_SHARE` and the warning
+  `_DELIVERY`. Rclone remotes are not checked by the engine (the installer checks them, CORE-406,
+  CORE-407).
+- Nine `CORE_CFG_*` codes in the code table and the engine catalog (EN, IT, FR, ES, DE), with form
+  labels for every new field (CORE-310).
+- `devices` and `media` are history sections after `backup` and reload-plan flags (CORE-416).
+
+### Changed (spec 0.49; CORE-416 added, CORE-390, CORE-399, CORE-406, CORE-407 changed)
+
+- Core spec 0.49: devices and media are history sections; two Kinects without a serial are a
+  duplicate; the rclone remote of a share is checked by the installer when it runs the share
+  (state `error`, reason `remote`), not by config validation. Rules 1.76.
+
 ### Added (milestone 8 defining; CORE-397..415, MED-01..08, MOD-100..103, spec 0.48 / rev 16)
 
 - Core spec 0.48: the media service (9.7, CORE-397..414) and the migration of MM² media

@@ -22,7 +22,9 @@ import { ApiError } from "/admin/static/admin.js";
 
 export const MAX_STEPS = 500;
 const STORE_KEY = "mm3.admin.draft";
-export const TOP_SECTIONS = ["engine", "display", "audio", "layout", "pages", "backup"];
+// Implements CORE-416 (Core spec 0.49, §6.8 Configuration history, undo and redo): devices and media
+// are top-level sections after backup.
+export const TOP_SECTIONS = ["engine", "display", "audio", "layout", "pages", "backup", "devices", "media"];
 
 // --- compact history (CORE-377) ------------------------------------------------------
 // A step keeps the texts it changed, before and after. In the browser store it keeps

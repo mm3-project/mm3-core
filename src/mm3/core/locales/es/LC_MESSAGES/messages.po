@@ -2368,3 +2368,267 @@ msgstr "Qué cambiaría la restauración"
 
 msgid "CORE_ADMIN_BACKUPS_YES"
 msgstr "Sí"
+
+msgid "CORE_CFG_DEVICE_PATH"
+msgstr "Una cámara necesita una ruta absoluta bajo /dev/v4l/by-id/ o /dev/v4l/by-path/ (indicada: {path})"
+
+msgid "CORE_CFG_DEVICE_OWNER"
+msgstr "Un kinect no puede tener owner media"
+
+msgid "CORE_CFG_DEVICE_DUPLICATE"
+msgstr "El dispositivo {device} es el mismo dispositivo que {other}"
+
+msgid "CORE_CFG_DEVICE_OWNER_ABSENT"
+msgstr "El dispositivo {device} tiene owner vision, pero ninguna instancia del módulo vision está activa"
+
+msgid "CORE_CFG_MEDIA_URL"
+msgstr "Una fuente de tipo {kind} necesita una URL con el esquema {allowed}"
+
+msgid "CORE_CFG_MEDIA_DEVICE"
+msgstr "Fuente {source}: {device} no es una cámara de devices"
+
+msgid "CORE_CFG_MEDIA_PATH"
+msgstr "La ruta {path} debe ser relativa, sin .., y empezar por files/ o shares/<share>/"
+
+msgid "CORE_CFG_MEDIA_SHARE"
+msgstr "Fuente {source}: el recurso compartido {share} no está en media.shares"
+
+msgid "CORE_CFG_MEDIA_DELIVERY"
+msgstr "Fuente {source}: una cámara se entrega como MJPEG; delivery hls se ignora"
+
+msgid "CFG_DEVICES"
+msgstr "Dispositivos"
+
+msgid "CFG_DEVICES_HELP"
+msgstr "Cámaras y Kinect, cada uno con el único servicio que puede abrirlo."
+
+msgid "CFG_DEVICES_KIND"
+msgstr "Tipo"
+
+msgid "CFG_DEVICES_KIND_HELP"
+msgstr "camera (un dispositivo V4L2) o kinect (un Kinect v1)."
+
+msgid "CFG_DEVICES_PATH"
+msgstr "Ruta"
+
+msgid "CFG_DEVICES_PATH_HELP"
+msgstr "Para una cámara: su ruta bajo /dev/v4l/by-id/ o /dev/v4l/by-path/."
+
+msgid "CFG_DEVICES_SERIAL"
+msgstr "Número de serie"
+
+msgid "CFG_DEVICES_SERIAL_HELP"
+msgstr "Para un Kinect: su número de serie. Vacío usa el primer Kinect encontrado."
+
+msgid "CFG_DEVICES_OWNER"
+msgstr "Propietario"
+
+msgid "CFG_DEVICES_OWNER_HELP"
+msgstr "El servicio que abre el dispositivo: auto (vision si está activo, si no media para una cámara), vision, media o none."
+
+msgid "CFG_DEVICES_IMAGES"
+msgstr "Imágenes de la cámara"
+
+msgid "CFG_DEVICES_IMAGES_HELP"
+msgstr "Permite ver esta cámara en los navegadores. Todo cliente admitido por server.allow puede verlas. Los fotogramas nunca se guardan."
+
+msgid "CFG_MEDIA"
+msgstr "Medios"
+
+msgid "CFG_MEDIA_HELP"
+msgstr "Fuentes de medios, recursos de red, límites y pantalla completa."
+
+msgid "CFG_MEDIA_SOURCES"
+msgstr "Fuentes"
+
+msgid "CFG_MEDIA_SOURCES_HELP"
+msgstr "Fuentes con nombre que los módulos y el admin pueden reproducir."
+
+msgid "CFG_MEDIA_SOURCE_KIND"
+msgstr "Tipo"
+
+msgid "CFG_MEDIA_SOURCE_KIND_HELP"
+msgstr "rtsp (un flujo de cámara), stream (HLS o un flujo de audio), camera (una cámara local de devices) o files."
+
+msgid "CFG_MEDIA_SOURCE_URL"
+msgstr "URL"
+
+msgid "CFG_MEDIA_SOURCE_URL_HELP"
+msgstr "Para rtsp: rtsp:// o rtsps://. Para stream: https:// o http://. Pon las credenciales en un valor !env."
+
+msgid "CFG_MEDIA_SOURCE_DEVICE"
+msgstr "Dispositivo"
+
+msgid "CFG_MEDIA_SOURCE_DEVICE_HELP"
+msgstr "Para camera: el nombre de una cámara de devices."
+
+msgid "CFG_MEDIA_SOURCE_PATH"
+msgstr "Ruta"
+
+msgid "CFG_MEDIA_SOURCE_PATH_HELP"
+msgstr "Para files: una carpeta o un archivo de la carpeta de medios, que empiece por files/ o shares/<share>/."
+
+msgid "CFG_MEDIA_SOURCE_DELIVERY"
+msgstr "Entrega"
+
+msgid "CFG_MEDIA_SOURCE_DELIVERY_HELP"
+msgstr "auto, mjpeg (baja latencia, sin sonido) o hls (con sonido)."
+
+msgid "CFG_MEDIA_SOURCE_TRANSCODE"
+msgstr "Transcodificar"
+
+msgid "CFG_MEDIA_SOURCE_TRANSCODE_HELP"
+msgstr "Codifica a H.264 cuando la fuente no se puede reproducir en un navegador. Usa más CPU o la GPU."
+
+msgid "CFG_MEDIA_SOURCE_AUDIO"
+msgstr "Sonido"
+
+msgid "CFG_MEDIA_SOURCE_AUDIO_HELP"
+msgstr "Si la fuente tiene sonido. Siempre desactivado para una cámara."
+
+msgid "CFG_MEDIA_SOURCE_FPS"
+msgstr "Fotogramas por segundo"
+
+msgid "CFG_MEDIA_SOURCE_FPS_HELP"
+msgstr "Frecuencia MJPEG, de 1 a 30."
+
+msgid "CFG_MEDIA_SOURCE_WIDTH"
+msgstr "Anchura"
+
+msgid "CFG_MEDIA_SOURCE_WIDTH_HELP"
+msgstr "Anchura en píxeles, como máximo 1920; vacío mantiene la de la fuente."
+
+msgid "CFG_MEDIA_SHARES"
+msgstr "Recursos compartidos"
+
+msgid "CFG_MEDIA_SHARES_HELP"
+msgstr "Carpetas de red copiadas con sync o montadas en solo lectura, bajo shares/<name>/."
+
+msgid "CFG_MEDIA_SHARE_METHOD"
+msgstr "Método"
+
+msgid "CFG_MEDIA_SHARE_METHOD_HELP"
+msgstr "sync (una copia hecha por rclone) o mount (un montaje de solo lectura)."
+
+msgid "CFG_MEDIA_SHARE_REMOTE"
+msgstr "Remoto"
+
+msgid "CFG_MEDIA_SHARE_REMOTE_HELP"
+msgstr "El nombre de un remoto rclone del instalador; el instalador lo comprueba al procesar el recurso."
+
+msgid "CFG_MEDIA_SHARE_PATH"
+msgstr "Ruta"
+
+msgid "CFG_MEDIA_SHARE_PATH_HELP"
+msgstr "La carpeta en el remoto o el servidor."
+
+msgid "CFG_MEDIA_SHARE_INTERVAL"
+msgstr "Intervalo (minutos)"
+
+msgid "CFG_MEDIA_SHARE_INTERVAL_HELP"
+msgstr "Cada cuánto se actualiza la copia, al menos 5 minutos."
+
+msgid "CFG_MEDIA_SHARE_MAX_SIZE_GB"
+msgstr "Tamaño máximo (GB)"
+
+msgid "CFG_MEDIA_SHARE_MAX_SIZE_GB_HELP"
+msgstr "La copia se detiene con un error por encima de este tamaño."
+
+msgid "CFG_MEDIA_SHARE_TYPE"
+msgstr "Tipo"
+
+msgid "CFG_MEDIA_SHARE_TYPE_HELP"
+msgstr "smb (credenciales de un remoto rclone) o nfs."
+
+msgid "CFG_MEDIA_SHARE_HOST"
+msgstr "Host"
+
+msgid "CFG_MEDIA_SHARE_HOST_HELP"
+msgstr "El nombre o la dirección del servidor."
+
+msgid "CFG_MEDIA_LIMITS"
+msgstr "Límites"
+
+msgid "CFG_MEDIA_LIMITS_HELP"
+msgstr "Cuántos reproductores funcionan a la vez y el tamaño máximo de una subida."
+
+msgid "CFG_MEDIA_LIMITS_PROCESSES"
+msgstr "Reproductores a la vez"
+
+msgid "CFG_MEDIA_LIMITS_PROCESSES_HELP"
+msgstr "De 1 a 8."
+
+msgid "CFG_MEDIA_LIMITS_TRANSCODE"
+msgstr "Transcodificaciones a la vez"
+
+msgid "CFG_MEDIA_LIMITS_TRANSCODE_HELP"
+msgstr "De 0 a 4."
+
+msgid "CFG_MEDIA_LIMITS_UPLOAD_MAX_MB"
+msgstr "Subida máxima (MB)"
+
+msgid "CFG_MEDIA_LIMITS_UPLOAD_MAX_MB_HELP"
+msgstr "De 1 a 8192."
+
+msgid "CFG_MEDIA_TAKEOVER"
+msgstr "Pantalla completa"
+
+msgid "CFG_MEDIA_TAKEOVER_HELP"
+msgstr "Cuánto dura la pantalla completa cuando la petición no indica duración."
+
+msgid "CFG_MEDIA_TAKEOVER_DURATION"
+msgstr "Duración (segundos)"
+
+msgid "CFG_MEDIA_TAKEOVER_DURATION_HELP"
+msgstr "La duración predeterminada."
+
+msgid "CFG_MEDIA_TAKEOVER_MAX_DURATION"
+msgstr "Duración máxima (segundos)"
+
+msgid "CFG_MEDIA_TAKEOVER_MAX_DURATION_HELP"
+msgstr "Ninguna pantalla completa dura más."
+
+msgid "CFG_MEDIA_BROWSER_AUDIO"
+msgstr "Sonido en los navegadores"
+
+msgid "CFG_MEDIA_BROWSER_AUDIO_HELP"
+msgstr "Reproduce el sonido también en otros navegadores, no solo en el kiosco."
+
+msgid "CORE_ADMIN_DEVICES_IMAGES_WARNING"
+msgstr "Las imágenes de las cámaras están activadas: todo cliente admitido por server.allow puede verlas."
+
+msgid "CORE_ADMIN_DEVICES"
+msgstr "Dispositivos"
+
+msgid "CORE_ADMIN_DEVICE"
+msgstr "Dispositivo"
+
+msgid "CORE_ADMIN_DEVICE_KIND"
+msgstr "Tipo"
+
+msgid "CORE_ADMIN_DEVICE_ID"
+msgstr "Ruta o número de serie"
+
+msgid "CORE_ADMIN_DEVICE_FIRST_FOUND"
+msgstr "el primero encontrado"
+
+msgid "CORE_ADMIN_DEVICE_OWNER"
+msgstr "Propietario"
+
+msgid "CORE_ADMIN_DEVICE_OWNER_AUTO"
+msgstr "automático"
+
+msgid "CORE_ADMIN_DEVICE_OWNER_EXPLICIT"
+msgstr "fijado en la config"
+
+msgid "CORE_ADMIN_DEVICE_PRESENT"
+msgstr "Presente"
+
+msgid "CORE_ADMIN_DEVICE_IMAGES"
+msgstr "Imágenes"
+
+msgid "CORE_ADMIN_DEVICE_YES"
+msgstr "Sí"
+
+msgid "CORE_ADMIN_DEVICE_NO"
+msgstr "No"
