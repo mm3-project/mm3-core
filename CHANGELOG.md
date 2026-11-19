@@ -7,6 +7,12 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (CORE-75)
+
+- `tools/restack.py` reports a refused push and a comment that cannot be posted with the error
+  output of `git push` or `gh` (workflow `::error::` and `::warning::` lines) instead of a bare
+  traceback; a failed comment no longer stops the other pull requests, and the run still fails.
+
 ### Changed (spec 0.51; CORE-397, CORE-400 and CORE-412 changed)
 
 - Core spec 0.51: an HLS viewer is a client address seen in the last 10 s, a child that exits with

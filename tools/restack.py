@@ -17,6 +17,11 @@ a person (or Claude) resolves it by hand. After a rebase the generated files
 are regenerated once more and committed when they changed, then the branch
 is pushed with ``--force-with-lease`` against the commit it had before.
 
+A refused push and a comment that cannot be posted are reported with the
+command's own error output (``::error::`` and ``::warning::`` lines in the
+workflow log), so a missing token permission shows its 403; a failed comment
+does not stop the other pull requests, but the run still fails.
+
 Usage (the Restack workflow)::
 
     python tools/restack.py --merged-sha SHA --merged-number N --prs prs.txt --push --comment
@@ -51,6 +56,7 @@ class Outcome:
     conflicts: list[str] = field(default_factory=list)
     regenerated: bool = False
     head: str | None = None
+    error: str | None = None
 
 
 class Git:
@@ -132,6 +138,10 @@ def restack(
             git.run("rebase", "--abort", check=False)
             outcome.status = "conflict"
             outcome.conflicts = conflicts
+            annotate(
+                "error",
+                f"rebase of {branch} (#{number}) stopped on {', '.join(conflicts) or 'an error'}",
+            )
             git.run("checkout", "-q", "--detach", base)
             return outcome
         rebuild(git, commands)
@@ -150,6 +160,8 @@ def restack(
         )
         if pushed.returncode != 0:
             outcome.status = "push_failed"
+            outcome.error = pushed.stderr.strip()
+            annotate("error", f"push of {branch} (#{number}) refused: {outcome.error}")
     git.run("checkout", "-q", "--detach", base)
     return outcome
 
@@ -176,13 +188,30 @@ def comment_text(o: Outcome, merged_number: int) -> str | None:
     return None
 
 
-def post_comment(repo: str, number: int, body: str) -> None:
-    """Comment on a pull request with the GitHub CLI."""
-    subprocess.run(  # noqa: S603
+def annotate(level: str, message: str) -> None:
+    """Write a workflow annotation (``::error::`` or ``::warning::``) to standard error."""
+    one_line = " ".join(message.split())
+    print(f"::{level}::{one_line}", file=sys.stderr)
+
+
+def post_comment(repo: str, number: int, body: str) -> bool:
+    """Comment on a pull request with the GitHub CLI.
+
+    Returns:
+        True when the comment was posted; otherwise a warning with ``gh``'s
+        error output is written and False returned.
+    """
+    done = subprocess.run(  # noqa: S603
         ["gh", "api", f"repos/{repo}/issues/{number}/comments", "-f", f"body={body}"],  # noqa: S607
-        check=True,
+        check=False,
         capture_output=True,
+        text=True,
     )
+    if done.returncode != 0:
+        detail = (done.stderr or done.stdout).strip() or f"exit status {done.returncode}"
+        annotate("warning", f"could not comment on #{number}: {detail}")
+        return False
+    return True
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -198,6 +227,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     git = Git(Path.cwd())
     outcomes: list[Outcome] = []
+    comments_failed = False
     for line in args.prs.read_text().splitlines():
         if not line.strip():
             continue
@@ -207,10 +237,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         outcomes.append(o)
         body = comment_text(o, args.merged_number)
-        if args.comment and body and args.repo:
-            post_comment(args.repo, o.number, body)
+        if args.comment and body and args.repo and not post_comment(args.repo, o.number, body):
+            comments_failed = True
     print(json.dumps([asdict(o) for o in outcomes], indent=2))
-    return 1 if any(o.status in ("conflict", "push_failed") for o in outcomes) else 0
+    failed = any(o.status in ("conflict", "push_failed") for o in outcomes)
+    return 1 if failed or comments_failed else 0
 
 
 if __name__ == "__main__":
