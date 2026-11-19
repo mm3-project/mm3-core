@@ -9,6 +9,7 @@ appears; strings shorter than 4 characters are never matched.
 Implements:
     CORE-116: Core spec 0.22, §10.5 Diagnostics and debugging.
     CORE-319: Core spec 0.24, §10.5 Diagnostics and debugging.
+    CORE-403: Core spec 0.48, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -16,6 +17,7 @@ from __future__ import annotations
 import os
 from collections.abc import Iterable, Mapping
 from typing import TYPE_CHECKING, Any
+from urllib.parse import urlsplit
 
 from pydantic import BaseModel, SecretBytes, SecretStr
 
@@ -27,7 +29,7 @@ if TYPE_CHECKING:
 
     from mm3.core.config.validate import ConfigResult
 
-__all__ = ["MASK", "MIN_SECRET_LENGTH", "Masker", "config_secrets"]
+__all__ = ["MASK", "MIN_SECRET_LENGTH", "Masker", "config_secrets", "url_credentials"]
 
 MASK = "!masked"
 """What a secret value becomes (CORE-303, CORE-319)."""
@@ -92,6 +94,7 @@ def config_secrets(
     Implements:
         CORE-319: Core spec 0.24, §10.5 Diagnostics and debugging.
         CORE-338: Core spec 0.34, §9.3 MQTT bridge.
+        CORE-403: Core spec 0.48, §9.7 Media service.
     """
     found: set[str] = set(extra)
     if result.config is not None:
@@ -106,7 +109,39 @@ def config_secrets(
         value = env.get(ref.name, ref.default)
         if value is not None:
             found.add(value)
+    if result.config is not None:
+        found.update(url_credentials(s.url for s in result.config.media.sources.values()))
     return frozenset(s for s in found if len(s) >= MIN_SECRET_LENGTH)
+
+
+def url_credentials(urls: Iterable[str | None]) -> set[str]:
+    """Return the credentials written in URLs: the password and ``user:password``.
+
+    A media source URL may carry them literally (CORE-403); they are secrets
+    like the values of ``!env`` references.
+
+    Args:
+        urls: The URLs; ``None`` entries are skipped.
+
+    Returns:
+        The password, and ``user:password``, of every URL that has a password.
+
+    Implements:
+        CORE-403: Core spec 0.48, §9.7 Media service.
+    """
+    out: set[str] = set()
+    for url in urls:
+        if not url:
+            continue
+        try:
+            parts = urlsplit(url)
+            password = parts.password
+        except ValueError:
+            continue
+        if password:
+            out.add(password)
+            out.add(f"{parts.username or ''}:{password}")
+    return out
 
 
 class Masker:

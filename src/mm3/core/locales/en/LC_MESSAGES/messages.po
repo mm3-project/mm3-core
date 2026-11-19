@@ -2632,3 +2632,57 @@ msgstr "Yes"
 
 msgid "CORE_ADMIN_DEVICE_NO"
 msgstr "No"
+
+msgid "CORE_ADMIN_MEDIA"
+msgstr "Media"
+
+msgid "CORE_ADMIN_MEDIA_SOURCE"
+msgstr "Source"
+
+msgid "CORE_ADMIN_MEDIA_STATE"
+msgstr "State"
+
+msgid "CORE_ADMIN_MEDIA_VIEWERS"
+msgstr "Viewers"
+
+msgid "CORE_ADMIN_MEDIA_REASON"
+msgstr "Reason"
+
+msgid "CORE_ADMIN_MEDIA_CHILDREN"
+msgstr "Running processes"
+
+msgid "CORE_ADMIN_MEDIA_PID"
+msgstr "PID"
+
+msgid "CORE_ADMIN_MEDIA_TRANSCODE"
+msgstr "Transcode"
+
+msgid "CORE_ADMIN_MEDIA_STARTED"
+msgstr "Started"
+
+msgid "CORE_ADMIN_MEDIA_STATE_IDLE"
+msgstr "Idle"
+
+msgid "CORE_ADMIN_MEDIA_STATE_RUNNING"
+msgstr "Running"
+
+msgid "CORE_ADMIN_MEDIA_STATE_ERROR"
+msgstr "Error"
+
+msgid "CORE_ADMIN_MEDIA_STATE_UNAVAILABLE"
+msgstr "Unavailable"
+
+msgid "CORE_ADMIN_MEDIA_REASON_CODEC"
+msgstr "The codecs do not play in a browser; set transcode: true"
+
+msgid "CORE_ADMIN_MEDIA_REASON_FAILED"
+msgstr "ffmpeg failed 5 times in 10 minutes; it is retried after the next reload"
+
+msgid "CORE_ADMIN_MEDIA_REASON_FFMPEG"
+msgstr "ffmpeg is not installed"
+
+msgid "CORE_ADMIN_MEDIA_REASON_CAMERA"
+msgstr "Camera sources are not available yet"
+
+msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
+msgstr "Restarting after an error"

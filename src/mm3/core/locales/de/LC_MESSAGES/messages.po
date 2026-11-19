@@ -2634,3 +2634,57 @@ msgstr "Ja"
 
 msgid "CORE_ADMIN_DEVICE_NO"
 msgstr "Nein"
+
+msgid "CORE_ADMIN_MEDIA"
+msgstr "Medien"
+
+msgid "CORE_ADMIN_MEDIA_SOURCE"
+msgstr "Quelle"
+
+msgid "CORE_ADMIN_MEDIA_STATE"
+msgstr "Zustand"
+
+msgid "CORE_ADMIN_MEDIA_VIEWERS"
+msgstr "Zuschauer"
+
+msgid "CORE_ADMIN_MEDIA_REASON"
+msgstr "Grund"
+
+msgid "CORE_ADMIN_MEDIA_CHILDREN"
+msgstr "Laufende Prozesse"
+
+msgid "CORE_ADMIN_MEDIA_PID"
+msgstr "PID"
+
+msgid "CORE_ADMIN_MEDIA_TRANSCODE"
+msgstr "Transkodierung"
+
+msgid "CORE_ADMIN_MEDIA_STARTED"
+msgstr "Gestartet"
+
+msgid "CORE_ADMIN_MEDIA_STATE_IDLE"
+msgstr "Untätig"
+
+msgid "CORE_ADMIN_MEDIA_STATE_RUNNING"
+msgstr "Läuft"
+
+msgid "CORE_ADMIN_MEDIA_STATE_ERROR"
+msgstr "Fehler"
+
+msgid "CORE_ADMIN_MEDIA_STATE_UNAVAILABLE"
+msgstr "Nicht verfügbar"
+
+msgid "CORE_ADMIN_MEDIA_REASON_CODEC"
+msgstr "Die Codecs laufen nicht im Browser; setze transcode: true"
+
+msgid "CORE_ADMIN_MEDIA_REASON_FAILED"
+msgstr "ffmpeg ist in 10 Minuten 5-mal gescheitert; neuer Versuch nach dem nächsten Neuladen"
+
+msgid "CORE_ADMIN_MEDIA_REASON_FFMPEG"
+msgstr "ffmpeg ist nicht installiert"
+
+msgid "CORE_ADMIN_MEDIA_REASON_CAMERA"
+msgstr "Kameraquellen sind noch nicht verfügbar"
+
+msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
+msgstr "Neustart nach einem Fehler"

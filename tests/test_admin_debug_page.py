@@ -20,6 +20,7 @@ from mm3.core.diag.inspector import BusInspector
 from mm3.core.engine import Engine
 from mm3.core.i18n.catalogs import CORE_CATALOG, Table
 from mm3.core.logging import configure_logging, get_logger
+from mm3.core.media import MediaService
 from mm3.core.pages import PageService
 from mm3.core.registry import Registry
 from mm3.core.settings import AdminSettings, EngineSettings, ServerSettings, Timeouts
@@ -195,6 +196,7 @@ async def running(tmp_path: Path) -> AsyncIterator[tuple[WebGateway, WebAuth, En
     reg.add(Panel)
     (tmp_path / "config.yaml").write_text(
         "modules:\n  - module: panel\n    id: one\n    position: top_left\n"
+        "media:\n  sources:\n    door: {kind: rtsp, url: 'rtsp://cam.lan/x', audio: false}\n"
     )
     result = load_config(tmp_path / "config.yaml", registry=reg, env_file=tmp_path / "x.env")
     settings = EngineSettings(
@@ -215,6 +217,10 @@ async def running(tmp_path: Path) -> AsyncIterator[tuple[WebGateway, WebAuth, En
     hub.attach_pages(pages, engine.supervisor)
     manager = ConfigManager(engine, result, registry=reg, env_file=tmp_path / "x.env")
     services = ApiServices(engine, manager, pages, hub, None, "1.0+t")
+    media = MediaService(tmp_path / "run", tmp_path / "state", engine.clock)
+    media.ffmpeg = None  # CORE-397: the source is unavailable without ffmpeg
+    media.configure(result)
+    services.media = media
     inspector = BusInspector()
     engine.bus.add_endpoint(inspector)
     channel = AdminChannel(auth, lambda: status_object(services), inspector, interval=0.1)
@@ -276,6 +282,9 @@ async def test_debug_page_renders_in_chromium(
             await page.goto(f"{base}/admin/debug")
             await page.wait_for_selector("text=Overview")
             await page.wait_for_selector("td >> text=one")
+            # CORE-412: the media card shows each source with its state and reason.
+            await page.wait_for_selector("tr[data-source=door] >> text=Unavailable")
+            await page.wait_for_selector("tr[data-source=door] >> text=ffmpeg is not installed")
             await page.wait_for_selector(".live.on")
             await page.click("td >> text=one")
             await page.wait_for_selector("text=Health record")
