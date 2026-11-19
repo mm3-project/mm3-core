@@ -539,10 +539,6 @@ A module is compliant when every MUST below passes; `mm3 module check` runs all 
 | MOD-25 | No requests from on\_request | MUST | test kit |
 | MOD-26 | Request errors handled | MUST | test kit (no responder, failing responder) |
 | MOD-27 | Frequent hide/show tolerated | MUST | test kit (rapid suspend/resume) |
-| MOD-100 | ctx.media only on granted sources; URLs only from ctx.media | MUST | test kit |
-| MOD-101 | Takeover only with media.takeover; stop only its own | MUST | test kit |
-| MOD-102 | Media only through mm3-player and mm3-youtube; errors handled; players stopped on suspend | MUST | static + browser harness |
-| MOD-103 | mm3-youtube only with media.youtube and the grant | MUST | static |
 
 ## 12. Conformance tooling
 
@@ -747,7 +743,7 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
-| 1.0 rev 16 | 2026-11-19 | Aligned with core spec 0.48 (media service, milestone 8): ctx.media with sources, URLs, files and the takeover (§4, §4.5); the capabilities media.play, media.takeover and media.youtube with their grants (§8); front-ends play media only through mm3-player and mm3-youtube; the fake media service of the test kit (MOD-100, MOD-101, MOD-102, MOD-103 added; §11 rows added). No MOD ids changed or removed |
+| 1.0 rev 16 | 2026-11-19 | Aligned with core spec 0.48 (media service, milestone 8): ctx.media with sources, URLs, files and the takeover (§4, §4.5); the capabilities media.play, media.takeover and media.youtube with their grants (§8); front-ends play media only through mm3-player and mm3-youtube; the fake media service of the test kit (MOD-100, MOD-101, MOD-102, MOD-103 added; their §11 rows come with the checks in the development of milestone 8). No MOD ids changed or removed |
 | 1.0 rev 15 | 2026-11-06 | Aligned with core spec 0.32: ctx.system.set\_display\_power(on) under the capability system.power (§4; core CORE-346). No MOD ids added, changed or removed |
 | 1.0 rev 14 | 2026-11-06 | Aligned with core spec 0.31: ctx.mqtt.ha\_entity() and HaEntity defined, errors without a bridge or connection, engine-owned topics (§4, §4.4; core CORE-342 to CORE-345). No MOD ids added, changed or removed |
 | 1.0 rev 13 | 2026-11-05 | Aligned with core spec 0.29: the admin element and its rules (MOD-38, MOD-39 added, §5.3, §11) and module routes on ctx.router (MOD-74 added, §8, §11); /core/mm3.js also exports render |
