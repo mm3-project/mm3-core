@@ -17,6 +17,7 @@ Implements:
     CORE-276: Core spec 0.14, §5.6 WebSocket protocol.
     CORE-275: Core spec 0.46, §5.6 WebSocket protocol.
     CORE-417: Core spec 0.53, §9.7 Media service.
+    CORE-418: Core spec 0.54, §9.7 Media service.
     CORE-117: Core spec 0.14, §10.5 Diagnostics and debugging.
     CORE-21: Core spec 0.9, §5.3 Routing rules.
     CORE-223: Core spec 0.13, §5.4 Request and reply.
@@ -237,6 +238,7 @@ class ClientHub:
         CORE-275: Core spec 0.46, §5.6 WebSocket protocol.
         CORE-247, CORE-248, CORE-249: Core spec 0.13, §5.6 WebSocket protocol.
         CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
+        CORE-418: Core spec 0.54, §9.7 Media service.
     """
 
     def __init__(
@@ -263,6 +265,8 @@ class ClientHub:
         self.frame_observer: Callable[[str, str, Mapping[str, Any]], None] | None = None
         """Sees every frame queued for or received from a shell (bus inspector, CORE-304)."""
         self.snapshots: dict[str, dict[str, Any]] = {}
+        self.takeover: Callable[[], dict[str, Any] | None] = lambda: None
+        """The running takeover as shells see it, for ``welcome`` (CORE-418)."""
         self._clients: dict[int, _Client] = {}
 
     def attach_pages(self, pages: PageService, supervisor: Supervisor) -> None:
@@ -311,6 +315,22 @@ class ClientHub:
         frame = _frame("control", {"action": action, **data}, instance)
         for c in self._clients.values():
             if instance is None or instance in c.instances:
+                self._push(c, frame)
+
+    def control_takeover(self, takeover: dict[str, Any] | None) -> None:
+        """Send ``control`` ``takeover`` to every kiosk and browser client (CORE-418).
+
+        The preview never shows a takeover, so it gets none.
+
+        Args:
+            takeover: ``{id, src, fit, until?}``, or ``None`` when it ended.
+
+        Implements:
+            CORE-418: Core spec 0.54, §9.7 Media service.
+        """
+        frame = _frame("control", {"action": "takeover", "takeover": takeover})
+        for c in self._clients.values():
+            if c.role != "preview":
                 self._push(c, frame)
 
     def kiosk_connected(self) -> bool:
@@ -633,6 +653,7 @@ class ClientHub:
             "touch": view.touch,
             "custom_css": view.custom_css,
             "audio": view.audio(role),
+            "takeover": None if role == "preview" else self.takeover(),
             "instances": [i.welcome_entry(self.status(i.id)) for i in view.instances],
         }
         self._media_seen = _media_key(view)

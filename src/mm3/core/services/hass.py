@@ -15,6 +15,7 @@ Implements:
     CORE-345: Core spec 0.34, §9.3 MQTT bridge.
     CORE-236: Core spec 0.34, §6.9 Pages and visibility.
     CORE-240: Core spec 0.34, §6.9 Pages and visibility.
+    CORE-411: Core spec 0.54, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -123,6 +124,37 @@ class KioskAudio(Protocol):
         ...
 
 
+class MediaControl(Protocol):
+    """What the media entities need from the takeover (CORE-411)."""
+
+    listeners: list[Callable[[], None]]
+
+    @property
+    def playing(self) -> str | None:
+        """The source of the running takeover, or ``None``."""
+        ...
+
+    def select_options(self) -> list[str]:
+        """The sources that can start without a file."""
+        ...
+
+    async def start(
+        self,
+        source: str,
+        *,
+        file: str | None = None,
+        duration: float | None = None,
+        takeover_id: str | None = None,
+        owner: str = "core",
+    ) -> str:
+        """Start a takeover."""
+        ...
+
+    async def stop(self, takeover_id: str | None = None, *, owner: str | None = None) -> bool:
+        """Stop the running takeover."""
+        ...
+
+
 @dataclass
 class HaControls:
     """What Home Assistant can steer, as far as this mirror has it.
@@ -131,11 +163,13 @@ class HaControls:
         pages: The page service; without it there are no page and visibility entities.
         kiosk: The kiosk agents; without them there are no volume and mute entities.
         reload_shells: Reloads every browser (``POST /api/v1/shell/reload``).
+        media: The takeover; without it there are no media entities (CORE-411).
     """
 
     pages: PagesControl | None = None
     kiosk: KioskAudio | None = None
     reload_shells: Callable[[], None] | None = None
+    media: MediaControl | None = None
 
 
 def state_text(value: str | float | bool | None) -> str:
@@ -252,6 +286,8 @@ class HaService:
             controls.pages.listeners.append(self._changed)
         if controls.kiosk is not None:
             controls.kiosk.audio_listeners.append(self._changed)
+        if controls.media is not None:
+            controls.media.listeners.append(self._changed)
 
     def _changed(self) -> None:
         self._request("states")
@@ -274,6 +310,8 @@ class HaService:
             self._request("resend")
         elif n.name in ("CORE_PAGE_CHANGED", "CORE_CONFIG_CHANGED"):
             self._request("sync")
+        elif n.name == "CORE_MEDIA_CHANGED":
+            self._request("states")  # CORE-411: both media states again
 
     # --- life cycle -----------------------------------------------------------------
 
@@ -504,6 +542,8 @@ class HaService:
             )
         if c.kiosk is not None:
             out.extend(self._kiosk_entities(c.kiosk))
+        if c.media is not None:
+            out.extend(self._media_entities(c.media))
         for inst in self._sup.instances():
             out.extend(self._instance_entities(inst.instance_id))
         return out
@@ -552,6 +592,35 @@ class HaService:
             ),
             _EngineEntity(
                 "kiosk_mute", "switch", "CORE_HA_KIOSK_MUTE", state=mute_state, command=set_mute
+            ),
+        ]
+
+    def _media_entities(self, media: MediaControl) -> list[_EngineEntity]:
+        """The select ``media_takeover`` and the sensor ``media_playing`` (CORE-411)."""
+
+        async def set_takeover(text: str) -> None:
+            if text == "none":
+                await media.stop()
+            elif text in media.select_options():
+                try:
+                    await media.start(text, owner="ha")
+                except Exception as exc:
+                    _log.warning("mqtt_ha_takeover_refused", source=text, error=str(exc))
+
+        return [
+            _EngineEntity(
+                "media_takeover",
+                "select",
+                "CORE_HA_MEDIA_TAKEOVER",
+                extra={"options": ["none", *media.select_options()]},
+                state=lambda: media.playing or "none",
+                command=set_takeover,
+            ),
+            _EngineEntity(
+                "media_playing",
+                "sensor",
+                "CORE_HA_MEDIA_PLAYING",
+                state=lambda: state_text(media.playing),
             ),
         ]
 

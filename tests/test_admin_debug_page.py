@@ -21,6 +21,7 @@ from mm3.core.engine import Engine
 from mm3.core.i18n.catalogs import CORE_CATALOG, Table
 from mm3.core.logging import configure_logging, get_logger
 from mm3.core.media import MediaService
+from mm3.core.media.takeover import TakeoverService
 from mm3.core.pages import PageService
 from mm3.core.registry import Registry
 from mm3.core.settings import AdminSettings, EngineSettings, ServerSettings, Timeouts
@@ -221,6 +222,7 @@ async def running(tmp_path: Path) -> AsyncIterator[tuple[WebGateway, WebAuth, En
     media.ffmpeg = None  # CORE-397: the source is unavailable without ffmpeg
     media.configure(result)
     services.media = media
+    takeover = TakeoverService(media)  # CORE-410: the overview shows the running takeover
     inspector = BusInspector()
     engine.bus.add_endpoint(inspector)
     channel = AdminChannel(auth, lambda: status_object(services), inspector, interval=0.1)
@@ -228,6 +230,7 @@ async def running(tmp_path: Path) -> AsyncIterator[tuple[WebGateway, WebAuth, En
     await engine.start(result.instance_specs())
     await pages.start()
     await gateway.start()
+    await takeover.start("door", duration=600)  # an unavailable source still starts (CORE-411)
     try:
         yield gateway, auth, engine
     finally:
@@ -285,6 +288,8 @@ async def test_debug_page_renders_in_chromium(
             # CORE-412: the media card shows each source with its state and reason.
             await page.wait_for_selector("tr[data-source=door] >> text=Unavailable")
             await page.wait_for_selector("tr[data-source=door] >> text=ffmpeg is not installed")
+            # CORE-410: and the running takeover.
+            await page.wait_for_selector("p.takeover >> text=Full screen: door until")
             await page.wait_for_selector(".live.on")
             await page.click("td >> text=one")
             await page.wait_for_selector("text=Health record")

@@ -7,6 +7,25 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 8 step 5: the takeover; CORE-410, CORE-411, CORE-412, CORE-418)
+
+- The full-screen takeover (`mm3.core.media.takeover`): one at a time, newest wins, holding the
+  page pause of holder `media`; it ends by duration (default `media.takeover.duration`, shortened
+  to `max_duration`), when a child exits with code 0, after a file's length read with `ffprobe`
+  within 5 s, on a stop, on a kiosk touch (`CORE_INTERACTION`) and on a hot reload that removes
+  or changes its source (CORE-410).
+- `MEDIA_TAKEOVER` and `MEDIA_STOP` on the bus (modules need `media.takeover` and a `media`
+  grant for the source, otherwise dropped with a warning; a module's `MEDIA_STOP` without an id
+  stops only its own takeover), from MQTT when imported, `POST /api/v1/media/takeover` (202
+  `{id}`, 422 `CORE_API_INVALID_REQUEST`) and `DELETE /api/v1/media/takeover[?id=]` (204); the
+  Home Assistant select `media_takeover` and sensor `media_playing`, published again on every
+  `CORE_MEDIA_CHANGED`; `GrantSet.media` (CORE-411).
+- `CORE_MEDIA_CHANGED` and `GET /api/v1/media` carry the running takeover, and the debug
+  overview shows it (CORE-412, CORE-410).
+- `welcome.takeover` and the `control` action `takeover` for kiosk and browser clients; the
+  shell shows it in an `mm3-player` in a layer above every preset, with the kiosk's sound, and
+  the preview never shows it (CORE-418).
+
 ### Changed (spec 0.54; CORE-410, CORE-411 changed, CORE-418 added)
 
 - Core spec 0.54, settled while building milestone 8 step 5: the engine ends a takeover when its

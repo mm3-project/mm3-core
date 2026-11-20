@@ -994,3 +994,68 @@ async def test_core_100_the_bridge_survives_a_slow_start(
     await asyncio.sleep(0)
     await settle()
     assert engine.mqtt.connected
+
+
+# --- CORE-411: Home Assistant, the media entities ----------------------------------------------
+
+
+class Takeover:
+    """A stand-in for the takeover service."""
+
+    def __init__(self) -> None:
+        self.listeners: list[Callable[[], None]] = []
+        self.playing: str | None = None
+        self.calls: list[tuple[str, str | None]] = []
+
+    def select_options(self) -> list[str]:
+        return ["door", "radio"]
+
+    async def start(self, source: str, **kw: Any) -> str:
+        self.calls.append(("start", kw.get("owner")))
+        self.playing = source
+        for cb in self.listeners:
+            cb()
+        return "t"
+
+    async def stop(self, takeover_id: str | None = None, *, owner: str | None = None) -> bool:
+        self.calls.append(("stop", owner))
+        self.playing = None
+        for cb in self.listeners:
+            cb()
+        return True
+
+
+async def test_core_411_select_media_takeover_and_sensor_media_playing(
+    make_engine: EngineFactory, broker: FakeBroker
+) -> None:
+    media = Takeover()
+    engine = make_engine(Net, mqtt=settings(ha_discovery=True))
+    engine.mqtt.connection._factory = broker.factory
+    engine.mqtt.connection._rand = lambda: 0.5
+    engine.mqtt.ha.attach_controls(HaControls(media=media))  # type: ignore[arg-type]
+    await engine.start([InstanceSpec("n", "net", grants=GRANTS)])
+    await settle()
+    select = config(broker, "select", f"{ENGINE}-media_takeover")
+    assert select["options"] == ["none", "door", "radio"]
+    assert select["name"] == "Media takeover"
+    assert config(broker, "sensor", f"{ENGINE}-media_playing")["name"] == "Media playing"
+    assert broker.last(f"{BASE}/ha/{ENGINE}/media_takeover/state") == "none"
+    assert broker.last(f"{BASE}/ha/{ENGINE}/media_playing/state") == "None"
+    broker.inject(f"{BASE}/ha/{ENGINE}/media_takeover/set", "door")
+    await settle()
+    assert media.calls == [("start", "ha")]
+    assert broker.last(f"{BASE}/ha/{ENGINE}/media_takeover/state") == "door"
+    assert broker.last(f"{BASE}/ha/{ENGINE}/media_playing/state") == "door"
+    broker.inject(f"{BASE}/ha/{ENGINE}/media_takeover/set", "garage")  # not an option
+    await settle()
+    assert len(media.calls) == 1
+    broker.inject(f"{BASE}/ha/{ENGINE}/media_takeover/set", "none")
+    await settle()
+    assert media.calls[-1] == ("stop", None)
+    assert broker.last(f"{BASE}/ha/{ENGINE}/media_takeover/state") == "none"
+    # every CORE_MEDIA_CHANGED publishes both states again
+    media.playing = "radio"
+    engine.supervisor.emit("CORE_MEDIA_CHANGED", {"takeover": None, "sources": []})
+    await settle()
+    assert broker.last(f"{BASE}/ha/{ENGINE}/media_playing/state") == "radio"
+    assert broker.last(f"{BASE}/ha/{ENGINE}/media_takeover/state") == "radio"

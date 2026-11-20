@@ -7,6 +7,7 @@ started with the kiosk's ``--autoplay-policy=no-user-gesture-required``
 
 Implements:
     CORE-409, CORE-413, CORE-417: Core spec 0.53, §9.7 Media service.
+    CORE-418: Core spec 0.54, §9.7 Media service.
     MOD-103: Module Contract 1.0 rev 16, §4.5 Media.
 """
 
@@ -621,4 +622,117 @@ async def test_core_413_youtube_iframe_only_with_capability_and_grant(
         await page.wait_for_function(f"() => !!{root}?.querySelector('.placeholder')")
         assert await page.evaluate(f"() => !{root}.querySelector('iframe')")
         assert await events(page, instance) == [{"type": "mm3-media-error", "reason": "forbidden"}]
+    await context.close()
+
+
+# --- CORE-418: the takeover in the shell -----------------------------------------------------
+
+TAKEOVER = {
+    "id": "t1",
+    "src": f"{BASE}/tone.wav",
+    "fit": "contain",
+    "until": "2026-01-01T00:01:00Z",
+}
+
+
+async def preview_ws(mirror: Mirror) -> Any:
+    headers = {"Cookie": f"{ADMIN_COOKIE}={mirror.admin_cookie()}", "Origin": mirror.admin}
+    url = f"ws://127.0.0.1:{mirror.gateway.admin.port}/admin/preview/ws"
+    ws = await websockets.connect(url, additional_headers=headers)
+    data = json.loads(hello())
+    data["data"]["role"] = "preview"
+    await ws.send(json.dumps(data))
+    return ws
+
+
+async def test_core_418_welcome_carries_the_takeover_except_for_the_preview(
+    mirror: Mirror,
+) -> None:
+    assert (await welcome_of(mirror))["takeover"] is None
+    mirror.hub.takeover = lambda: TAKEOVER
+    assert (await welcome_of(mirror, "browser"))["takeover"] == TAKEOVER
+    assert (await welcome_of(mirror, "kiosk"))["takeover"] == TAKEOVER
+    ws = await preview_ws(mirror)
+    try:
+        welcome = json.loads(await ws.recv())
+        assert welcome["data"]["role"] == "preview"
+        assert welcome["data"]["takeover"] is None
+    finally:
+        await ws.close()
+
+
+async def test_core_418_control_takeover_reaches_kiosk_and_browser_only(mirror: Mirror) -> None:
+    preview = await preview_ws(mirror)
+    try:
+        async with websockets.connect(f"ws://127.0.0.1:{mirror.gateway.mirror.port}/ws") as ws:
+            await ws.send(hello())
+            assert await frames_until_control(ws, wait=2) is not None  # the page frame
+            assert await frames_until_control(preview, wait=2) is not None
+            mirror.hub.control_takeover(TAKEOVER)
+            frame = await frames_until_control(ws, wait=2)
+            assert frame is not None
+            assert frame["data"] == {"action": "takeover", "takeover": TAKEOVER}
+            assert "instance" not in frame or frame["instance"] is None
+            assert await frames_until_control(preview) is None
+            mirror.hub.control_takeover(None)
+            frame = await frames_until_control(ws, wait=2)
+            assert frame is not None
+            assert frame["data"] == {"action": "takeover", "takeover": None}
+    finally:
+        await preview.close()
+
+
+LAYER = "document.querySelector('#mm3-takeover')"
+LAYER_AUDIO = (
+    f"() => {LAYER}?.querySelector('mm3-player')?.shadowRoot.querySelector('audio')?.muted"
+)
+
+
+@pytest.mark.browser
+async def test_core_418_layer_above_every_preset_with_kiosk_sound(
+    mirror: Mirror, browser: Any
+) -> None:
+    page = await open_shell(mirror, browser, kiosk=True)
+    await page.wait_for_function(f"() => !!{el('picture')}")
+    mirror.hub.control_takeover(TAKEOVER)
+    await page.wait_for_function(f"() => ({LAYER_AUDIO})() !== undefined")
+    assert await page.evaluate(LAYER_AUDIO) is False  # the kiosk's sound
+    covers = await page.evaluate(
+        f"""() => {{
+            const r = {LAYER}.getBoundingClientRect();
+            const top = document.elementFromPoint(100, 100);
+            return [r.width, r.height, !!top && !!top.closest('#mm3-takeover')];
+        }}"""
+    )
+    assert covers == [1280, 720, True]
+    mirror.hub.control_takeover(None)
+    await page.wait_for_function(f"() => !{LAYER}")
+    assert await page.evaluate(f"() => !!{el('picture')}")  # the layout stayed underneath
+    await page.context.close()
+
+
+@pytest.mark.browser
+async def test_core_418_a_lan_browser_shows_it_muted_and_a_reconnect_shows_it_again(
+    mirror: Mirror, browser: Any
+) -> None:
+    mirror.hub.takeover = lambda: TAKEOVER
+    page = await open_shell(mirror, browser)
+    await page.wait_for_function(f"() => ({LAYER_AUDIO})() !== undefined")  # from welcome
+    assert await page.evaluate(LAYER_AUDIO) is True
+    await page.context.close()
+
+
+@pytest.mark.browser
+async def test_core_418_the_preview_never_shows_a_takeover(mirror: Mirror, browser: Any) -> None:
+    mirror.hub.takeover = lambda: TAKEOVER
+    context = await browser.new_context()
+    await context.add_cookies(
+        [{"name": ADMIN_COOKIE, "value": mirror.admin_cookie(), "url": mirror.admin}]
+    )
+    page = await context.new_page()
+    await page.goto(mirror.admin + "/admin/preview")
+    await page.wait_for_function(f"() => !!{el('picture')}")
+    mirror.hub.control_takeover(TAKEOVER)
+    await asyncio.sleep(0.3)
+    assert await page.evaluate(f"() => !{LAYER}")
     await context.close()

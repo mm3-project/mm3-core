@@ -764,6 +764,12 @@ msgstr "Volume du kiosque"
 msgid "CORE_HA_KIOSK_MUTE"
 msgstr "Sourdine du kiosque"
 
+msgid "CORE_HA_MEDIA_TAKEOVER"
+msgstr "Média en plein écran"
+
+msgid "CORE_HA_MEDIA_PLAYING"
+msgstr "Média en lecture"
+
 msgid "CORE_HA_INSTANCE_VISIBLE"
 msgstr "{instance} visible"
 
@@ -2649,6 +2655,9 @@ msgstr "Non"
 
 msgid "CORE_ADMIN_MEDIA"
 msgstr "Médias"
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER"
+msgstr "Plein écran : {source} jusqu'à {until}"
 
 msgid "CORE_ADMIN_MEDIA_SOURCE"
 msgstr "Source"

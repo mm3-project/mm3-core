@@ -5,6 +5,8 @@
 // the reason `codec`.
 // Implements CORE-402 (Core spec 0.52, §9.7 Media service): a camera source shows the reasons
 // `feed` (waiting for the owner's feed) and `owner` (owned by nobody).
+// Implements CORE-410 (Core spec 0.54, §9.7 Media service): the running takeover, its source
+// and its end, above the sources.
 import { html, nothing } from "/admin/static/lit-html.js";
 import { fmtTime, t } from "/admin/static/admin.js";
 
@@ -33,7 +35,14 @@ function reason(value) {
 export function mediaCard(media) {
   const sources = (media && media.sources) || [];
   const children = (media && media.children) || [];
+  const takeover = media && media.takeover;
   return html`<section class="card media"><h2>${t("CORE_ADMIN_MEDIA")}</h2>
+    ${takeover
+      ? html`<p class="takeover" data-takeover=${takeover.id}>${t("CORE_ADMIN_MEDIA_TAKEOVER", {
+          source: takeover.file ? `${takeover.source} / ${takeover.file}` : takeover.source,
+          until: fmtTime(takeover.until),
+        })}</p>`
+      : nothing}
     ${sources.length
       ? html`<table>
           <thead><tr>

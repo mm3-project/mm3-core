@@ -421,7 +421,11 @@ status = "in_progress"
 #   the owner change); step 4 the player in the shell (CORE-409, 413, 417: mm3-player,
 #   mm3-youtube, welcome.audio, the youtube CSP exception, the media and youtube grants;
 #   MOD-103 only in part: the check rows of the media elements, the fake media service of
-#   the test kit comes with ctx.media).
+#   the test kit comes with ctx.media); step 5 the takeover (CORE-410, 411, 412, 418:
+#   mm3.core.media.takeover, ffprobe for file lengths, the media pause hold, MEDIA_TAKEOVER
+#   and MEDIA_STOP on the bus with media.takeover and the source grant, REST, MQTT import,
+#   the HA select media_takeover and sensor media_playing, welcome.takeover and control
+#   takeover, the shell's full-screen layer, the takeover in the debug overview).
 requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "CORE-417", "CORE-418", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]

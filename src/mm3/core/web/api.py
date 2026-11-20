@@ -35,6 +35,7 @@ Implements:
     CORE-358: Core spec 0.33, §10.7 Installer service.
     CORE-393: Core spec 0.47, §6.11 Camera devices.
     CORE-412: Core spec 0.51, §9.7 Media service.
+    CORE-411: Core spec 0.54, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -79,6 +80,7 @@ if TYPE_CHECKING:
     from mm3.core.config.manager import ConfigManager
     from mm3.core.engine import Engine
     from mm3.core.media import MediaService
+    from mm3.core.media.takeover import TakeoverService
     from mm3.core.pages import PageService
     from mm3.core.supervisor import ManagedInstance
     from mm3.core.web.kiosk import KioskAgents
@@ -88,6 +90,14 @@ if TYPE_CHECKING:
 __all__ = ["ApiServices", "api_router", "check_api_auth", "openapi_schema", "status_object"]
 
 _log = get_logger(subsystem="api")
+
+_TAKEOVER_REFUSED = {
+    "unknown": "Unknown source",
+    "duration": "duration must be more than 0",
+    "file": "The file does not exist in the source, or the source has no files",
+    "file_required": "A files source on a folder needs a file",
+}
+"""The ``detail`` of a refused takeover (CORE-411)."""
 
 Level = Literal["debug", "info", "warning", "error"]
 
@@ -110,6 +120,7 @@ class ApiServices:
         installer: The link to the installer service (CORE-356, CORE-382); without it the
             installer counts as unavailable.
         media: The media service (CORE-412); without it there are no sources.
+        takeover: The takeover (CORE-411); without it every source is unknown.
     """
 
     engine: Engine
@@ -123,6 +134,7 @@ class ApiServices:
     mirror: MirrorPreview | None = None
     installer: InstallerLink | None = None
     media: MediaService | None = None
+    takeover: TakeoverService | None = None
 
 
 # --- request bodies ---------------------------------------------------------------------
@@ -154,6 +166,15 @@ class PauseBody(_Body):
     """
 
     for_: StrictInt | None = Field(default=None, alias="for", ge=1, le=3600)
+
+
+class TakeoverBody(_Body):
+    """``POST /api/v1/media/takeover``: the payload of ``MEDIA_TAKEOVER`` (CORE-411)."""
+
+    source: str
+    file: str | None = None
+    duration: float | None = None
+    id: str | None = None
 
 
 class NotifyBody(_Body):
@@ -543,6 +564,32 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
         if services.media is None:
             return {"takeover": None, "sources": [], "children": []}
         return services.media.status()
+
+    @router.post("/media/takeover", status_code=202)
+    async def start_takeover(body: TakeoverBody) -> dict[str, Any]:
+        """Start a takeover, replacing the running one; answers ``{id}`` (CORE-411)."""
+        from mm3.core.media.takeover import TakeoverRefused
+
+        if services.takeover is None:
+            raise ApiError("CORE_API_INVALID_REQUEST", f"Unknown source {body.source!r}")
+        try:
+            tid = await services.takeover.start(
+                body.source,
+                file=body.file,
+                duration=body.duration,
+                takeover_id=body.id or None,
+                owner="rest",
+            )
+        except TakeoverRefused as exc:
+            raise ApiError("CORE_API_INVALID_REQUEST", _TAKEOVER_REFUSED[exc.reason]) from None
+        return {"id": tid}
+
+    @router.delete("/media/takeover", status_code=204)
+    async def stop_takeover(id: str | None = None) -> Response:
+        """Stop the running takeover, or only the one with ``id``; always 204 (CORE-411)."""
+        if services.takeover is not None:
+            await services.takeover.stop(id or None)
+        return Response(status_code=204)
 
     # --- Show on mirror (CORE-307) -----------------------------------------------------
 
