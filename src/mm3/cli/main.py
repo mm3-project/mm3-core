@@ -231,6 +231,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.diag.secrets import Masker, config_secrets
     from mm3.core.engine import Engine
     from mm3.core.media import MediaService
+    from mm3.core.media.takeover import TakeoverService
     from mm3.core.pages import PageService
     from mm3.core.services.hass import HaControls
     from mm3.core.services.power import PowerService
@@ -284,13 +285,6 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     engine.supervisor.power = PowerService(
         engine.supervisor, agents.set_display_power if agents is not None else None
     )  # CORE-52, CORE-53, CORE-346
-    engine.mqtt.ha.attach_controls(
-        HaControls(
-            pages=pages,
-            kiosk=agents,
-            reload_shells=lambda: hub.control("reload", {"scope": "page"}),
-        )
-    )  # CORE-343
     masks: dict[str, Any] = {}
 
     def masker() -> Masker:
@@ -308,6 +302,20 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     )
     media.configure(result)
     manager.layout_listeners.append(media.reloaded)
+    # CORE-410, CORE-411, CORE-418 (Core spec 0.54, §9.7 Media service): one takeover at a
+    # time, from MEDIA_TAKEOVER on the bus, REST and Home Assistant, shown by the shells.
+    takeover = TakeoverService(media, supervisor=engine.supervisor, pages=pages, shells=hub)
+    hub.takeover = takeover.shell_object
+    engine.bus.add_endpoint(takeover)
+    manager.layout_listeners.append(takeover.reloaded)
+    engine.mqtt.ha.attach_controls(
+        HaControls(
+            pages=pages,
+            kiosk=agents,
+            reload_shells=lambda: hub.control("reload", {"scope": "page"}),
+            media=takeover,
+        )
+    )  # CORE-343, CORE-411
     # CORE-396 (Core spec 0.47, §9.5 Local camera feed): devices.json is written again only
     # after Media has released a camera it no longer owns, so Vision opens it afterwards.
     manager.layout_listeners.append(devices.reloaded)
@@ -333,6 +341,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
         mirror=mirror,
         installer=installer,
         media=media,
+        takeover=takeover,
     )
     gateway = WebGateway(
         result.config.engine,
@@ -362,6 +371,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
             with contextlib.suppress(asyncio.CancelledError):
                 await watchdog
         await gateway.stop()
+        await takeover.close()
         await media.close()
         await pages.close()
         await manager.close()

@@ -272,9 +272,11 @@ async def test_core_246_welcome_then_one_state_per_instance(mirror: Mirror) -> N
             "touch",
             "custom_css",
             "audio",  # CORE-417
+            "takeover",  # CORE-418
             "instances",
         }
         assert data["location"] is None
+        assert data["takeover"] is None  # no takeover runs (CORE-418)
         assert data["audio"] is False  # a browser, media.browser_audio off (CORE-417)
         assert (data["engine_build"], data["role"], data["interactive"]) == (
             "1.0+test",

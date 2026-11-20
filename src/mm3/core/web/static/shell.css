@@ -2,6 +2,7 @@
 /* Implements CORE-255, CORE-256, CORE-258, CORE-259 (Core spec 0.14, §6.5 Screen layout) */
 /* Implements CORE-117 (Core spec 0.14, §10.5 Diagnostics and debugging) */
 /* Implements CORE-325 (Core spec 0.28, §6.6 Live layout preview): draft placeholders */
+/* Implements CORE-418 (Core spec 0.54, §9.7 Media service): the takeover layer above every preset */
 html, body {
   margin: 0;
   height: 100%;
@@ -89,3 +90,12 @@ html[data-touch="true"] #mm3-grid { pointer-events: auto; }
   font-size: 1.2rem;
   overflow: hidden;
 }
+
+/* The takeover (CORE-418): full screen, above every preset and the failure placeholders. */
+#mm3-takeover {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  background: #000;
+}
+#mm3-takeover mm3-player { width: 100%; height: 100%; }

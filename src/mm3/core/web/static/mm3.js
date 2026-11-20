@@ -289,7 +289,9 @@ function mediaKind(url) {
 /** Whether sound may play here (CORE-409): `welcome.audio`, and `muted` always wins. */
 function soundAllowed(el) {
   const host = mirrorHost(el);
-  return Boolean(host && host._mediaAudio) && !el.hasAttribute("muted");
+  // CORE-418: the shell's takeover player is in no element; the shell gives it `_mediaAudio`.
+  const audio = host ? host._mediaAudio : el._mediaAudio;
+  return audio === true && !el.hasAttribute("muted");
 }
 
 function mediaEvent(el, type, detail) {

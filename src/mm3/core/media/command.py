@@ -3,8 +3,9 @@
 Pure functions only: which delivery a source uses (CORE-400), the arguments
 of each child (CORE-397, CORE-401, CORE-403), the input codecs read from
 ``ffmpeg``'s standard error and whether they play in a browser (CORE-401),
-and the masking of URL credentials in log lines (CORE-397, CORE-403).
-Nothing here starts a process.
+the masking of URL credentials in log lines (CORE-397, CORE-403), and the
+``ffprobe`` command line that reads the length of a file in a takeover
+(CORE-410). Nothing here starts a process.
 
 Implements:
     CORE-397: Core spec 0.51, §9.7 Media service.
@@ -12,6 +13,7 @@ Implements:
     CORE-401: Core spec 0.48, §9.7 Media service.
     CORE-402: Core spec 0.52, §9.7 Media service.
     CORE-403: Core spec 0.48, §9.7 Media service.
+    CORE-410: Core spec 0.54, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -38,8 +40,10 @@ __all__ = [
     "Encoder",
     "delivery",
     "ffmpeg_command",
+    "ffprobe_command",
     "mask_url_credentials",
     "parse_codecs",
+    "parse_duration",
     "unplayable",
 ]
 
@@ -316,3 +320,56 @@ def mask_url_credentials(text: str) -> str:
         CORE-403: Core spec 0.48, §9.7 Media service.
     """
     return _USERINFO.sub(lambda m: f"{m['scheme']}{MASK}@", text)
+
+
+def ffprobe_command(ffprobe: str, fd: int) -> list[str]:
+    """Return the ``ffprobe`` command that prints the length of an open file (CORE-410).
+
+    The file is opened by the engine without following links (CORE-404) and
+    passed to the child as descriptor ``fd``; ``ffprobe`` reads it through
+    ``/proc/self/fd``, with no other protocol allowed.
+
+    Args:
+        ffprobe: Path of ``ffprobe`` (from the ffmpeg package).
+        fd: The descriptor, kept open in the child.
+
+    Returns:
+        The argument list.
+
+    Implements:
+        CORE-410: Core spec 0.54, §9.7 Media service.
+    """
+    return [
+        ffprobe,
+        "-v",
+        "error",
+        "-protocol_whitelist",
+        "file",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "default=noprint_wrappers=1:nokey=1",
+        f"file:/proc/self/fd/{fd}",
+    ]
+
+
+def parse_duration(text: str) -> float | None:
+    """Read the length printed by :func:`ffprobe_command`, in seconds.
+
+    Args:
+        text: ``ffprobe``'s standard output.
+
+    Returns:
+        A positive length, or ``None`` when there is none (``N/A``, empty, zero).
+
+    Implements:
+        CORE-410: Core spec 0.54, §9.7 Media service.
+    """
+    for line in text.splitlines():
+        try:
+            value = float(line.strip())
+        except ValueError:
+            continue
+        if value > 0 and value == value and value != float("inf"):
+            return value
+    return None

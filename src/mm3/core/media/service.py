@@ -16,9 +16,9 @@ not browser-playable gets the state ``error`` with the reason ``codec``
 URL credentials and the configuration's secrets masked (CORE-397, CORE-403).
 
 The state of every source is sent as ``CORE_MEDIA_CHANGED`` on change, at
-most once a second, and is the body of ``GET /api/v1/media`` (CORE-412). The
-takeover (CORE-410) comes in a later step of milestone 8: until then
-``takeover`` is always null.
+most once a second, and is the body of ``GET /api/v1/media`` (CORE-412), with
+the running takeover of :mod:`mm3.core.media.takeover` (CORE-410). A child
+that exits with code 0 tells the takeover that its stream ended.
 
 A ``camera`` source follows the owner of its device (CORE-389, CORE-402):
 owned by ``vision`` it relays the frames of the local feed (CORE-395) with
@@ -38,6 +38,7 @@ Implements:
     CORE-401: Core spec 0.48, §9.7 Media service.
     CORE-402: Core spec 0.52, §9.7 Media service.
     CORE-403: Core spec 0.48, §9.7 Media service.
+    CORE-410: Core spec 0.54, §9.7 Media service.
     CORE-412: Core spec 0.51, §9.7 Media service.
 """
 
@@ -291,6 +292,12 @@ class MediaService:
         self.limits_transcode = 1
         self.sources: dict[str, _Source] = {}
         self.images: dict[str, bool] = {}
+        self.takeover_durations: tuple[int, int] = (60, 3600)
+        """``media.takeover``: ``(duration, max_duration)`` in seconds (CORE-410)."""
+        self.takeover_state: Callable[[], dict[str, Any] | None] = lambda: None
+        """The running takeover for the state (set by the takeover service, CORE-412)."""
+        self.ended_listeners: list[Callable[[str], None]] = []
+        """Told the source name when a child exits with code 0: its stream ended (CORE-410)."""
         self._reaper: asyncio.Task[None] | None = None
         self._pending: asyncio.Task[None] | None = None
         self._last_sent: dict[str, Any] | None = None
@@ -328,6 +335,7 @@ class MediaService:
         """
         self.limits_processes = media.limits.processes
         self.limits_transcode = media.limits.transcode
+        self.takeover_durations = (media.takeover.duration, media.takeover.max_duration)
         self.images = {d.name: d.config.images for d in devices}
         by_name: Mapping[str, ResolvedDevice] = {d.name: d for d in devices}
         now = self.clock.boottime()
@@ -440,7 +448,7 @@ class MediaService:
             CORE-412: Core spec 0.51, §9.7 Media service.
         """
         return {
-            "takeover": None,
+            "takeover": self.takeover_state(),
             "sources": [
                 {"name": s.name, "state": s.state, "viewers": s.viewers}
                 for s in self.sources.values()
@@ -471,6 +479,10 @@ class MediaService:
             if s.child is not None
         ]
         return body
+
+    def state_changed(self) -> None:
+        """The takeover changed: send the state (CORE-412)."""
+        self._changed()
 
     def _changed(self) -> None:
         """Send ``CORE_MEDIA_CHANGED`` when the state changed, at most once a second."""
@@ -930,6 +942,8 @@ class MediaService:
             await self._end(src, "error", "codec")
         elif code == 0:
             await self._end(src, "idle", None)
+            for listener in list(self.ended_listeners):
+                listener(src.name)  # CORE-410: a stream that ends ends its takeover
         else:
             await self._failed(src, child)
         self._changed()

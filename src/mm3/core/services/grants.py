@@ -4,8 +4,9 @@ Built from the instance's ``grants`` block (``mm3.core.config.model.Grants``);
 default is nothing granted (deny).
 
 Implements:
-    -: Module Contract 1.0 rev 12, §8 Capabilities and grants.
+    -: Module Contract 1.0 rev 16, §8 Capabilities and grants.
     CORE-284: Core spec 0.19, §3.4 HTTP transport.
+    CORE-411: Core spec 0.54, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -27,12 +28,18 @@ class GrantSet:
         http_ca: ``(prefix, absolute PEM path)`` of the entries with a ``ca``.
         mqtt_publish: Topic globs for ``ctx.mqtt.publish``.
         mqtt_subscribe: Topic globs for ``ctx.mqtt.subscribe``.
+        media: Media source names, or ``*`` for all (CORE-411, Contract §8).
     """
 
     http: tuple[str, ...] = ()
     http_ca: tuple[tuple[str, str], ...] = ()
     mqtt_publish: tuple[str, ...] = ()
     mqtt_subscribe: tuple[str, ...] = ()
+    media: tuple[str, ...] = ()
+
+    def media_granted(self, source: str) -> bool:
+        """Whether the ``media`` grant covers a source (CORE-411)."""
+        return "*" in self.media or source in self.media
 
     @classmethod
     def from_config(cls, grants: Any, base_dir: Path | None = None) -> GrantSet:
@@ -69,4 +76,5 @@ class GrantSet:
             http_ca=tuple(ca),
             mqtt_publish=tuple(mqtt.get("publish") or ()),
             mqtt_subscribe=tuple(mqtt.get("subscribe") or ()),
+            media=tuple(str(m) for m in grants.get("media") or ()),
         )

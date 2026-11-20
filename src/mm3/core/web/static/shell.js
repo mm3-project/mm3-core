@@ -16,6 +16,9 @@
 // Implements CORE-417 (Core spec 0.53, §9.7 Media service): elements learn `welcome.audio`
 // and their instance's `youtube`; a resync re-creates every element when `audio` changed and
 // an element whose `youtube` changed.
+// Implements CORE-418 (Core spec 0.54, §9.7 Media service): `welcome.takeover` and the
+// `control` action `takeover` show the takeover in an `mm3-player` in a layer above every
+// preset, removed on null; the page, layout and elements underneath stay as they are.
 import { bind } from "/core/mm3.js";
 
 const mode = document.documentElement.dataset.mode === "preview" ? "preview" : "mirror";
@@ -227,6 +230,7 @@ async function onWelcome(data) {
   document.documentElement.dataset.touch = data.touch ? "true" : "false";
   applyCustomCss(data.custom_css);
   applyLayout(draftLayout || data.layout);
+  applyTakeover(data.takeover);
   const wanted = new Set(data.instances.map((i) => i.id));
   for (const [id, cell] of cells) {
     const info = data.instances.find((i) => i.id === id);
@@ -530,6 +534,8 @@ function onControl(instance, data) {
       if (data.scope === "page") location.reload();
       else resync();
       return undefined;
+    case "takeover":
+      return applyTakeover(data.takeover);
     default:
       return undefined;
   }
@@ -629,6 +635,34 @@ function fit(cell) {
   if (!w || !h || !aw || !ah) return;
   const scale = Math.min(1, aw / w, ah / h);
   if (scale < 1) box.style.transform = `scale(${scale})`;
+}
+
+// --- takeover (CORE-418) -------------------------------------------------------------
+
+let takeoverLayer = null;
+
+/** Show the takeover `{id, src, fit, until?}` above every preset, or remove it on null. */
+function applyTakeover(takeover) {
+  const t = mode === "preview" ? null : takeover || null;
+  if (takeoverLayer && t && takeoverLayer.dataset.id === t.id && takeoverLayer.dataset.src === t.src) {
+    return;
+  }
+  if (takeoverLayer) {
+    takeoverLayer.remove(); // removing the player closes its stream (CORE-409)
+    takeoverLayer = null;
+  }
+  if (!t || typeof t.src !== "string") return;
+  const layer = document.createElement("div");
+  layer.id = "mm3-takeover";
+  layer.dataset.id = t.id;
+  layer.dataset.src = t.src;
+  const player = document.createElement("mm3-player");
+  player._mediaAudio = Boolean(welcome && welcome.audio); // the sound of CORE-409
+  player.setAttribute("fit", t.fit === "cover" ? "cover" : "contain");
+  player.setAttribute("src", t.src);
+  layer.append(player);
+  document.body.append(layer);
+  takeoverLayer = layer;
 }
 
 // --- touch (CORE-260, CORE-276) --------------------------------------------------------

@@ -757,6 +757,12 @@ msgstr ""
 msgid "CORE_HA_KIOSK_MUTE"
 msgstr ""
 
+msgid "CORE_HA_MEDIA_TAKEOVER"
+msgstr ""
+
+msgid "CORE_HA_MEDIA_PLAYING"
+msgstr ""
+
 msgid "CORE_HA_INSTANCE_VISIBLE"
 msgstr ""
 
@@ -2627,6 +2633,9 @@ msgid "CORE_ADMIN_DEVICE_NO"
 msgstr ""
 
 msgid "CORE_ADMIN_MEDIA"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER"
 msgstr ""
 
 msgid "CORE_ADMIN_MEDIA_SOURCE"

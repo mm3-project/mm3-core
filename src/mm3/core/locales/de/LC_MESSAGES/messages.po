@@ -764,6 +764,12 @@ msgstr "Kiosk-Lautstärke"
 msgid "CORE_HA_KIOSK_MUTE"
 msgstr "Kiosk stumm"
 
+msgid "CORE_HA_MEDIA_TAKEOVER"
+msgstr "Medien im Vollbild"
+
+msgid "CORE_HA_MEDIA_PLAYING"
+msgstr "Medienwiedergabe"
+
 msgid "CORE_HA_INSTANCE_VISIBLE"
 msgstr "{instance} sichtbar"
 
@@ -2649,6 +2655,9 @@ msgstr "Nein"
 
 msgid "CORE_ADMIN_MEDIA"
 msgstr "Medien"
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER"
+msgstr "Vollbild: {source} bis {until}"
 
 msgid "CORE_ADMIN_MEDIA_SOURCE"
 msgstr "Quelle"
