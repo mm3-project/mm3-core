@@ -12,6 +12,7 @@ start (within 10 minutes). A change of the block applies from the next run.
 Implements:
     CORE-360: Core spec 0.37, §10.8 Backup and restore.
     CORE-244: Core spec 0.37, §10.8 Backup and restore.
+    CORE-406: Core spec 0.56, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -30,6 +31,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from pydantic import ValidationError
 
 from mm3.core.config.loader import include_target, node_to_json, rt_load
+from mm3.core.config.media import MediaConfig, MediaShare
 from mm3.core.config.model import BackupConfig
 from mm3.core.logging import get_logger
 from mm3.installer.files import read_json, write_json
@@ -61,6 +63,8 @@ class Settings:
 
     backup: BackupConfig = field(default_factory=BackupConfig)
     timezone: str = "UTC"
+    shares: Mapping[str, MediaShare] = field(default_factory=dict)
+    """``media.shares`` of the running configuration (CORE-406, CORE-407)."""
 
     @property
     def tz(self) -> tzinfo:
@@ -98,7 +102,9 @@ def _resolve(docs: Mapping[str, Any], main: str, node: Any) -> Any:
 
 
 def parse_settings(files: Mapping[str, str], main: str = "config.yaml") -> Settings:
-    """The ``backup`` block and the time zone of a config set (one ``!include`` level).
+    """The ``backup`` block, the time zone and ``media.shares`` of a config set.
+
+    One ``!include`` level is followed.
 
     Args:
         files: YAML files by path relative to the config directory.
@@ -119,7 +125,22 @@ def parse_settings(files: Mapping[str, str], main: str = "config.yaml") -> Setti
     except ValidationError as exc:
         _log.warning("backup_config_invalid", errors=len(exc.errors()))
         backup = BackupConfig()
-    return Settings(backup, zone if isinstance(zone, str) else "UTC")
+    return Settings(
+        backup, zone if isinstance(zone, str) else "UTC", _shares(docs, main, root.get("media"))
+    )
+
+
+def _shares(docs: Mapping[str, Any], main: str, node: Any) -> dict[str, MediaShare]:
+    """``media.shares`` of a config set; empty for a missing or invalid block (CORE-406)."""
+    block = _resolve(docs, main, node)
+    if block is None or not hasattr(block, "get"):
+        return {}
+    shares = node_to_json(_resolve(docs, main, block.get("shares")))
+    try:
+        return dict(MediaConfig.model_validate({"shares": shares or {}}).shares)
+    except ValidationError as exc:
+        _log.warning("media_shares_invalid", errors=len(exc.errors()))
+        return {}
 
 
 class _UnixConnection(http.client.HTTPConnection):

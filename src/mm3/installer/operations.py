@@ -30,6 +30,7 @@ Implements:
     CORE-371, CORE-372: Core spec 0.36, §10.7 Installer service.
     CORE-363, CORE-366: Core spec 0.37, §10.8 Backup and restore.
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
+    CORE-406: Core spec 0.56, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -76,6 +77,7 @@ from mm3.installer.verify import Verification, VerifyError
 
 if TYPE_CHECKING:
     from mm3.installer.backupops import BackupRunner
+    from mm3.installer.shares import Shares
 
 __all__ = [
     "KEPT_OPERATIONS",
@@ -91,7 +93,9 @@ __all__ = [
     "State",
 ]
 
-Action = Literal["install", "update", "remove", "restore_previous", "backup", "restore"]
+Action = Literal[
+    "install", "update", "remove", "restore_previous", "backup", "restore", "media_sync"
+]
 Source = Literal["catalog", "pypi", "local"]
 Origin = Literal["catalog", "pypi", "local"]
 State = Literal[
@@ -256,6 +260,8 @@ class Installer:
         self.listeners: list[Callable[[Operation, dict[str, Any] | None], None]] = []
         self.backups: BackupRunner | None = None
         """Set by the assembly; None disables pre-operation backups (tests of venvs)."""
+        self.shares: Shares | None = None
+        """Set by the assembly; runs ``media_sync`` operations (CORE-406)."""
         layout.operations.mkdir(mode=0o700, parents=True, exist_ok=True)
         layout.wheels.mkdir(mode=0o700, parents=True, exist_ok=True)
         self._fail_interrupted()
@@ -451,6 +457,10 @@ class Installer:
                 self._runner().backup(self, op, request)
             elif request.action == "restore":
                 self._runner().restore(self, op, request)
+            elif request.action == "media_sync":
+                if self.shares is None:
+                    raise OperationError("shares are not set up on this installer")
+                self.shares.sync(self, op, request)
             elif request.action == "restore_previous":
                 self._pre(op)
                 self._restore_previous(op)

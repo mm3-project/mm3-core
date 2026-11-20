@@ -41,6 +41,7 @@ Implements:
     CORE-410: Core spec 0.54, §9.7 Media service.
     CORE-412: Core spec 0.51, §9.7 Media service.
     CORE-405: Core spec 0.55, §9.7 Media service.
+    CORE-406: Core spec 0.56, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -82,6 +83,13 @@ if TYPE_CHECKING:
     from mm3.core.config.diff import ReloadPlan
     from mm3.core.config.validate import ConfigResult
     from mm3.core.diag.secrets import Masker
+
+
+def _share_of(path: str | None) -> str | None:
+    """The share a ``files`` path lies under (``shares/<name>/…``), or ``None``."""
+    parts = (path or "").split("/")
+    return parts[1] if len(parts) >= 2 and parts[0] == "shares" else None
+
 
 __all__ = [
     "BACKOFF_MAX_S",
@@ -293,6 +301,10 @@ class MediaService:
         self.limits_transcode = 1
         self.upload_max_mb = 2048
         """``media.limits.upload_max_mb``, the largest admin upload (CORE-405)."""
+        self.share_names: frozenset[str] = frozenset()
+        """The names of ``media.shares`` (CORE-406)."""
+        self.failed_shares: frozenset[str] = frozenset()
+        """Shares the installer reports in ``error``; their sources are unavailable (CORE-406)."""
         self.sources: dict[str, _Source] = {}
         self.images: dict[str, bool] = {}
         self.takeover_durations: tuple[int, int] = (60, 3600)
@@ -339,6 +351,7 @@ class MediaService:
         self.limits_processes = media.limits.processes
         self.limits_transcode = media.limits.transcode
         self.upload_max_mb = media.limits.upload_max_mb
+        self.share_names = frozenset(media.shares)
         self.takeover_durations = (media.takeover.duration, media.takeover.max_duration)
         self.images = {d.name: d.config.images for d in devices}
         by_name: Mapping[str, ResolvedDevice] = {d.name: d for d in devices}
@@ -385,7 +398,34 @@ class MediaService:
             return "idle", None
         if src.config.kind in ("rtsp", "stream") and self.ffmpeg is None:
             return "unavailable", "ffmpeg"
+        if src.config.kind == "files" and _share_of(src.config.path) in self.failed_shares:
+            return "unavailable", "share"  # CORE-406: its share is in error
         return "idle", None
+
+    def set_failed_shares(self, names: frozenset[str]) -> None:
+        """Take the shares the installer reports in ``error`` (CORE-406, CORE-407).
+
+        A ``files`` source under such a share is ``unavailable`` with the reason
+        ``share`` until the share is no longer in error.
+
+        Implements:
+            CORE-406: Core spec 0.56, §9.7 Media service.
+        """
+        if names == self.failed_shares:
+            return
+        self.failed_shares = names
+        moved = False
+        for src in self.sources.values():
+            if src.config.kind != "files" or src.active:
+                continue
+            if src.state == "error":
+                continue
+            state = self._resting_state(src)
+            if (src.state, src.reason) != state:
+                src.state, src.reason = state
+                moved = True
+        if moved:
+            self._changed()
 
     async def reloaded(self, new: ConfigResult, plan: ReloadPlan) -> None:
         """Layout listener: apply a hot reload (``media`` is live, CORE-398).

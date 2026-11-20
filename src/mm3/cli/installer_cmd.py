@@ -1,17 +1,18 @@
 """``mm3 installer``: serve, unit, polkit rule, passphrase, TOTP and status.
 
 ``serve`` runs the installer service (``mm3-installer.service`` starts it from
-``/opt/mm3/installer/``, CORE-368). ``unit`` and ``polkit`` print the shipped
-unit and polkit rule (CORE-357). ``passphrase`` and ``totp`` talk to the
-installer socket and need root, which the installer checks with
-``SO_PEERCRED``; they are run from the installer's own venv,
-``sudo /opt/mm3/installer/bin/mm3 installer …``, so no module code runs as
+``/opt/mm3/installer/``, CORE-368). ``unit``, ``polkit`` and ``generator`` print the
+shipped unit, polkit rule (CORE-357) and share mount generator (CORE-407).
+``passphrase`` and ``totp`` talk to the installer socket and need root, which the
+installer checks with ``SO_PEERCRED``; they are run from the installer's own
+venv, ``sudo /opt/mm3/installer/bin/mm3 installer …``, so no module code runs as
 root (CORE-369).
 
 Implements:
     CORE-357: Core spec 0.42, §10.7 Installer service.
     CORE-369: Core spec 0.37, §10.7 Installer service.
     CORE-132: Core spec 0.33, §10.7 Installer service.
+    CORE-407: Core spec 0.56, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -29,7 +30,7 @@ from typing import TextIO
 
 from mm3.installer.client import DEFAULT_SOCKET, InstallerClient, InstallerUnavailable
 
-__all__ = ["add_installer_parser", "polkit_text", "run_installer", "unit_text"]
+__all__ = ["add_installer_parser", "generator_text", "polkit_text", "run_installer", "unit_text"]
 
 EXIT_OK, EXIT_FAILED, EXIT_TOOL = 0, 1, 2
 
@@ -45,6 +46,7 @@ def add_installer_parser(sub: argparse._SubParsersAction) -> None:  # type: igno
     cmds.add_parser("serve", help="run the installer service (mm3-installer.service)")
     cmds.add_parser("unit", help="print mm3-installer.service")
     cmds.add_parser("polkit", help="print the installer's polkit rule")
+    cmds.add_parser("generator", help="print the share mount generator mm3-media-mounts")
     for name, text in (
         ("passphrase", "set the install passphrase (root)"),
         ("status", "show the installer's state"),
@@ -64,6 +66,11 @@ def unit_text() -> str:
 def polkit_text() -> str:
     """Return the shipped polkit rule."""
     return (resources.files("mm3.installer") / "mm3-installer.rules").read_text()
+
+
+def generator_text() -> str:
+    """Return the shipped systemd generator of the share mounts (CORE-407)."""
+    return (resources.files("mm3.installer") / "mm3-media-mounts").read_text()
 
 
 def _serve() -> int:
@@ -113,6 +120,9 @@ def run_installer(
         return EXIT_OK
     if cmd == "polkit":
         stream.write(polkit_text())
+        return EXIT_OK
+    if cmd == "generator":
+        stream.write(generator_text())
         return EXIT_OK
     client = InstallerClient(args.socket)
     try:

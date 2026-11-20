@@ -433,7 +433,9 @@ status = "in_progress"
 #   takeover, the shell's full-screen layer, the takeover in the debug overview).
 #   Step 6a the files of the admin and the media backup part (CORE-404, 405, 408:
 #   mm3.core.media.files with its own executor, the file routes, media in backup.parts, its
-#   restore and the pre-restore backup); step 6b the shares (CORE-406, 407) in the installer.
+#   restore and the pre-restore backup); step 6b the shares (CORE-406, 407:
+#   mm3.installer.shares, the media_sync operation, the generator mm3-media-mounts and the
+#   polkit rule, the engine's share states every 30 s).
 requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "CORE-417", "CORE-418", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]
