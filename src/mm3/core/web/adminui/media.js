@@ -1,5 +1,5 @@
 // The media service in the admin debug overview (core spec 9.7).
-// Implements CORE-412 (Core spec 0.51, §9.7 Media service): the overview shows each source with
+// Implements CORE-412 (Core spec 0.58, §9.7 Media service): the overview shows each source with
 // its state, viewers and reason, and the running children, from GET /api/v1/media.
 // Implements CORE-401 (Core spec 0.48, §9.7 Media service): a source that is not playable shows
 // the reason `codec`.
@@ -26,9 +26,15 @@ const REASONS = {
   restarting: "CORE_ADMIN_MEDIA_REASON_RESTARTING",
 };
 
-function reason(value) {
+/** The text of a source's reason (CORE-412); nothing for none, the code itself when unknown. */
+export function reasonText(value) {
   if (!value) return nothing;
   return REASONS[value] ? t(REASONS[value]) : value;
+}
+
+/** The text of a source's state (CORE-412). */
+export function stateText(value) {
+  return STATES[value] ? t(STATES[value]) : value;
 }
 
 /** The media card of the debug overview: sources, then the running children. */
@@ -51,8 +57,8 @@ export function mediaCard(media) {
           </tr></thead>
           <tbody>${sources.map(
             (s) => html`<tr data-source=${s.name} class=${s.state === "error" ? "bad" : ""}>
-              <td>${s.name}</td><td>${STATES[s.state] ? t(STATES[s.state]) : s.state}</td>
-              <td>${s.viewers}</td><td>${reason(s.reason)}</td>
+              <td>${s.name}</td><td>${stateText(s.state)}</td>
+              <td>${s.viewers}</td><td>${reasonText(s.reason)}</td>
             </tr>`,
           )}</tbody>
         </table>`

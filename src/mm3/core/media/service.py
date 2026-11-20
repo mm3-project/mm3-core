@@ -39,7 +39,7 @@ Implements:
     CORE-402: Core spec 0.52, §9.7 Media service.
     CORE-403: Core spec 0.48, §9.7 Media service.
     CORE-410: Core spec 0.54, §9.7 Media service.
-    CORE-412: Core spec 0.51, §9.7 Media service.
+    CORE-412: Core spec 0.58, §9.7 Media service.
     CORE-406: Core spec 0.57, §9.7 Media service.
     CORE-405: Core spec 0.57, §9.7 Media service.
 """
@@ -489,7 +489,7 @@ class MediaService:
         """The payload of ``CORE_MEDIA_CHANGED`` (CORE-412).
 
         Implements:
-            CORE-412: Core spec 0.51, §9.7 Media service.
+            CORE-412: Core spec 0.58, §9.7 Media service.
         """
         return {
             "takeover": self.takeover_state(),
@@ -504,14 +504,21 @@ class MediaService:
 
         Returns:
             The payload, each source with its ``reason`` (null unless it is in
-            ``error`` or ``unavailable``), plus the running children.
+            ``error`` or ``unavailable``), its ``kind``, its ``delivery``, its ``device`` (a
+            camera) and its ``path`` (files), never its ``url``, plus the
+            running children.
 
         Implements:
-            CORE-412: Core spec 0.51, §9.7 Media service.
+            CORE-412: Core spec 0.58, §9.7 Media service.
         """
         body = self.payload()
         for entry in body["sources"]:
-            entry["reason"] = self.sources[entry["name"]].reason
+            src = self.sources[entry["name"]]
+            entry["reason"] = src.reason
+            entry["kind"] = src.config.kind
+            entry["delivery"] = src.how
+            entry["device"] = src.config.device
+            entry["path"] = src.config.path
         body["children"] = [
             {
                 "source": s.name,

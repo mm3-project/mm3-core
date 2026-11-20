@@ -2715,3 +2715,291 @@ msgstr "Kein Dienst besitzt diese Kamera (owner: none)"
 
 msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
 msgstr "Neustart nach einem Fehler"
+
+msgid "CORE_WEB_NAV_MEDIA"
+msgstr "Medien"
+
+msgid "CORE_ADMIN_MEDIA_REFRESH"
+msgstr "Aktualisieren"
+
+msgid "CORE_ADMIN_MEDIA_H_SOURCES"
+msgstr "Quellen"
+
+msgid "CORE_ADMIN_MEDIA_H_FILES"
+msgstr "Dateien"
+
+msgid "CORE_ADMIN_MEDIA_H_SHARES"
+msgstr "Freigaben"
+
+msgid "CORE_ADMIN_MEDIA_KIND"
+msgstr "Art"
+
+msgid "CORE_ADMIN_MEDIA_KIND_RTSP"
+msgstr "RTSP-Stream"
+
+msgid "CORE_ADMIN_MEDIA_KIND_STREAM"
+msgstr "Remote-Stream"
+
+msgid "CORE_ADMIN_MEDIA_KIND_CAMERA"
+msgstr "Kamera"
+
+msgid "CORE_ADMIN_MEDIA_KIND_FILES"
+msgstr "Dateien"
+
+msgid "CORE_ADMIN_MEDIA_NO_SOURCES"
+msgstr "Es sind keine Medienquellen konfiguriert."
+
+msgid "CORE_ADMIN_MEDIA_SELECT"
+msgstr "{name} auswählen"
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER_OPEN"
+msgstr "Vollbild: {source}"
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER_NONE"
+msgstr "Es wird nichts im Vollbild gezeigt."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_NAME"
+msgstr "Vorschau"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_EFFECT"
+msgstr "Spielt die gewählte Quelle hier im Admin ab. Sie startet erst, wenn Sie die Schaltfläche drücken."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_LABEL"
+msgstr "Vorschau"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_STOP"
+msgstr "Vorschau beenden"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_LOAD"
+msgstr "Der Player konnte nicht geladen werden."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_FORBIDDEN"
+msgstr "Die Vorschau von {name} wird abgelehnt: Kamerabilder sind für dieses Gerät ausgeschaltet."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_ERROR"
+msgstr "Die Vorschau von {name} läuft nicht: {reason}."
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_UNAVAILABLE"
+msgstr "die Quelle antwortet nicht"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_UNSUPPORTED"
+msgstr "dieser Browser spielt kein HLS ab"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_DECODE"
+msgstr "der Browser kann sie nicht dekodieren"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_NETWORK"
+msgstr "die Verbindung ist fehlgeschlagen"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_NAME"
+msgstr "Im Vollbild zeigen"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_EFFECT"
+msgstr "Zeigt die gewählte Quelle auf dem Spiegel über jeder Seite, bis sie endet oder Sie sie beenden."
+
+msgid "CORE_ADMIN_MEDIA_SHOW_LABEL"
+msgstr "Zeigen"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_DONE"
+msgstr "{source} wird im Vollbild gezeigt."
+
+msgid "CORE_ADMIN_MEDIA_STOP_NAME"
+msgstr "Vollbild beenden"
+
+msgid "CORE_ADMIN_MEDIA_STOP_EFFECT"
+msgstr "Beendet die Vollbildanzeige und bringt den Spiegel zurück."
+
+msgid "CORE_ADMIN_MEDIA_STOP_LABEL"
+msgstr "Beenden"
+
+msgid "CORE_ADMIN_MEDIA_STOP_DONE"
+msgstr "Die Vollbildanzeige ist beendet."
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_SOURCE"
+msgstr "Wählen Sie zuerst eine Quelle."
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_TAKEOVER"
+msgstr "Es wird nichts im Vollbild gezeigt."
+
+msgid "CORE_ADMIN_MEDIA_REASON_FOLDER"
+msgstr "Diese Quelle ist ein Ordner: Wählen Sie mit „Im Vollbild zeigen“ eine Datei."
+
+msgid "CORE_ADMIN_MEDIA_REASON_IMAGES"
+msgstr "Kamerabilder sind für das Gerät {device} ausgeschaltet (images: false)."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_TITLE"
+msgstr "Eine Datei von {source} zeigen"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_TEXT"
+msgstr "Wählen Sie die Datei für die Vollbildanzeige, aus diesem Ordner oder einem Unterordner."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_EMPTY"
+msgstr "Hier gibt es keine Mediendateien."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_UP"
+msgstr "Hinauf"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_SHOW"
+msgstr "Zeigen"
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_FILE"
+msgstr "Wählen Sie zuerst eine Datei."
+
+msgid "CORE_ADMIN_MEDIA_PATH"
+msgstr "Pfad"
+
+msgid "CORE_ADMIN_MEDIA_NAME"
+msgstr "Name"
+
+msgid "CORE_ADMIN_MEDIA_SIZE"
+msgstr "Größe"
+
+msgid "CORE_ADMIN_MEDIA_MODIFIED"
+msgstr "Geändert"
+
+msgid "CORE_ADMIN_MEDIA_FILE_FOLDER"
+msgstr "Ordner"
+
+msgid "CORE_ADMIN_MEDIA_FILE_VIDEO"
+msgstr "Video"
+
+msgid "CORE_ADMIN_MEDIA_FILE_AUDIO"
+msgstr "Audio"
+
+msgid "CORE_ADMIN_MEDIA_FILE_IMAGE"
+msgstr "Bild"
+
+msgid "CORE_ADMIN_MEDIA_FILES_EMPTY"
+msgstr "Dieser Ordner ist leer."
+
+msgid "CORE_ADMIN_MEDIA_REASON_SHARES_READONLY"
+msgstr "Freigaben sind schreibgeschützt."
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_NAME"
+msgstr "Datei hochladen"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_EFFECT"
+msgstr "Kopiert eine Datei von Ihrem Computer in diesen Ordner."
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_LABEL"
+msgstr "Hochladen"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_PROGRESS"
+msgstr "{name} wird hochgeladen: {percent} %"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_DONE"
+msgstr "{name} wurde hochgeladen."
+
+msgid "CORE_ADMIN_MEDIA_REASON_UPLOADING"
+msgstr "Ein Upload läuft."
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_NAME"
+msgstr "Neuer Ordner"
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_EFFECT"
+msgstr "Legt in diesem einen leeren Ordner an."
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_LABEL"
+msgstr "Anlegen"
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_DONE"
+msgstr "Der Ordner {name} wurde angelegt."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_TITLE"
+msgstr "Neuer Ordner in {path}"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_NAME"
+msgstr "Ordnername"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_NEED_NAME"
+msgstr "Geben Sie einen Namen für den Ordner ein."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_TITLE"
+msgstr "{name} löschen?"
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_TEXT"
+msgstr "Die Datei wird aus dem Medienordner gelöscht und kann nicht wiederhergestellt werden."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_FOLDER_TEXT"
+msgstr "Der Ordner wird aus dem Medienordner gelöscht."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_TITLE"
+msgstr "{name} und seinen gesamten Inhalt löschen?"
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_TEXT"
+msgstr "Der Ordner ist nicht leer. Sein gesamter Inhalt wird gelöscht und kann nicht wiederhergestellt werden."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_ACTION"
+msgstr "Alles löschen"
+
+msgid "CORE_ADMIN_MEDIA_DELETE_DONE"
+msgstr "{name} wurde gelöscht."
+
+msgid "CORE_ADMIN_MEDIA_METHOD"
+msgstr "Methode"
+
+msgid "CORE_ADMIN_MEDIA_METHOD_SYNC"
+msgstr "Synchronisierung"
+
+msgid "CORE_ADMIN_MEDIA_METHOD_MOUNT"
+msgstr "Einhängen"
+
+msgid "CORE_ADMIN_MEDIA_LAST_SYNC"
+msgstr "Letzte Synchronisierung"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_IDLE"
+msgstr "Noch nicht gelaufen"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_SYNCING"
+msgstr "Wird synchronisiert"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_OK"
+msgstr "Aktuell"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_ERROR"
+msgstr "Fehler"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_REMOTE"
+msgstr "Das rclone-Remote existiert nicht oder hat einen anderen Typ"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_TOO_LARGE"
+msgstr "Die Kopie wäre größer als max_size_gb"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_FAILED"
+msgstr "Die Synchronisierung ist fehlgeschlagen"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_MOUNT"
+msgstr "Das Einhängen ist fehlgeschlagen"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_PATH"
+msgstr "Der Pfad existiert in der Freigabe nicht"
+
+msgid "CORE_ADMIN_MEDIA_SHARES_NONE"
+msgstr "Es sind keine Freigaben konfiguriert."
+
+msgid "CORE_ADMIN_MEDIA_SHARES_UNAVAILABLE"
+msgstr "Die Freigaben können nicht gelesen werden: {error}"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_LABEL"
+msgstr "Jetzt synchronisieren"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_STARTED"
+msgstr "{name} wird synchronisiert …"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_DONE"
+msgstr "{name} wurde synchronisiert."
+
+msgid "CORE_ADMIN_MEDIA_SYNC_FAILED"
+msgstr "Die Synchronisierung von {name} ist fehlgeschlagen. {error}"
+
+msgid "CORE_ADMIN_MEDIA_REASON_MOUNT"
+msgstr "Eine eingehängte Freigabe ist immer aktuell; es gibt nichts zu synchronisieren."
+
+msgid "CORE_ADMIN_MEDIA_REASON_SYNCING"
+msgstr "Diese Freigabe wird gerade synchronisiert."
+
+msgid "CORE_ADMIN_MEDIA_REASON_INSTALLER_AWAY"
+msgstr "Der Installer ist nicht verfügbar."
+
+msgid "CORE_ADMIN_MEDIA_REASON_INSTALLER_BUSY"
+msgstr "Der Installer ist mit einer anderen Operation beschäftigt."

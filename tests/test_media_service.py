@@ -355,6 +355,10 @@ async def test_core_397_child_starts_on_first_viewer_and_stops_30s_after_the_las
         "state": "running",
         "viewers": 2,
         "reason": None,
+        "kind": "rtsp",
+        "delivery": "mjpeg",
+        "device": None,
+        "path": None,  # CORE-412: what the Media page needs; never the url
     }
     child = media.service.status()["children"][0]
     assert child["source"] == "door"
@@ -774,3 +778,26 @@ async def test_core_401_real_ffmpeg_remuxes_h264_aac_to_hls_and_mjpeg(tmp_path: 
 
 def state_of(service: MediaService, name: str) -> str:
     return str(next(s for s in service.status()["sources"] if s["name"] == name)["state"])
+
+
+async def test_core_412_state_gives_the_kind_delivery_device_and_path_but_never_the_url(
+    media: Media,
+) -> None:
+    by_name = {s["name"]: s for s in media.service.status()["sources"]}
+    assert (by_name["door"]["kind"], by_name["door"]["device"], by_name["door"]["path"]) == (
+        "rtsp",
+        None,
+        None,
+    )
+    assert [by_name[n]["delivery"] for n in ("door", "radio", "mirror", "holidays")] == [
+        "mjpeg",
+        "hls",
+        "mjpeg",
+        "file",
+    ]
+    assert (by_name["mirror"]["kind"], by_name["mirror"]["device"]) == ("camera", "cam")
+    assert (by_name["holidays"]["kind"], by_name["holidays"]["path"]) == ("files", "files/trip")
+    assert all("url" not in s for s in by_name.values())
+    assert "s3cret" not in str(media.service.status())
+    # CORE_MEDIA_CHANGED stays as it was: the extra fields belong to the REST body only.
+    assert all("kind" not in s for s in media.service.payload()["sources"])

@@ -2713,3 +2713,291 @@ msgstr "No service owns this camera (owner: none)"
 
 msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
 msgstr "Restarting after an error"
+
+msgid "CORE_WEB_NAV_MEDIA"
+msgstr "Media"
+
+msgid "CORE_ADMIN_MEDIA_REFRESH"
+msgstr "Refresh"
+
+msgid "CORE_ADMIN_MEDIA_H_SOURCES"
+msgstr "Sources"
+
+msgid "CORE_ADMIN_MEDIA_H_FILES"
+msgstr "Files"
+
+msgid "CORE_ADMIN_MEDIA_H_SHARES"
+msgstr "Shares"
+
+msgid "CORE_ADMIN_MEDIA_KIND"
+msgstr "Kind"
+
+msgid "CORE_ADMIN_MEDIA_KIND_RTSP"
+msgstr "RTSP stream"
+
+msgid "CORE_ADMIN_MEDIA_KIND_STREAM"
+msgstr "Remote stream"
+
+msgid "CORE_ADMIN_MEDIA_KIND_CAMERA"
+msgstr "Camera"
+
+msgid "CORE_ADMIN_MEDIA_KIND_FILES"
+msgstr "Files"
+
+msgid "CORE_ADMIN_MEDIA_NO_SOURCES"
+msgstr "No media sources are configured."
+
+msgid "CORE_ADMIN_MEDIA_SELECT"
+msgstr "Select {name}"
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER_OPEN"
+msgstr "Full screen: {source}"
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER_NONE"
+msgstr "Nothing is shown full screen."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_NAME"
+msgstr "Preview"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_EFFECT"
+msgstr "Plays the selected source here, in the admin. It starts only when you press the button."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_LABEL"
+msgstr "Preview"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_STOP"
+msgstr "Stop preview"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_LOAD"
+msgstr "The player could not be loaded."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_FORBIDDEN"
+msgstr "The preview of {name} is refused: camera images are off for this device."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_ERROR"
+msgstr "The preview of {name} does not play: {reason}."
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_UNAVAILABLE"
+msgstr "the source does not answer"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_UNSUPPORTED"
+msgstr "this browser cannot play HLS"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_DECODE"
+msgstr "the browser cannot decode it"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_NETWORK"
+msgstr "the connection failed"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_NAME"
+msgstr "Show full screen"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_EFFECT"
+msgstr "Shows the selected source on the mirror, over every page, until it ends or you stop it."
+
+msgid "CORE_ADMIN_MEDIA_SHOW_LABEL"
+msgstr "Show"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_DONE"
+msgstr "{source} is shown full screen."
+
+msgid "CORE_ADMIN_MEDIA_STOP_NAME"
+msgstr "Stop full screen"
+
+msgid "CORE_ADMIN_MEDIA_STOP_EFFECT"
+msgstr "Ends the full-screen showing and brings the mirror back."
+
+msgid "CORE_ADMIN_MEDIA_STOP_LABEL"
+msgstr "Stop"
+
+msgid "CORE_ADMIN_MEDIA_STOP_DONE"
+msgstr "The full-screen showing is stopped."
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_SOURCE"
+msgstr "Select a source first."
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_TAKEOVER"
+msgstr "Nothing is shown full screen."
+
+msgid "CORE_ADMIN_MEDIA_REASON_FOLDER"
+msgstr "This source is a folder: use Show full screen to choose a file."
+
+msgid "CORE_ADMIN_MEDIA_REASON_IMAGES"
+msgstr "Camera images are off for the device {device} (images: false)."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_TITLE"
+msgstr "Show a file of {source}"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_TEXT"
+msgstr "Choose the file to show full screen, from this folder or one inside it."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_EMPTY"
+msgstr "There are no media files here."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_UP"
+msgstr "Up"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_SHOW"
+msgstr "Show"
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_FILE"
+msgstr "Choose a file first."
+
+msgid "CORE_ADMIN_MEDIA_PATH"
+msgstr "Path"
+
+msgid "CORE_ADMIN_MEDIA_NAME"
+msgstr "Name"
+
+msgid "CORE_ADMIN_MEDIA_SIZE"
+msgstr "Size"
+
+msgid "CORE_ADMIN_MEDIA_MODIFIED"
+msgstr "Modified"
+
+msgid "CORE_ADMIN_MEDIA_FILE_FOLDER"
+msgstr "Folder"
+
+msgid "CORE_ADMIN_MEDIA_FILE_VIDEO"
+msgstr "Video"
+
+msgid "CORE_ADMIN_MEDIA_FILE_AUDIO"
+msgstr "Audio"
+
+msgid "CORE_ADMIN_MEDIA_FILE_IMAGE"
+msgstr "Image"
+
+msgid "CORE_ADMIN_MEDIA_FILES_EMPTY"
+msgstr "This folder is empty."
+
+msgid "CORE_ADMIN_MEDIA_REASON_SHARES_READONLY"
+msgstr "Shares are read-only."
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_NAME"
+msgstr "Upload a file"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_EFFECT"
+msgstr "Copies a file from your computer into this folder."
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_LABEL"
+msgstr "Upload"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_PROGRESS"
+msgstr "Uploading {name}: {percent} %"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_DONE"
+msgstr "{name} was uploaded."
+
+msgid "CORE_ADMIN_MEDIA_REASON_UPLOADING"
+msgstr "An upload is running."
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_NAME"
+msgstr "New folder"
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_EFFECT"
+msgstr "Makes an empty folder in this one."
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_LABEL"
+msgstr "Create"
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_DONE"
+msgstr "The folder {name} was created."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_TITLE"
+msgstr "New folder in {path}"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_NAME"
+msgstr "Folder name"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_NEED_NAME"
+msgstr "Enter a name for the folder."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_TITLE"
+msgstr "Delete {name}?"
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_TEXT"
+msgstr "The file is deleted from the media folder and cannot be brought back."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_FOLDER_TEXT"
+msgstr "The folder is deleted from the media folder."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_TITLE"
+msgstr "Delete {name} and everything in it?"
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_TEXT"
+msgstr "The folder is not empty. Everything in it is deleted and cannot be brought back."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_ACTION"
+msgstr "Delete all"
+
+msgid "CORE_ADMIN_MEDIA_DELETE_DONE"
+msgstr "{name} was deleted."
+
+msgid "CORE_ADMIN_MEDIA_METHOD"
+msgstr "Method"
+
+msgid "CORE_ADMIN_MEDIA_METHOD_SYNC"
+msgstr "Sync"
+
+msgid "CORE_ADMIN_MEDIA_METHOD_MOUNT"
+msgstr "Mount"
+
+msgid "CORE_ADMIN_MEDIA_LAST_SYNC"
+msgstr "Last sync"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_IDLE"
+msgstr "Not run yet"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_SYNCING"
+msgstr "Syncing"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_OK"
+msgstr "Up to date"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_ERROR"
+msgstr "Error"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_REMOTE"
+msgstr "The rclone remote does not exist or has another type"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_TOO_LARGE"
+msgstr "The copy would be larger than max_size_gb"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_FAILED"
+msgstr "The sync failed"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_MOUNT"
+msgstr "The mount failed"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_PATH"
+msgstr "The path does not exist on the share"
+
+msgid "CORE_ADMIN_MEDIA_SHARES_NONE"
+msgstr "No shares are configured."
+
+msgid "CORE_ADMIN_MEDIA_SHARES_UNAVAILABLE"
+msgstr "The shares cannot be read: {error}"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_LABEL"
+msgstr "Sync now"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_STARTED"
+msgstr "Syncing {name}…"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_DONE"
+msgstr "{name} was synced."
+
+msgid "CORE_ADMIN_MEDIA_SYNC_FAILED"
+msgstr "The sync of {name} failed. {error}"
+
+msgid "CORE_ADMIN_MEDIA_REASON_MOUNT"
+msgstr "A mount share is always up to date; there is nothing to sync."
+
+msgid "CORE_ADMIN_MEDIA_REASON_SYNCING"
+msgstr "This share is syncing now."
+
+msgid "CORE_ADMIN_MEDIA_REASON_INSTALLER_AWAY"
+msgstr "The installer is not available."
+
+msgid "CORE_ADMIN_MEDIA_REASON_INSTALLER_BUSY"
+msgstr "The installer is busy with another operation."
