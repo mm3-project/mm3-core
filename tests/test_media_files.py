@@ -6,6 +6,7 @@ The routes run on the admin listener and on the admin socket over
 
 from __future__ import annotations
 
+import json
 import os
 import time
 from collections.abc import AsyncIterator
@@ -354,3 +355,57 @@ def test_core_405_kinds_follow_the_extensions_of_core_404() -> None:
     assert {kinds[e] for e in (".mp4", ".m4v", ".webm")} == {"video"}
     assert {kinds[e] for e in (".gif", ".avif", ".png")} == {"image"}
     assert media_files.entry_kind("x.txt") is None
+
+
+async def test_core_407_file_delivery_runs_on_the_folder_threads(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import threading
+
+    from fastapi import FastAPI
+
+    from mm3.core.web import media as web_media
+    from mm3.core.web.media import add_media_routes
+
+    media = MediaService(tmp_path / "run", tmp_path / "state", VirtualClock())
+    a = Admin(tmp_path / "x")
+    a.media = media
+    a.configure("media: {}\n", tmp_path)
+    (media.root / "files" / "a.mp4").write_bytes(b"abcdef")
+    seen: list[str] = []
+    real = web_media.open_file
+
+    def spy(root: Path, rel: str) -> object:
+        seen.append(threading.current_thread().name)
+        return real(root, rel)
+
+    monkeypatch.setattr(web_media, "open_file", spy)
+    app = FastAPI()
+    add_media_routes(app, media, "/media")
+    transport = httpx.ASGITransport(app=app, client=("127.0.0.1", 5))
+    async with httpx.AsyncClient(transport=transport, base_url="http://m") as c:
+        r = await c.get("/media/files/files/a.mp4")
+        assert (r.status_code, r.content) == (200, b"abcdef")
+        assert seen[0].startswith("mm3-media-folder")
+        monkeypatch.setattr(media_files, "FOLDER_TIMEOUT_S", 0.2)
+
+        def hung(root: Path, rel: str) -> object:
+            time.sleep(1.0)
+            return None
+
+        monkeypatch.setattr(web_media, "open_file", hung)
+        started = time.monotonic()
+        r = await c.get("/media/files/files/a.mp4")
+        assert r.status_code == 503
+        assert time.monotonic() - started < 0.9
+    await media.close()
+
+
+def test_core_408_the_backups_page_offers_the_media_part() -> None:
+    root = Path(__file__).resolve().parents[1] / "src" / "mm3" / "core"
+    script = (root / "web" / "adminui" / "backups.js").read_text(encoding="utf-8")
+    assert 'export const PARTS = ["config", "data", "modules", "secrets", "media"];' in script
+    assert 'parts: ["config", "data", "modules"]' in script  # never a default
+    for lang in ("en", "it", "fr", "es", "de"):
+        catalog = json.loads((root / "locales" / lang / "messages.json").read_text("utf-8"))
+        assert catalog.get("CORE_ADMIN_BACKUPS_PART_MEDIA"), lang

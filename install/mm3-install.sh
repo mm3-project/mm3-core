@@ -37,7 +37,7 @@
 # which the media service runs.
 # Implements CORE-401 (Core spec 0.48, §9.7 Media service): on kiosk systems mm3
 # in the groups render and video (VA-API and a camera the engine owns).
-# Implements CORE-407 (Core spec 0.56, §9.7 Media service): the packages
+# Implements CORE-407 (Core spec 0.57, §9.7 Media service): the packages
 # cifs-utils and nfs-common, and the root systemd generator mm3-media-mounts that
 # makes the share mount units from the installer's mounts/shares.json.
 set -Eeuo pipefail

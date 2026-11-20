@@ -7,6 +7,18 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (milestone 8 step 6 follow-ups; spec 0.57: CORE-405, CORE-406, CORE-407 changed)
+
+- The file delivery route `/media/files/…` (opening and every read) and the takeover's file
+  checks and length probe run on the media folder threads with the 5 s timeout, like the admin
+  file routes, so a hung mount never takes the engine's default threads (CORE-407, CORE-400).
+- The Backups page offers the `media` part, off by default, with its label in the five
+  languages (CORE-408).
+- Core spec 0.57 records the user's decisions after the step 6 review: a failed upload write
+  answers 503, a removed share's copy goes at the installer's next pass, and the SMB password is
+  revealed only when it changes, an accepted risk (spec sync PR #156); citations of CORE-405..407
+  moved to 0.57.
+
 ### Added (milestone 8 step 6a: files in the admin and the media backup part; CORE-404, CORE-405, CORE-408)
 
 - File routes of the admin on the admin listener and the admin socket (`mm3.core.media.files`,

@@ -1,5 +1,5 @@
 #!/usr/bin/python3 -IS
-"""systemd generator of the MM3 share mounts (CORE-407, Core spec 0.56, §9.7 Media service).
+"""systemd generator of the MM3 share mounts (CORE-407, Core spec 0.57, §9.7 Media service).
 
 mm3-install.sh installs this file, as root, into
 /usr/lib/systemd/system-generators/. systemd runs it at boot and on every
@@ -21,7 +21,7 @@ only the standard library, never imports MM3 code and always exits 0, so a bad
 file never stops the boot.
 
 Implements:
-    CORE-407: Core spec 0.56, §9.7 Media service.
+    CORE-407: Core spec 0.57, §9.7 Media service.
 """
 
 import json

@@ -6,7 +6,7 @@ Implements:
     CORE-368: Core spec 0.35, §10.7 Installer service.
     CORE-360, CORE-365: Core spec 0.37, §10.8 Backup and restore.
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
-    CORE-406, CORE-407: Core spec 0.56, §9.7 Media service.
+    CORE-406, CORE-407: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -83,7 +83,7 @@ def build_server(layout: Layout | None = None) -> InstallerServer:
         return True
 
     scheduler = BackupScheduler(reader, runner_.last_scheduled, submit_scheduled)
-    # CORE-406, CORE-407 (Core spec 0.56, §9.7 Media service): the shares, applied once a
+    # CORE-406, CORE-407 (Core spec 0.57, §9.7 Media service): the shares, applied once a
     # minute; a due sync is an operation like any other and waits while one runs.
     shares = Shares(layout, reader, DroppedRclone(layout), SystemdUnits())
     installer.shares = shares

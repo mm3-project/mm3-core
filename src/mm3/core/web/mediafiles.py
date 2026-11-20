@@ -10,7 +10,7 @@ with the authentication of the other routes. Every folder call runs off the
 event loop with a 5 s timeout (:func:`mm3.core.media.files.run_folder`).
 
 Implements:
-    CORE-405: Core spec 0.55, §9.7 Media service.
+    CORE-405: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -73,7 +73,7 @@ def register_media_file_routes(router: APIRouter, media: MediaService | None) ->
             without it every path is 404.
 
     Implements:
-        CORE-405: Core spec 0.55, §9.7 Media service.
+        CORE-405: Core spec 0.57, §9.7 Media service.
     """
 
     def service() -> MediaService:

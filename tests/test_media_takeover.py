@@ -583,3 +583,26 @@ async def test_core_411_from_mqtt_only_when_imported(
     await settle()
     await settle()
     assert world.takeover.current is None
+
+
+async def test_core_407_a_hung_file_check_is_refused_on_the_folder_threads(
+    world: World, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import threading
+    import time
+
+    from mm3.core.media import files as media_files
+    from mm3.core.media import takeover as takeover_mod
+
+    monkeypatch.setattr(media_files, "FOLDER_TIMEOUT_S", 0.2)
+    threads: list[str] = []
+
+    def hung(root: Path, rel: str) -> int | None:
+        threads.append(threading.current_thread().name)
+        time.sleep(1.0)
+        return None
+
+    monkeypatch.setattr(takeover_mod, "_open_check", hung)
+    with pytest.raises(TakeoverRefused):
+        await world.takeover.start("holidays", file="a.mp4")
+    assert threads[0].startswith("mm3-media-folder")

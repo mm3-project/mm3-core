@@ -394,6 +394,7 @@
  "CORE_ADMIN_BACKUPS_PARTS": "Parties",
  "CORE_ADMIN_BACKUPS_PART_CONFIG": "configuration",
  "CORE_ADMIN_BACKUPS_PART_DATA": "données",
+ "CORE_ADMIN_BACKUPS_PART_MEDIA": "fichiers multimédias",
  "CORE_ADMIN_BACKUPS_PART_MODULES": "modules",
  "CORE_ADMIN_BACKUPS_PART_SECRETS": "secrets",
  "CORE_ADMIN_BACKUPS_PASSPHRASE": "Phrase secrète de l'installateur",

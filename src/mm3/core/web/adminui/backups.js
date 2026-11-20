@@ -23,7 +23,8 @@ import { Messages, actionRow, banner, closeOnBackdrop } from "/admin/static/ui.j
 export const FINAL_STATES = ["done", "rolled_back", "failed"];
 
 /** The parts of a backup, in the order of the spec (CORE-161). */
-export const PARTS = ["config", "data", "modules", "secrets"];
+// Implements CORE-408 (Core spec 0.55, §9.7 Media service): media is a part, never a default.
+export const PARTS = ["config", "data", "modules", "secrets", "media"];
 
 /** The largest archive the admin sends (CORE-361). */
 export const MAX_UPLOAD = 2 * 1024 ** 3;
