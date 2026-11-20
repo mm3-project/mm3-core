@@ -258,7 +258,6 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     # CORE-391 (Core spec 0.47, §6.11 Camera devices): devices.json at start and after reloads.
     devices = DeviceRegistry(runtime_dir())
     devices.write(result)
-    manager.layout_listeners.append(devices.reloaded)
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
@@ -309,6 +308,9 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     )
     media.configure(result)
     manager.layout_listeners.append(media.reloaded)
+    # CORE-396 (Core spec 0.47, §9.5 Local camera feed): devices.json is written again only
+    # after Media has released a camera it no longer owns, so Vision opens it afterwards.
+    manager.layout_listeners.append(devices.reloaded)
     inspector = BusInspector(masker)
     engine.bus.add_endpoint(inspector)
     hub.frame_observer = inspector.frame

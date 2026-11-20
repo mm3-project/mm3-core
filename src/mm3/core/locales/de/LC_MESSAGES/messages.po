@@ -2683,8 +2683,11 @@ msgstr "ffmpeg ist in 10 Minuten 5-mal gescheitert; neuer Versuch nach dem näch
 msgid "CORE_ADMIN_MEDIA_REASON_FFMPEG"
 msgstr "ffmpeg ist nicht installiert"
 
-msgid "CORE_ADMIN_MEDIA_REASON_CAMERA"
-msgstr "Kameraquellen sind noch nicht verfügbar"
+msgid "CORE_ADMIN_MEDIA_REASON_FEED"
+msgstr "Warte auf den Kamera-Feed von Vision"
+
+msgid "CORE_ADMIN_MEDIA_REASON_OWNER"
+msgstr "Kein Dienst besitzt diese Kamera (owner: none)"
 
 msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
 msgstr "Neustart nach einem Fehler"

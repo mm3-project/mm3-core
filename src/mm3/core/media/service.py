@@ -17,14 +17,26 @@ URL credentials and the configuration's secrets masked (CORE-397, CORE-403).
 
 The state of every source is sent as ``CORE_MEDIA_CHANGED`` on change, at
 most once a second, and is the body of ``GET /api/v1/media`` (CORE-412). The
-takeover (CORE-410) and camera sources (CORE-402) come in later steps of
-milestone 8: until then ``takeover`` is always null and a ``camera`` source
-is ``unavailable``.
+takeover (CORE-410) comes in a later step of milestone 8: until then
+``takeover`` is always null.
+
+A ``camera`` source follows the owner of its device (CORE-389, CORE-402):
+owned by ``vision`` it relays the frames of the local feed (CORE-395) with
+no ``ffmpeg``; owned by ``media`` it runs an ``ffmpeg`` child on the V4L2
+device; owned by ``none`` it is ``unavailable``. A relay is not a child and
+does not count against the limits. While the feed cannot be read the source
+is ``idle`` with the reason ``feed``, never ``error``: a new viewer is
+refused with 503 and open viewers stay while the relay connects again every
+1 to 5 s. A hot reload that changes the owner ends the source: the device is
+released within 5 s, and after a change to ``media`` the device is opened no
+earlier than 5 s after the reload, so that Vision has let it go (CORE-396).
 
 Implements:
+    CORE-396: Core spec 0.47, §9.5 Local camera feed.
     CORE-397: Core spec 0.51, §9.7 Media service.
     CORE-400: Core spec 0.51, §9.7 Media service.
     CORE-401: Core spec 0.48, §9.7 Media service.
+    CORE-402: Core spec 0.52, §9.7 Media service.
     CORE-403: Core spec 0.48, §9.7 Media service.
     CORE-412: Core spec 0.51, §9.7 Media service.
 """
@@ -46,7 +58,10 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal
 
 from mm3.core.clock import Clock
+from mm3.core.config.devices import ResolvedDevice, ResolvedOwner
 from mm3.core.config.media import MediaConfig, MediaSource
+from mm3.core.devices import feed_path, resolved
+from mm3.core.feed import FeedClosed, FeedError, FeedReader
 from mm3.core.logging import get_logger
 from mm3.core.media.command import (
     ADTS_HINT,
@@ -70,8 +85,10 @@ __all__ = [
     "BACKOFF_MAX_S",
     "FAILURES_FOR_ERROR",
     "FAILURE_WINDOW_S",
+    "FEED_RETRY_MAX_S",
     "HLS_LEASE_S",
     "IDLE_STOP_S",
+    "OWNER_SETTLE_S",
     "RETRY_AFTER_S",
     "MediaRefused",
     "MediaService",
@@ -95,6 +112,15 @@ STABLE_S = 60.0
 """A child that ran this long resets the backoff."""
 STOP_GRACE_S = 5.0
 """How long a stopping child gets before it is killed."""
+CAMERA_STOP_GRACE_S = 3.0
+"""A camera child gets less, so the device is free within 5 s (CORE-402)."""
+OWNER_SETTLE_S = 5.0
+"""After an owner change to ``media`` the device is opened this long after the reload."""
+FEED_CONNECT_S = 2.0
+"""How long a viewer's request waits for the feed to connect and send its header."""
+FEED_RETRY_MIN_S = 1.0
+FEED_RETRY_MAX_S = 5.0
+"""A relay that lost its feed connects again every 1 to 5 s (CORE-402)."""
 NICE = 10
 EVENT_INTERVAL_S = 1.0
 """``CORE_MEDIA_CHANGED`` is sent at most once a second (CORE-412)."""
@@ -144,10 +170,22 @@ class _Child:
 
 
 @dataclass
+class _Relay:
+    """The relay of a camera owned by ``vision``: a reader of the local feed (CORE-402)."""
+
+    reader: FeedReader | None
+    task: asyncio.Task[None] | None = None
+
+
+@dataclass
 class _Source:
     name: str
     config: MediaSource
     how: Delivery
+    owner: ResolvedOwner | None = None
+    device_path: str | None = None
+    not_before: float = 0.0
+    relay: _Relay | None = None
     state: SourceState = "idle"
     reason: str | None = None
     child: _Child | None = None
@@ -167,6 +205,11 @@ class _Source:
     @property
     def viewers(self) -> int:
         return self.mjpeg_viewers + len(self.leases)
+
+    @property
+    def active(self) -> bool:
+        """A child, a pending restart or a relay holds the source."""
+        return self.child is not None or self.restart is not None or self.relay is not None
 
 
 class MjpegViewer:
@@ -235,6 +278,7 @@ class MediaService:
         masker: Callable[[], Masker] | None = None,
         playlist_wait: float = PLAYLIST_WAIT_S,
     ) -> None:
+        self.runtime = runtime
         self.hls_root = runtime / "media"
         self.root = media_root(state_dir)
         self.clock = clock
@@ -265,8 +309,7 @@ class MediaService:
             result: The running configuration.
         """
         media = result.config.media if result.config is not None else MediaConfig()
-        devices = result.config.devices if result.config is not None else {}
-        self._apply(media, {n: d.images for n, d in devices.items()})
+        self._apply(media, resolved(result), settle=False)
         prepare(self.root)
         with contextlib.suppress(OSError):
             shutil.rmtree(self.hls_root)
@@ -275,21 +318,43 @@ class MediaService:
         if self.sources and self.ffmpeg is None:
             _log.warning("media_ffmpeg_missing", sources=len(self.sources))
 
-    def _apply(self, media: MediaConfig, images: Mapping[str, bool]) -> list[_Source]:
-        """Install a new ``media`` key; return the sources to stop (changed or removed)."""
+    def _apply(
+        self, media: MediaConfig, devices: list[ResolvedDevice], *, settle: bool = True
+    ) -> list[_Source]:
+        """Install a new ``media`` key; return the sources to stop (changed or removed).
+
+        A ``camera`` source is also changed when the resolved owner or the
+        path of its device changed (CORE-396, CORE-402).
+        """
         self.limits_processes = media.limits.processes
         self.limits_transcode = media.limits.transcode
-        self.images = dict(images)
+        self.images = {d.name: d.config.images for d in devices}
+        by_name: Mapping[str, ResolvedDevice] = {d.name: d for d in devices}
+        now = self.clock.boottime()
         gone: list[_Source] = []
         fresh: dict[str, _Source] = {}
         for name, cfg in media.sources.items():
+            owner: ResolvedOwner | None = None
+            path: str | None = None
+            if cfg.kind == "camera":
+                dev = by_name.get(cfg.device or "")
+                owner = dev.owner if dev is not None else "none"
+                path = dev.config.path if dev is not None else None
             old = self.sources.get(name)
-            if old is not None and old.config == cfg:
+            if (
+                old is not None
+                and old.config == cfg
+                and old.owner == owner
+                and old.device_path == path
+            ):
                 fresh[name] = old
                 continue
             if old is not None:
                 gone.append(old)
-            fresh[name] = _Source(name, cfg, delivery(cfg))
+            src = _Source(name, cfg, delivery(cfg), owner=owner, device_path=path)
+            if settle and owner == "media" and (old is None or old.owner != "media"):
+                src.not_before = now + OWNER_SETTLE_S  # CORE-396: the old owner lets go first
+            fresh[name] = src
         gone += [s for n, s in self.sources.items() if n not in fresh]
         self.sources = fresh
         for src in fresh.values():
@@ -299,7 +364,13 @@ class MediaService:
     def _resting_state(self, src: _Source) -> tuple[SourceState, str | None]:
         """The state of a source with no child, before any failure."""
         if src.config.kind == "camera":
-            return "unavailable", "camera"
+            if src.owner == "vision":
+                return "idle", None  # a relay needs no ffmpeg (CORE-402)
+            if src.owner != "media":
+                return "unavailable", "owner"
+            if self.ffmpeg is None:
+                return "unavailable", "ffmpeg"
+            return "idle", None
         if src.config.kind in ("rtsp", "stream") and self.ffmpeg is None:
             return "unavailable", "ffmpeg"
         return "idle", None
@@ -317,13 +388,13 @@ class MediaService:
         """
         if new.config is None:
             return
-        gone = self._apply(new.config.media, {n: d.images for n, d in new.config.devices.items()})
+        gone = self._apply(new.config.media, resolved(new))
         for src in gone:
             await self._stop_source(src)
         for src in self.sources.values():
             src.failures.clear()
             src.consecutive = 0
-            if src.state == "error" and src.child is None:
+            if src.state == "error" and not src.active:
                 src.state, src.reason = self._resting_state(src)
         self._changed()
 
@@ -453,6 +524,8 @@ class MediaService:
                 raise MediaRefused(403, "images")  # CORE-392
         if src.state in ("error", "unavailable"):
             raise MediaRefused(503, src.state)
+        if src.relay is not None and src.relay.reader is None:
+            raise MediaRefused(503, "feed", RETRY_AFTER_S)  # CORE-402: reconnecting
         return src
 
     async def open_mjpeg(self, name: str) -> MjpegViewer:
@@ -551,7 +624,7 @@ class MediaService:
                         del src.leases[client]
                 if src.viewers != before:
                     self._changed()
-                if src.child is None and src.restart is None:
+                if not src.active:
                     src.idle_since = None
                     continue
                 busy = True
@@ -576,9 +649,23 @@ class MediaService:
         )
 
     async def _ensure_child(self, src: _Source) -> None:
-        """Start the source's child unless it runs or waits for its restart (CORE-397)."""
-        if src.child is not None or src.restart is not None:
+        """Start the source's child unless it runs or waits for its restart (CORE-397).
+
+        A camera owned by ``vision`` gets a relay instead (CORE-402); one
+        owned by ``media`` waits for the end of an owner change (CORE-396).
+        """
+        if src.active:
             return
+        if src.owner == "vision":
+            await self._open_relay(src)
+            return
+        wait = src.not_before - self.clock.boottime()
+        if wait > 0:
+            await self.clock.sleep(wait)
+            if self.sources.get(src.name) is not src:
+                raise MediaRefused(503, "reload", RETRY_AFTER_S)
+            if src.active:
+                return
         if self._running() >= self.limits_processes:
             raise MediaRefused(503, "limit", RETRY_AFTER_S)
         if src.config.transcode and self._running(transcode=True) >= self.limits_transcode:
@@ -611,6 +698,7 @@ class MediaService:
             encoder=encoder or "x264",
             render_node=self.render_node if encoder == "vaapi" else None,
             adts=src.adts,
+            device_path=src.device_path,
         )
         try:
             proc = await asyncio.create_subprocess_exec(
@@ -650,6 +738,92 @@ class MediaService:
             child.tasks.append(asyncio.create_task(self._read_frames(src, child)))
         child.tasks.append(asyncio.create_task(self._watch(src, child)))
         self._changed()
+
+    # --- relays of the local feed (CORE-402) ------------------------------------------
+
+    async def _connect_feed(self, src: _Source) -> FeedReader:
+        device = src.config.device or ""
+        return await FeedReader.connect(
+            feed_path(self.runtime, device), device, timeout=FEED_CONNECT_S
+        )
+
+    async def _open_relay(self, src: _Source) -> None:
+        """Connect to the owner's feed for the first viewer (CORE-402).
+
+        Raises:
+            MediaRefused: 503 with ``Retry-After: 5`` when the feed cannot be
+                read; the source is then ``idle`` with the reason ``feed``.
+        """
+        try:
+            reader = await self._connect_feed(src)
+        except FeedError as exc:
+            _log.info("media_feed_unavailable", source=src.name, error=str(exc))
+            src.state, src.reason = "idle", "feed"
+            self._changed()
+            raise MediaRefused(503, "feed", RETRY_AFTER_S) from exc
+        if self.sources.get(src.name) is not src or src.active:
+            await reader.close()
+            return
+        relay = _Relay(reader)
+        relay.task = asyncio.create_task(
+            self._relay(src, relay), name=f"mm3-media-relay-{src.name}"
+        )
+        src.relay = relay
+        src.state, src.reason = "running", None
+        _log.info("media_relay_started", source=src.name, device=src.config.device)
+        self._changed()
+
+    async def _relay(self, src: _Source, relay: _Relay) -> None:
+        """Hand the feed's frames to the viewers, newest first; reconnect when it drops."""
+        delay = FEED_RETRY_MIN_S
+        while True:
+            reader = relay.reader
+            if reader is not None:
+                try:
+                    while True:
+                        frame = await reader.frame()
+                        delay = FEED_RETRY_MIN_S
+                        async with src.cond:
+                            src.frame = frame
+                            src.seq += 1
+                            src.cond.notify_all()
+                except FeedError as exc:
+                    closed = isinstance(exc, FeedClosed)
+                    _log.info("media_feed_lost", source=src.name, closed=closed, error=str(exc))
+                await reader.close()
+                relay.reader = None
+                src.frame = None
+                src.state, src.reason = "idle", "feed"
+                self._changed()
+            if src.viewers == 0:
+                src.relay = None
+                await self._end(src, "idle", "feed")
+                self._changed()
+                return
+            await self.clock.sleep(delay)
+            delay = min(FEED_RETRY_MAX_S, delay * 2)
+            if src.viewers == 0:
+                continue
+            try:
+                relay.reader = await self._connect_feed(src)
+            except FeedError:
+                continue
+            src.state, src.reason = "running", None
+            _log.info("media_relay_reconnected", source=src.name)
+            self._changed()
+
+    async def _close_relay(self, src: _Source) -> None:
+        relay = src.relay
+        if relay is None:
+            return
+        src.relay = None
+        if relay.task is not None and relay.task is not asyncio.current_task():
+            relay.task.cancel()
+            with contextlib.suppress(asyncio.CancelledError, Exception):
+                await relay.task
+        if relay.reader is not None:
+            await relay.reader.close()
+        _log.info("media_relay_stopped", source=src.name)
 
     def _mask(self, line: str) -> str:
         line = mask_url_credentials(line)
@@ -812,12 +986,14 @@ class MediaService:
         if src.restart is not None:
             src.restart.cancel()
             src.restart = None
+        await self._close_relay(src)
         child = src.child
+        grace = CAMERA_STOP_GRACE_S if src.config.kind == "camera" else STOP_GRACE_S
         if child is not None:
             child.stopping = True
             self._terminate(child)
             try:
-                await asyncio.wait_for(child.proc.wait(), STOP_GRACE_S)
+                await asyncio.wait_for(child.proc.wait(), grace)
             except TimeoutError:
                 with contextlib.suppress(ProcessLookupError):
                     child.proc.kill()

@@ -10,6 +10,7 @@ Implements:
     CORE-397: Core spec 0.51, §9.7 Media service.
     CORE-400: Core spec 0.51, §9.7 Media service.
     CORE-401: Core spec 0.48, §9.7 Media service.
+    CORE-402: Core spec 0.52, §9.7 Media service.
     CORE-403: Core spec 0.48, §9.7 Media service.
 """
 
@@ -132,6 +133,7 @@ def ffmpeg_command(
     encoder: Encoder = "x264",
     render_node: Path | None = None,
     adts: bool = False,
+    device_path: str | None = None,
 ) -> list[str]:
     """Build the argument list of one child.
 
@@ -152,25 +154,35 @@ def ffmpeg_command(
         adts: The copied audio is AAC in ADTS framing (MPEG-TS, RTSP), which
             fragmented MP4 takes only through the ``aac_adtstoasc`` filter; the
             service learns it from a first run (:data:`ADTS_HINT`).
+        device_path: The V4L2 device of a ``camera`` source that Media owns
+            (CORE-402); its child always delivers MJPEG.
 
     Returns:
         The argument list, ``ffmpeg`` first.
 
     Raises:
-        ValueError: The source has no URL, or HLS without ``out_dir``.
+        ValueError: The source has no URL (or a camera no device), or HLS
+            without ``out_dir``.
 
     Implements:
         CORE-397: Core spec 0.51, §9.7 Media service.
         CORE-400: Core spec 0.51, §9.7 Media service.
         CORE-401: Core spec 0.48, §9.7 Media service.
+        CORE-402: Core spec 0.52, §9.7 Media service.
         CORE-403: Core spec 0.48, §9.7 Media service.
     """
-    if source.url is None:
-        raise ValueError("only rtsp and stream sources run ffmpeg here")
     args = [ffmpeg, "-hide_banner", "-nostdin", "-loglevel", "info"]
-    if how == "hls" and encoder == "vaapi" and source.transcode and render_node is not None:
-        args += ["-vaapi_device", str(render_node)]
-    args += _input_args(source.url)
+    if source.kind == "camera":
+        if device_path is None:
+            raise ValueError("a camera child needs its device")
+        args += ["-f", "v4l2", "-i", device_path]
+        how = "mjpeg"  # CORE-399: a camera is always MJPEG
+    elif source.url is None:
+        raise ValueError("only rtsp, stream and camera sources run ffmpeg here")
+    else:
+        if how == "hls" and encoder == "vaapi" and source.transcode and render_node is not None:
+            args += ["-vaapi_device", str(render_node)]
+        args += _input_args(source.url)
     if how == "mjpeg":
         filters = [f"fps={source.fps}", *_scale(source.width)]
         return [
