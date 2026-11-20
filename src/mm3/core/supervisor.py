@@ -58,6 +58,7 @@ from mm3.core.context import (
 )
 from mm3.core.i18n.catalogs import I18n
 from mm3.core.logging import get_logger
+from mm3.core.media.instance import MediaBackend, NoMedia
 from mm3.core.registry import Registry
 from mm3.core.services.grants import GrantSet
 from mm3.core.services.http import HttpTransport, UnavailableTransport
@@ -784,6 +785,7 @@ class Supervisor:
         self.power: PowerService | None = None
         self.http_transport: HttpTransport = UnavailableTransport()
         self.mqtt_broker: MqttBroker = NoBroker()
+        self.media: MediaBackend = NoMedia()
         self.on_denied: Callable[[str, str], None] | None = None
         self.i18n: I18n | None = None
 
@@ -827,6 +829,7 @@ class Supervisor:
             http_transport=self.http_transport,
             module_version=self.module_version(inst.spec.module),
             mqtt_broker=self.mqtt_broker,
+            media=self.media,
             enqueue=inst.inbox.put,
             on_denied=(
                 functools.partial(self.on_denied, inst.instance_id)

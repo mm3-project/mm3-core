@@ -21,11 +21,13 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlsplit
 
-from mm3.core.config.media import MediaSource
 from mm3.core.diag.secrets import MASK
+
+if TYPE_CHECKING:
+    from mm3.core.config.media import MediaSource
 
 __all__ = [
     "ADTS_HINT",

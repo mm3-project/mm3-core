@@ -239,3 +239,53 @@ async def test_mod_84_info_log_on_every_refresh_warns(
     results = await rows(proj, cls)
     assert (results["MOD-84"].level, results["MOD-84"].status) == ("SHOULD", "warn")
     assert "debug" in " ".join(results["MOD-84"].findings)
+
+
+PNG = bytes.fromhex(
+    "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489"
+    "0000000d49444154789c6360f8cfc0f01f0005000001ffe0e6a5d50000000049454e44ae426082"
+)
+
+
+async def decodes(h: BrowserHarness, url: str) -> bool:
+    return bool(
+        await h.page.evaluate(
+            """async (u) => {
+                const i = new Image();
+                i.src = u;
+                try { await i.decode(); return true; } catch { return false; }
+            }""",
+            url,
+        )
+    )
+
+
+async def test_mod_103_the_harness_serves_media_fixtures_under_media_and_the_preview_prefix(
+    greeting: tuple[Path, Any], tmp_path: Path
+) -> None:
+    _, cls = greeting
+    shot = tmp_path / "front-door.jpg"
+    shot.write_bytes(PNG)
+    async with BrowserHarness(
+        cls,
+        media={
+            "/media/files/files/trip/day%202/a.png": shot,
+            "/media/door/stream.mjpg": shot,
+        },
+    ) as h:
+        assert await decodes(h, "/media/files/files/trip/day%202/a.png")
+        assert await decodes(h, "/media/door/stream.mjpg")
+        assert await decodes(h, "/admin/preview/media/door/stream.mjpg")
+        assert h.stray_requests == []
+        assert not await decodes(h, "/media/other/stream.mjpg")  # no fixture: a stray request
+        assert h.stray_requests == ["/media/other/stream.mjpg"]
+
+
+async def test_mod_103_a_media_fixture_must_be_a_file_under_a_media_route(
+    greeting: tuple[Path, Any], tmp_path: Path
+) -> None:
+    _, cls = greeting
+    with pytest.raises(ValueError, match="media route"):
+        BrowserHarness(cls, media={"/core/mm3.js": tmp_path / "x.png"})
+    with pytest.raises(ValueError, match="not a file"):
+        BrowserHarness(cls, media={"/media/door/stream.mjpg": tmp_path / "missing.jpg"})

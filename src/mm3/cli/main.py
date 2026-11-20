@@ -231,6 +231,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     from mm3.core.diag.secrets import Masker, config_secrets
     from mm3.core.engine import Engine
     from mm3.core.media import MediaService
+    from mm3.core.media.instance import EngineMediaBackend
     from mm3.core.media.takeover import TakeoverService
     from mm3.core.pages import PageService
     from mm3.core.services.hass import HaControls
@@ -307,6 +308,8 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     takeover = TakeoverService(media, supervisor=engine.supervisor, pages=pages, shells=hub)
     hub.takeover = takeover.shell_object
     engine.bus.add_endpoint(takeover)
+    # MOD-100, MOD-101 (Module Contract 1.0 rev 16, §4.5 Media): ctx.media of every instance.
+    engine.supervisor.media = EngineMediaBackend(media, takeover)
     manager.layout_listeners.append(takeover.reloaded)
     engine.mqtt.ha.attach_controls(
         HaControls(

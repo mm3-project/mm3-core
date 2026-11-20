@@ -22,6 +22,7 @@ Implements:
     CORE-332: Core spec 0.29, §9.1 Remote-control API.
     MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
     CORE-52, CORE-53, CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
+    MOD-100, MOD-101: Module Contract 1.0 rev 16, §4.5 Media.
 """
 
 from __future__ import annotations
@@ -48,6 +49,7 @@ from mm3.core.bus import Bus, ClientChannel, MqttDelivery
 from mm3.core.clock import Clock
 from mm3.core.i18n.catalogs import I18n, format_date, format_number, locale_chain, substitute
 from mm3.core.logging import Logger, get_logger
+from mm3.core.media.instance import InstanceMedia, MediaBackend, NoMedia
 from mm3.core.services.grants import GrantSet
 from mm3.core.services.http import HttpTransport, InstanceHttp, UnavailableTransport
 from mm3.core.services.mqtt import InstanceMqtt, MqttBroker, NoBroker
@@ -329,6 +331,7 @@ class EngineContext:
         grants: Scopes granted to the instance (Contract section 8).
         http_transport: Sends ``ctx.http`` requests (the test kit's fake in tests).
         mqtt_broker: Broker connection behind ``ctx.mqtt``.
+        media: The media behind ``ctx.media`` (Contract 4.5); none when there is no media service.
         enqueue: Puts an MQTT delivery into the instance inbox.
         on_denied: Called with a capability used but not declared (MOD-70).
         module_version: Version of the module's distribution, for the
@@ -367,6 +370,7 @@ class EngineContext:
         grants: GrantSet | None = None,
         http_transport: HttpTransport | None = None,
         mqtt_broker: MqttBroker | None = None,
+        media: MediaBackend | None = None,
         enqueue: Callable[[MqttDelivery], None] | None = None,
         on_denied: Callable[[str], None] | None = None,
         module_version: str = "0",
@@ -424,6 +428,9 @@ class EngineContext:
         self._health = InstanceHealth(counters, self._guard)
         self._on_denied = on_denied
         self._system = InstanceSystem(instance_id, power, capabilities, self._guard, on_denied)
+        self._media = InstanceMedia(
+            instance_id, media or NoMedia(), capabilities, granted, self._guard, on_denied
+        )
         self._router: APIRouter | None = None
 
     # --- engine side ----------------------------------------------------------
@@ -678,6 +685,21 @@ class EngineContext:
                 self._on_denied("system.power")
             raise PermissionError("capability system.power is not declared")
         return self._system
+
+    @property
+    def media(self) -> InstanceMedia:
+        """Media sources, URLs, files and the takeover (Contract 4.5, MOD-100, MOD-101).
+
+        Raises:
+            PermissionError: The module declares neither ``media.play`` nor
+                ``media.takeover``; each call checks its own capability.
+        """
+        self._guard()
+        if not self._media.declared():
+            if self._on_denied is not None:
+                self._on_denied("media.play")
+            raise PermissionError("capability media.play is not declared")
+        return self._media
 
     @property
     def router(self) -> APIRouter:

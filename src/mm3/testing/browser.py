@@ -5,7 +5,8 @@ that hosts it the way the real shell does (same ``mm3.js``, theme, CSP and
 cell structure), feeds it states, resizes the cell, toggles preview and
 locale, and records render times, CSP violations, attempted network calls
 and overflow. Nothing is served over a socket: Playwright answers the page's
-requests from the engine's and the module's files.
+requests from the engine's and the module's files, and from the fixture files
+the test gives as media sources (``media=``, MOD-103).
 
 ``run_browser_checks`` runs the harness rows of Contract section 11
 (MOD-32, 34, 36, 51, 54, 84).
@@ -18,6 +19,7 @@ Implements:
     CORE-63: Core spec 0.38, §10.1 Security.
     CORE-279: Core spec 0.18, §10.2 Packaging and deployment.
     CORE-288: Core spec 0.19, §6.2 Rules.
+    MOD-103: Module Contract 1.0 rev 16, §4.5 Media.
 """
 
 from __future__ import annotations
@@ -78,6 +80,14 @@ PAGE_HTML = (
     '</head>\n<body>\n<main id="mm3-grid"></main>\n</body>\n</html>\n'
 )
 MODULE_PREFIX = "/modules/mm3test/v/"
+PREVIEW_MEDIA = "/admin/preview/media/"
+MEDIA_TYPES = {
+    ".js": "text/javascript",
+    ".mjs": "text/javascript",
+    ".mjpg": "image/jpeg",
+    ".m3u8": "application/vnd.apple.mpegurl",
+}
+"""Content types of media fixtures that ``mimetypes`` does not know (CORE-400)."""
 
 
 class BrowserUnavailableError(RuntimeError):
@@ -151,6 +161,12 @@ class BrowserHarness:
             (``name`` text or per-language mapping); the element reads it as
             ``this.location``. ``None`` when unset.
         preview: Mount as in the admin live preview (``this.preview``).
+        media: Fixture files served as media sources (MOD-103): each key is a URL path
+            of the engine's media routes (CORE-400), such as
+            ``/media/files/files/trip/a.webm`` or ``/media/door/stream.mjpg``, and each
+            value the local file that answers it. In the preview the same files answer
+            under ``/admin/preview/media/`` (CORE-409), so a state built from
+            ``ctx.media`` URLs plays in either mode.
         chromium: Path of a Chromium executable; default ``MM3_CHROMIUM`` or
             Playwright's own.
 
@@ -167,6 +183,7 @@ class BrowserHarness:
         timezone: str = "UTC",
         location: Mapping[str, Any] | None = None,
         preview: bool = False,
+        media: Mapping[str, str | os.PathLike[str]] | None = None,
         chromium: str | None = None,
     ) -> None:
         if module.element is None:
@@ -177,6 +194,13 @@ class BrowserHarness:
         self.timezone = timezone
         self.location = dict(location) if location is not None else None
         self.preview = preview
+        self._media: dict[str, Path] = {}
+        for url, local in (media or {}).items():
+            if not url.startswith("/media/"):
+                raise ValueError(f"{url!r} is not a media route (it must start with /media/)")
+            if not Path(local).is_file():
+                raise ValueError(f"the media fixture {str(local)!r} is not a file")
+            self._media[url] = Path(local)
         self.chromium = chromium or os.environ.get("MM3_CHROMIUM") or None
         self.stray_requests: list[str] = []
         self.mount_failures: list[str] = []
@@ -241,10 +265,18 @@ class BrowserHarness:
                 file = inside(STATIC_DIR, path.removeprefix("/core/"))
             elif path.startswith(MODULE_PREFIX):
                 file = inside(self._static, path.removeprefix(MODULE_PREFIX))
+            else:
+                # MOD-103: a media fixture, also under the preview's prefix (CORE-409).
+                route_path = (
+                    "/media/" + path.removeprefix(PREVIEW_MEDIA)
+                    if path.startswith(PREVIEW_MEDIA)
+                    else path
+                )
+                file = self._media.get(route_path)
             if file is not None:
                 body = file.read_bytes()
-            kind = {".js": "text/javascript", ".mjs": "text/javascript"}.get(
-                file.suffix if file else "",
+            kind = MEDIA_TYPES.get(
+                file.suffix.lower() if file else "",
                 mimetypes.guess_type(path)[0] or "application/octet-stream",
             )
         if body is None:

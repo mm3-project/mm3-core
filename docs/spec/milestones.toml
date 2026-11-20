@@ -436,7 +436,10 @@ status = "in_progress"
 #   mm3.core.media.files with its own executor, the file routes, media in backup.parts, its
 #   restore and the pre-restore backup); step 6b the shares (CORE-406, 407:
 #   mm3.installer.shares, the media_sync operation, the generator mm3-media-mounts and the
-#   polkit rule, the engine's share states every 30 s).
+#   polkit rule, the engine's share states every 30 s). Step 7 ctx.media and the test kit's
+#   media (MOD-100..103: mm3.media, mm3.core.media.instance, the takeover command queue,
+#   h.media and BrowserHarness(media=)); the admin Media page (CORE-414) and the reference
+#   module mm3-media (MED-01..08) follow.
 requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "CORE-417", "CORE-418", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]
