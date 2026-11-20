@@ -440,6 +440,7 @@ status = "in_progress"
 #   media (MOD-100..103: mm3.media, mm3.core.media.instance, the takeover command queue,
 #   h.media and BrowserHarness(media=)); the admin Media page (CORE-414) and the reference
 #   module mm3-media (MED-01..08) follow.
+# The §11 rows and checks of MOD-100..103 are postponed to a chat of their own (ENH-015).
 requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "CORE-417", "CORE-418", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]
