@@ -25,6 +25,7 @@ Implements:
     CORE-365: Core spec 0.37, §10.8 Backup and restore.
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
     CORE-408: Core spec 0.55, §9.7 Media service.
+    CORE-406: Core spec 0.56, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -52,6 +53,7 @@ from mm3.installer.backup import PARTS, BackupError
 from mm3.installer.operations import FINAL, BusyError, Installer, Operation, Request
 from mm3.installer.remotes import REMOTE_NAME, RemoteError
 from mm3.installer.schedule import BackupScheduler
+from mm3.installer.shares import SharesScheduler
 from mm3.installer.system import ACTIONS, DELAY_S, SystemActions
 from mm3.installer.uploads import MAX_UPLOAD
 from mm3.installer.venv import BuildError
@@ -80,6 +82,7 @@ _OP_PATH = re.compile(r"^/v1/operations/([0-9a-f]{16})(/events)?$")
 _BACKUP_PATH = re.compile(r"^/v1/backups/([A-Za-z0-9][A-Za-z0-9._-]{0,200}\.mm3backup)$")
 _REMOTE_PATH = re.compile(r"^/v1/backups/remotes/([^/]+)(/test)?$")
 _PARTS = PARTS  # media too (CORE-408)
+_SYNC_PATH = re.compile(r"^/v1/media/shares/([a-z][a-z0-9_]{0,31})/sync$")
 MAX_SECRET = 16 * 1024
 
 _log = get_logger("installer")
@@ -144,6 +147,7 @@ class InstallerServer:
         socket_gid: Group of the socket (``mm3``), or None to keep ours.
         peer: Reads the peer's uid from a connection (``SO_PEERCRED``; a fake in tests).
         scheduler: Scheduled backups (CORE-360).
+        shares: Applies ``media.shares`` once a minute and submits the due syncs (CORE-406).
         system: Restart and reboot commands (CORE-382); without it the routes answer 404.
         system_delay: Seconds between the 202 and the command (CORE-382).
     """
@@ -156,10 +160,12 @@ class InstallerServer:
         socket_gid: int | None = None,
         peer: Callable[[socket.socket], int] = peer_uid,
         scheduler: BackupScheduler | None = None,
+        shares: SharesScheduler | None = None,
         system: SystemActions | None = None,
         system_delay: float = DELAY_S,
     ) -> None:
         self.scheduler = scheduler
+        self.shares = shares
         self.system = system
         self._system_delay = system_delay
         self.installer = installer
@@ -203,6 +209,9 @@ class InstallerServer:
             if refresh and self.scheduler is not None
             else None
         )
+        shared = (
+            asyncio.create_task(self.shares.run()) if refresh and self.shares is not None else None
+        )
         _log.info("installer_listening", socket=str(path))
         try:
             async with server:
@@ -212,6 +221,8 @@ class InstallerServer:
                 refresher.cancel()
             if scheduled is not None:
                 scheduled.cancel()
+            if shared is not None:
+                shared.cancel()
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(path)
 
@@ -326,6 +337,11 @@ class InstallerServer:
             await self._send(writer, 200, {"operations": ops})
         elif (m := _SYSTEM_PATH.match(req.path)) and req.method == "POST":
             await self._system_action(m.group(1), req, writer)
+        elif route == ("GET", "/v1/media/shares"):
+            await self._send(writer, 200, {"shares": await asyncio.to_thread(self._share_list)})
+        elif (m := _SYNC_PATH.match(req.path)) and req.method == "POST":
+            op = self._start(self._sync_request(m.group(1), req))
+            await self._send(writer, 202, {"id": op.id})
         elif req.path == "/v1/backups" or req.path.startswith("/v1/backups/"):
             await self._backups(req, writer)
         elif req.path.startswith("/v1/auth/"):
@@ -402,6 +418,28 @@ class InstallerServer:
         if request.source == "catalog":
             await self._check_auth(body)
         return self._start(request)
+
+    def _share_list(self) -> list[dict[str, Any]]:
+        """The share states of ``GET /v1/media/shares`` (CORE-406)."""
+        if self.shares is None:
+            return []
+        return self.shares.shares.listing()
+
+    def _sync_request(self, name: str, req: HttpRequest) -> Request:
+        """``POST /v1/media/shares/<name>/sync``: a ``media_sync`` operation (CORE-406).
+
+        Raises:
+            HttpError: 404 for a name that is not a configured sync share.
+        """
+        if self.shares is None or name not in self.shares.shares.sync_names():
+            raise HttpError(404, f"no sync share named {name}")
+        client = req.json().get("client")
+        return Request(
+            action="media_sync",
+            name=name,
+            client=str(client or ("root" if req.uid == 0 else f"uid {req.uid}"))[:200],
+            peer_uid=req.uid,
+        )
 
     def _start(self, request: Request) -> Operation:
         if self.installer.busy:

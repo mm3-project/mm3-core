@@ -348,3 +348,26 @@ def test_core_401_a_failed_media_group_change_is_not_fatal(tmp_path: Path) -> No
     assert result.returncode == 0
     assert "done" in result.stdout
     assert "could not add mm3 to the group render" in result.stderr
+
+
+def test_core_407_cifs_utils_and_nfs_common_with_or_without_the_kiosk(tmp_path: Path) -> None:
+    for kiosk in ("yes", "no"):
+        result = call(f"WANT_KIOSK={kiosk}; install_packages", {"MM3_SKIP_PACKAGES": "yes"})
+        assert result.returncode == 0
+        packages = (result.stdout + result.stderr).split("(")[1].split(")")[0].split()
+        assert {"cifs-utils", "nfs-common"} <= set(packages)
+
+
+def test_core_407_the_mount_generator_is_installed_from_the_package(tmp_path: Path) -> None:
+    opt = tmp_path / "opt"
+    fake = opt / "installer" / "bin" / "mm3"
+    fake.parent.mkdir(parents=True)
+    fake.write_text('#!/bin/sh\n[ "$1 $2" = "installer generator" ] && echo "#!generator"\n')
+    fake.chmod(0o755)
+    gen_dir = tmp_path / "generators"
+    env = {**own_env(tmp_path), "MM3_OPT": str(opt), "MM3_GENERATOR_DIR": str(gen_dir)}
+    result = call("install_mount_generator", env)
+    assert result.returncode == 0, result.stderr
+    installed = gen_dir / "mm3-media-mounts"
+    assert installed.read_text() == "#!generator\n"
+    assert stat.S_IMODE(installed.stat().st_mode) == 0o755

@@ -1,9 +1,12 @@
-// MM3: lets the installer user stop, start and restart the engine, restart the kiosk and
-// reboot the machine, nothing else.
+// MM3: lets the installer user stop, start and restart the engine, restart the kiosk,
+// reboot the machine, reload systemd and start, stop and restart the media share mounts,
+// nothing else.
 // Implements CORE-357 (Core spec 0.42, §10.7 Installer service)
 // Implements CORE-359 (Core spec 0.42, §10.8 Backup and restore): stop, start and restart
 // of mm3.service, restart of mm3-kiosk.service, reboot through logind
 // Implements CORE-382 (Core spec 0.42, §9.1 Remote-control API): the kiosk restart and the reboot
+// Implements CORE-407 (Core spec 0.56, §9.7 Media service): reloading systemd and start, stop and
+// restart of the share units var-lib-mm3-media-shares-*.mount and .automount only
 polkit.addRule(function (action, subject) {
     if (subject.user !== "mm3-install") {
         return polkit.Result.NOT_HANDLED;
@@ -18,6 +21,16 @@ polkit.addRule(function (action, subject) {
         if (unit === "mm3-kiosk.service" && verb === "restart") {
             return polkit.Result.YES;
         }
+        // The share units the generator mm3-media-mounts makes; a share name is
+        // [a-z][a-z0-9_]{0,31}, so the whole unit name is checked, not only its prefix.
+        if (typeof unit === "string" &&
+                /^var-lib-mm3-media-shares-[a-z][a-z0-9_]{0,31}\.(auto)?mount$/.test(unit) &&
+                (verb === "start" || verb === "stop" || verb === "restart")) {
+            return polkit.Result.YES;
+        }
+    }
+    if (action.id === "org.freedesktop.systemd1.reload-daemon") {
+        return polkit.Result.YES;
     }
     if (action.id === "org.freedesktop.login1.reboot" ||
             action.id === "org.freedesktop.login1.reboot-multiple-sessions") {

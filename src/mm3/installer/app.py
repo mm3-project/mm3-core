@@ -6,6 +6,7 @@ Implements:
     CORE-368: Core spec 0.35, §10.7 Installer service.
     CORE-360, CORE-365: Core spec 0.37, §10.8 Backup and restore.
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
+    CORE-406, CORE-407: Core spec 0.56, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -27,6 +28,7 @@ from mm3.installer.runner import SetprivRunner
 from mm3.installer.schedule import AdminSettings, BackupScheduler, StatusFile
 from mm3.installer.server import InstallerServer, group_id
 from mm3.installer.service import SystemdEngine
+from mm3.installer.shares import DroppedRclone, Shares, SharesScheduler, SystemdUnits
 from mm3.installer.store import CatalogStore
 from mm3.installer.system import SystemdActions
 from mm3.installer.venv import VenvBuilder
@@ -81,10 +83,27 @@ def build_server(layout: Layout | None = None) -> InstallerServer:
         return True
 
     scheduler = BackupScheduler(reader, runner_.last_scheduled, submit_scheduled)
+    # CORE-406, CORE-407 (Core spec 0.56, §9.7 Media service): the shares, applied once a
+    # minute; a due sync is an operation like any other and waits while one runs.
+    shares = Shares(layout, reader, DroppedRclone(layout), SystemdUnits())
+    installer.shares = shares
+
+    def submit_sync(name: str) -> bool:
+        if installer.busy:
+            return False
+        request = Request(action="media_sync", name=name, client="scheduler")
+        try:
+            op = installer.submit(request)
+        except BusyError:
+            return False
+        threading.Thread(target=installer.run, args=(op, request), daemon=True).start()
+        return True
+
     return InstallerServer(
         installer,
         Auth(layout),
         socket_gid=group_id(),
         scheduler=scheduler,
+        shares=SharesScheduler(shares, submit_sync),
         system=SystemdActions(),
     )

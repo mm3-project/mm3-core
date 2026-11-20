@@ -14,6 +14,7 @@ Implements:
     CORE-356: Core spec 0.44, §10.7 Installer service.
     CORE-358: Core spec 0.33, §10.7 Installer service.
     CORE-361: Core spec 0.45, §10.8 Backup and restore.
+    CORE-406: Core spec 0.56, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -424,6 +425,41 @@ class InstallerLink:
         if stream.status != 200:
             raise await self._backup_problem(Reply(stream.status, stream.body))
         return stream
+
+    # --- media shares (CORE-406) ---------------------------------------------------------
+
+    async def shares(self) -> list[dict[str, Any]]:
+        """``GET /v1/media/shares``: the share states (CORE-406).
+
+        Raises:
+            ApiError: 503 ``CORE_API_INSTALLER_UNAVAILABLE`` without an installer.
+        """
+        reply = await self._call("GET", "/v1/media/shares")
+        body = reply.body
+        shares = body.get("shares") if isinstance(body, dict) else None
+        if not isinstance(shares, list):
+            raise ApiError("CORE_API_INSTALLER_UNAVAILABLE", "The installer sent no share list")
+        return [s for s in shares if isinstance(s, dict)]
+
+    async def sync_share(self, name: str, client: str) -> str:
+        """``POST /v1/media/shares/<name>/sync``: start a ``media_sync`` operation (CORE-406).
+
+        Returns:
+            The operation id.
+
+        Raises:
+            ApiError: 404 ``CORE_API_NOT_FOUND`` for a name that is not a sync share,
+                409 ``CORE_API_INSTALLER_BUSY``, or 503 ``CORE_API_INSTALLER_UNAVAILABLE``.
+        """
+        reply = await self._call(
+            "POST", f"/v1/media/shares/{name}/sync", {"client": client}, accept=(404,)
+        )
+        if reply.status == 404:
+            raise ApiError("CORE_API_NOT_FOUND", reply.error or f"No sync share named {name}")
+        op_id = reply.body.get("id") if isinstance(reply.body, dict) else None
+        if not isinstance(op_id, str):
+            raise ApiError("CORE_API_INSTALLER_UNAVAILABLE", "The installer sent no operation id")
+        return op_id
 
     # --- the installer's answers ------------------------------------------------------
 

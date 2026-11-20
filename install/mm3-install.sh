@@ -37,6 +37,9 @@
 # which the media service runs.
 # Implements CORE-401 (Core spec 0.48, §9.7 Media service): on kiosk systems mm3
 # in the groups render and video (VA-API and a camera the engine owns).
+# Implements CORE-407 (Core spec 0.56, §9.7 Media service): the packages
+# cifs-utils and nfs-common, and the root systemd generator mm3-media-mounts that
+# makes the share mount units from the installer's mounts/shares.json.
 set -Eeuo pipefail
 
 readonly EXIT_UNSUPPORTED=1
@@ -64,6 +67,7 @@ SVC_GROUP=${MM3_GROUP:-mm3}
 INSTALLER_USER=${MM3_INSTALLER_USER:-mm3-install}
 BUILD_USER=${MM3_BUILD_USER:-mm3-build}
 POLKIT_DIR=${MM3_POLKIT_DIR:-/etc/polkit-1/rules.d}
+GENERATOR_DIR=${MM3_GENERATOR_DIR:-/usr/lib/systemd/system-generators}
 TIMEZONE_FILE=${MM3_TIMEZONE_FILE:-/etc/timezone}
 SKIP_PACKAGES=${MM3_SKIP_PACKAGES:-no}
 
@@ -298,7 +302,8 @@ decide_kiosk() {
 }
 
 install_packages() {
-  local packages=(python3 python3-venv ca-certificates polkitd age rclone ffmpeg)
+  local packages=(python3 python3-venv ca-certificates polkitd age rclone ffmpeg
+    cifs-utils nfs-common)
   if [[ $WANT_KIOSK == yes ]]; then
     packages+=(cage chromium wlr-randr ddcutil cec-utils)
   fi
@@ -529,6 +534,19 @@ install_installer_unit() {
   install -m 0644 "$tmp" "$POLKIT_DIR/50-mm3-installer.rules"
   rm -f "$tmp"
   say "installed $UNIT_DIR/mm3-installer.service and $POLKIT_DIR/50-mm3-installer.rules"
+  install_mount_generator
+}
+
+# CORE-407: the share mount units are made by this generator, owned by root and
+# run by systemd at boot and on every reload; the installer only writes data.
+install_mount_generator() {
+  local tmp
+  install -d -m 0755 "$GENERATOR_DIR"
+  tmp=$(mktemp)
+  "$OPT/installer/bin/mm3" installer generator >"$tmp"
+  install -m 0755 "$tmp" "$GENERATOR_DIR/mm3-media-mounts"
+  rm -f "$tmp"
+  say "installed $GENERATOR_DIR/mm3-media-mounts"
 }
 
 start_units() {

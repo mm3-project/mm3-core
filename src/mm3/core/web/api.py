@@ -37,6 +37,7 @@ Implements:
     CORE-412: Core spec 0.51, §9.7 Media service.
     CORE-411: Core spec 0.54, §9.7 Media service.
     CORE-405: Core spec 0.55, §9.7 Media service.
+    CORE-406: Core spec 0.56, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -587,6 +588,23 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
         return {"id": tid}
 
     register_media_file_routes(router, services.media)  # CORE-405
+
+    @router.get("/media/shares")
+    async def get_shares() -> list[dict[str, Any]]:
+        """The share states, forwarded to the installer (CORE-406)."""
+        if services.installer is None:
+            raise ApiError("CORE_API_INSTALLER_UNAVAILABLE", "No installer is reachable")
+        return await services.installer.shares()
+
+    @router.post("/media/shares/{name}/sync", status_code=202)
+    async def sync_share(name: str, request: Request) -> dict[str, Any]:
+        """Start a sync of a share now; 202 ``{id}`` (CORE-406)."""
+        if services.installer is None:
+            raise ApiError("CORE_API_INSTALLER_UNAVAILABLE", "No installer is reachable")
+        if services.media is None or name not in services.media.share_names:
+            raise ApiError("CORE_API_NOT_FOUND", f"No share named {name!r}")
+        client = str(getattr(request.state, "caller", "cli"))
+        return {"id": await services.installer.sync_share(name, client)}
 
     @router.delete("/media/takeover", status_code=204)
     async def stop_takeover(id: str | None = None) -> Response:

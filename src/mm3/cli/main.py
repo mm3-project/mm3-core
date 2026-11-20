@@ -324,6 +324,11 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     hub.frame_observer = inspector.frame
     editor = ConfigEditor(history, masker, lambda: manager.applied)
     installer = InstallerLink()
+    # CORE-406 (Core spec 0.56, §9.7 Media service): the share states every 30 s while
+    # media.shares is not empty; files sources under a share in error are unavailable.
+    from mm3.core.media.shares import ShareWatch
+
+    share_watch = ShareWatch(media, installer.shares)
     channel = AdminChannel(hub.auth, lambda: status_object(api), inspector, installer=installer)
     # CORE-307: Show on mirror ends on DELETE, a reload, 60 s, or the session's last channel.
     mirror = MirrorPreview(hub, lambda: hub.view().layout, channel.has_session)
@@ -359,6 +364,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     await engine.start(result.instance_specs())
     await manager.start()
     await pages.start()
+    share_watch.start()
     watchdog = asyncio.create_task(agents.watchdog(), name="mm3-kiosk-watchdog") if agents else None
     try:
         await gateway.start()
@@ -371,6 +377,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
             with contextlib.suppress(asyncio.CancelledError):
                 await watchdog
         await gateway.stop()
+        await share_watch.close()
         await takeover.close()
         await media.close()
         await pages.close()

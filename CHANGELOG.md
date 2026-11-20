@@ -29,6 +29,38 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 - Core spec 0.55 settles the details of the file routes, the `media` part, how the installer
   applies shares and the mount options (spec sync PR #152).
+### Added (milestone 8 step 6b: network shares; CORE-406, CORE-407)
+
+- Shares by sync (`mm3.installer.shares`): the installer reads `media.shares` over the admin
+  socket once a minute, keeps the share states in `/var/lib/mm3-install/shares.json` (`idle`,
+  `syncing`, `ok`, `error` with `remote`, `too_large`, `failed`, `mount` or `path`) and runs due
+  syncs as `media_sync` operations that wait while another operation runs; a run checks the
+  remote's type, measures it with `rclone size` against `max_size_gb`, then runs `rclone sync`
+  without capabilities (`setpriv`, umask 022) for the extensions of CORE-404 only, without
+  links, into `shares/<name>/` opened without following a link and owned by `mm3-install`
+  (mode 0755), passed as `/proc/self/fd/<n>`; copies of removed shares are deleted;
+  `GET /v1/media/shares` and `POST /v1/media/shares/<name>/sync` on the installer socket
+  (CORE-406).
+- Shares by mount: the installer writes only `mounts/shares.json` and the SMB credentials files
+  (0600, from the rclone remote, the password revealed only when it changes) in its own state;
+  the root systemd generator `mm3-media-mounts` (shipped in the package, printed by
+  `mm3 installer generator`, installed by `mm3-install.sh` into
+  `/usr/lib/systemd/system-generators/`) checks every entry again and makes
+  `var-lib-mm3-media-shares-<name>.mount` and `.automount` (`ro,nosuid,nodev,noexec,_netdev`,
+  NFS `soft,timeo=100,retrans=3`, `TimeoutSec=10s`, `TimeoutIdleSec=600`, wanted by
+  `remote-fs.target`); the installer reloads systemd, starts and stops those units, and marks a
+  failed mount `error` with reason `mount`; the polkit rule allows the reload and start, stop
+  and restart of exactly those unit names; `mm3-install.sh` installs `cifs-utils` and
+  `nfs-common` (CORE-407).
+- The engine forwards `GET /api/v1/media/shares` and `POST /api/v1/media/shares/<name>/sync`
+  (202 `{id}`) to the installer, reads the share states every 30 s while `media.shares` is not
+  empty, and gives `files` sources under a share in `error` the state `unavailable` with the
+  reason `share` (CORE-406).
+
+### Changed (spec 0.56; CORE-406, CORE-407 changed)
+
+- Core spec 0.56: the mount units are made by a root generator and named after their mount
+  point, as systemd requires (spec sync PR #154).
 
 ### Added (milestone 8 step 5: the takeover; CORE-410, CORE-411, CORE-412, CORE-418)
 
