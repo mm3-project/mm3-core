@@ -4,7 +4,7 @@ The reports the user makes in chat, as `ISS-nnn` (issue) and `ENH-nnn` (enhancem
 
 The log moved here from the project documents `claude/mm3-issue-log.md` and `claude/mm3-issue-log-entries-1.md` … `-4.md` on 2026-11-17 (log 2.55; a process change asked by the user, not a log entry), because a project document can only be replaced whole and the log had to be split to stay readable. Here an entry is edited in place.
 
-Current specification versions: Core spec 0.54, Module Contract 1.0 rev 16 (`docs/spec/versions.toml` is the source).
+Current specification versions: Core spec 0.55, Module Contract 1.0 rev 16 (`docs/spec/versions.toml` is the source).
 
 ## Where things are
 - `entries/<ID>.md`: one file per entry. A YAML front matter holds the columns of the table below; the text under `# <ID> — <title>` holds the details in the format of the template.

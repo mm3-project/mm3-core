@@ -413,6 +413,9 @@ status = "in_progress"
 # Core 0.54 changes CORE-410 and CORE-411 and adds CORE-418 (how the engine knows a
 #   takeover ended, refused values, ids and stops, the HA select, takeover in welcome
 #   and the control action takeover; settled while building step 5).
+# Core 0.55 changes CORE-405, CORE-406, CORE-407 and CORE-408 (the details of the admin
+#   file routes, the media backup part and its restore, how the installer applies shares
+#   and the engine reads their states, the mount options; settled before building step 6).
 # Development: step 1 (PR #141) the config base (CORE-388..393, 398, 399, 416);
 #   step 2 the media service and delivery (CORE-397, 400, 401, 403, 404, 412: ffmpeg
 #   children, limits and backoff, MJPEG, HLS and file routes, remux and transcode, TLS,
