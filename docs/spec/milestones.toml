@@ -407,14 +407,16 @@ status = "in_progress"
 #   CORE-398 (details settled while building step 1).
 # Core 0.51 changes CORE-397, CORE-400 and CORE-412 (details settled while building
 #   step 2). Core 0.52 changes CORE-402 (feed relay and owner change, settled while
-#   building step 3).
+#   building step 3). Core 0.53 changes CORE-409 and CORE-413 and adds CORE-417
+#   (native HLS only, the player's events and retry, welcome.audio and youtube per
+#   instance, the media and youtube grants; settled while building step 4).
 # Development: step 1 (PR #141) the config base (CORE-388..393, 398, 399, 416);
 #   step 2 the media service and delivery (CORE-397, 400, 401, 403, 404, 412: ffmpeg
 #   children, limits and backoff, MJPEG, HLS and file routes, remux and transcode, TLS,
 #   the media folder, CORE_MEDIA_CHANGED and GET /api/v1/media); step 3 camera sources
 #   and the local feed (CORE-394..396, 402: mm3.core.feed, the feed relay, the v4l2 child,
 #   the owner change).
-requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "MED-01..08", "MOD-100..103"]
+requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "CORE-417", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]
 number = 9
