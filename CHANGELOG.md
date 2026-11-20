@@ -7,6 +7,15 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (milestone 8 step 9, spec sync: Core spec 0.58)
+
+- Core spec 0.58 changes CORE-412 (`GET /api/v1/media` also gives each source `kind`, `delivery`,
+  `device` and `path`, never `url`) and CORE-414 (the Media page `/admin/media`: Sources, Files and Shares,
+  how it reads its data and what each action does). Spec sync in this PR: `core.md`,
+  `requirements.toml`, `versions.toml`, `coverage.md`, `milestones.toml` (comment), `docs/rules.md`
+  1.87 and the versions line of `docs/log/README.md`. The same edits are to be made in the master
+  document of the Core spec. The code follows in the next PR.
+
 ### Added (milestone 8 step 8 follow-up: the MOD-102 row and its static check; Contract 1.0 rev 17)
 
 - Module Contract 1.0 rev 17 adds the row of MOD-102 to section 11 (MUST, static) and a
