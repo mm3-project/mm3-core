@@ -7,6 +7,11 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (ISS-020; CORE-361)
+
+- A restore from an uploaded archive deletes the staged file before it shows its final state
+  (`done`, `rolled_back` or `failed`), not just after it, so a client that checks at once no
+  longer finds it; a new test checks the file at the moment the final state is written.
 ### Changed (milestone 8 step 6 follow-ups; spec 0.57: CORE-405, CORE-406, CORE-407 changed)
 
 - The file delivery route `/media/files/…` (opening and every read) and the takeover's file

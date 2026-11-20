@@ -269,3 +269,27 @@ async def test_core_361_a_dead_installer_is_reported_by_the_client(tmp_path: Pat
 def test_core_361_the_constants_are_the_spec_values() -> None:
     assert MAX_STAGED == 2
     assert MAX_AGE_S == 24 * 3600
+
+
+async def test_core_361_the_upload_is_gone_before_the_restore_shows_its_final_state(
+    served: Served, mirror: Mirror, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ISS-020: a client that sees ``done`` finds no staged file any more."""
+    from mm3.installer.operations import FINAL, Installer
+
+    seen: list[tuple[str, list[str]]] = []
+    real = Installer._step
+
+    def watch(self: Installer, op: Any, state: Any, detail: str) -> None:
+        if state in FINAL:
+            seen.append((state, [p.name for p in staged(mirror) if p.suffix == ".mm3backup"]))
+        real(self, op, state, detail)
+
+    monkeypatch.setattr(Installer, "_step", watch)
+    created = mirror.make("manual", ["config"])
+    reply = await upload(served, created.path.read_bytes())
+    body = {"upload": reply.body["upload"], "parts": ["config"], "passphrase": PASS}
+    ok = await served.call("POST", "/v1/backups/restore", body)
+    assert ok.status == 202, ok.body
+    assert (await _wait_done(served, ok.body["id"]))["state"] == "done"
+    assert seen == [("done", [])]

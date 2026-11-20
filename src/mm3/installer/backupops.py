@@ -113,6 +113,8 @@ class BackupRunner:
         self._hostname = hostname
         self._now = now
         self.uploads = Uploads(layout)
+        self._staged: dict[str, str] = {}
+        """The staged upload of each running restore, by operation id (CORE-361)."""
 
     # --- small helpers --------------------------------------------------------------
 
@@ -436,15 +438,26 @@ class BackupRunner:
         """
         opts = request.options
         work = self._work(op.id, "rs")
+        staged = opts["source"].get("upload")
+        if staged is not None:
+            self._staged[op.id] = str(staged)
         try:
             self._restore(inst, op, opts, work)
         except BackupError as exc:
             raise OperationError(str(exc)) from exc
         finally:
             remove_work(work)
-            staged = opts["source"].get("upload")
-            if staged is not None:
-                self.uploads.discard(str(staged))  # CORE-361: a staged file ends with its restore
+            self._release(op)
+
+    def _release(self, op: Operation) -> None:
+        """Delete the staged upload of a restore before its final state (CORE-361, ISS-020).
+
+        A client that sees ``done``, ``rolled_back`` or ``failed`` may look for the
+        file at once, so it is deleted first; calling it again does nothing.
+        """
+        staged = self._staged.pop(op.id, None)
+        if staged is not None:
+            self.uploads.discard(staged)  # CORE-361: a staged file ends with its restore
 
     def _restore(self, inst: Installer, op: Operation, opts: dict[str, Any], work: Path) -> None:
         inst.step(op, "verifying", "opening the backup")
@@ -524,6 +537,7 @@ class BackupRunner:
                         f"mm3 diag check failed (exit {result.returncode}): {result.output.strip()}"
                     )
         if reason is None:
+            self._release(op)
             inst.step(op, "done", "restored")
             if switched:
                 inst.builder.prune()
@@ -559,8 +573,10 @@ class BackupRunner:
             self._marker(op)
         except (OSError, BackupError, SectionError, OperationError) as exc:
             op.error = f"{reason}; the rollback failed too ({exc}); the pre-restore backup is kept"
+            self._release(op)
             inst.step(op, "failed", op.error)
             return
         back = inst.engine.start()
         op.error = reason if back else f"{reason}; after rollback the engine is still not READY"
+        self._release(op)
         inst.step(op, "rolled_back", op.error)
