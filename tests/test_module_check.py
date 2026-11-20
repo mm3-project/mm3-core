@@ -848,3 +848,55 @@ def test_mod_71_media_elements_count_as_using_their_capabilities(
     checks = static(proj, tmp_path)
     assert checks["MOD-70"].status == "pass"
     assert checks["MOD-71"].status == "pass"
+
+
+def _declare_touch(proj: Path) -> None:
+    edit(
+        pkg(proj) / "__init__.py",
+        "    min_size_px:",
+        '    capabilities: ClassVar = frozenset({"input.touch"})\n    min_size_px:',
+    )
+
+
+def test_mod_71_a_pointer_handler_that_sends_counts_as_using_input_touch(
+    proj: Path, tmp_path: Path
+) -> None:
+    """``input.touch`` has no ctx member: handling a pointer event and sending is its use."""
+    _declare_touch(proj)
+    edit(
+        proj / JS,
+        "    return html`<p",
+        '    html`<div @click=${() => this.send("touch")}></div>`;\n    return html`<p',
+    )
+    checks = static(proj, tmp_path)
+    assert checks["MOD-71"].status == "pass"
+    assert checks["MOD-70"].status == "pass"
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "    html`<div @click=${() => this.render()}></div>`;",  # a handler that sends nothing
+        '    this.send("touch");',  # a message that no pointer event causes
+    ],
+)
+def test_mod_71_input_touch_needs_both_the_handler_and_the_message(
+    proj: Path, tmp_path: Path, line: str
+) -> None:
+    _declare_touch(proj)
+    edit(proj / JS, "    return html`<p", f"{line}\n    return html`<p")
+    checks = static(proj, tmp_path)
+    assert any("input.touch" in f.message for f in checks["MOD-71"].findings)
+
+
+def test_mod_71_a_front_end_that_sends_from_a_click_needs_no_declaration(
+    proj: Path, tmp_path: Path
+) -> None:
+    """Only the warning about an unused capability is relaxed; MOD-70 does not ask for it."""
+    edit(
+        proj / JS,
+        "    return html`<p",
+        '    html`<div @click=${() => this.send("touch")}></div>`;\n    return html`<p',
+    )
+    checks = static(proj, tmp_path)
+    assert checks["MOD-70"].status == "pass"

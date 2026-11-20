@@ -2715,3 +2715,291 @@ msgstr "Aucun service ne possède cette caméra (owner: none)"
 
 msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
 msgstr "Redémarrage après une erreur"
+
+msgid "CORE_WEB_NAV_MEDIA"
+msgstr "Médias"
+
+msgid "CORE_ADMIN_MEDIA_REFRESH"
+msgstr "Actualiser"
+
+msgid "CORE_ADMIN_MEDIA_H_SOURCES"
+msgstr "Sources"
+
+msgid "CORE_ADMIN_MEDIA_H_FILES"
+msgstr "Fichiers"
+
+msgid "CORE_ADMIN_MEDIA_H_SHARES"
+msgstr "Partages"
+
+msgid "CORE_ADMIN_MEDIA_KIND"
+msgstr "Type"
+
+msgid "CORE_ADMIN_MEDIA_KIND_RTSP"
+msgstr "Flux RTSP"
+
+msgid "CORE_ADMIN_MEDIA_KIND_STREAM"
+msgstr "Flux distant"
+
+msgid "CORE_ADMIN_MEDIA_KIND_CAMERA"
+msgstr "Caméra"
+
+msgid "CORE_ADMIN_MEDIA_KIND_FILES"
+msgstr "Fichiers"
+
+msgid "CORE_ADMIN_MEDIA_NO_SOURCES"
+msgstr "Aucune source média n'est configurée."
+
+msgid "CORE_ADMIN_MEDIA_SELECT"
+msgstr "Sélectionner {name}"
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER_OPEN"
+msgstr "Plein écran : {source}"
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER_NONE"
+msgstr "Rien n'est affiché en plein écran."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_NAME"
+msgstr "Aperçu"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_EFFECT"
+msgstr "Lit ici, dans l'admin, la source sélectionnée. Elle ne démarre que lorsque vous appuyez sur le bouton."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_LABEL"
+msgstr "Aperçu"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_STOP"
+msgstr "Arrêter l'aperçu"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_LOAD"
+msgstr "Le lecteur n'a pas pu être chargé."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_FORBIDDEN"
+msgstr "L'aperçu de {name} est refusé : les images de la caméra sont désactivées pour cet appareil."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_ERROR"
+msgstr "L'aperçu de {name} ne se lit pas : {reason}."
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_UNAVAILABLE"
+msgstr "la source ne répond pas"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_UNSUPPORTED"
+msgstr "ce navigateur ne lit pas le HLS"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_DECODE"
+msgstr "le navigateur ne peut pas la décoder"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_NETWORK"
+msgstr "la connexion a échoué"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_NAME"
+msgstr "Afficher en plein écran"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_EFFECT"
+msgstr "Affiche la source sélectionnée sur le miroir, au-dessus de chaque page, jusqu'à sa fin ou son arrêt."
+
+msgid "CORE_ADMIN_MEDIA_SHOW_LABEL"
+msgstr "Afficher"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_DONE"
+msgstr "{source} est affiché en plein écran."
+
+msgid "CORE_ADMIN_MEDIA_STOP_NAME"
+msgstr "Arrêter le plein écran"
+
+msgid "CORE_ADMIN_MEDIA_STOP_EFFECT"
+msgstr "Termine l'affichage en plein écran et ramène le miroir."
+
+msgid "CORE_ADMIN_MEDIA_STOP_LABEL"
+msgstr "Arrêter"
+
+msgid "CORE_ADMIN_MEDIA_STOP_DONE"
+msgstr "L'affichage en plein écran est arrêté."
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_SOURCE"
+msgstr "Sélectionnez d'abord une source."
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_TAKEOVER"
+msgstr "Rien n'est affiché en plein écran."
+
+msgid "CORE_ADMIN_MEDIA_REASON_FOLDER"
+msgstr "Cette source est un dossier : utilisez « Afficher en plein écran » pour choisir un fichier."
+
+msgid "CORE_ADMIN_MEDIA_REASON_IMAGES"
+msgstr "Les images de la caméra sont désactivées pour l'appareil {device} (images: false)."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_TITLE"
+msgstr "Afficher un fichier de {source}"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_TEXT"
+msgstr "Choisissez le fichier à afficher en plein écran, dans ce dossier ou l'un de ses sous-dossiers."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_EMPTY"
+msgstr "Il n'y a aucun fichier média ici."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_UP"
+msgstr "Haut"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_SHOW"
+msgstr "Afficher"
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_FILE"
+msgstr "Choisissez d'abord un fichier."
+
+msgid "CORE_ADMIN_MEDIA_PATH"
+msgstr "Chemin"
+
+msgid "CORE_ADMIN_MEDIA_NAME"
+msgstr "Nom"
+
+msgid "CORE_ADMIN_MEDIA_SIZE"
+msgstr "Taille"
+
+msgid "CORE_ADMIN_MEDIA_MODIFIED"
+msgstr "Modifié"
+
+msgid "CORE_ADMIN_MEDIA_FILE_FOLDER"
+msgstr "Dossier"
+
+msgid "CORE_ADMIN_MEDIA_FILE_VIDEO"
+msgstr "Vidéo"
+
+msgid "CORE_ADMIN_MEDIA_FILE_AUDIO"
+msgstr "Audio"
+
+msgid "CORE_ADMIN_MEDIA_FILE_IMAGE"
+msgstr "Image"
+
+msgid "CORE_ADMIN_MEDIA_FILES_EMPTY"
+msgstr "Ce dossier est vide."
+
+msgid "CORE_ADMIN_MEDIA_REASON_SHARES_READONLY"
+msgstr "Les partages sont en lecture seule."
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_NAME"
+msgstr "Téléverser un fichier"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_EFFECT"
+msgstr "Copie un fichier de votre ordinateur dans ce dossier."
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_LABEL"
+msgstr "Téléverser"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_PROGRESS"
+msgstr "Téléversement de {name} : {percent} %"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_DONE"
+msgstr "{name} a été téléversé."
+
+msgid "CORE_ADMIN_MEDIA_REASON_UPLOADING"
+msgstr "Un téléversement est en cours."
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_NAME"
+msgstr "Nouveau dossier"
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_EFFECT"
+msgstr "Crée un dossier vide dans celui-ci."
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_LABEL"
+msgstr "Créer"
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_DONE"
+msgstr "Le dossier {name} a été créé."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_TITLE"
+msgstr "Nouveau dossier dans {path}"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_NAME"
+msgstr "Nom du dossier"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_NEED_NAME"
+msgstr "Saisissez un nom pour le dossier."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_TITLE"
+msgstr "Supprimer {name} ?"
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_TEXT"
+msgstr "Le fichier est supprimé du dossier média et ne peut pas être récupéré."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_FOLDER_TEXT"
+msgstr "Le dossier est supprimé du dossier média."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_TITLE"
+msgstr "Supprimer {name} et tout son contenu ?"
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_TEXT"
+msgstr "Le dossier n'est pas vide. Tout son contenu est supprimé et ne peut pas être récupéré."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_ACTION"
+msgstr "Tout supprimer"
+
+msgid "CORE_ADMIN_MEDIA_DELETE_DONE"
+msgstr "{name} a été supprimé."
+
+msgid "CORE_ADMIN_MEDIA_METHOD"
+msgstr "Méthode"
+
+msgid "CORE_ADMIN_MEDIA_METHOD_SYNC"
+msgstr "Synchronisation"
+
+msgid "CORE_ADMIN_MEDIA_METHOD_MOUNT"
+msgstr "Montage"
+
+msgid "CORE_ADMIN_MEDIA_LAST_SYNC"
+msgstr "Dernière synchronisation"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_IDLE"
+msgstr "Pas encore exécuté"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_SYNCING"
+msgstr "Synchronisation en cours"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_OK"
+msgstr "À jour"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_ERROR"
+msgstr "Erreur"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_REMOTE"
+msgstr "Le remote rclone n'existe pas ou est d'un autre type"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_TOO_LARGE"
+msgstr "La copie dépasserait max_size_gb"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_FAILED"
+msgstr "La synchronisation a échoué"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_MOUNT"
+msgstr "Le montage a échoué"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_PATH"
+msgstr "Le chemin n'existe pas sur le partage"
+
+msgid "CORE_ADMIN_MEDIA_SHARES_NONE"
+msgstr "Aucun partage n'est configuré."
+
+msgid "CORE_ADMIN_MEDIA_SHARES_UNAVAILABLE"
+msgstr "Les partages ne peuvent pas être lus : {error}"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_LABEL"
+msgstr "Synchroniser maintenant"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_STARTED"
+msgstr "Synchronisation de {name}…"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_DONE"
+msgstr "{name} a été synchronisé."
+
+msgid "CORE_ADMIN_MEDIA_SYNC_FAILED"
+msgstr "La synchronisation de {name} a échoué. {error}"
+
+msgid "CORE_ADMIN_MEDIA_REASON_MOUNT"
+msgstr "Un partage monté est toujours à jour : il n'y a rien à synchroniser."
+
+msgid "CORE_ADMIN_MEDIA_REASON_SYNCING"
+msgstr "Ce partage est en cours de synchronisation."
+
+msgid "CORE_ADMIN_MEDIA_REASON_INSTALLER_AWAY"
+msgstr "L'installateur n'est pas disponible."
+
+msgid "CORE_ADMIN_MEDIA_REASON_INSTALLER_BUSY"
+msgstr "L'installateur est occupé par une autre opération."

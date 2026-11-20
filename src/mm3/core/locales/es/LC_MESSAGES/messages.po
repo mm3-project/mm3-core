@@ -2713,3 +2713,291 @@ msgstr "Ningún servicio es dueño de esta cámara (owner: none)"
 
 msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
 msgstr "Reiniciando tras un error"
+
+msgid "CORE_WEB_NAV_MEDIA"
+msgstr "Multimedia"
+
+msgid "CORE_ADMIN_MEDIA_REFRESH"
+msgstr "Actualizar"
+
+msgid "CORE_ADMIN_MEDIA_H_SOURCES"
+msgstr "Fuentes"
+
+msgid "CORE_ADMIN_MEDIA_H_FILES"
+msgstr "Archivos"
+
+msgid "CORE_ADMIN_MEDIA_H_SHARES"
+msgstr "Recursos compartidos"
+
+msgid "CORE_ADMIN_MEDIA_KIND"
+msgstr "Tipo"
+
+msgid "CORE_ADMIN_MEDIA_KIND_RTSP"
+msgstr "Flujo RTSP"
+
+msgid "CORE_ADMIN_MEDIA_KIND_STREAM"
+msgstr "Flujo remoto"
+
+msgid "CORE_ADMIN_MEDIA_KIND_CAMERA"
+msgstr "Cámara"
+
+msgid "CORE_ADMIN_MEDIA_KIND_FILES"
+msgstr "Archivos"
+
+msgid "CORE_ADMIN_MEDIA_NO_SOURCES"
+msgstr "No hay fuentes multimedia configuradas."
+
+msgid "CORE_ADMIN_MEDIA_SELECT"
+msgstr "Seleccionar {name}"
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER_OPEN"
+msgstr "Pantalla completa: {source}"
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER_NONE"
+msgstr "No se muestra nada a pantalla completa."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_NAME"
+msgstr "Vista previa"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_EFFECT"
+msgstr "Reproduce aquí, en el admin, la fuente seleccionada. Solo empieza cuando pulsa el botón."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_LABEL"
+msgstr "Vista previa"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_STOP"
+msgstr "Detener la vista previa"
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_LOAD"
+msgstr "No se pudo cargar el reproductor."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_FORBIDDEN"
+msgstr "Se rechaza la vista previa de {name}: las imágenes de la cámara están desactivadas para este dispositivo."
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_ERROR"
+msgstr "La vista previa de {name} no se reproduce: {reason}."
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_UNAVAILABLE"
+msgstr "la fuente no responde"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_UNSUPPORTED"
+msgstr "este navegador no reproduce HLS"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_DECODE"
+msgstr "el navegador no puede decodificarla"
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_NETWORK"
+msgstr "falló la conexión"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_NAME"
+msgstr "Mostrar a pantalla completa"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_EFFECT"
+msgstr "Muestra la fuente seleccionada en el espejo, sobre todas las páginas, hasta que termina o la detiene."
+
+msgid "CORE_ADMIN_MEDIA_SHOW_LABEL"
+msgstr "Mostrar"
+
+msgid "CORE_ADMIN_MEDIA_SHOW_DONE"
+msgstr "{source} se muestra a pantalla completa."
+
+msgid "CORE_ADMIN_MEDIA_STOP_NAME"
+msgstr "Detener la pantalla completa"
+
+msgid "CORE_ADMIN_MEDIA_STOP_EFFECT"
+msgstr "Termina la pantalla completa y devuelve el espejo."
+
+msgid "CORE_ADMIN_MEDIA_STOP_LABEL"
+msgstr "Detener"
+
+msgid "CORE_ADMIN_MEDIA_STOP_DONE"
+msgstr "La pantalla completa se ha detenido."
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_SOURCE"
+msgstr "Seleccione primero una fuente."
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_TAKEOVER"
+msgstr "No se muestra nada a pantalla completa."
+
+msgid "CORE_ADMIN_MEDIA_REASON_FOLDER"
+msgstr "Esta fuente es una carpeta: use «Mostrar a pantalla completa» para elegir un archivo."
+
+msgid "CORE_ADMIN_MEDIA_REASON_IMAGES"
+msgstr "Las imágenes de la cámara están desactivadas para el dispositivo {device} (images: false)."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_TITLE"
+msgstr "Mostrar un archivo de {source}"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_TEXT"
+msgstr "Elija el archivo que se mostrará a pantalla completa, en esta carpeta o en una subcarpeta."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_EMPTY"
+msgstr "Aquí no hay archivos multimedia."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_UP"
+msgstr "Subir"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_SHOW"
+msgstr "Mostrar"
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_FILE"
+msgstr "Elija primero un archivo."
+
+msgid "CORE_ADMIN_MEDIA_PATH"
+msgstr "Ruta"
+
+msgid "CORE_ADMIN_MEDIA_NAME"
+msgstr "Nombre"
+
+msgid "CORE_ADMIN_MEDIA_SIZE"
+msgstr "Tamaño"
+
+msgid "CORE_ADMIN_MEDIA_MODIFIED"
+msgstr "Modificado"
+
+msgid "CORE_ADMIN_MEDIA_FILE_FOLDER"
+msgstr "Carpeta"
+
+msgid "CORE_ADMIN_MEDIA_FILE_VIDEO"
+msgstr "Vídeo"
+
+msgid "CORE_ADMIN_MEDIA_FILE_AUDIO"
+msgstr "Audio"
+
+msgid "CORE_ADMIN_MEDIA_FILE_IMAGE"
+msgstr "Imagen"
+
+msgid "CORE_ADMIN_MEDIA_FILES_EMPTY"
+msgstr "Esta carpeta está vacía."
+
+msgid "CORE_ADMIN_MEDIA_REASON_SHARES_READONLY"
+msgstr "Los recursos compartidos son de solo lectura."
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_NAME"
+msgstr "Subir un archivo"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_EFFECT"
+msgstr "Copia un archivo de su ordenador en esta carpeta."
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_LABEL"
+msgstr "Subir"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_PROGRESS"
+msgstr "Subiendo {name}: {percent} %"
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_DONE"
+msgstr "{name} se ha subido."
+
+msgid "CORE_ADMIN_MEDIA_REASON_UPLOADING"
+msgstr "Hay una subida en curso."
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_NAME"
+msgstr "Nueva carpeta"
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_EFFECT"
+msgstr "Crea una carpeta vacía dentro de esta."
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_LABEL"
+msgstr "Crear"
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_DONE"
+msgstr "La carpeta {name} se ha creado."
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_TITLE"
+msgstr "Nueva carpeta en {path}"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_NAME"
+msgstr "Nombre de la carpeta"
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_NEED_NAME"
+msgstr "Introduzca un nombre para la carpeta."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_TITLE"
+msgstr "¿Eliminar {name}?"
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_TEXT"
+msgstr "El archivo se elimina de la carpeta multimedia y no se puede recuperar."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_FOLDER_TEXT"
+msgstr "La carpeta se elimina de la carpeta multimedia."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_TITLE"
+msgstr "¿Eliminar {name} y todo su contenido?"
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_TEXT"
+msgstr "La carpeta no está vacía. Todo su contenido se elimina y no se puede recuperar."
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_ACTION"
+msgstr "Eliminar todo"
+
+msgid "CORE_ADMIN_MEDIA_DELETE_DONE"
+msgstr "{name} se ha eliminado."
+
+msgid "CORE_ADMIN_MEDIA_METHOD"
+msgstr "Método"
+
+msgid "CORE_ADMIN_MEDIA_METHOD_SYNC"
+msgstr "Sincronización"
+
+msgid "CORE_ADMIN_MEDIA_METHOD_MOUNT"
+msgstr "Montaje"
+
+msgid "CORE_ADMIN_MEDIA_LAST_SYNC"
+msgstr "Última sincronización"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_IDLE"
+msgstr "Aún no ejecutada"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_SYNCING"
+msgstr "Sincronizando"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_OK"
+msgstr "Al día"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_ERROR"
+msgstr "Error"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_REMOTE"
+msgstr "El remoto de rclone no existe o es de otro tipo"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_TOO_LARGE"
+msgstr "La copia superaría max_size_gb"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_FAILED"
+msgstr "La sincronización falló"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_MOUNT"
+msgstr "El montaje falló"
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_PATH"
+msgstr "La ruta no existe en el recurso compartido"
+
+msgid "CORE_ADMIN_MEDIA_SHARES_NONE"
+msgstr "No hay recursos compartidos configurados."
+
+msgid "CORE_ADMIN_MEDIA_SHARES_UNAVAILABLE"
+msgstr "No se pueden leer los recursos compartidos: {error}"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_LABEL"
+msgstr "Sincronizar ahora"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_STARTED"
+msgstr "Sincronizando {name}…"
+
+msgid "CORE_ADMIN_MEDIA_SYNC_DONE"
+msgstr "{name} se ha sincronizado."
+
+msgid "CORE_ADMIN_MEDIA_SYNC_FAILED"
+msgstr "La sincronización de {name} falló. {error}"
+
+msgid "CORE_ADMIN_MEDIA_REASON_MOUNT"
+msgstr "Un recurso montado siempre está al día: no hay nada que sincronizar."
+
+msgid "CORE_ADMIN_MEDIA_REASON_SYNCING"
+msgstr "Este recurso se está sincronizando."
+
+msgid "CORE_ADMIN_MEDIA_REASON_INSTALLER_AWAY"
+msgstr "El instalador no está disponible."
+
+msgid "CORE_ADMIN_MEDIA_REASON_INSTALLER_BUSY"
+msgstr "El instalador está ocupado con otra operación."

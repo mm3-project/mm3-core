@@ -32,6 +32,7 @@ Implements:
     CORE-329, CORE-330: Core spec 0.29, §11.1 Engine additions.
     CORE-400: Core spec 0.51, §9.7 Media service.
     CORE-413: Core spec 0.53, §9.7 Media service.
+    CORE-414: Core spec 0.58, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -75,6 +76,7 @@ from mm3.core.web.pages import (
     admin_debug_page,
     admin_extension_page,
     admin_home_page,
+    admin_media_page,
     admin_texts,
     form_texts,
     language_names,
@@ -535,6 +537,13 @@ def admin_app(
         if check.outcome != "ok":
             return _login_redirect(request)
         return _html(admin_backups_page(await extension_links(request, check.via)))
+
+    @app.get("/admin/media")
+    async def admin_media(request: Request) -> Response:
+        check = await auth.check_admin(request, request.method)
+        if check.outcome != "ok":
+            return _login_redirect(request)
+        return _html(admin_media_page(await extension_links(request, check.via)))
 
     @app.get("/admin/static/{path:path}")
     async def admin_static(path: str) -> Response:

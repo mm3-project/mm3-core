@@ -34,7 +34,7 @@ Implements:
     CORE-356: Core spec 0.44, §10.7 Installer service.
     CORE-358: Core spec 0.33, §10.7 Installer service.
     CORE-393: Core spec 0.47, §6.11 Camera devices.
-    CORE-412: Core spec 0.51, §9.7 Media service.
+    CORE-412: Core spec 0.58, §9.7 Media service.
     CORE-411: Core spec 0.54, §9.7 Media service.
     CORE-406: Core spec 0.57, §9.7 Media service.
     CORE-405: Core spec 0.57, §9.7 Media service.

@@ -2691,3 +2691,291 @@ msgstr ""
 
 msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
 msgstr ""
+
+msgid "CORE_WEB_NAV_MEDIA"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REFRESH"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_H_SOURCES"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_H_FILES"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_H_SHARES"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_KIND"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_KIND_RTSP"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_KIND_STREAM"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_KIND_CAMERA"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_KIND_FILES"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_NO_SOURCES"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SELECT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER_OPEN"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_TAKEOVER_NONE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_EFFECT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_LABEL"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_STOP"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_LOAD"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_FORBIDDEN"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PREVIEW_ERROR"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_UNAVAILABLE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_UNSUPPORTED"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_DECODE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PLAYER_NETWORK"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHOW_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHOW_EFFECT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHOW_LABEL"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHOW_DONE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_STOP_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_STOP_EFFECT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_STOP_LABEL"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_STOP_DONE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_SOURCE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_TAKEOVER"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_FOLDER"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_IMAGES"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_TITLE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_TEXT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_EMPTY"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_UP"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_FILE_SHOW"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_NO_FILE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_PATH"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SIZE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_MODIFIED"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_FILE_FOLDER"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_FILE_VIDEO"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_FILE_AUDIO"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_FILE_IMAGE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_FILES_EMPTY"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_SHARES_READONLY"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_EFFECT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_LABEL"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_PROGRESS"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_UPLOAD_DONE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_UPLOADING"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_EFFECT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_LABEL"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_FOLDER_DONE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_TITLE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_FOLDER_NEED_NAME"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_TITLE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_TEXT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_FOLDER_TEXT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_TITLE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_TEXT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DLG_DELETE_ALL_ACTION"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_DELETE_DONE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_METHOD"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_METHOD_SYNC"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_METHOD_MOUNT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_LAST_SYNC"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_IDLE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_SYNCING"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_OK"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARE_STATE_ERROR"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_REMOTE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_TOO_LARGE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_FAILED"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_MOUNT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARE_ERROR_PATH"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARES_NONE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SHARES_UNAVAILABLE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SYNC_LABEL"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SYNC_STARTED"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SYNC_DONE"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_SYNC_FAILED"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_MOUNT"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_SYNCING"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_INSTALLER_AWAY"
+msgstr ""
+
+msgid "CORE_ADMIN_MEDIA_REASON_INSTALLER_BUSY"
+msgstr ""

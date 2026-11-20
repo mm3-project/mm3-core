@@ -7,6 +7,44 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 8 step 9: the Media page; CORE-414, CORE-412; closes milestone 8)
+
+- The admin page `/admin/media` (CORE-414, nav link "Media", session required) with three parts
+  (`adminui/mediapage.js`, element `mm3-admin-media`). **Sources**: one row per source with kind,
+  state, viewers and reason, the running takeover above them, and action rows: *Preview* plays
+  the selected source in an `mm3-player` from `/admin/preview/media/` (CORE-400, CORE-409), one at
+  a time and only on request, disabled with the reason for a folder source and for a camera whose
+  device has `images: false` (CORE-392), and a `forbidden` answer of the player says the same;
+  *Show full screen* starts a takeover (CORE-411), for a folder source after a form dialog that
+  asks for a file of the folder or below it; *Stop full screen* is enabled while a takeover runs.
+  **Files**: a browser of `files/` and `shares/<name>/` with name, kind, size and time, *Upload*
+  with progress, *New folder* and *Delete* (red confirmation; a folder that is not empty asks
+  again and sends `recursive=true`), all disabled with the reason under `shares/` (CORE-405).
+  **Shares**: method, state, last sync, size and the reason of an error, and *Sync now*, disabled
+  for a mount share, while syncing and while the installer is away or busy; the end of a sync
+  comes from the `installer` topic (CORE-406, CORE-356). The page reads `GET /api/v1/media`,
+  `/devices`, `/media/shares` and `/installer` when it opens, after its own actions, on Refresh and
+  when the `status` topic changes, and never polls. It uses the dialogs, action rows and banners
+  of CORE-384..387; 95 texts `CORE_ADMIN_MEDIA_*` and `CORE_WEB_NAV_MEDIA` in the five languages.
+- `GET /api/v1/media` gives each source `kind`, `delivery`, `device` and `path`, and never `url`
+  (CORE-412, Core spec 0.58); the debug overview is unchanged.
+- Tests: `tests/test_admin_media_page.py` (page, script rules, texts, the decisions of the page in
+  Node and the whole page in Chromium) and one for the new fields in `tests/test_media_service.py`.
+
+### Fixed (milestone 8 step 9: MOD-71 and `input.touch`)
+
+- `mm3 module check` no longer warns (MOD-71) that a module declares `input.touch` and never uses
+  it when its front-end handles a pointer event (`@click`, `@pointer…`, `@touch…`, a listener or
+  an `on…` property) and sends the backend a message with `this.send(…)`, which is how a module
+  reacts to touch (CORE-103; the capability has no `ctx` member to find). MOD-70 is unchanged: a
+  front-end that sends from a click is not asked to declare it. `mm3-media` has no warning left.
+
+### Milestone 8 closed
+
+- Milestone 8 (Media) is done at Core spec 0.58 / Contract 1.0 rev 17 (`milestones.toml`,
+  `coverage.md`). The §11 rows of MOD-100, MOD-101 and MOD-103 stay in ENH-015 as a carry-over; the
+  row of MOD-102 exists since Contract rev 17.
+
 ### Changed (milestone 8 step 9, spec sync: Core spec 0.58)
 
 - Core spec 0.58 changes CORE-412 (`GET /api/v1/media` also gives each source `kind`, `delivery`,

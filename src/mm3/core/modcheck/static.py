@@ -60,6 +60,14 @@ SCOPED = {"http.outbound": "http", "mqtt.publish": "mqtt", "mqtt.subscribe": "mq
 CLIENT_MESSAGE_TYPE = re.compile(r"""\.(?:send_to_client|send)\(\s*["']([^"']+)["']""")
 """A client message type in ``ctx.send_to_client("…")`` or ``this.send("…")`` (MOD-44)."""
 LOWER_SNAKE = re.compile(r"^[a-z][a-z0-9_]*$")
+POINTER_HANDLER = re.compile(
+    r"""@(?:click|dblclick|(?:pointer|touch|mouse)[a-z]+)\s*=|"""
+    r"""addEventListener\(\s*["'](?:click|dblclick|(?:pointer|touch|mouse)[a-z]+)["']|"""
+    r"""\bon(?:click|dblclick|(?:pointer|touch|mouse)[a-z]+)\s*="""
+)
+"""A pointer handler in a front-end: a lit event binding, a listener or an ``on…`` property."""
+FRONTEND_SEND = re.compile(r"\bthis\.send\(")
+"""A front-end message to the backend (``this.send(...)``, CORE-103)."""
 Found = dict[str, list[Finding]]
 
 
@@ -508,7 +516,15 @@ class _Static:
         for cap, (rel, line) in sorted(used.items()):
             if cap not in facts.capabilities:
                 self.add("MOD-70", f"uses {cap} without declaring it in capabilities", rel, line)
-        for cap in sorted(facts.capabilities - set(used)):
+        # input.touch has no ctx member to find: a front-end that handles a pointer event and
+        # sends the backend a message is the use of it (CORE-103, Contract §8).
+        touch = {
+            rel
+            for rel, text in self.mod.js.items()
+            if POINTER_HANDLER.search(text) and FRONTEND_SEND.search(text)
+        }
+        unused = facts.capabilities - set(used) - ({"input.touch"} if touch else set())
+        for cap in sorted(unused):
             self.add(
                 "MOD-71",
                 f"declares {cap} but the code never uses it; request the narrowest set",

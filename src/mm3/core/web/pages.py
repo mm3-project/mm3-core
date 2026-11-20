@@ -16,6 +16,7 @@ Implements:
     CORE-310: Core spec 0.40, §6.4 Web configuration editor.
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
     CORE-329: Core spec 0.29, §11.1 Engine additions.
+    CORE-414: Core spec 0.58, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -34,6 +35,7 @@ __all__ = [
     "admin_config_page",
     "admin_debug_page",
     "admin_home_page",
+    "admin_media_page",
     "admin_texts",
     "form_texts",
     "language_names",
@@ -184,6 +186,7 @@ def _admin_page(
         ("/admin/config", t("CORE_WEB_NAV_CONFIG")),
         ("/admin/catalog", t("CORE_WEB_NAV_CATALOG")),
         ("/admin/backups", t("CORE_WEB_NAV_BACKUPS")),
+        ("/admin/media", t("CORE_WEB_NAV_MEDIA")),
         ("/admin/debug", t("CORE_WEB_NAV_DEBUG")),
         *extensions,
     ]
@@ -270,6 +273,25 @@ def admin_backups_page(extensions: Sequence[tuple[str, str]] = ()) -> str:
         CORE-361: Core spec 0.45, §10.8 Backup and restore.
     """
     return _admin_page("mm3-admin-backups", "backups.js", "/admin/backups", extensions)
+
+
+def admin_media_page(extensions: Sequence[tuple[str, str]] = ()) -> str:
+    """Render ``/admin/media``, the page of the sources, files and shares of Media (CORE-414).
+
+    ``mediapage.js`` reads the media state, the files and the shares through the REST
+    API and follows a sync on the ``installer`` topic of the admin channel; the page itself
+    holds no data.
+
+    Args:
+        extensions: Links to the module pages (CORE-329).
+
+    Returns:
+        The HTML.
+
+    Implements:
+        CORE-414: Core spec 0.58, §9.7 Media service.
+    """
+    return _admin_page("mm3-admin-media", "mediapage.js", "/admin/media", extensions)
 
 
 def admin_extension_page(href: str, extensions: Sequence[tuple[str, str]], attrs: str) -> str:

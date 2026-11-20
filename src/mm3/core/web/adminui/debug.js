@@ -5,7 +5,7 @@
 // Implements CORE-381 (Core spec 0.41, §9.1 Remote-control API): the MQTT line of the overview.
 // Implements CORE-393 (Core spec 0.47, §6.11 Camera devices): the overview lists each device with
 // its owner.
-// Implements CORE-412 (Core spec 0.51, §9.7 Media service): the overview shows the media state.
+// Implements CORE-412 (Core spec 0.58, §9.7 Media service): the overview shows the media state.
 // Implements CORE-112 (Core spec 0.23, §10.5 Diagnostics and debugging): the
 // log-level control of each instance.
 // Implements CORE-114, CORE-115 (Core spec 0.22, §10.5 Diagnostics and debugging):
