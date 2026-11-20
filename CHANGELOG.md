@@ -7,6 +7,13 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (spec 0.52; CORE-402 changed)
+
+- Core spec 0.52: a relay of the local camera feed is not a child; while the feed cannot be
+  read a camera source is `idle` with the reason `feed`, never `error` (a new viewer gets 503
+  with `Retry-After: 5`, the relay connects again every 1 to 5 s); after an owner change to
+  `media`, Media opens the device no earlier than 5 s after the hot reload (CORE-402). Rules 1.79.
+
 ### Fixed (CORE-75)
 
 - `tools/restack.py` reports a refused push and a comment that cannot be posted with the error
