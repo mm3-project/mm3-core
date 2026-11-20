@@ -7,6 +7,18 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (spec 0.53; CORE-409, CORE-413 changed, CORE-417 added)
+
+- Core spec 0.53, settled while building milestone 8 step 4: `mm3-player` plays HLS only where
+  the browser does natively (Chromium 142 and later) and hls.js leaves the approved stack,
+  because its MediaSource playback needs `media-src blob:`; in the preview shell `/media/` URLs
+  play from `/admin/preview/media/`; `mm3-media-error` `{reason, status?}` (bubbling, composed;
+  `unavailable`, `forbidden`, `network`, `decode`, `unsupported`), `mm3-media-playing` and a retry
+  every 30 s (CORE-409). `mm3-youtube` takes `video-id`, `loop` and `muted`, follows the sound
+  rule and dispatches `forbidden` (or `unavailable` for a bad id) with its placeholder (CORE-413).
+  `welcome.audio`, `youtube` per instance, the grants `media` and `youtube`, and a resync when
+  they change (CORE-417). Rules 1.80.
+
 ### Changed (spec 0.52; CORE-402 changed)
 
 - Core spec 0.52: a relay of the local camera feed is not a child; while the feed cannot be
