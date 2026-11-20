@@ -24,8 +24,8 @@ Implements:
     CORE-364: Core spec 0.37, §10.8 Backup and restore.
     CORE-365: Core spec 0.37, §10.8 Backup and restore.
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
+    CORE-406: Core spec 0.57, §9.7 Media service.
     CORE-408: Core spec 0.55, §9.7 Media service.
-    CORE-406: Core spec 0.56, §9.7 Media service.
 """
 
 from __future__ import annotations

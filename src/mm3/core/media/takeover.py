@@ -26,6 +26,7 @@ Implements:
     CORE-410: Core spec 0.54, §9.7 Media service.
     CORE-411: Core spec 0.54, §9.7 Media service.
     CORE-418: Core spec 0.54, §9.7 Media service.
+    CORE-407: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -44,6 +45,7 @@ from urllib.parse import quote
 
 from mm3.core.logging import get_logger
 from mm3.core.media.command import ffprobe_command, parse_duration
+from mm3.core.media.files import FileRefused, run_folder
 from mm3.core.media.folder import MEDIA_EXTENSIONS, open_file, split_media_path
 
 if TYPE_CHECKING:
@@ -69,8 +71,6 @@ HOLDER = "media"
 """The holder of the page pause while a takeover runs (CORE-410, CORE-336)."""
 PROBE_TIMEOUT_S = 5.0
 """A file's length must be read within this time, else the file ends by duration."""
-OPEN_TIMEOUT_S = 5.0
-"""A file that cannot be opened in this time (a hung mount) is refused."""
 IMAGE_EXTENSIONS = frozenset({".jpg", ".jpeg", ".png", ".webp", ".gif", ".avif"})
 """Image files end only by duration (CORE-410)."""
 LIVE_KINDS = frozenset({"rtsp", "camera"})
@@ -385,10 +385,10 @@ class TakeoverService:
         if not rel or split_media_path(rel) is None:
             raise TakeoverRefused(reason)
         try:
-            fd = await asyncio.wait_for(
-                asyncio.to_thread(_open_check, self.media.root, rel), OPEN_TIMEOUT_S
-            )
-        except TimeoutError:
+            # The folder threads with their 5 s timeout: a hung mount never takes the
+            # engine's default threads (CORE-407).
+            fd = await run_folder(_open_check, self.media.root, rel)
+        except FileRefused:
             raise TakeoverRefused(reason) from None
         if fd is None:
             raise TakeoverRefused(reason)
@@ -400,10 +400,8 @@ class TakeoverService:
         if PurePosixPath(rel).suffix.lower() in IMAGE_EXTENSIONS or self.ffprobe is None:
             return None
         try:
-            one = await asyncio.wait_for(
-                asyncio.to_thread(open_file, self.media.root, rel), OPEN_TIMEOUT_S
-            )
-        except TimeoutError:
+            one = await run_folder(open_file, self.media.root, rel)
+        except FileRefused:
             return None
         if one is None:
             return None

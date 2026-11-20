@@ -30,7 +30,7 @@ Implements:
     CORE-371, CORE-372: Core spec 0.36, §10.7 Installer service.
     CORE-363, CORE-366: Core spec 0.37, §10.8 Backup and restore.
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
-    CORE-406: Core spec 0.56, §9.7 Media service.
+    CORE-406: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations

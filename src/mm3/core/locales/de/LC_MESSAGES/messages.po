@@ -2209,6 +2209,9 @@ msgstr "Module"
 msgid "CORE_ADMIN_BACKUPS_PART_SECRETS"
 msgstr "Geheimnisse"
 
+msgid "CORE_ADMIN_BACKUPS_PART_MEDIA"
+msgstr "Mediendateien"
+
 msgid "CORE_ADMIN_BACKUPS_PASSPHRASE"
 msgstr "Passphrase des Installers"
 

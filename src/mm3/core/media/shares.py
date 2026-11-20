@@ -8,7 +8,7 @@ does not answer, the last answer stands; with no shares configured nothing is
 read and no share counts as failed.
 
 Implements:
-    CORE-406: Core spec 0.56, §9.7 Media service.
+    CORE-406: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations

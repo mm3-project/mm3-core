@@ -14,7 +14,7 @@ Implements:
     CORE-356: Core spec 0.44, §10.7 Installer service.
     CORE-358: Core spec 0.33, §10.7 Installer service.
     CORE-361: Core spec 0.45, §10.8 Backup and restore.
-    CORE-406: Core spec 0.56, §9.7 Media service.
+    CORE-406: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations

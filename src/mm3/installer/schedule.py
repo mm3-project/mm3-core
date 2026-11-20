@@ -12,7 +12,7 @@ start (within 10 minutes). A change of the block applies from the next run.
 Implements:
     CORE-360: Core spec 0.37, §10.8 Backup and restore.
     CORE-244: Core spec 0.37, §10.8 Backup and restore.
-    CORE-406: Core spec 0.56, §9.7 Media service.
+    CORE-406: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations

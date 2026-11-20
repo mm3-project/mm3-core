@@ -12,7 +12,7 @@ Implements:
     CORE-357: Core spec 0.42, §10.7 Installer service.
     CORE-369: Core spec 0.37, §10.7 Installer service.
     CORE-132: Core spec 0.33, §10.7 Installer service.
-    CORE-407: Core spec 0.56, §9.7 Media service.
+    CORE-407: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations

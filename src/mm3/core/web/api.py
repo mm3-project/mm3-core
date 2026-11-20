@@ -36,8 +36,8 @@ Implements:
     CORE-393: Core spec 0.47, §6.11 Camera devices.
     CORE-412: Core spec 0.51, §9.7 Media service.
     CORE-411: Core spec 0.54, §9.7 Media service.
-    CORE-405: Core spec 0.55, §9.7 Media service.
-    CORE-406: Core spec 0.56, §9.7 Media service.
+    CORE-406: Core spec 0.57, §9.7 Media service.
+    CORE-405: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations

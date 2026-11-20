@@ -5,7 +5,7 @@
 // Implements CORE-359 (Core spec 0.42, §10.8 Backup and restore): stop, start and restart
 // of mm3.service, restart of mm3-kiosk.service, reboot through logind
 // Implements CORE-382 (Core spec 0.42, §9.1 Remote-control API): the kiosk restart and the reboot
-// Implements CORE-407 (Core spec 0.56, §9.7 Media service): reloading systemd and start, stop and
+// Implements CORE-407 (Core spec 0.57, §9.7 Media service): reloading systemd and start, stop and
 // restart of the share units var-lib-mm3-media-shares-*.mount and .automount only
 polkit.addRule(function (action, subject) {
     if (subject.user !== "mm3-install") {

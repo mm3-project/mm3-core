@@ -27,8 +27,8 @@ start and stop of those units. A share whose mount unit has failed is ``error``
 with the reason ``mount``.
 
 Implements:
-    CORE-406: Core spec 0.56, §9.7 Media service.
-    CORE-407: Core spec 0.56, §9.7 Media service.
+    CORE-406: Core spec 0.57, §9.7 Media service.
+    CORE-407: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations

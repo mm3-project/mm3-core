@@ -15,7 +15,7 @@ so a file appears whole or not at all.
 
 Implements:
     CORE-404: Core spec 0.48, §9.7 Media service.
-    CORE-405: Core spec 0.55, §9.7 Media service.
+    CORE-405: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -193,7 +193,7 @@ def list_folder(root: Path, rel: str) -> list[dict[str, Any]]:
         FileRefused: ``invalid`` path, or ``not_found`` when it is not a folder.
 
     Implements:
-        CORE-405: Core spec 0.55, §9.7 Media service.
+        CORE-405: Core spec 0.57, §9.7 Media service.
     """
     fd = _open_dir(root, _parts(rel, listing=True))
     out: list[dict[str, Any]] = []
@@ -236,7 +236,7 @@ def make_folder(root: Path, rel: str) -> dict[str, Any]:
             ``not_found`` (no parent) or ``conflict`` (the name exists).
 
     Implements:
-        CORE-405: Core spec 0.55, §9.7 Media service.
+        CORE-405: Core spec 0.57, §9.7 Media service.
     """
     parts = _parts(rel)
     _writable(parts)
@@ -266,7 +266,7 @@ def delete_path(root: Path, rel: str, recursive: bool) -> None:
             ``not_found`` (also for a link) or ``conflict`` (a folder not empty).
 
     Implements:
-        CORE-405: Core spec 0.55, §9.7 Media service.
+        CORE-405: Core spec 0.57, §9.7 Media service.
     """
     parts = _parts(rel)
     _writable(parts)
@@ -388,7 +388,7 @@ def start_upload(root: Path, rel: str, name: str, overwrite: bool) -> Upload:
             ``not_found`` (no such folder) or ``conflict`` (the name exists).
 
     Implements:
-        CORE-405: Core spec 0.55, §9.7 Media service.
+        CORE-405: Core spec 0.57, §9.7 Media service.
     """
     parts = _parts(rel)
     _writable(parts)

@@ -14,11 +14,11 @@ own origin, so the CSP of CORE-63 does not change.
 
 Implements:
     CORE-400: Core spec 0.51, §9.7 Media service.
+    CORE-407: Core spec 0.57, §9.7 Media service.
 """
 
 from __future__ import annotations
 
-import asyncio
 import os
 import re
 from collections.abc import AsyncIterator, Awaitable, Callable
@@ -26,13 +26,14 @@ from collections.abc import AsyncIterator, Awaitable, Callable
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, Response, StreamingResponse
 
+from mm3.core.media.files import FOLDER_TIMEOUT_S, FileRefused, run_folder
 from mm3.core.media.folder import MediaFile, open_file, split_media_path
 from mm3.core.media.service import MediaRefused, MediaService
 
 __all__ = ["BOUNDARY", "OPEN_TIMEOUT_S", "add_media_routes"]
 
 BOUNDARY = "mm3frame"
-OPEN_TIMEOUT_S = 5.0
+OPEN_TIMEOUT_S = FOLDER_TIMEOUT_S
 """A file of the media folder that cannot be opened in 5 s (a hung mount) is 503."""
 CHUNK = 256 * 1024
 
@@ -74,7 +75,12 @@ async def _chunks(fd: int, start: int, length: int) -> AsyncIterator[bytes]:
     try:
         pos, left = start, length
         while left > 0:
-            data = await asyncio.to_thread(os.pread, fd, min(CHUNK, left), pos)
+            try:
+                # The folder threads: a read from a mount that hangs ends the response
+                # after 5 s and never takes the engine's default threads (CORE-407).
+                data = await run_folder(os.pread, fd, min(CHUNK, left), pos)
+            except FileRefused:
+                return
             if not data:
                 return
             pos += len(data)
@@ -87,10 +93,8 @@ async def _chunks(fd: int, start: int, length: int) -> AsyncIterator[bytes]:
 async def _file_response(media: MediaService, rel: str, request: Request) -> Response:
     """Send a file of the media folder, honouring one byte range (CORE-400, CORE-404)."""
     try:
-        found: MediaFile | None = await asyncio.wait_for(
-            asyncio.to_thread(open_file, media.root, rel), OPEN_TIMEOUT_S
-        )
-    except TimeoutError:
+        found: MediaFile | None = await run_folder(open_file, media.root, rel)
+    except FileRefused:
         return Response("unavailable", status_code=503, media_type="text/plain")
     if found is None:
         return Response(status_code=404)

@@ -324,7 +324,7 @@ async def _serve(result: ConfigResult, registry: Registry, env_file: Path) -> No
     hub.frame_observer = inspector.frame
     editor = ConfigEditor(history, masker, lambda: manager.applied)
     installer = InstallerLink()
-    # CORE-406 (Core spec 0.56, §9.7 Media service): the share states every 30 s while
+    # CORE-406 (Core spec 0.57, §9.7 Media service): the share states every 30 s while
     # media.shares is not empty; files sources under a share in error are unavailable.
     from mm3.core.media.shares import ShareWatch
 
