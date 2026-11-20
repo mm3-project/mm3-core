@@ -2681,8 +2681,11 @@ msgstr "ffmpeg è fallito 5 volte in 10 minuti; si riprova dopo il prossimo rica
 msgid "CORE_ADMIN_MEDIA_REASON_FFMPEG"
 msgstr "ffmpeg non è installato"
 
-msgid "CORE_ADMIN_MEDIA_REASON_CAMERA"
-msgstr "Le sorgenti camera non sono ancora disponibili"
+msgid "CORE_ADMIN_MEDIA_REASON_FEED"
+msgstr "In attesa del flusso della camera da Vision"
+
+msgid "CORE_ADMIN_MEDIA_REASON_OWNER"
+msgstr "Nessun servizio possiede questa camera (owner: none)"
 
 msgid "CORE_ADMIN_MEDIA_REASON_RESTARTING"
 msgstr "Riavvio dopo un errore"

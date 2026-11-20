@@ -515,23 +515,16 @@ async def test_core_397_stderr_to_debug_log_with_credentials_masked(media: Media
     configure_logging("info")
 
 
-async def test_core_400_camera_follows_images_and_waits_for_its_owner(
-    media: Media, tmp_path: Path
-) -> None:
+async def test_core_400_camera_follows_images(media: Media, tmp_path: Path) -> None:
     with pytest.raises(MediaRefused) as refused:
         await media.service.open_mjpeg("mirror")
     assert (refused.value.status, refused.value.reason) == (403, "images")
+    assert media.runs() == []  # CORE-392: nothing is opened while images are off
     on = CONFIG.replace("usb-cam-video-index0}", "usb-cam-video-index0, images: true}")
     await media.service.reloaded(load(tmp_path, on), ReloadPlan(media=True, devices=True))
-    with pytest.raises(MediaRefused) as later:
-        await media.service.open_mjpeg("mirror")
-    assert later.value.status == 503
-    assert state(media, "mirror") == {
-        "name": "mirror",
-        "state": "unavailable",
-        "viewers": 0,
-        "reason": "camera",
-    }
+    viewer = await media.service.open_mjpeg("mirror")  # owned by media: no Vision instance
+    assert (await frames(viewer, 1))[0].startswith(b"\xff\xd8")
+    viewer.close()
 
 
 async def test_core_398_reload_stops_changed_and_removed_sources(

@@ -14,6 +14,27 @@ separately under **Module API** in each release (Module Contract, section 10).
   with `Retry-After: 5`, the relay connects again every 1 to 5 s); after an owner change to
   `media`, Media opens the device no earlier than 5 s after the hot reload (CORE-402). Rules 1.79.
 
+### Added (milestone 8 step 3: camera sources and the local feed; CORE-394..396, CORE-402, spec 0.52)
+
+- Local camera feed `mm3.core.feed` (CORE-394, CORE-395), standard library only: `FeedServer`
+  for the owner of a device (the socket `/run/mm3/feed/<device>.sock`, mode 0660, group `mm3`;
+  the header line, then 4-byte big-endian lengths and JPEG frames; the newest frame wins for a
+  slow reader, and the owner learns when readers come and go so it captures only while read),
+  and `FeedReader`, which refuses a header or a frame that breaks the limits (640 x 480, 30 fps,
+  `jpeg`). `mm3-vision` can use either side or speak the same bytes; the engine itself offers no
+  feed.
+- Camera sources (CORE-402): owned by `vision`, a source relays the feed as MJPEG with no
+  `ffmpeg` and outside `media.limits.processes`, connecting on the first viewer and leaving 30 s
+  after the last; while the feed cannot be read it is `idle` with the reason `feed` (new viewers
+  503 with `Retry-After: 5`, open viewers stay and the relay connects again every 1 to 5 s);
+  owned by `media`, an `ffmpeg` child reads the V4L2 device (`-f v4l2`); owned by `none`, it is
+  `unavailable` with the reason `owner`. The admin shows the reasons `feed` and `owner`; the
+  placeholder reason `camera` of step 2 is gone.
+- Owner change (CORE-396): a hot reload that changes a camera's owner ends its source; a camera
+  child gets 3 s before it is killed, so the device is free within 5 s, and `devices.json` is
+  written again only after that; after a change to `media` the device is opened no earlier than
+  5 s after the reload.
+
 ### Fixed (CORE-75)
 
 - `tools/restack.py` reports a refused push and a comment that cannot be posted with the error

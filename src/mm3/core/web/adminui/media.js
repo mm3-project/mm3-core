@@ -3,6 +3,8 @@
 // its state, viewers and reason, and the running children, from GET /api/v1/media.
 // Implements CORE-401 (Core spec 0.48, §9.7 Media service): a source that is not playable shows
 // the reason `codec`.
+// Implements CORE-402 (Core spec 0.52, §9.7 Media service): a camera source shows the reasons
+// `feed` (waiting for the owner's feed) and `owner` (owned by nobody).
 import { html, nothing } from "/admin/static/lit-html.js";
 import { fmtTime, t } from "/admin/static/admin.js";
 
@@ -17,7 +19,8 @@ const REASONS = {
   codec: "CORE_ADMIN_MEDIA_REASON_CODEC",
   failed: "CORE_ADMIN_MEDIA_REASON_FAILED",
   ffmpeg: "CORE_ADMIN_MEDIA_REASON_FFMPEG",
-  camera: "CORE_ADMIN_MEDIA_REASON_CAMERA",
+  feed: "CORE_ADMIN_MEDIA_REASON_FEED",
+  owner: "CORE_ADMIN_MEDIA_REASON_OWNER",
   restarting: "CORE_ADMIN_MEDIA_REASON_RESTARTING",
 };
 

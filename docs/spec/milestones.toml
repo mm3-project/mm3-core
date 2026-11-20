@@ -411,8 +411,9 @@ status = "in_progress"
 # Development: step 1 (PR #141) the config base (CORE-388..393, 398, 399, 416);
 #   step 2 the media service and delivery (CORE-397, 400, 401, 403, 404, 412: ffmpeg
 #   children, limits and backoff, MJPEG, HLS and file routes, remux and transcode, TLS,
-#   the media folder, CORE_MEDIA_CHANGED and GET /api/v1/media). Camera sources and the
-#   local feed (CORE-394..396, 402) come next; a camera source is unavailable until then.
+#   the media folder, CORE_MEDIA_CHANGED and GET /api/v1/media); step 3 camera sources
+#   and the local feed (CORE-394..396, 402: mm3.core.feed, the feed relay, the v4l2 child,
+#   the owner change).
 requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]
