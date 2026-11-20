@@ -1,0 +1,129 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HEADER"
+msgstr "Medien"
+
+msgid "MEDIA_LOADING"
+msgstr "Medium wird geladen …"
+
+msgid "MEDIA_ERROR_UNAVAILABLE"
+msgstr "Dieses Medium ist nicht verfügbar."
+
+msgid "MEDIA_ERROR_FORBIDDEN"
+msgstr "Dieses Medium ist hier nicht erlaubt."
+
+msgid "MEDIA_ERROR_NETWORK"
+msgstr "Der Medienserver antwortet nicht."
+
+msgid "MEDIA_ERROR_DECODE"
+msgstr "Dieses Medium kann nicht abgespielt werden."
+
+msgid "MEDIA_ERROR_UNSUPPORTED"
+msgstr "Dieser Browser kann diesen Stream nicht abspielen."
+
+msgid "MEDIA_GRANT_MISSING"
+msgstr "Keine Medienfreigabe für „{source}“. Fügen Sie sie den Freigaben dieser Instanz hinzu."
+
+msgid "MEDIA_GRANT_YOUTUBE"
+msgstr "YouTube benötigt die Freigabe youtube: true in dieser Instanz."
+
+msgid "MEDIA_NO_IMAGES"
+msgstr "Es gibt keine Bilder zum Anzeigen."
+
+msgid "CFG_KIND"
+msgstr "Was angezeigt wird"
+
+msgid "CFG_KIND_HELP"
+msgstr "video, image, slideshow, audio oder youtube."
+
+msgid "CFG_SOURCE"
+msgstr "Quelle"
+
+msgid "CFG_SOURCE_HELP"
+msgstr "Eine Quelle des Schlüssels media der Konfiguration; für youtube nicht nötig."
+
+msgid "CFG_FILE"
+msgstr "Datei"
+
+msgid "CFG_FILE_HELP"
+msgstr "Eine Datei einer files-Quelle, für video, image und audio."
+
+msgid "CFG_VIDEO_ID"
+msgstr "YouTube-Video-ID"
+
+msgid "CFG_VIDEO_ID_HELP"
+msgstr "Die 11 Zeichen nach v= in der Videoadresse; nur für youtube."
+
+msgid "CFG_FIT"
+msgstr "Anpassung"
+
+msgid "CFG_FIT_HELP"
+msgstr "contain zeigt alles, cover füllt die Zelle und beschneidet."
+
+msgid "CFG_LOOP"
+msgstr "Wiederholen"
+
+msgid "CFG_LOOP_HELP"
+msgstr "Am Ende erneut abspielen."
+
+msgid "CFG_MUTED"
+msgstr "Stumm"
+
+msgid "CFG_MUTED_HELP"
+msgstr "Nie Ton abspielen, auch nicht am Kiosk."
+
+msgid "CFG_OPACITY"
+msgstr "Deckkraft"
+
+msgid "CFG_OPACITY_HELP"
+msgstr "Von 0 (unsichtbar) bis 1 (deckend); für Hintergrund oder Überlagerung verringern."
+
+msgid "CFG_INTERVAL"
+msgstr "Intervall (Sekunden)"
+
+msgid "CFG_INTERVAL_HELP"
+msgstr "Sekunden zwischen zwei Bildern einer Diashow; mindestens 3."
+
+msgid "CFG_ORDER"
+msgstr "Reihenfolge"
+
+msgid "CFG_ORDER_HELP"
+msgstr "name, date (älteste zuerst) oder random (jedes Bild einmal vor Wiederholungen)."
+
+msgid "CFG_TRANSITION"
+msgstr "Übergang"
+
+msgid "CFG_TRANSITION_HELP"
+msgstr "fade (1 Sekunde) oder none."
+
+msgid "CFG_RECURSIVE"
+msgstr "Unterordner einbeziehen"
+
+msgid "CFG_RECURSIVE_HELP"
+msgstr "Auch die Bilder der Unterordner anzeigen."
+
+msgid "CFG_ON_TOUCH"
+msgstr "Bei Berührung"
+
+msgid "CFG_ON_TOUCH_HELP"
+msgstr "none oder takeover, um dieselbe Quelle oder Datei im Vollbild zu zeigen (braucht die Freigabe media.takeover und engine.input.touch)."
+
+msgid "CFG_YOUTUBE_NEEDS_VIDEO_ID"
+msgstr "kind youtube benötigt video_id."
+
+msgid "CFG_YOUTUBE_NO_SOURCE"
+msgstr "kind youtube hat weder source noch file."
+
+msgid "CFG_YOUTUBE_NO_TAKEOVER"
+msgstr "on_touch takeover braucht eine Quelle, kein YouTube-Video."
+
+msgid "CFG_SOURCE_REQUIRED"
+msgstr "Dieser Typ benötigt eine Quelle."
+
+msgid "CFG_VIDEO_ID_YOUTUBE_ONLY"
+msgstr "video_id gilt nur für kind youtube."
+
+msgid "CFG_SLIDESHOW_NO_FILE"
+msgstr "Eine Diashow zeigt den Ordner ihrer Quelle, keine einzelne Datei."

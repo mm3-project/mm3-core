@@ -1,0 +1,129 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HEADER"
+msgstr "Media"
+
+msgid "MEDIA_LOADING"
+msgstr "Loading media…"
+
+msgid "MEDIA_ERROR_UNAVAILABLE"
+msgstr "This media is not available."
+
+msgid "MEDIA_ERROR_FORBIDDEN"
+msgstr "This media is not allowed here."
+
+msgid "MEDIA_ERROR_NETWORK"
+msgstr "The media server does not answer."
+
+msgid "MEDIA_ERROR_DECODE"
+msgstr "This media cannot be played."
+
+msgid "MEDIA_ERROR_UNSUPPORTED"
+msgstr "This browser cannot play this stream."
+
+msgid "MEDIA_GRANT_MISSING"
+msgstr "No media grant for “{source}”. Add it to the grants of this instance."
+
+msgid "MEDIA_GRANT_YOUTUBE"
+msgstr "YouTube needs the grant youtube: true in this instance."
+
+msgid "MEDIA_NO_IMAGES"
+msgstr "There are no images to show."
+
+msgid "CFG_KIND"
+msgstr "What to show"
+
+msgid "CFG_KIND_HELP"
+msgstr "video, image, slideshow, audio or youtube."
+
+msgid "CFG_SOURCE"
+msgstr "Source"
+
+msgid "CFG_SOURCE_HELP"
+msgstr "A source of the media key of the configuration; not used for youtube."
+
+msgid "CFG_FILE"
+msgstr "File"
+
+msgid "CFG_FILE_HELP"
+msgstr "A file of a files source, for video, image and audio."
+
+msgid "CFG_VIDEO_ID"
+msgstr "YouTube video id"
+
+msgid "CFG_VIDEO_ID_HELP"
+msgstr "The 11 characters after v= in the video address; for youtube only."
+
+msgid "CFG_FIT"
+msgstr "Fit"
+
+msgid "CFG_FIT_HELP"
+msgstr "contain shows all of it, cover fills the cell and crops."
+
+msgid "CFG_LOOP"
+msgstr "Loop"
+
+msgid "CFG_LOOP_HELP"
+msgstr "Play again when it ends."
+
+msgid "CFG_MUTED"
+msgstr "Muted"
+
+msgid "CFG_MUTED_HELP"
+msgstr "Never play sound, even on the kiosk."
+
+msgid "CFG_OPACITY"
+msgstr "Opacity"
+
+msgid "CFG_OPACITY_HELP"
+msgstr "From 0 (invisible) to 1 (opaque); lower it for a background or an overlay."
+
+msgid "CFG_INTERVAL"
+msgstr "Interval (seconds)"
+
+msgid "CFG_INTERVAL_HELP"
+msgstr "Seconds between two images of a slideshow; at least 3."
+
+msgid "CFG_ORDER"
+msgstr "Order"
+
+msgid "CFG_ORDER_HELP"
+msgstr "name, date (oldest first) or random (every image once before any repeats)."
+
+msgid "CFG_TRANSITION"
+msgstr "Transition"
+
+msgid "CFG_TRANSITION_HELP"
+msgstr "fade (1 second) or none."
+
+msgid "CFG_RECURSIVE"
+msgstr "Include subfolders"
+
+msgid "CFG_RECURSIVE_HELP"
+msgstr "Also show the images of the subfolders."
+
+msgid "CFG_ON_TOUCH"
+msgstr "On touch"
+
+msgid "CFG_ON_TOUCH_HELP"
+msgstr "none, or takeover to show the same source or file full screen (needs the media.takeover grant and engine.input.touch)."
+
+msgid "CFG_YOUTUBE_NEEDS_VIDEO_ID"
+msgstr "kind youtube needs video_id."
+
+msgid "CFG_YOUTUBE_NO_SOURCE"
+msgstr "kind youtube takes no source and no file."
+
+msgid "CFG_YOUTUBE_NO_TAKEOVER"
+msgstr "on_touch takeover needs a source, not a YouTube video."
+
+msgid "CFG_SOURCE_REQUIRED"
+msgstr "This kind needs a source."
+
+msgid "CFG_VIDEO_ID_YOUTUBE_ONLY"
+msgstr "video_id is for kind youtube only."
+
+msgid "CFG_SLIDESHOW_NO_FILE"
+msgstr "A slideshow shows the folder of its source, not one file."

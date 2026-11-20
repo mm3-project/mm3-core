@@ -1,0 +1,17 @@
+/* Implements MED-02, MED-03, MED-04 (Core spec 0.57, §9.4 Reference modules) */
+:host { display: block; position: relative; width: 100%; height: 100%; opacity: var(--media-opacity, 1); }
+.box, .layers { position: relative; width: 100%; height: 100%; }
+.media { width: 100%; height: 100%; }
+/* While a message is shown the player stays in place, hidden, because it tries again by itself. */
+.failed .layers { visibility: hidden; }
+.touch { cursor: pointer; }
+.slide { position: absolute; inset: 0; }
+.fade .slide.current { animation: mm3-media-in 1s linear both; }
+.fade .slide.previous { animation: mm3-media-out 1s linear both; }
+@keyframes mm3-media-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes mm3-media-out { from { opacity: 1; } to { opacity: 0; } }
+.notice {
+  position: absolute; inset: 0; box-sizing: border-box; display: flex;
+  align-items: center; justify-content: center; padding: 0.5em; text-align: center;
+  color: var(--mm3-color-dimmed); font-size: var(--mm3-size-small); overflow-wrap: anywhere;
+}

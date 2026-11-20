@@ -17,6 +17,7 @@ META = MODULES / "mm3-modules-default"
 DEFAULTS = {
     "mm3-clock",
     "mm3-weather",
+    "mm3-media",
     "mm3-presence",
 }  # the published reference modules (CORE-289)
 
@@ -64,9 +65,10 @@ def test_core_294_is_a_distribution_without_code(tmp_path: Path) -> None:
         metadata = next(z.read(n).decode() for n in names if n.endswith("/METADATA"))
     assert "Requires-Dist: mm3-clock<2,>=1.0" in metadata
     assert "Requires-Dist: mm3-weather<2,>=1.0" in metadata
+    assert "Requires-Dist: mm3-media<2,>=1.0" in metadata
     assert "Requires-Dist: mm3-presence<2,>=1.0" in metadata
     requires = [line for line in metadata.splitlines() if line.startswith("Requires-Dist:")]
-    assert len(requires) == 3
+    assert len(requires) == 4
     assert not any("mm3-core" in line for line in requires)
 
 

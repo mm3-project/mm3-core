@@ -188,6 +188,23 @@ def test_core_281_python_scan_collects_what_other_checks_combine() -> None:
     assert scan.keys == [("BAD_KEY", "m.py", 5)]
 
 
+def test_mod_70_media_calls_need_the_media_capabilities() -> None:
+    """``ctx.media`` reads need ``media.play``, takeovers and stops ``media.takeover`` (MOD-102)."""
+    src = (
+        "async def f(self):\n"
+        "    self.ctx.media.sources()\n"
+        "    self.ctx.media.url('door')\n"
+        "    await self.ctx.media.files('door')\n"
+        "async def g(ctx):\n"
+        "    await ctx.media.takeover('door')\n"
+        "    await ctx.media.stop()\n"
+    )
+    scan = scan_python("m.py", ast.parse(src), None)
+    assert set(scan.used_caps) == {"media.play", "media.takeover"}
+    only_play = scan_python("m.py", ast.parse("def f(ctx):\n    ctx.media.url('a')\n"), None)
+    assert set(only_play.used_caps) == {"media.play"}
+
+
 CLASS = """
 from typing import ClassVar
 from mm3 import MirrorModule

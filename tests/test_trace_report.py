@@ -62,3 +62,15 @@ def test_core_78_repository_map_is_complete() -> None:
     assert data["unassigned"] == []
     assert data["duplicates"] == []
     assert not any(r["unknown"] for r in data["rows"])  # type: ignore[attr-defined]
+
+
+def test_core_78_tests_named_after_a_module_requirement_are_found(tmp_path, monkeypatch) -> None:  # type: ignore[no-untyped-def]
+    """Every module family counts: ``test_med_03_...`` covers MED-03 (as clk, wth and prs do)."""
+    (tmp_path / "tests").mkdir()
+    (tmp_path / "modules" / "mm3-x" / "tests").mkdir(parents=True)
+    (tmp_path / "modules" / "mm3-x" / "tests" / "test_a.py").write_text(
+        "def test_med_03_order(): ...\ndef test_prs_01_x(): ...\ndef test_mod_102_y(): ...\n"
+    )
+    monkeypatch.setattr(trace_report, "ROOT", tmp_path)
+    found = trace_report.tested_ids()
+    assert {"MED-03", "PRS-01", "MOD-102"} <= set(found)

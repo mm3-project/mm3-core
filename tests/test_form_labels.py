@@ -52,7 +52,9 @@ def _module_class(module: str) -> str:
     return str(entry).split(":")[1]
 
 
-@pytest.mark.parametrize("module", ["mm3-clock", "mm3-weather", "mm3-presence", "mm3-greeting"])
+@pytest.mark.parametrize(
+    "module", ["mm3-clock", "mm3-weather", "mm3-media", "mm3-presence", "mm3-greeting"]
+)
 def test_core_310_reference_modules_have_every_label(module: str) -> None:
     package = module.replace("-", "_")
     src = MODULES / module / "src" / package

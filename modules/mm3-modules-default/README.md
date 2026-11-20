@@ -8,6 +8,7 @@ that are published when a release is cut (core spec 10.2, CORE-294).
 | --- | --- |
 | Clock | `mm3-clock` |
 | Weather | `mm3-weather` |
+| Media (video, image, slideshow, audio, YouTube) | `mm3-media` |
 | Presence and power | `mm3-presence` |
 
 Each module is also installable alone. Modules published later join in a later
