@@ -12,6 +12,7 @@ Implements:
     CORE-288: Core spec 0.19, §6.2 Rules.
     CORE-274: Core spec 0.14, §5.6 WebSocket protocol.
     CORE-329: Core spec 0.29, §11.1 Engine additions.
+    CORE-417: Core spec 0.53, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -119,6 +120,9 @@ class ShellInstance:
         subscribes: The module's ``subscribes`` globs, ``None`` for all names.
         chain: The instance's locale chain (core spec 8.2).
         touch: The element takes touch gestures itself (CORE-235).
+        youtube: The module declares ``media.youtube`` and the instance's
+            grants have ``youtube: true``, so ``mm3-youtube`` may build its
+            iframe (CORE-413, CORE-417).
     """
 
     id: str
@@ -135,6 +139,7 @@ class ShellInstance:
     subscribes: tuple[str, ...] | None = None
     chain: tuple[str, ...] = ("en",)
     touch: bool = False
+    youtube: bool = False
 
     def welcome_entry(self, status: str = "ok") -> dict[str, Any]:
         """Return the instance's entry in ``welcome.instances`` (CORE-246).
@@ -157,6 +162,7 @@ class ShellInstance:
             "appearance": dict(self.appearance),
             "status": status,
             "touch": self.touch,
+            "youtube": self.youtube,
         }
 
 
@@ -175,6 +181,8 @@ class ShellView:
             element), or ``None`` (CORE-288).
         touch: ``engine.input.touch`` (CORE-103).
         custom_css: Version of ``/custom.css``, or ``None`` without one (CORE-262).
+        browser_audio: ``media.browser_audio``: browsers other than the kiosk
+            play sound (CORE-409, CORE-417).
         instances: Instances with a front-end element, in configuration order.
         files: Module name to its version and static directory.
     """
@@ -187,8 +195,25 @@ class ShellView:
     location: Mapping[str, Any] | None = None
     touch: bool = False
     custom_css: str | None = None
+    browser_audio: bool = False
     instances: list[ShellInstance] = field(default_factory=list)
     files: Mapping[str, ModuleFiles] = field(default_factory=dict)
+
+    @property
+    def youtube(self) -> bool:
+        """Whether an instance may embed YouTube, so the shell CSP frames it (CORE-413)."""
+        return any(inst.youtube for inst in self.instances)
+
+    def audio(self, role: str) -> bool:
+        """Return ``welcome.audio`` for a client role (CORE-409, CORE-417).
+
+        Args:
+            role: ``kiosk``, ``browser`` or ``preview``.
+
+        Returns:
+            True on the kiosk; ``media.browser_audio`` for the other roles.
+        """
+        return role == "kiosk" or self.browser_audio
 
     def instance(self, instance_id: str) -> ShellInstance | None:
         """Return the instance with this id, if the shells show it."""
@@ -281,6 +306,7 @@ def shell_view(
                 subscribes=None if cls.subscribes is None else tuple(sorted(cls.subscribes)),
                 chain=chain,
                 touch=touch and "input.touch" in cls.capabilities,
+                youtube="media.youtube" in cls.capabilities and inst.spec.grants.youtube,
             )
         )
     custom = result.assets.custom_css
@@ -293,6 +319,7 @@ def shell_view(
         location=_location_entry(config.engine.location),
         touch=config.engine.input.touch,
         custom_css=content_version(custom) if custom is not None else None,
+        browser_audio=config.media.browser_audio,
         instances=instances,
         files=files,
     )

@@ -29,3 +29,53 @@ msgstr "Optionaler Name nach der Begrüßung"
 msgid "HEADER"
 msgstr "Begrüßung"
 
+msgid "CFG_MEDIA_DEMO"
+msgstr "Mediendemo"
+
+msgid "CFG_MEDIA_DEMO_HELP"
+msgstr "Spielt eine Medien-URL oder ein YouTube-Video unter dem Gruß ab, um den Player zu testen."
+
+msgid "CFG_MEDIA_DEMO_SRC"
+msgstr "Medien-URL"
+
+msgid "CFG_MEDIA_DEMO_SRC_HELP"
+msgstr "Eine URL unter /media/ des Spiegels, zum Beispiel /media/door/stream.mjpg."
+
+msgid "CFG_MEDIA_DEMO_YOUTUBE"
+msgstr "YouTube-Video"
+
+msgid "CFG_MEDIA_DEMO_YOUTUBE_HELP"
+msgstr "Die 11-stellige ID eines YouTube-Videos (benötigt die Freigabe youtube: true)."
+
+msgid "CFG_MEDIA_DEMO_FIT"
+msgstr "Einpassen"
+
+msgid "CFG_MEDIA_DEMO_FIT_HELP"
+msgstr "contain zeigt das ganze Bild, cover füllt den Rahmen."
+
+msgid "CFG_MEDIA_DEMO_LOOP"
+msgstr "Wiederholen"
+
+msgid "CFG_MEDIA_DEMO_LOOP_HELP"
+msgstr "Am Ende neu beginnen."
+
+msgid "CFG_MEDIA_DEMO_MUTED"
+msgstr "Stumm"
+
+msgid "CFG_MEDIA_DEMO_MUTED_HELP"
+msgstr "Nie Ton abspielen, auch nicht auf dem Kiosk."
+
+msgid "MEDIA_UNAVAILABLE"
+msgstr "Das Medium ist gerade nicht verfügbar."
+
+msgid "MEDIA_FORBIDDEN"
+msgstr "Dieses Medium darf hier nicht angezeigt werden."
+
+msgid "MEDIA_NETWORK"
+msgstr "Der Spiegel ist nicht erreichbar."
+
+msgid "MEDIA_DECODE"
+msgstr "Dieses Medium kann nicht abgespielt werden."
+
+msgid "MEDIA_UNSUPPORTED"
+msgstr "Dieser Browser kann diesen Stream nicht abspielen."

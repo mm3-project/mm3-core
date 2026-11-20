@@ -29,3 +29,53 @@ msgstr "Optional name shown after the greeting"
 msgid "HEADER"
 msgstr "Greeting"
 
+msgid "CFG_MEDIA_DEMO"
+msgstr "Media demo"
+
+msgid "CFG_MEDIA_DEMO_HELP"
+msgstr "Plays one media URL or YouTube video under the greeting, to test the player."
+
+msgid "CFG_MEDIA_DEMO_SRC"
+msgstr "Media URL"
+
+msgid "CFG_MEDIA_DEMO_SRC_HELP"
+msgstr "A URL under /media/ on the mirror, such as /media/door/stream.mjpg."
+
+msgid "CFG_MEDIA_DEMO_YOUTUBE"
+msgstr "YouTube video"
+
+msgid "CFG_MEDIA_DEMO_YOUTUBE_HELP"
+msgstr "The 11-character id of a YouTube video (needs the grant youtube: true)."
+
+msgid "CFG_MEDIA_DEMO_FIT"
+msgstr "Fit"
+
+msgid "CFG_MEDIA_DEMO_FIT_HELP"
+msgstr "contain shows the whole picture, cover fills the box."
+
+msgid "CFG_MEDIA_DEMO_LOOP"
+msgstr "Loop"
+
+msgid "CFG_MEDIA_DEMO_LOOP_HELP"
+msgstr "Start again at the end."
+
+msgid "CFG_MEDIA_DEMO_MUTED"
+msgstr "Muted"
+
+msgid "CFG_MEDIA_DEMO_MUTED_HELP"
+msgstr "Never play sound, even on the kiosk."
+
+msgid "MEDIA_UNAVAILABLE"
+msgstr "The media is not available right now."
+
+msgid "MEDIA_FORBIDDEN"
+msgstr "This media may not be shown here."
+
+msgid "MEDIA_NETWORK"
+msgstr "The mirror cannot be reached."
+
+msgid "MEDIA_DECODE"
+msgstr "This media cannot be played."
+
+msgid "MEDIA_UNSUPPORTED"
+msgstr "This browser cannot play this stream."

@@ -415,7 +415,10 @@ status = "in_progress"
 #   children, limits and backoff, MJPEG, HLS and file routes, remux and transcode, TLS,
 #   the media folder, CORE_MEDIA_CHANGED and GET /api/v1/media); step 3 camera sources
 #   and the local feed (CORE-394..396, 402: mm3.core.feed, the feed relay, the v4l2 child,
-#   the owner change).
+#   the owner change); step 4 the player in the shell (CORE-409, 413, 417: mm3-player,
+#   mm3-youtube, welcome.audio, the youtube CSP exception, the media and youtube grants;
+#   MOD-103 only in part: the check rows of the media elements, the fake media service of
+#   the test kit comes with ctx.media).
 requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "CORE-417", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]

@@ -271,9 +271,11 @@ async def test_core_246_welcome_then_one_state_per_instance(mirror: Mirror) -> N
             "location",
             "touch",
             "custom_css",
+            "audio",  # CORE-417
             "instances",
         }
         assert data["location"] is None
+        assert data["audio"] is False  # a browser, media.browser_audio off (CORE-417)
         assert (data["engine_build"], data["role"], data["interactive"]) == (
             "1.0+test",
             "browser",
@@ -299,6 +301,7 @@ async def test_core_246_welcome_then_one_state_per_instance(mirror: Mirror) -> N
             "appearance": home["appearance"],
             "status": "ok",
             "touch": False,
+            "youtube": False,  # CORE-417
         }
         assert home["appearance"]["scale"] == 1
         assert [(s["kind"], s["instance"]) for s in states] == [

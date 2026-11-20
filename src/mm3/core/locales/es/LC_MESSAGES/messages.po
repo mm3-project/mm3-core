@@ -1445,6 +1445,18 @@ msgstr "Direcciones web"
 msgid "CFG_MODULES_GRANTS_HTTP_HELP"
 msgstr "Prefijos de URL que la instancia puede llamar; una entrada puede indicar su propio archivo CA."
 
+msgid "CFG_MODULES_GRANTS_MEDIA"
+msgstr "Fuentes multimedia"
+
+msgid "CFG_MODULES_GRANTS_MEDIA_HELP"
+msgstr "Fuentes multimedia que la instancia puede reproducir (ctx.media), o * para todas."
+
+msgid "CFG_MODULES_GRANTS_YOUTUBE"
+msgstr "YouTube"
+
+msgid "CFG_MODULES_GRANTS_YOUTUBE_HELP"
+msgstr "Permite a la instancia incrustar vídeos de YouTube (requiere la capacidad media.youtube)."
+
 msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE"
 msgstr "Suscripción"
 

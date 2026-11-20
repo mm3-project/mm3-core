@@ -11,6 +11,8 @@
 // the admin's preview shell, so modules can render a placeholder instead
 // Implements MOD-38 (Module Contract 1.0 rev 13, §5.3 Rules): `render` is exported for
 // admin elements
+// Implements CORE-409, CORE-413, CORE-417 (Core spec 0.53, §9.7 Media service): the
+// elements `mm3-player` and `mm3-youtube`; sound only where `welcome.audio` is true
 import { html, svg, nothing, render as litRender } from "/core/vendor/lit-html/lit-html.js";
 
 // `render` is for admin elements (MOD-38), which extend HTMLElement and render themselves.
@@ -77,6 +79,9 @@ export class MirrorElement extends HTMLElement {
     this.timezone = info.timezone;
     this.location = placeOf(info.location, info.locale, info.engineLocale);
     this.catalog = info.catalog || null;
+    // CORE-417: read by mm3-player and mm3-youtube inside this element, not by modules.
+    this._mediaAudio = info.audio === true;
+    this._youtube = info.youtube === true;
   }
 
   disconnectedCallback() {
@@ -241,3 +246,326 @@ export class MirrorElement extends HTMLElement {
     this._renderNow();
   }
 }
+
+// --- media elements (core spec 9.7) ----------------------------------------------------
+
+const RETRY_MS = 30000; // CORE-409: a failed player tries again every 30 s
+const HLS_TYPE = "application/vnd.apple.mpegurl";
+const IMAGE_EXT = /\.(jpe?g|png|webp|gif|avif)$/i;
+const AUDIO_EXT = /\.(mp3|m4a|aac|ogg|opus|flac|wav)$/i;
+const YOUTUBE_ORIGIN = "https://www.youtube-nocookie.com";
+const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
+
+/** The module element an engine media element sits in, through nested shadow roots. */
+function mirrorHost(node) {
+  let n = node;
+  for (;;) {
+    const host = n.getRootNode().host;
+    if (!host) return null;
+    if (host instanceof MirrorElement) return host;
+    n = host;
+  }
+}
+
+/** CORE-409: in the preview shell a `/media/` URL is served under `/admin/preview/media/`. */
+function mediaUrl(src) {
+  const preview = document.documentElement.dataset.mode === "preview";
+  return preview && src.startsWith("/media/") ? `/admin/preview${src}` : src;
+}
+
+function mediaKind(url) {
+  let path = url;
+  try {
+    path = new URL(url, location.href).pathname;
+  } catch {
+    // keep the raw string
+  }
+  if (/\.m3u8$/i.test(path)) return "hls";
+  if (/\.mjpg$/i.test(path) || IMAGE_EXT.test(path)) return "image";
+  if (AUDIO_EXT.test(path)) return "audio";
+  return "video";
+}
+
+/** Whether sound may play here (CORE-409): `welcome.audio`, and `muted` always wins. */
+function soundAllowed(el) {
+  const host = mirrorHost(el);
+  return Boolean(host && host._mediaAudio) && !el.hasAttribute("muted");
+}
+
+function mediaEvent(el, type, detail) {
+  el.dispatchEvent(new CustomEvent(type, { bubbles: true, composed: true, detail }));
+}
+
+let playerSheet = null;
+function mediaSheet() {
+  if (!playerSheet) {
+    playerSheet = new CSSStyleSheet();
+    playerSheet.replaceSync(
+      ":host { display: block; position: relative; overflow: hidden; width: 100%; height: 100%; }" +
+        ".media { display: block; width: 100%; height: 100%; border: 0; object-fit: contain; }" +
+        ":host([fit='cover']) .media { object-fit: cover; }" +
+        "audio.media { display: none; }" +
+        ".placeholder { width: 100%; height: 100%; min-height: 2em; display: flex; align-items: center;" +
+        " justify-content: center; background: rgba(255, 255, 255, 0.06); }" +
+        ".placeholder svg { width: 3em; height: 3em; fill: currentColor; opacity: 0.4; }",
+    );
+  }
+  return playerSheet;
+}
+
+/**
+ * `<mm3-player src fit loop muted>` (CORE-409): plays an MJPEG URL in an image, an HLS URL
+ * natively (no HLS library: `mm3-media-error` `unsupported` without native HLS), or a file
+ * URL of the media folder. Sound plays only where `welcome.audio` is true. Events
+ * `mm3-media-error` `{reason, status?}` and `mm3-media-playing` bubble out of the shadow
+ * root; after an error it tries again every 30 s. `stop()` and `start()` let an element
+ * stop it while suspended (MOD-27); removing it or its `src` stops it too.
+ */
+class MirrorPlayer extends HTMLElement {
+  static get observedAttributes() {
+    return ["src", "loop", "muted"];
+  }
+
+  constructor() {
+    super();
+    this._root = this.attachShadow({ mode: "open" });
+    this._root.adoptedStyleSheets = [mediaSheet()];
+    this._media = null;
+    this._timer = null;
+    this._probe = null;
+    this._attempt = 0;
+    this._stopped = false;
+  }
+
+  connectedCallback() {
+    if (!this._stopped) this._load();
+  }
+
+  disconnectedCallback() {
+    this._clear();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (!this.isConnected || oldValue === newValue) return;
+    if (name === "src") {
+      if (!this._stopped) this._load();
+      return;
+    }
+    const m = this._media;
+    if (!m || m.tagName === "IMG") return;
+    if (name === "loop") m.loop = this.hasAttribute("loop");
+    if (name === "muted") m.muted = !soundAllowed(this);
+  }
+
+  /** Stop playing and close the stream until `start()`. */
+  stop() {
+    this._stopped = true;
+    this._clear();
+  }
+
+  /** Start again after `stop()`. */
+  start() {
+    this._stopped = false;
+    if (this.isConnected) this._load();
+  }
+
+  _clear() {
+    clearTimeout(this._timer);
+    this._timer = null;
+    if (this._probe) this._probe.abort();
+    this._probe = null;
+    const m = this._media;
+    this._media = null;
+    this._attempt += 1;
+    if (m) {
+      if (m.tagName === "IMG") {
+        m.removeAttribute("src"); // closes the MJPEG response
+      } else {
+        m.pause();
+        m.removeAttribute("src");
+        m.load();
+      }
+    }
+    this._root.replaceChildren();
+  }
+
+  _load() {
+    this._clear();
+    const src = this.getAttribute("src");
+    if (!src) return;
+    const url = mediaUrl(src);
+    const kind = mediaKind(url);
+    const attempt = this._attempt;
+    const failed = (reason) => {
+      if (attempt === this._attempt) this._failed(url, attempt, reason);
+    };
+    let played = false;
+    const playing = () => {
+      if (attempt !== this._attempt || played) return;
+      played = true;
+      mediaEvent(this, "mm3-media-playing", {});
+    };
+    if (kind === "hls" && !document.createElement("video").canPlayType(HLS_TYPE)) {
+      this._failed(url, attempt, "unsupported");
+      return;
+    }
+    let m;
+    if (kind === "image") {
+      m = document.createElement("img");
+      m.alt = "";
+      m.addEventListener("load", playing);
+      m.addEventListener("error", () => failed(null));
+    } else {
+      m = document.createElement(kind === "audio" ? "audio" : "video");
+      m.autoplay = true;
+      m.playsInline = true;
+      m.loop = this.hasAttribute("loop");
+      m.muted = !soundAllowed(this);
+      m.addEventListener("playing", playing);
+      m.addEventListener("error", () => {
+        const code = m.error ? m.error.code : 0;
+        failed(code === MediaError.MEDIA_ERR_DECODE ? "decode" : null);
+      });
+      // A live stream that ends is gone; a file that ends is simply over.
+      if (kind === "hls") m.addEventListener("ended", () => failed("unavailable"));
+    }
+    m.className = "media";
+    this._media = m;
+    this._root.append(m);
+    m.src = url;
+    if (m.tagName === "IMG") {
+      m.decode().then(playing, () => {});
+      return;
+    }
+    m.play().catch((err) => {
+      // A browser that refuses sound without a gesture still plays muted.
+      if (attempt === this._attempt && err && err.name === "NotAllowedError" && !m.muted) {
+        m.muted = true;
+        m.play().catch(() => {});
+      }
+    });
+  }
+
+  async _failed(url, attempt, reason) {
+    let detail = { reason: reason || "unavailable" };
+    if (!reason) detail = await this._why(url, attempt);
+    if (attempt !== this._attempt) return;
+    const m = this._media;
+    this._media = null;
+    if (m) {
+      m.removeAttribute("src");
+      if (m.tagName !== "IMG") m.load();
+    }
+    this._root.replaceChildren();
+    mediaEvent(this, "mm3-media-error", detail);
+    if (detail.reason === "unsupported") return;
+    this._timer = setTimeout(() => {
+      if (this.isConnected && !this._stopped) this._load();
+    }, RETRY_MS);
+  }
+
+  /** Ask the URL once to tell an HTTP refusal from a decoding failure. */
+  async _why(url, attempt) {
+    const probe = new AbortController();
+    this._probe = probe;
+    try {
+      const res = await fetch(url, { cache: "no-store", signal: probe.signal });
+      probe.abort(); // only the status is needed; an MJPEG body never ends
+      if (res.status === 403) return { reason: "forbidden", status: 403 };
+      if (!res.ok) return { reason: "unavailable", status: res.status };
+      return { reason: "decode", status: res.status };
+    } catch {
+      return attempt === this._attempt ? { reason: "network" } : { reason: "unavailable" };
+    } finally {
+      if (this._probe === probe) this._probe = null;
+    }
+  }
+}
+
+function placeholder() {
+  const box = document.createElement("div");
+  box.className = "placeholder";
+  const ns = "http://www.w3.org/2000/svg";
+  const icon = document.createElementNS(ns, "svg");
+  icon.setAttribute("viewBox", "0 0 24 24");
+  const path = document.createElementNS(ns, "path");
+  path.setAttribute("d", "M8 5v14l11-7z");
+  icon.append(path);
+  box.append(icon);
+  return box;
+}
+
+/**
+ * `<mm3-youtube video-id loop muted>` (CORE-413): the youtube-nocookie.com iframe, only
+ * while the instance has the capability `media.youtube` and the grant `youtube: true`
+ * (`welcome`, CORE-417); otherwise a placeholder and `mm3-media-error` `forbidden`
+ * (`unavailable` for an invalid id). Sound follows CORE-409.
+ */
+class MirrorYouTube extends HTMLElement {
+  static get observedAttributes() {
+    return ["video-id", "loop", "muted"];
+  }
+
+  constructor() {
+    super();
+    this._root = this.attachShadow({ mode: "open" });
+    this._root.adoptedStyleSheets = [mediaSheet()];
+  }
+
+  connectedCallback() {
+    this._build();
+  }
+
+  disconnectedCallback() {
+    this._root.replaceChildren();
+  }
+
+  attributeChangedCallback(name, oldValue, newValue) {
+    if (this.isConnected && oldValue !== newValue) this._build();
+  }
+
+  /** Remove the iframe until `start()` (MOD-27). */
+  stop() {
+    this._stopped = true;
+    this._root.replaceChildren();
+  }
+
+  /** Build the iframe again after `stop()`. */
+  start() {
+    this._stopped = false;
+    if (this.isConnected) this._build();
+  }
+
+  _build() {
+    this._root.replaceChildren();
+    if (this._stopped) return;
+    const host = mirrorHost(this);
+    const id = this.getAttribute("video-id") || "";
+    if (!host || !host._youtube || !VIDEO_ID.test(id)) {
+      this._root.append(placeholder());
+      mediaEvent(this, "mm3-media-error", { reason: host && host._youtube ? "unavailable" : "forbidden" });
+      return;
+    }
+    const params = new URLSearchParams({
+      autoplay: "1",
+      mute: soundAllowed(this) ? "0" : "1",
+      controls: "0",
+      playsinline: "1",
+      rel: "0",
+    });
+    if (this.hasAttribute("loop")) {
+      params.set("loop", "1");
+      params.set("playlist", id);
+    }
+    const frame = document.createElement("iframe");
+    frame.className = "media";
+    frame.title = "YouTube";
+    frame.referrerPolicy = "strict-origin-when-cross-origin";
+    frame.allow = "autoplay; encrypted-media";
+    frame.src = `${YOUTUBE_ORIGIN}/embed/${id}?${params}`;
+    this._root.append(frame);
+  }
+}
+
+if (!customElements.get("mm3-player")) customElements.define("mm3-player", MirrorPlayer);
+if (!customElements.get("mm3-youtube")) customElements.define("mm3-youtube", MirrorYouTube);

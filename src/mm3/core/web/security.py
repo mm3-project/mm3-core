@@ -15,6 +15,7 @@ Implements:
     CORE-61: Core spec 0.12, §10.1 Security.
     CORE-63: Core spec 0.38, §10.1 Security.
     CORE-12: Core spec 0.15, §4.4 Contract rules.
+    CORE-413: Core spec 0.53, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -33,11 +34,13 @@ __all__ = [
     "CSP_CONFIG",
     "CSP_PREVIEW",
     "PERMISSIONS_POLICY",
+    "YOUTUBE_ORIGIN",
     "AllowList",
     "Network",
     "SecurityHeaders",
     "is_loopback",
     "security_headers",
+    "shell_csp",
 ]
 
 Network = ipaddress.IPv4Network | ipaddress.IPv6Network
@@ -54,6 +57,29 @@ CSP_PREVIEW = _CSP_BASE + "frame-ancestors 'self'"
 
 CSP_CONFIG = _CSP_BASE + "frame-src 'self'; frame-ancestors 'none'"
 """Content-Security-Policy of ``/admin/config``, which frames the preview (CORE-63, 6.6)."""
+
+YOUTUBE_ORIGIN = "https://www.youtube-nocookie.com"
+"""The only origin a shell may frame, for ``mm3-youtube`` (CORE-413)."""
+
+
+def shell_csp(*, preview: bool, youtube: bool) -> str:
+    """Return the Content-Security-Policy of the shell page (CORE-63, CORE-413).
+
+    Args:
+        preview: ``/admin/preview`` (framed by the admin) instead of ``/``.
+        youtube: An enabled instance declares ``media.youtube`` and its grants
+            have ``youtube: true``.
+
+    Returns:
+        The policy: the one of CORE-63, plus ``frame-src`` for youtube-nocookie.com
+        when ``youtube`` is true; nothing else changes.
+
+    Implements:
+        CORE-413: Core spec 0.53, §9.7 Media service.
+    """
+    csp = CSP_PREVIEW if preview else CSP
+    return (csp + f"; frame-src {YOUTUBE_ORIGIN}") if youtube else csp
+
 
 PERMISSIONS_POLICY = (
     "camera=(), microphone=(), geolocation=(), usb=(), serial=(), bluetooth=(), payment=()"

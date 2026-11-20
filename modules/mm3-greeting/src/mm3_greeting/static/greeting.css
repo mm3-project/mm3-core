@@ -1,2 +1,5 @@
 /* Implements CORE-289 (Core spec 0.19, §9.4 Reference modules) */
 .greeting { font-size: 1.25em; margin: 0; overflow-wrap: anywhere; }
+/* Implements CORE-409 (Core spec 0.53, §9.7 Media service): the media_demo box */
+.media { position: relative; width: 100%; aspect-ratio: 16 / 9; margin-top: 0.5em; }
+.media-error { position: absolute; inset: auto 0 0 0; margin: 0; padding: 0.25em 0.5em; font-size: 0.8em; }
