@@ -406,7 +406,8 @@ status = "in_progress"
 #   CORE-406 and CORE-407 of this milestone. Core 0.50 changes CORE-388 and
 #   CORE-398 (details settled while building step 1).
 # Core 0.51 changes CORE-397, CORE-400 and CORE-412 (details settled while building
-#   step 2).
+#   step 2). Core 0.52 changes CORE-402 (feed relay and owner change, settled while
+#   building step 3).
 # Development: step 1 (PR #141) the config base (CORE-388..393, 398, 399, 416);
 #   step 2 the media service and delivery (CORE-397, 400, 401, 403, 404, 412: ffmpeg
 #   children, limits and backoff, MJPEG, HLS and file routes, remux and transcode, TLS,
