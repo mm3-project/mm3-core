@@ -16,6 +16,7 @@ Implements:
     CORE-272, CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
     CORE-276: Core spec 0.14, §5.6 WebSocket protocol.
     CORE-275: Core spec 0.46, §5.6 WebSocket protocol.
+    CORE-417: Core spec 0.53, §9.7 Media service.
     CORE-117: Core spec 0.14, §10.5 Diagnostics and debugging.
     CORE-21: Core spec 0.9, §5.3 Routing rules.
     CORE-223: Core spec 0.13, §5.4 Request and reply.
@@ -200,6 +201,11 @@ class _Client:
     since: datetime | None = None
 
 
+def _media_key(view: ShellView) -> tuple[bool, frozenset[str]]:
+    """What of ``welcome`` follows the media settings (CORE-417)."""
+    return view.browser_audio, frozenset(i.id for i in view.instances if i.youtube)
+
+
 def _frame(kind: str, data: Any, instance: str | None = None) -> dict[str, Any]:
     out: dict[str, Any] = {"v": 1, "kind": kind}
     if instance is not None:
@@ -268,6 +274,7 @@ class ClientHub:
                 failure placeholder.
         """
         self.pages = pages
+        self._media_seen: tuple[bool, frozenset[str]] | None = None
         self._supervisor = supervisor
         pages.shells = self
 
@@ -385,6 +392,7 @@ class ClientHub:
         Implements:
             CORE-275: Core spec 0.46, §5.6 WebSocket protocol.
             CORE-267: Core spec 0.15, §8.5 Catalogs at run time.
+            CORE-417: Core spec 0.53, §9.7 Media service.
         """
         if self.pages is not None:
             self.pages.reload(result)
@@ -401,6 +409,12 @@ class ClientHub:
             or plan.engine_live & shell_keys
         )
         view = self.view()
+        # CORE-417: welcome.audio or an instance's youtube changed: rebuild.
+        seen, self._media_seen = self._media_seen, _media_key(view)
+        if seen is None:
+            rebuild = rebuild or plan.media or bool(plan.restart)
+        else:
+            rebuild = rebuild or seen != self._media_seen
         relocalized: list[ShellInstance] = []
         if not rebuild and (plan.locale or "locale" in plan.engine_live):
             for inst in view.instances:
@@ -618,8 +632,10 @@ class ClientHub:
             "location": view.location,
             "touch": view.touch,
             "custom_css": view.custom_css,
+            "audio": view.audio(role),
             "instances": [i.welcome_entry(self.status(i.id)) for i in view.instances],
         }
+        self._media_seen = _media_key(view)
         self._clients[id(client)] = client
         client.queue.append(_frame("welcome", welcome))
         for inst in view.instances:

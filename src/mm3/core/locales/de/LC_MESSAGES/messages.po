@@ -1447,6 +1447,18 @@ msgstr "Webadressen"
 msgid "CFG_MODULES_GRANTS_HTTP_HELP"
 msgstr "URL-Präfixe, die die Instanz aufrufen darf; ein Eintrag kann eine eigene CA-Datei nennen."
 
+msgid "CFG_MODULES_GRANTS_MEDIA"
+msgstr "Medienquellen"
+
+msgid "CFG_MODULES_GRANTS_MEDIA_HELP"
+msgstr "Medienquellen, die die Instanz abspielen darf (ctx.media), oder * für alle."
+
+msgid "CFG_MODULES_GRANTS_YOUTUBE"
+msgstr "YouTube"
+
+msgid "CFG_MODULES_GRANTS_YOUTUBE_HELP"
+msgstr "Erlaubt der Instanz, YouTube-Videos einzubetten (benötigt die Fähigkeit media.youtube)."
+
 msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE"
 msgstr "Abonnieren"
 

@@ -1447,6 +1447,18 @@ msgstr "Adresses web"
 msgid "CFG_MODULES_GRANTS_HTTP_HELP"
 msgstr "Préfixes d'URL que l'instance peut appeler ; une entrée peut nommer son propre fichier CA."
 
+msgid "CFG_MODULES_GRANTS_MEDIA"
+msgstr "Sources multimédias"
+
+msgid "CFG_MODULES_GRANTS_MEDIA_HELP"
+msgstr "Sources multimédias que l'instance peut lire (ctx.media), ou * pour toutes."
+
+msgid "CFG_MODULES_GRANTS_YOUTUBE"
+msgstr "YouTube"
+
+msgid "CFG_MODULES_GRANTS_YOUTUBE_HELP"
+msgstr "Permet à l'instance d'intégrer des vidéos YouTube (nécessite la capacité media.youtube)."
+
 msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE"
 msgstr "Abonnement"
 

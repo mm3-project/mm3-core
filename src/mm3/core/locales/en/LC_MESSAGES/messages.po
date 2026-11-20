@@ -1445,6 +1445,18 @@ msgstr "Web addresses"
 msgid "CFG_MODULES_GRANTS_HTTP_HELP"
 msgstr "URL prefixes the instance may call; an entry can name its own CA file."
 
+msgid "CFG_MODULES_GRANTS_MEDIA"
+msgstr "Media sources"
+
+msgid "CFG_MODULES_GRANTS_MEDIA_HELP"
+msgstr "Media sources the instance may play (ctx.media), or * for all."
+
+msgid "CFG_MODULES_GRANTS_YOUTUBE"
+msgstr "YouTube"
+
+msgid "CFG_MODULES_GRANTS_YOUTUBE_HELP"
+msgstr "Lets the instance embed YouTube videos (needs the capability media.youtube)."
+
 msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE"
 msgstr "Subscribe"
 

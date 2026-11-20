@@ -20,3 +20,7 @@ packages = ["src/mm3_greeting"]
 [tool.mm3]
 category = "clock"
 screenshot = "docs/screenshot.png"
+
+[tool.mm3.check]
+# media_demo needs a URL of the mirror's media service, which the check cannot sample.
+config = {}

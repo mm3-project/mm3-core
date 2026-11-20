@@ -42,3 +42,26 @@ async def test_greeting_updates_every_minute() -> None:
         assert h.state == {"part": "morning"}
         await h.advance(seconds=60)
         assert h.state == {"part": "afternoon"}
+
+
+def test_greeting_media_demo_takes_a_media_url_or_a_video_id() -> None:
+    # CORE-409, CORE-413: the test option that plays through mm3-player or mm3-youtube
+    from mm3_greeting import GreetingConfig
+    from pydantic import ValidationError
+
+    demo = GreetingConfig.model_validate({"media_demo": {"src": "/media/door/stream.mjpg"}})
+    assert demo.media_demo is not None
+    assert (demo.media_demo.fit, demo.media_demo.loop, demo.media_demo.muted) == (
+        "contain",
+        True,
+        False,
+    )
+    assert GreetingConfig.model_validate({"media_demo": {"youtube": "dQw4w9WgXcQ"}}).media_demo
+    for bad in (
+        {"src": "https://example.com/a.mp4"},  # only the mirror's own media routes
+        {"youtube": "not-an-id"},
+        {"fit": "stretch"},
+        {"autoplay": True},
+    ):
+        with pytest.raises(ValidationError):
+            GreetingConfig.model_validate({"media_demo": bad})

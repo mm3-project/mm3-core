@@ -1445,6 +1445,18 @@ msgstr "Indirizzi web"
 msgid "CFG_MODULES_GRANTS_HTTP_HELP"
 msgstr "Prefissi URL che l'istanza può chiamare; una voce può indicare un proprio file CA."
 
+msgid "CFG_MODULES_GRANTS_MEDIA"
+msgstr "Sorgenti multimediali"
+
+msgid "CFG_MODULES_GRANTS_MEDIA_HELP"
+msgstr "Sorgenti multimediali che l'istanza può riprodurre (ctx.media), oppure * per tutte."
+
+msgid "CFG_MODULES_GRANTS_YOUTUBE"
+msgstr "YouTube"
+
+msgid "CFG_MODULES_GRANTS_YOUTUBE_HELP"
+msgstr "Consente all'istanza di incorporare video di YouTube (richiede la capacità media.youtube)."
+
 msgid "CFG_MODULES_GRANTS_MQTT_SUBSCRIBE"
 msgstr "Sottoscrizione"
 

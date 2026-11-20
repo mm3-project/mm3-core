@@ -29,3 +29,53 @@ msgstr "Nombre opcional que se muestra tras el saludo"
 msgid "HEADER"
 msgstr "Saludo"
 
+msgid "CFG_MEDIA_DEMO"
+msgstr "Demo multimedia"
+
+msgid "CFG_MEDIA_DEMO_HELP"
+msgstr "Reproduce una URL multimedia o un vídeo de YouTube bajo el saludo, para probar el reproductor."
+
+msgid "CFG_MEDIA_DEMO_SRC"
+msgstr "URL multimedia"
+
+msgid "CFG_MEDIA_DEMO_SRC_HELP"
+msgstr "Una URL bajo /media/ del espejo, por ejemplo /media/door/stream.mjpg."
+
+msgid "CFG_MEDIA_DEMO_YOUTUBE"
+msgstr "Vídeo de YouTube"
+
+msgid "CFG_MEDIA_DEMO_YOUTUBE_HELP"
+msgstr "El identificador de 11 caracteres de un vídeo de YouTube (requiere el permiso youtube: true)."
+
+msgid "CFG_MEDIA_DEMO_FIT"
+msgstr "Ajuste"
+
+msgid "CFG_MEDIA_DEMO_FIT_HELP"
+msgstr "contain muestra la imagen entera, cover llena el recuadro."
+
+msgid "CFG_MEDIA_DEMO_LOOP"
+msgstr "Repetir"
+
+msgid "CFG_MEDIA_DEMO_LOOP_HELP"
+msgstr "Volver a empezar al final."
+
+msgid "CFG_MEDIA_DEMO_MUTED"
+msgstr "Silenciado"
+
+msgid "CFG_MEDIA_DEMO_MUTED_HELP"
+msgstr "No reproducir nunca el sonido, ni siquiera en el quiosco."
+
+msgid "MEDIA_UNAVAILABLE"
+msgstr "El contenido no está disponible en este momento."
+
+msgid "MEDIA_FORBIDDEN"
+msgstr "Este contenido no se puede mostrar aquí."
+
+msgid "MEDIA_NETWORK"
+msgstr "No se puede contactar con el espejo."
+
+msgid "MEDIA_DECODE"
+msgstr "Este contenido no se puede reproducir."
+
+msgid "MEDIA_UNSUPPORTED"
+msgstr "Este navegador no puede reproducir esta transmisión."

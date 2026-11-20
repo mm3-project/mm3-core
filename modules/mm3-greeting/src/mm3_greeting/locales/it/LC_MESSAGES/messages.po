@@ -29,3 +29,53 @@ msgstr "Nome facoltativo mostrato dopo il saluto"
 msgid "HEADER"
 msgstr "Saluto"
 
+msgid "CFG_MEDIA_DEMO"
+msgstr "Demo multimediale"
+
+msgid "CFG_MEDIA_DEMO_HELP"
+msgstr "Riproduce un URL multimediale o un video di YouTube sotto il saluto, per provare il lettore."
+
+msgid "CFG_MEDIA_DEMO_SRC"
+msgstr "URL multimediale"
+
+msgid "CFG_MEDIA_DEMO_SRC_HELP"
+msgstr "Un URL sotto /media/ dello specchio, per esempio /media/door/stream.mjpg."
+
+msgid "CFG_MEDIA_DEMO_YOUTUBE"
+msgstr "Video di YouTube"
+
+msgid "CFG_MEDIA_DEMO_YOUTUBE_HELP"
+msgstr "L'identificativo di 11 caratteri di un video di YouTube (richiede il permesso youtube: true)."
+
+msgid "CFG_MEDIA_DEMO_FIT"
+msgstr "Adattamento"
+
+msgid "CFG_MEDIA_DEMO_FIT_HELP"
+msgstr "contain mostra l'intera immagine, cover riempie il riquadro."
+
+msgid "CFG_MEDIA_DEMO_LOOP"
+msgstr "Ripeti"
+
+msgid "CFG_MEDIA_DEMO_LOOP_HELP"
+msgstr "Ricomincia alla fine."
+
+msgid "CFG_MEDIA_DEMO_MUTED"
+msgstr "Senza audio"
+
+msgid "CFG_MEDIA_DEMO_MUTED_HELP"
+msgstr "Non riprodurre mai l'audio, nemmeno sul chiosco."
+
+msgid "MEDIA_UNAVAILABLE"
+msgstr "Il contenuto non è disponibile in questo momento."
+
+msgid "MEDIA_FORBIDDEN"
+msgstr "Questo contenuto non può essere mostrato qui."
+
+msgid "MEDIA_NETWORK"
+msgstr "Lo specchio non è raggiungibile."
+
+msgid "MEDIA_DECODE"
+msgstr "Questo contenuto non può essere riprodotto."
+
+msgid "MEDIA_UNSUPPORTED"
+msgstr "Questo browser non può riprodurre questo flusso."

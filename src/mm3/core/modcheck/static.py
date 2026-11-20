@@ -13,6 +13,7 @@ Implements:
     MOD-52: Module Contract 1.0 rev 10, §6.3 Layout and preview.
     MOD-60, MOD-61, MOD-62, MOD-63, MOD-67: Module Contract 1.0 rev 10, §7 Internationalization.
     MOD-70, MOD-71: Module Contract 1.0 rev 10, §8 Capabilities and grants.
+    MOD-103: Module Contract 1.0 rev 16, §4.5 Media.
     MOD-80, MOD-86: Module Contract 1.0 rev 10, §9 Logging, health and errors.
 """
 
@@ -41,6 +42,12 @@ from mm3.core.modcheck.report import Check, Finding, apply_suppressions, checks_
 from mm3_build.catalogs import CatalogError, compiled, po_files
 
 __all__ = ["bounded_to_one_major", "run_static"]
+
+MEDIA_ELEMENTS = (
+    (re.compile(r"\bmm3-player\b"), "media.play"),
+    (re.compile(r"\bmm3-youtube\b"), "media.youtube"),
+)
+"""Engine media elements and the capability a front-end needs to use them (Contract §8)."""
 
 SEMVER = re.compile(
     r"^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)"
@@ -462,6 +469,12 @@ class _Static:
                 used.setdefault(cap, place)
         if facts.admin:
             used.setdefault("admin.extension", (facts.file, facts.line))
+        # The engine media elements need their capabilities (MOD-103, Contract §8).
+        for rel, text in sorted(self.mod.js.items()):
+            for tag, cap in MEDIA_ELEMENTS:
+                m = tag.search(text)
+                if m is not None:
+                    used.setdefault(cap, (rel, text.count("\n", 0, m.start()) + 1))
         for cap, (rel, line) in sorted(used.items()):
             if cap not in facts.capabilities:
                 self.add("MOD-70", f"uses {cap} without declaring it in capabilities", rel, line)

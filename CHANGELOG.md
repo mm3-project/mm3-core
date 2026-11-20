@@ -7,6 +7,30 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 8 step 4: the player in the shell; CORE-409, CORE-413, CORE-417, spec 0.53)
+
+- `mm3-player` in `/core/mm3.js` (CORE-409): plays an MJPEG URL in an image, an HLS URL natively
+  and a file of the media folder as video, audio or image, with `src`, `fit`, `loop` and
+  `muted`; sound only where `welcome.audio` is true (the kiosk, or every client with
+  `media.browser_audio`), `muted` always wins, and a browser that refuses sound without a
+  gesture plays muted; `mm3-media-error` with the reason found by asking the URL once (403
+  `forbidden`, 404/503 `unavailable`, no answer `network`, a 200 that does not play `decode`,
+  HLS without native support `unsupported`), `mm3-media-playing`, a retry every 30 s, and
+  `stop()` / `start()` for suspended elements (MOD-27); in the preview `/media/` URLs play from
+  `/admin/preview/media/`.
+- `mm3-youtube` (CORE-413): the youtube-nocookie.com iframe with `referrerpolicy` and `allow`,
+  only for an instance whose module declares `media.youtube` and whose grants have
+  `youtube: true`; otherwise a placeholder and `mm3-media-error` `forbidden`. The shell page
+  (`/` and `/admin/preview`) adds `frame-src https://www.youtube-nocookie.com` to its CSP only
+  while such an instance is enabled.
+- `welcome.audio` and `youtube` per instance (CORE-417); the instance grants `media` and
+  `youtube` with labels in five languages; a hot reload that changes either resyncs the shells,
+  and the shell re-creates the elements concerned.
+- `mm3 module check`: using `mm3-player` or `mm3-youtube` in a front-end counts as using
+  `media.play` or `media.youtube` (MOD-70, MOD-71, MOD-103).
+- mm3-greeting (never published): `media_demo` plays one `/media/` URL or one YouTube video under
+  the greeting, to try the player on the mirror before `ctx.media` (MOD-100) exists.
+
 ### Changed (spec 0.53; CORE-409, CORE-413 changed, CORE-417 added)
 
 - Core spec 0.53, settled while building milestone 8 step 4: `mm3-player` plays HLS only where

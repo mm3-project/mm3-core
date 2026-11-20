@@ -13,6 +13,9 @@
 // Implements CORE-264, CORE-267 (Core spec 0.15, §8.5 Catalogs at run time)
 // Implements CORE-325 (Core spec 0.28, §6.6 Live layout preview): in preview mode the
 // admin page sends the draft layout and the selected page with postMessage.
+// Implements CORE-417 (Core spec 0.53, §9.7 Media service): elements learn `welcome.audio`
+// and their instance's `youtube`; a resync re-creates every element when `audio` changed and
+// an element whose `youtube` changed.
 import { bind } from "/core/mm3.js";
 
 const mode = document.documentElement.dataset.mode === "preview" ? "preview" : "mirror";
@@ -217,6 +220,7 @@ async function onWelcome(data) {
     return;
   }
   build = data.engine_build;
+  const audioChanged = welcome !== null && Boolean(welcome.audio) !== Boolean(data.audio);
   welcome = data;
   document.documentElement.lang = data.locale;
   // Pointer events reach elements only with engine.input.touch (CORE-103).
@@ -227,7 +231,9 @@ async function onWelcome(data) {
   for (const [id, cell] of cells) {
     const info = data.instances.find((i) => i.id === id);
     // CORE-275: a changed public config re-creates the element; a kept one never gets a new config.
-    if (!info || cell.key !== keyOf(info) || !sameConfig(cell.info.config, info.config)) removeCell(id);
+    if (!info || audioChanged || cell.key !== keyOf(info) || !sameConfig(cell.info.config, info.config)) {
+      removeCell(id);
+    }
   }
   for (const info of data.instances) {
     const old = cells.get(info.id);
@@ -264,7 +270,7 @@ function onPreviewMessage(ev) {
 
 if (mode === "preview") window.addEventListener("message", onPreviewMessage);
 
-const keyOf = (info) => `${info.module}|${info.element}|${info.scripts.join(",")}`;
+const keyOf = (info) => `${info.module}|${info.element}|${info.scripts.join(",")}|${info.youtube ? 1 : 0}`;
 const sameConfig = (a, b) => JSON.stringify(a ?? {}) === JSON.stringify(b ?? {});
 
 function applyLayout(layout) {
@@ -349,6 +355,8 @@ async function addCell(info) {
     location: welcome.location,
     engineLocale: welcome.locale,
     catalog,
+    audio: Boolean(welcome.audio),
+    youtube: Boolean(info.youtube),
   });
   fitBox.append(el);
   new ResizeObserver(() => scheduleResize(cell)).observe(area);

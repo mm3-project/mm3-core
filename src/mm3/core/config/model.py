@@ -18,6 +18,7 @@ Implements:
     CORE-333, CORE-334, CORE-335: Core spec 0.34, §6.9 Pages and visibility.
     CORE-388: Core spec 0.50, §6.11 Camera devices.
     CORE-398: Core spec 0.50, §9.7 Media service.
+    CORE-417: Core spec 0.53, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -253,7 +254,11 @@ class HttpGrant(_Model):
 
 
 class Grants(_Model):
-    """Scopes granted to an instance (Contract section 8)."""
+    """Scopes granted to an instance (Contract section 8).
+
+    Implements:
+        CORE-417: Core spec 0.53, §9.7 Media service.
+    """
 
     mqtt: MqttGrants = Field(
         default=MqttGrants(),
@@ -264,6 +269,16 @@ class Grants(_Model):
         default_factory=list,
         title="CFG_MODULES_GRANTS_HTTP",
         description="CFG_MODULES_GRANTS_HTTP_HELP",
+    )
+    media: list[Annotated[str, Field(pattern=r"^(\*|[a-z][a-z0-9_]{0,31})$")]] = Field(
+        default_factory=list,
+        title="CFG_MODULES_GRANTS_MEDIA",
+        description="CFG_MODULES_GRANTS_MEDIA_HELP",
+    )
+    youtube: bool = Field(
+        default=False,
+        title="CFG_MODULES_GRANTS_YOUTUBE",
+        description="CFG_MODULES_GRANTS_YOUTUBE_HELP",
     )
 
 

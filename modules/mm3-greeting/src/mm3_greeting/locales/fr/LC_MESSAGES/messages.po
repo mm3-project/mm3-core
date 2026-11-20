@@ -29,3 +29,53 @@ msgstr "Nom facultatif affiché après le message d'accueil"
 msgid "HEADER"
 msgstr "Salutation"
 
+msgid "CFG_MEDIA_DEMO"
+msgstr "Démo multimédia"
+
+msgid "CFG_MEDIA_DEMO_HELP"
+msgstr "Lit une URL multimédia ou une vidéo YouTube sous le message d'accueil, pour tester le lecteur."
+
+msgid "CFG_MEDIA_DEMO_SRC"
+msgstr "URL multimédia"
+
+msgid "CFG_MEDIA_DEMO_SRC_HELP"
+msgstr "Une URL sous /media/ du miroir, par exemple /media/door/stream.mjpg."
+
+msgid "CFG_MEDIA_DEMO_YOUTUBE"
+msgstr "Vidéo YouTube"
+
+msgid "CFG_MEDIA_DEMO_YOUTUBE_HELP"
+msgstr "L'identifiant de 11 caractères d'une vidéo YouTube (nécessite l'autorisation youtube: true)."
+
+msgid "CFG_MEDIA_DEMO_FIT"
+msgstr "Ajustement"
+
+msgid "CFG_MEDIA_DEMO_FIT_HELP"
+msgstr "contain montre toute l'image, cover remplit le cadre."
+
+msgid "CFG_MEDIA_DEMO_LOOP"
+msgstr "Boucle"
+
+msgid "CFG_MEDIA_DEMO_LOOP_HELP"
+msgstr "Recommencer à la fin."
+
+msgid "CFG_MEDIA_DEMO_MUTED"
+msgstr "Muet"
+
+msgid "CFG_MEDIA_DEMO_MUTED_HELP"
+msgstr "Ne jamais jouer le son, même sur le kiosque."
+
+msgid "MEDIA_UNAVAILABLE"
+msgstr "Le média n'est pas disponible pour le moment."
+
+msgid "MEDIA_FORBIDDEN"
+msgstr "Ce média ne peut pas être affiché ici."
+
+msgid "MEDIA_NETWORK"
+msgstr "Le miroir est injoignable."
+
+msgid "MEDIA_DECODE"
+msgstr "Ce média ne peut pas être lu."
+
+msgid "MEDIA_UNSUPPORTED"
+msgstr "Ce navigateur ne peut pas lire ce flux."

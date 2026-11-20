@@ -31,6 +31,7 @@ Implements:
     CORE-309: Core spec 0.26, §9.1 Remote-control API.
     CORE-329, CORE-330: Core spec 0.29, §11.1 Engine additions.
     CORE-400: Core spec 0.51, §9.7 Media service.
+    CORE-413: Core spec 0.53, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -82,7 +83,7 @@ from mm3.core.web.pages import (
     pair_page,
 )
 from mm3.core.web.problems import ApiError, problem
-from mm3.core.web.security import AllowList, Network, SecurityHeaders
+from mm3.core.web.security import AllowList, Network, SecurityHeaders, shell_csp
 from mm3.core.web.sessions import ADMIN_COOKIE, ADMIN_SESSION_TTL, DISPLAY_COOKIE
 from mm3.core.web.shell import (
     IMMUTABLE,
@@ -225,6 +226,7 @@ def mirror_app(
         CORE-254: Core spec 0.12, §10.1 Security.
         CORE-273: Core spec 0.13, §5.6 WebSocket protocol.
         CORE-400: Core spec 0.51, §9.7 Media service.
+        CORE-413: Core spec 0.53, §9.7 Media service.
     """
     app = _bare()
 
@@ -272,10 +274,13 @@ def mirror_app(
         return response
 
     if sources is not None:
+        shell_view = sources.view
 
         @app.get("/")
         async def shell() -> HTMLResponse:
-            return _html(shell_page("mirror"))
+            # CORE-413: the CSP frames youtube-nocookie.com only while an instance may.
+            csp = shell_csp(preview=False, youtube=shell_view().youtube)
+            return HTMLResponse(shell_page("mirror"), headers={"Content-Security-Policy": csp})
 
         add_shell_files(app, sources)
     else:
@@ -419,13 +424,15 @@ def admin_app(
         return response
 
     if sources is not None:
+        preview_view = sources.view
 
         @app.get("/admin/preview")
         async def preview(request: Request) -> Response:
             check = await auth.check_admin(request, request.method)
             if check.outcome != "ok":
                 return _login_redirect(request)
-            return _html(shell_page("preview"))
+            csp = shell_csp(preview=True, youtube=preview_view().youtube)
+            return HTMLResponse(shell_page("preview"), headers={"Content-Security-Policy": csp})
 
         add_shell_files(app, sources)
 

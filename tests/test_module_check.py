@@ -809,3 +809,32 @@ def test_core_281_check_venv_pins_the_running_playwright() -> None:
     from mm3.core.modcheck.build import _browser_pin
 
     assert _browser_pin() == [f"playwright=={metadata.version('playwright')}"]
+
+
+def test_mod_103_media_elements_need_their_capabilities(proj: Path, tmp_path: Path) -> None:
+    edit(
+        proj / JS,
+        "    return html`<p",
+        "    html`<mm3-youtube video-id=x></mm3-youtube>`;\n    return html`<p",
+    )
+    checks = static(proj, tmp_path)
+    assert checks["MOD-70"].status == "fail"
+    assert any("media.youtube" in f.message for f in checks["MOD-70"].findings)
+
+
+def test_mod_71_media_elements_count_as_using_their_capabilities(
+    proj: Path, tmp_path: Path
+) -> None:
+    edit(
+        proj / JS,
+        "    return html`<p",
+        "    html`<mm3-player src=x></mm3-player>`;\n    return html`<p",
+    )
+    edit(
+        pkg(proj) / "__init__.py",
+        "    min_size_px:",
+        '    capabilities: ClassVar = frozenset({"media.play"})\n    min_size_px:',
+    )
+    checks = static(proj, tmp_path)
+    assert checks["MOD-70"].status == "pass"
+    assert checks["MOD-71"].status == "pass"
