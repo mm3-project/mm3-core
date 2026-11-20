@@ -7,6 +7,19 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 8 step 8 follow-up: the MOD-102 row and its static check; Contract 1.0 rev 17)
+
+- Module Contract 1.0 rev 17 adds the row of MOD-102 to section 11 (MUST, static) and a
+  Document history row; no MOD id changed (spec sync in this PR: `contract.md`,
+  `requirements.toml`, `versions.toml`). The other media rules of section 4.5 get no row yet.
+- `mm3 module check` has a static MOD-102 row (`mm3.core.modcheck.jsscan.scan_media`, run from
+  `static.py`): in a front-end that uses `mm3-player` or `mm3-youtube`, or whose module declares
+  a `media.*` capability, it fails `<video>`, `<audio>`, `<iframe>`, `<source>`, `<embed>`,
+  `<object>`, an `<img>` whose `src` comes from data, `new Audio()`, `new Image()`, assignments to
+  `src`, `srcObject` and `srcset` and `setAttribute('src' | 'srcset' | 'data')`; and for a
+  front-end that uses a player it fails a script that never handles `mm3-media-error`, or whose
+  `onSuspend` is missing or stops nothing. `mm3-media` passes (MOD-102).
+
 ### Added (milestone 8 step 8: the reference module `mm3-media`; MED-01..08, MOD-102)
 
 - `modules/mm3-media`, the fourth reference module (MED-01): one distribution, published with the
@@ -29,8 +42,8 @@ separately under **Module API** in each release (Module Contract, section 10).
 - `mm3 module check` counts `ctx.media.sources`, `url` and `files` as uses of `media.play` and
   `takeover` and `stop` as uses of `media.takeover` (MOD-70); the check still warns that
   `mm3-media` declares `input.touch` without using it (MOD-71), because it cannot see touch
-  input in the front-end. **Part not built:** the row of
-  MOD-102 in Contract section 11 and its static check (they need a Contract and spec change).
+  input in the front-end. The row of MOD-102 in Contract section 11 and its static check follow
+  in the next entry.
 - CI and the release workflow build and publish `mm3-media` with the other default modules; the
   PyPI project needs its trusted publisher set up once, like the others.
 

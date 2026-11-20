@@ -13,6 +13,7 @@ Implements:
     -: Module Contract 1.0 rev 11, §11 Compliance checklist.
     MOD-38, MOD-39: Module Contract 1.0 rev 13, §5.3 Rules.
     MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
+    MOD-102: Module Contract 1.0 rev 17, §11 Compliance checklist.
 """
 
 from __future__ import annotations
@@ -128,6 +129,7 @@ def _rows() -> dict[str, Row]:
         ("MOD-84", s, ("harness",), ""),
         ("MOD-86", m, ("static", "review"), "No broad except hides an error."),
         ("MOD-93", s, ("review",), "api_version is the lowest minor whose features are used."),
+        ("MOD-102", m, ("static",), ""),
     ]
     return {i: Row(i, lv, cats, text) for i, lv, cats, text in table}
 

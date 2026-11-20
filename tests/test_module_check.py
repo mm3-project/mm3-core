@@ -186,6 +186,11 @@ MUTATIONS = {
     "MOD-33": (CSS, ".greeting", "@font-face { font-family: x; }\n.greeting"),
     "MOD-35": (JS, "    if (!state.part)", "    setInterval(f, 1);\n    if (!state.part)"),
     "MOD-37": (JS, '"/core/mm3.js"', '"/core/mm3.js";\nimport "lit"'),
+    "MOD-102": (
+        JS,
+        "    if (!state.part)",
+        "    const p = html`<mm3-player src=${state.x}></mm3-player>`;\n    if (!state.part)",
+    ),
     "MOD-62": (po("de"), 'msgid "HEADER"\nmsgstr "[de] Greeting"\n\n', ""),
     "MOD-60": (po("en"), 'msgid "HEADER"', 'msgid "Header text"'),
     "MOD-63": (po("en"), "Optional name", "{count} names"),
@@ -219,6 +224,7 @@ RELATED = {
     "MOD-60": {"MOD-17", "MOD-46", "MOD-62"},
     "MOD-62": {"MOD-17", "MOD-46"},
     "MOD-63": {"MOD-62"},
+    "MOD-102": {"MOD-70"},  # the player needs media.play too
 }
 
 
@@ -381,6 +387,10 @@ def test_mod_80_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
 
 def test_mod_86_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
     one_defect_fails_its_row("MOD-86", proj, tmp_path)
+
+
+def test_mod_102_defect_fails_its_row(proj: Path, tmp_path: Path) -> None:
+    one_defect_fails_its_row("MOD-102", proj, tmp_path)
 
 
 @pytest.mark.parametrize(

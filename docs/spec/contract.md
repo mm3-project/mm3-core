@@ -1,6 +1,6 @@
 # MM3 Module Contract v1.0
 
-Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 16 (draft)
+Oct 27, 2026 · @Nicola Reina · Version 1.0 rev 17 (draft)
 
 ## 1. Scope and conformance
 
@@ -539,6 +539,7 @@ A module is compliant when every MUST below passes; `mm3 module check` runs all 
 | MOD-25 | No requests from on\_request | MUST | test kit |
 | MOD-26 | Request errors handled | MUST | test kit (no responder, failing responder) |
 | MOD-27 | Frequent hide/show tolerated | MUST | test kit (rapid suspend/resume) |
+| MOD-102 | Media only through `mm3-player` and `mm3-youtube`, no media URL of its own, `mm3-media-error` handled, players stopped in `onSuspend` | MUST | static (JS scan) |
 
 ## 12. Conformance tooling
 
@@ -743,6 +744,7 @@ async def test_mod_contract_and_morning():
 
 | Revision | Date | Changes |
 | --- | --- | --- |
+| 1.0 rev 17 | 2026-11-20 | Section 11 gets the row for the media front-end rule of section 4.5, checked by a static JS scan in mm3 module check (milestone 8, development of mm3-media); the other media rules of section 4.5 get no row yet. No MOD ids added, changed or removed |
 | 1.0 rev 16 | 2026-11-19 | Aligned with core spec 0.48 (media service, milestone 8): ctx.media with sources, URLs, files and the takeover (§4, §4.5); the capabilities media.play, media.takeover and media.youtube with their grants (§8); front-ends play media only through mm3-player and mm3-youtube; the fake media service of the test kit (MOD-100, MOD-101, MOD-102, MOD-103 added; their §11 rows come with the checks in the development of milestone 8). No MOD ids changed or removed |
 | 1.0 rev 15 | 2026-11-06 | Aligned with core spec 0.32: ctx.system.set\_display\_power(on) under the capability system.power (§4; core CORE-346). No MOD ids added, changed or removed |
 | 1.0 rev 14 | 2026-11-06 | Aligned with core spec 0.31: ctx.mqtt.ha\_entity() and HaEntity defined, errors without a bridge or connection, engine-owned topics (§4, §4.4; core CORE-342 to CORE-345). No MOD ids added, changed or removed |

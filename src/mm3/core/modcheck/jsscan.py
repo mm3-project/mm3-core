@@ -10,6 +10,7 @@ Implements:
     MOD-38, MOD-39: Module Contract 1.0 rev 13, §5.3 Rules.
     MOD-61: Module Contract 1.0 rev 10, §7 Internationalization.
     MOD-80: Module Contract 1.0 rev 10, §9 Logging, health and errors.
+    MOD-102: Module Contract 1.0 rev 17, §4.5 Media.
     CORE-281: Core spec 0.18, §10.2 Packaging and deployment.
 """
 
@@ -22,7 +23,7 @@ from dataclasses import dataclass, field
 
 from mm3.core.modcheck.report import Finding
 
-__all__ = ["JsContext", "Tok", "notified_names", "scan_js", "tokenize"]
+__all__ = ["JsContext", "MediaScan", "Tok", "notified_names", "scan_js", "scan_media", "tokenize"]
 
 
 @dataclass(slots=True)
@@ -476,3 +477,112 @@ def notified_names(text: str) -> list[tuple[str, int]]:
             if sig[i + 1].text == "(" and sig[i + 2].kind == "str":
                 out.append((sig[i + 2].text, sig[i + 2].line))
     return out
+
+
+# --- MOD-102: media only through the engine elements ---------------------------------------
+
+_MEDIA_TAGS = re.compile(r"<(video|audio|iframe|source|embed|object)\b", re.I)
+_IMG_FROM_DATA = re.compile(r"<img\b[^>]*?\bsrc\s*=\s*[\"']?[^>\"']*\x00", re.I)
+_PLAYER_TAGS = re.compile(r"\bmm3-(?:player|youtube)\b")
+_URL_PROPS = {"src", "srcObject", "srcset", "currentSrc"}
+_URL_ATTRS = {"src", "srcset", "data"}
+
+
+@dataclass
+class MediaScan:
+    """What one script does about media (MOD-102).
+
+    Attributes:
+        players: The script names ``mm3-player`` or ``mm3-youtube``.
+        listens: The script handles ``mm3-media-error``.
+        suspend: Line of ``onSuspend`` and whether its body stops something; ``None``
+            when the script defines no ``onSuspend``.
+        findings: Own media elements and media URLs the script sets itself.
+    """
+
+    players: bool = False
+    listens: bool = False
+    suspend: tuple[int, bool] | None = None
+    findings: list[Finding] = field(default_factory=list)
+
+
+def _body_stops(sig: list[Tok], i: int) -> bool:
+    """Whether the method whose name is at ``i`` calls something named ``stop...``."""
+    j = i + 1
+    while j < len(sig) and sig[j].text != "{":
+        j += 1
+    depth = 0
+    while j < len(sig):
+        if sig[j].text == "{":
+            depth += 1
+        elif sig[j].text == "}":
+            depth -= 1
+            if depth == 0:
+                return False
+        elif (
+            sig[j].kind == "name"
+            and sig[j].text.lower().startswith("stop")
+            and j + 1 < len(sig)
+            and sig[j + 1].text in ("(", "?.")
+        ):
+            return True
+        j += 1
+    return False
+
+
+def scan_media(rel: str, text: str) -> MediaScan:
+    """Look for what MOD-102 forbids and requires in one script.
+
+    Args:
+        rel: Path relative to the module root, for findings.
+        text: The source.
+
+    Returns:
+        The facts about media in the script.
+    """
+    scan = MediaScan()
+    sig = _sig(list(walk(tokenize(text))))
+
+    def hit(tok: Tok, message: str) -> None:
+        scan.findings.append(Finding(message, rel, tok.line))
+
+    for i, t in enumerate(sig):
+        nxt = sig[i + 1] if i + 1 < len(sig) else None
+        if t.kind == "tmpl":
+            flat = "\x00".join(t.parts)
+            if _PLAYER_TAGS.search(flat):
+                scan.players = True
+            if "mm3-media-error" in flat:
+                scan.listens = True
+            if t.tag == "html":
+                found = _MEDIA_TAGS.search(flat)
+                if found:
+                    hit(t, f"<{found.group(1)}> shows media itself; use mm3-player or mm3-youtube")
+                if _IMG_FROM_DATA.search(flat):
+                    hit(t, "<img> with a URL from data; use mm3-player with the URL of ctx.media")
+        elif t.kind == "str":
+            if _PLAYER_TAGS.search(t.text):
+                scan.players = True
+            if t.text == "mm3-media-error":
+                scan.listens = True
+            if (
+                t.text in _URL_ATTRS
+                and i >= 2
+                and sig[i - 1].text == "("
+                and sig[i - 2].text == "setAttribute"
+            ):
+                hit(t, f"setAttribute({t.text!r}) sets a media URL of the module's own")
+        elif t.kind == "name":
+            if t.text in ("Audio", "Image") and i > 0 and sig[i - 1].text == "new":
+                hit(t, f"new {t.text}() makes a media element of the module's own")
+            if (
+                t.text in _URL_PROPS
+                and _prev_dot(sig, i) is not None
+                and nxt is not None
+                and nxt.text == "="
+            ):
+                hit(t, f".{t.text} sets a media URL of the module's own")
+            is_def = nxt is not None and nxt.text == "(" and _prev_dot(sig, i) is None
+            if t.text == "onSuspend" and is_def and scan.suspend is None:
+                scan.suspend = (t.line, _body_stops(sig, i))
+    return scan
