@@ -32,6 +32,7 @@ Implements:
     CORE-364: Core spec 0.37, §10.8 Backup and restore.
     CORE-365: Core spec 0.37, §10.8 Backup and restore.
     CORE-366: Core spec 0.37, §10.8 Backup and restore.
+    CORE-408: Core spec 0.55, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -294,9 +295,14 @@ class BackupRunner:
         *,
         keep_plain: bool,
         need_secrets: bool = False,
+        need_media: bool = False,
     ) -> Any:
         cfg = self.reader.read().backup
         parts = [*PRE_PARTS, *(["secrets"] if cfg.encrypt_to else [])]
+        if need_media:
+            # CORE-408: media only before a restore that replaces files/, so that the
+            # rollback can put it back; other operations never copy the media files.
+            parts.append("media")
         passphrase = None
         if need_secrets and not cfg.encrypt_to:
             # The restore replaces secrets, so the rollback needs them: they go into
@@ -464,7 +470,12 @@ class BackupRunner:
                     )
             work_pre = work / "pre"
             created = self._pre(
-                inst, op, work_pre, keep_plain=True, need_secrets="secrets" in selection.parts
+                inst,
+                op,
+                work_pre,
+                keep_plain=True,
+                need_secrets="secrets" in selection.parts,
+                need_media="media" in selection.parts,
             )
             old = inst.builder.current()
             new = None

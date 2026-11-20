@@ -1190,3 +1190,78 @@ async def test_core_160_a_restore_is_an_installer_operation_that_is_logged_and_k
     assert mirror.world.engine.events == ["stop", "start"]
     listed = await served.call("GET", "/v1/operations")
     assert listed.body["operations"][0]["id"] == reply.body["id"]
+
+
+# --- the media part (CORE-408) --------------------------------------------------------------
+
+
+def _media(mirror: Mirror) -> Path:
+    files = mirror.layout.media_files
+    (files / "trip").mkdir(parents=True)
+    (files / "trip" / "a.jpg").write_bytes(b"jpg")
+    (files / "b.mp4").write_bytes(b"mp4")
+    (files / ".x1.upload").write_bytes(b"half")  # an upload being written
+    share = files.parent / "shares" / "nas"
+    share.mkdir(parents=True)
+    (share / "c.mp4").write_bytes(b"share")
+    return files
+
+
+def test_core_408_media_holds_files_only_and_is_never_a_default(mirror: Mirror) -> None:
+    _media(mirror)
+    created = mirror.make("manual", ["config", "media"])
+    with Archive(created.path) as archive:
+        names = sorted(archive.names("media"))
+    assert names == ["media/b.mp4", "media/trip/a.jpg"]
+    assert created.entry.sidecar.parts == ["config", "media"]
+    default = mirror.make("manual")
+    with Archive(default.path) as archive:
+        assert list(archive.names("media")) == []
+    assert "media" not in BackupConfig().effective_parts
+    assert "media" not in BackupConfig(encrypt_to=RECIPIENT).effective_parts
+    assert BackupConfig(parts=["media"]).effective_parts == ["media"]
+
+
+def test_core_408_restore_replaces_files_whole_and_never_touches_shares(mirror: Mirror) -> None:
+    files = _media(mirror)
+    created = mirror.make("manual", ["config", "media"])
+    (files / "b.mp4").write_bytes(b"changed")
+    (files / "new.png").write_bytes(b"new")
+    share = files.parent / "shares" / "nas"
+    (share / "c.mp4").write_bytes(b"share2")
+    op = mirror.restore(created.entry.name, parts=["media"])
+    assert op.state == "done", op.error
+    got = sorted(p.relative_to(files).as_posix() for p in files.rglob("*") if p.is_file())
+    assert got == ["b.mp4", "trip/a.jpg"]
+    assert (files / "b.mp4").read_bytes() == b"mp4"
+    assert (share / "c.mp4").read_bytes() == b"share2"
+    detail = [s["detail"] for s in op.steps if s["state"] == "restoring"]
+    assert any(d.startswith("media:") for d in detail)
+
+
+def test_core_408_pre_backup_has_media_only_before_a_media_restore(mirror: Mirror) -> None:
+    _media(mirror)
+    mirror.world.publish(("mm3-news", "1.2.0"))
+    assert mirror.run(action="install", name="mm3-news").state == "done"
+    (first,) = [e for e in mirror.service.listing() if e.sidecar.kind == "pre"]
+    assert "media" not in first.sidecar.parts
+    created = mirror.make("manual", ["config", "media"])
+    assert mirror.restore(created.entry.name, parts=["config"]).state == "done"
+    assert mirror.restore(created.entry.name, parts=["media"]).state == "done"
+    pres = sorted(
+        (e for e in mirror.service.listing() if e.sidecar.kind == "pre"),
+        key=lambda e: e.sidecar.created,
+    )
+    assert ["media" in e.sidecar.parts for e in pres] == [False, False, True]
+
+
+def test_core_408_media_restore_rolls_back_with_the_media_of_the_pre_backup(
+    mirror: Mirror,
+) -> None:
+    files = _media(mirror)
+    created = mirror.make("manual", ["config", "media"])
+    (files / "b.mp4").write_bytes(b"mine")
+    mirror.world.engine.ready = [False, True]
+    op = mirror.restore(created.entry.name, parts=["media"])
+    assert op.state == "rolled_back"
+    assert (files / "b.mp4").read_bytes() == b"mine"

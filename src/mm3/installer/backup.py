@@ -4,7 +4,8 @@ An archive is a gzip-compressed tar named ``<hostname>-<YYYYmmdd-HHMMSS>-<kind>.
 with ``kind`` ``scheduled``, ``manual`` or ``pre`` (CORE-362). It holds
 ``manifest.json``, ``config/`` (``config/set/`` the config directory without the
 env file, ``config/history/`` the configuration history), ``data/<instance>/``
-(``files/`` and ``kv.json``), ``modules.json`` and ``secrets/``. An encrypted
+(``files/`` and ``kv.json``), ``modules.json``, ``secrets/`` and, when the
+``media`` part is chosen, ``media/`` (the media folder's ``files/``, CORE-408). An encrypted
 archive is the whole ``.tar.gz`` encrypted with age; each archive has an
 unencrypted sidecar ``<name>.mm3backup.json`` without secrets, so local and
 remote lists work without the key (CORE-362).
@@ -21,6 +22,7 @@ Implements:
     CORE-360: Core spec 0.37, §10.8 Backup and restore.
     CORE-362: Core spec 0.37, §10.8 Backup and restore.
     CORE-366: Core spec 0.37, §10.8 Backup and restore.
+    CORE-408: Core spec 0.55, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -70,7 +72,8 @@ SIDECAR_SUFFIX = ".mm3backup.json"
 MANIFEST = "manifest.json"
 MODULES_JSON = "modules.json"
 FORMAT = 1
-PARTS = ("config", "data", "modules", "secrets")
+PARTS = ("config", "data", "modules", "secrets", "media")
+"""Every part; ``media`` is never in the default (CORE-408)."""
 KEEP_PRE = 3
 """Pre-operation backups kept, outside ``backup.keep`` (CORE-366)."""
 MAX_MEMBERS = 500_000
@@ -525,6 +528,11 @@ class BackupService:
                 for path in sorted(kv.glob("*.json")):
                     if not path.name.startswith(".") and not path.is_symlink():
                         yield f"data/{path.stem}/kv.json", path
+        if "media" in parts:
+            # CORE-408: files/ of the media folder only, never shares/; hidden names
+            # (an upload being written) are left out by _walk.
+            for path in self._walk(lay.media_files):
+                yield f"media/{path.relative_to(lay.media_files).as_posix()}", path
         if "modules" in parts:
             yield MODULES_JSON, json.dumps(self._modules(), indent=1).encode() + b"\n"
         if "secrets" in parts:

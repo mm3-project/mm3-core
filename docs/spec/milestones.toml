@@ -429,6 +429,9 @@ status = "in_progress"
 #   and MEDIA_STOP on the bus with media.takeover and the source grant, REST, MQTT import,
 #   the HA select media_takeover and sensor media_playing, welcome.takeover and control
 #   takeover, the shell's full-screen layer, the takeover in the debug overview).
+#   Step 6a the files of the admin and the media backup part (CORE-404, 405, 408:
+#   mm3.core.media.files with its own executor, the file routes, media in backup.parts, its
+#   restore and the pre-restore backup); step 6b the shares (CORE-406, 407) in the installer.
 requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "CORE-417", "CORE-418", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]

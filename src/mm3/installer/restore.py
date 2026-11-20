@@ -2,7 +2,8 @@
 
 ``preview`` says, part by part, what a restore would change. ``apply`` writes
 the selected parts in the order of CORE-363: ``secrets``, ``data`` (each
-selected instance's directory replaced whole) and ``config`` (the whole set,
+selected instance's directory replaced whole), ``media`` (the media folder's
+``files/`` replaced whole, never ``shares/``, CORE-408) and ``config`` (the whole set,
 or for one instance only its section, the rest kept). ``modules`` is the
 venv's business (the installer rebuilds it, CORE-354). Every write goes
 through an open directory descriptor without following symlinks (CORE-373);
@@ -18,6 +19,7 @@ Implements:
     CORE-163: Core spec 0.37, §10.8 Backup and restore.
     CORE-165: Core spec 0.37, §10.8 Backup and restore.
     CORE-363: Core spec 0.37, §10.8 Backup and restore.
+    CORE-408: Core spec 0.55, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -204,6 +206,8 @@ class Restorer:
             }
         if "modules" in selection.parts:
             out["modules"] = self._modules_preview(archive, installed)
+        if "media" in selection.parts:
+            out["media"] = {"files": sum(1 for _ in archive.names("media"))}
         if "secrets" in selection.parts:
             names = [n[len("secrets/") :] for n in archive.names("secrets")]
             out["secrets"] = {"replaced": [n for n in names if n in _SECRET_NAMES]}
@@ -234,7 +238,7 @@ class Restorer:
     # --- writing --------------------------------------------------------------------
 
     def apply(self, archive: Archive, selection: Selection) -> list[str]:
-        """Write ``secrets``, ``data`` and ``config``, in that order (CORE-363).
+        """Write ``secrets``, ``data``, ``media`` and ``config``, in order (CORE-363, CORE-408).
 
         The caller has stopped the engine and taken the pre-restore backup.
 
@@ -254,6 +258,8 @@ class Restorer:
             done.append(self._secrets(archive))
         if "data" in selection.parts:
             done.append(self._data(archive, selection.instance))
+        if "media" in selection.parts:
+            done.append(self._media(archive))
         if "config" in selection.parts:
             done.append(self._config(archive, selection.instance))
         return done
@@ -341,6 +347,38 @@ class Restorer:
             os.close(modules_fd)
             os.close(kv_fd)
         return "data: " + ", ".join(instances)
+
+    def _media(self, archive: Archive) -> str:
+        """Replace the media folder's ``files/`` whole with the archive's ``media/`` (CORE-408).
+
+        ``shares/`` is never touched. Like ``data``, every write goes through an
+        open folder without following links, owned by ``mm3`` (CORE-373).
+
+        Implements:
+            CORE-408: Core spec 0.55, §9.7 Media service.
+        """
+        members = list(archive.names("media"))
+        media_fd = open_dir(
+            self.layout.engine_state, ["media"], create=True, mode=0o750, owner=self.owner
+        )
+
+        def populate(root_fd: int) -> None:
+            for name in members:
+                parts = PurePosixPath(name[len("media/") :]).parts
+                sub = open_subdir(root_fd, parts[:-1], create=True, mode=0o750, owner=self.owner)
+                try:
+                    with archive.open(name) as fh:
+                        put_file(
+                            sub, parts[-1], fh, mode=self._mode(archive, name), owner=self.owner
+                        )
+                finally:
+                    os.close(sub)
+
+        try:
+            replace_tree(media_fd, "files", populate, mode=0o750, owner=self.owner)
+        finally:
+            os.close(media_fd)
+        return f"media: {len(members)} files"
 
     def _config(self, archive: Archive, only: str | None) -> str:
         lay = self.layout
@@ -442,6 +480,8 @@ def describe(preview: Mapping[str, Any]) -> list[str]:
                 f"modules: {len(info['install'])} to install, {len(info['manual'])} for manual "
                 f"install, {info['unchanged']} unchanged"
             )
+        elif part == "media":
+            lines.append(f"media: files/ replaced by {info['files']} files")
         elif part == "secrets":
             lines.append("secrets: " + (", ".join(info["replaced"]) or "none"))
     for warning in preview.get("warnings", []):

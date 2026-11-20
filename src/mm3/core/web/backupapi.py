@@ -13,6 +13,7 @@ nothing here logs a request body.
 
 Implements:
     CORE-361: Core spec 0.45, §10.8 Backup and restore.
+    CORE-408: Core spec 0.55, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -52,7 +53,7 @@ REMOTE_NAME = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_.-]{0,63}$")
 MAX_SECRET = 1024
 """The longest passphrase, key or TOTP code the engine passes on."""
 
-Part = Literal["config", "data", "modules", "secrets"]
+Part = Literal["config", "data", "modules", "secrets", "media"]  # media: CORE-408
 
 
 class _Body(BaseModel):
@@ -66,7 +67,7 @@ class BackupBody(_Body):
     engine only ever asks for a manual one.
     """
 
-    parts: list[Part] | None = Field(default=None, min_length=1, max_length=4)
+    parts: list[Part] | None = Field(default=None, min_length=1, max_length=5)
     recipient: str | None = Field(default=None, max_length=100)
     archive_passphrase: str | None = Field(default=None, max_length=MAX_SECRET, repr=False)
     use_configured_key: bool = False
@@ -105,7 +106,7 @@ class SourceBody(_Body):
 
     source: Source
     key: str | None = Field(default=None, max_length=MAX_SECRET, repr=False)
-    parts: list[Part] | None = Field(default=None, min_length=1, max_length=4)
+    parts: list[Part] | None = Field(default=None, min_length=1, max_length=5)
     instance: str | None = Field(default=None, max_length=64)
 
     @model_validator(mode="after")

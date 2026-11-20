@@ -7,6 +7,29 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 8 step 6a: files in the admin and the media backup part; CORE-404, CORE-405, CORE-408)
+
+- File routes of the admin on the admin listener and the admin socket (`mm3.core.media.files`,
+  `mm3.core.web.mediafiles`): `GET /api/v1/media/files?path=` lists a folder of `files/` or
+  `shares/` (`shares` alone lists the shares) as `{name, kind, size, modified}` with `kind`
+  `folder`, `video`, `audio` or `image`, skipping links and other extensions;
+  `POST /api/v1/media/files?path=&name=[&overwrite=true]` takes the raw body, refused from its
+  `Content-Length` above `media.limits.upload_max_mb` (413 `CORE_API_UPLOAD_TOO_LARGE`), writes
+  a hidden temporary file and links (or renames) it to its name, removes it when the body does
+  not match its length or a write fails, and answers 201; `POST /api/v1/media/folders` `{path}`
+  and `DELETE /api/v1/media/files?path=[&recursive=true]`; writes under `shares/` are 403, and a
+  folder that does not answer in 5 s is 503. Folder calls run on a small executor of their own,
+  so a hung mount never takes the engine's default threads (CORE-405, CORE-404).
+- The `media` backup part: `backup.parts`, `POST /api/v1/backups` and `mm3 backup --parts`
+  accept `media` (never a default); it holds the media folder's `files/` under `media/`; a
+  restore that selects it replaces `files/` whole and never touches `shares/`, and only then
+  does the pre-restore backup include `media` (CORE-408).
+
+### Changed (spec 0.55; CORE-405, CORE-406, CORE-407, CORE-408 changed)
+
+- Core spec 0.55 settles the details of the file routes, the `media` part, how the installer
+  applies shares and the mount options (spec sync PR #152).
+
 ### Added (milestone 8 step 5: the takeover; CORE-410, CORE-411, CORE-412, CORE-418)
 
 - The full-screen takeover (`mm3.core.media.takeover`): one at a time, newest wins, holding the
