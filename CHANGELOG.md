@@ -7,6 +7,18 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Changed (spec 0.54; CORE-410, CORE-411 changed, CORE-418 added)
+
+- Core spec 0.54, settled while building milestone 8 step 5: the engine ends a takeover when its
+  child exits with code 0 or after a file's length read with `ffprobe`; images and live sources
+  end by duration; a hot reload that removes or changes the source ends it; the preview never
+  shows it (CORE-410). `duration` is shortened to `max_duration`; a bad duration or file, or a
+  folder `files` source without `file`, is 422 from REST and dropped otherwise; generated ids of
+  12 hex characters; `MEDIA_STOP` without an id from a module stops only its own takeover;
+  `DELETE /api/v1/media/takeover[?id=]` answers 204; the options, commands and state of the HA
+  select `media_takeover` (CORE-411). `welcome.takeover` and the `control` action `takeover` for
+  kiosk and browser clients (CORE-418). Rules 1.81.
+
 ### Added (milestone 8 step 4: the player in the shell; CORE-409, CORE-413, CORE-417, spec 0.53)
 
 - `mm3-player` in `/core/mm3.js` (CORE-409): plays an MJPEG URL in an image, an HLS URL natively

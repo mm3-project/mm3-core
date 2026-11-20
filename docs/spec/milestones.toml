@@ -410,6 +410,9 @@ status = "in_progress"
 #   building step 3). Core 0.53 changes CORE-409 and CORE-413 and adds CORE-417
 #   (native HLS only, the player's events and retry, welcome.audio and youtube per
 #   instance, the media and youtube grants; settled while building step 4).
+# Core 0.54 changes CORE-410 and CORE-411 and adds CORE-418 (how the engine knows a
+#   takeover ended, refused values, ids and stops, the HA select, takeover in welcome
+#   and the control action takeover; settled while building step 5).
 # Development: step 1 (PR #141) the config base (CORE-388..393, 398, 399, 416);
 #   step 2 the media service and delivery (CORE-397, 400, 401, 403, 404, 412: ffmpeg
 #   children, limits and backoff, MJPEG, HLS and file routes, remux and transcode, TLS,
@@ -419,7 +422,7 @@ status = "in_progress"
 #   mm3-youtube, welcome.audio, the youtube CSP exception, the media and youtube grants;
 #   MOD-103 only in part: the check rows of the media elements, the fake media service of
 #   the test kit comes with ctx.media).
-requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "CORE-417", "MED-01..08", "MOD-100..103"]
+requirements = ["CORE-388..396", "CORE-397..414", "CORE-416", "CORE-417", "CORE-418", "MED-01..08", "MOD-100..103"]
 
 [[milestone]]
 number = 9
