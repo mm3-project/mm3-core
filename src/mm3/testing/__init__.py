@@ -5,7 +5,8 @@ it without the extra raises ``MissingExtraError`` naming the install
 command (core CORE-279).
 
 ``ModuleHarness`` runs one module instance on a real engine with fakes for
-the network (``h.http``, ``h.mqtt``), recorded browsers and virtual time;
+the network (``h.http``, ``h.mqtt``), the media service (``h.media``), recorded
+browsers and virtual time;
 ``await h.check_contract()`` runs every test-kit row of Contract section 11.
 ``mm3.testing.browser`` (``BrowserHarness``, Playwright) hosts a module's
 element in a stand-alone shell and runs the harness rows.
@@ -13,6 +14,7 @@ element in a stand-alone shell and runs the harness rows.
 Implements:
     -: Module Contract 1.0 rev 11, §12.2 mm3.testing kit.
     CORE-279: Core spec 0.17, §10.2 Packaging and deployment.
+    MOD-103: Module Contract 1.0 rev 16, §4.5 Media.
 """
 
 from mm3.core.extras import MissingExtraError, missing_testing_modules
@@ -39,10 +41,12 @@ from mm3.testing.contract import (  # noqa: E402
 from mm3.testing.fakes import (  # noqa: E402
     FakeHaEntity,
     FakeHttp,
+    FakeMedia,
     FakeMqtt,
     FakeSystem,
     HttpCall,
     Published,
+    RecordedTakeover,
     fake_mqtt,
 )
 from mm3.testing.harness import ModuleHarness  # noqa: E402
@@ -60,6 +64,7 @@ __all__ = [
     "DriveError",
     "FakeHaEntity",
     "FakeHttp",
+    "FakeMedia",
     "FakeMqtt",
     "FakeSystem",
     "HttpCall",
@@ -68,6 +73,7 @@ __all__ = [
     "ModuleHarness",
     "NotificationLog",
     "Published",
+    "RecordedTakeover",
     "Render",
     "VirtualClock",
     "fake_mqtt",

@@ -7,6 +7,33 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 8 step 7: `ctx.media`, the fake media service; MOD-100, MOD-101, MOD-103)
+
+- `ctx.media` (`mm3.media`, `mm3.core.media.instance`): `sources()` lists the granted sources
+  with kind, delivery, audio and state; `url(source, file=)` gives a path on the engine's origin
+  (`/media/<source>/stream.mjpg`, `/media/<source>/hls/index.m3u8`, `/media/files/<path>`);
+  `files(source, path)` lists a folder of a `files` source on the media folder threads (a folder
+  that does not answer in 5 s is `TransientError`); `takeover(source, file=, duration=)` returns
+  the id of a takeover that starts as `MEDIA_TAKEOVER` does (queued in order, a refusal logged and
+  dropped); `stop(id=)` is `MEDIA_STOP`, without an id only for the takeover the instance started
+  last. `sources()`, `url()` and `files()` need `media.play`, `takeover()` and `stop()` need
+  `media.takeover`, every call needs a `media` grant for the source, and the context raises
+  `PermissionError` for a missing capability (reported like any denied capability, MOD-70) or
+  grant. An unknown source, a `file` on a source that is not a `files` source, a missing or unsafe
+  `file`, a `duration` of 0 or less and a folder that is not one are `ValueError` (MOD-100,
+  MOD-101).
+  **Part not built:** `url()` looks a file up only in `files/`; a file under a share is not
+  checked, because a share may be a network mount and `url()` is synchronous, so the player
+  reports it as unavailable (MOD-100 names an unknown file as a `ValueError`).
+- The takeover service queues `MEDIA_TAKEOVER` and `MEDIA_STOP` (from the bus and from
+  `ctx.media`) so a start and a stop sent one after the other keep their order (CORE-411).
+- Test kit: `ModuleHarness.media` is `FakeMedia` (`add_source`, `add_files`, `set_state`, `end`;
+  recorded `takeovers` and `stops`, `current`, `list_error`), and `BrowserHarness(media=...)`
+  serves fixture files under `/media/...` and `/admin/preview/media/...`, so a state built from
+  `ctx.media` URLs plays in the browser harness (MOD-103).
+- `mm3.core.media` loads its service on first use, so `ctx.media` and the folder helpers import
+  without the configuration package (no import cycle with the supervisor).
+
 ### Fixed (ISS-020; CORE-361)
 
 - A restore from an uploaded archive deletes the staged file before it shows its final state

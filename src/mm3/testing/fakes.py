@@ -1,4 +1,4 @@
-"""Fakes behind ``ctx.http``, ``ctx.mqtt`` and ``ctx.system`` in the module harness.
+"""Fakes behind ``ctx.http``, ``ctx.mqtt``, ``ctx.system`` and ``ctx.media`` in the module harness.
 
 They replace only the network: the capability and grant checks of the
 engine run in front of them, so a URL or topic outside the grants raises
@@ -7,6 +7,7 @@ engine run in front of them, so a URL or topic outside the grants raises
 Implements:
     -: Module Contract 1.0 rev 9, §12.2 mm3.testing kit.
     CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
+    MOD-103: Module Contract 1.0 rev 16, §4.5 Media.
 """
 
 from __future__ import annotations
@@ -16,19 +17,24 @@ from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from typing import Any
 
+from mm3.core.media.files import entry_kind
+from mm3.core.media.instance import SourceInfo
 from mm3.core.services.hass import state_text
 from mm3.core.services.mqtt import HaEntitySpec, topic_matches, topic_reserved
 from mm3.errors import HttpConnectionError, TransientError
 from mm3.http import Response
+from mm3.media import MediaKind, MediaState
 from mm3.mqtt import MqttMessage, Qos, encode_payload
 
 __all__ = [
     "FakeHaEntity",
     "FakeHttp",
+    "FakeMedia",
     "FakeMqtt",
     "FakeSystem",
     "HttpCall",
     "Published",
+    "RecordedTakeover",
     "fake_mqtt",
 ]
 
@@ -388,3 +394,191 @@ class FakeSystem:
         if self.error is not None:
             raise self.error
         self.display_calls.append(on)
+
+
+@dataclass(frozen=True)
+class RecordedTakeover:
+    """A takeover an instance started through ``ctx.media.takeover()``.
+
+    Attributes:
+        id: The id the call returned.
+        source: The source.
+        file: The file under the source's ``path``, if any.
+        duration: The seconds asked for, or ``None``.
+        owner: The instance that started it.
+    """
+
+    id: str
+    source: str
+    file: str | None
+    duration: float | None
+    owner: str
+
+
+_MODIFIED = "2026-01-01T00:00:00Z"
+
+
+class FakeMedia:
+    """``h.media``: the media service behind ``ctx.media`` (Module Contract MOD-103).
+
+    The capability and grant checks run in front of it as on a mirror; the fake
+    holds the sources, their files and their states that the test sets, and
+    records the takeovers and stops. Nothing plays and nothing ends on its own:
+    a test calls :meth:`end` to say a takeover is over.
+
+    Attributes:
+        takeovers: Every takeover started, in order.
+        stops: The id of every ``stop()`` call, ``None`` for a call without one.
+        current: The id of the running takeover, or ``None``.
+        list_error: When set, listing a folder raises it (a hung mount is
+            ``TransientError``).
+    """
+
+    def __init__(self) -> None:
+        self._sources: dict[str, SourceInfo] = {}
+        self._folders: dict[str, list[dict[str, Any]]] = {}
+        self._single: set[str] = set()
+        self.takeovers: list[RecordedTakeover] = []
+        self.stops: list[str | None] = []
+        self.current: str | None = None
+        self.list_error: Exception | None = None
+
+    # --- what a test sets ----------------------------------------------------------------
+
+    def add_source(
+        self,
+        name: str,
+        kind: MediaKind = "files",
+        *,
+        path: str | None = None,
+        delivery: str | None = None,
+        audio: bool | None = None,
+        state: MediaState = "idle",
+    ) -> None:
+        """Add or replace a source, as the user's ``media`` key would.
+
+        Args:
+            name: The source name.
+            kind: ``rtsp``, ``stream``, ``camera`` or ``files``.
+            path: For ``files``: its ``path``; default ``files/<name>``. A path
+                with a media extension is one file, which then exists.
+            delivery: ``mjpeg``, ``hls`` or ``file``; default by the kind as CORE-400.
+            audio: Whether it has sound; default true, never for a camera.
+            state: Its state.
+        """
+        if kind == "files":
+            path = path or f"files/{name}"
+            how = "file"
+            if entry_kind(path.rpartition("/")[2]) is not None:
+                self._single.add(path)
+        else:
+            how = delivery or ("mjpeg" if kind == "camera" else "hls")
+        has_audio = audio if audio is not None else kind != "camera"
+        self._sources[name] = SourceInfo(
+            name,
+            kind,
+            how,
+            has_audio and kind != "camera",
+            state,
+            path if kind == "files" else None,
+        )
+
+    def add_files(
+        self, source: str, names: Sequence[str | tuple[str, int]], path: str = ""
+    ) -> None:
+        """Put files into a folder of a ``files`` source.
+
+        Args:
+            source: A source added with :meth:`add_source`.
+            names: File names with a media extension (CORE-404), as ``"a.jpg"`` or
+                ``("a.jpg", size)``; a name ending in ``/`` is a folder.
+            path: The folder under the source's ``path``; default the folder itself.
+
+        Raises:
+            ValueError: An unknown source, or a name with an extension that is not served.
+        """
+        info = self._sources.get(source)
+        if info is None or info.kind != "files":
+            raise ValueError(f"{source!r} is not a files source of the fake")
+        rel = f"{(info.path or '').rstrip('/')}/{path.strip('/')}".rstrip("/")
+        entries = self._folders.setdefault(rel, [])
+        for item in names:
+            name, size = (item, 1000) if isinstance(item, str) else item
+            if name.endswith("/"):
+                entries.append(
+                    {
+                        "name": name.rstrip("/"),
+                        "kind": "folder",
+                        "size": None,
+                        "modified": _MODIFIED,
+                    }
+                )
+                continue
+            kind = entry_kind(name)
+            if kind is None or "/" in name:
+                raise ValueError(f"{name!r} is not a media file name")
+            entries.append({"name": name, "kind": kind, "size": size, "modified": _MODIFIED})
+        entries.sort(key=lambda e: str(e["name"]))
+
+    def set_state(self, source: str, state: MediaState) -> None:
+        """Change a source's state, as the engine's would change."""
+        info = self._sources[source]
+        self._sources[source] = SourceInfo(
+            info.name, info.kind, info.delivery, info.audio, state, info.path
+        )
+
+    def end(self) -> None:
+        """Say that the running takeover is over (its media ended or its time passed)."""
+        self.current = None
+
+    # --- the backend of InstanceMedia -----------------------------------------------------
+
+    def sources(self) -> Mapping[str, SourceInfo]:
+        """Every source of the fake by name."""
+        return dict(self._sources)
+
+    def file_known(self, rel: str) -> bool | None:
+        """Whether a file was put there (or is the one file of a source)."""
+        if rel in self._single:
+            return True
+        folder, _, name = rel.rpartition("/")
+        return any(
+            e["name"] == name and e["kind"] != "folder" for e in self._folders.get(folder, [])
+        )
+
+    async def list_folder(self, rel: str) -> list[dict[str, Any]]:
+        """A folder as the engine lists it; ``list_error`` is raised when set."""
+        if self.list_error is not None:
+            raise self.list_error
+        if rel not in self._folders:
+            raise ValueError(f"no such folder: {rel}")
+        return [dict(e) for e in self._folders[rel]]
+
+    async def takeover(
+        self,
+        owner: str,
+        source: str,
+        *,
+        file: str | None,
+        duration: float | None,
+        takeover_id: str,
+    ) -> None:
+        """Record the takeover; it replaces the running one."""
+        self.takeovers.append(RecordedTakeover(takeover_id, source, file, duration, owner))
+        self.current = takeover_id
+
+    async def stop(
+        self, owner: str, takeover_id: str | None, granted: Callable[[str], bool]
+    ) -> None:
+        """Record the stop; without an id it ends only a takeover of this owner (MOD-101)."""
+        self.stops.append(takeover_id)
+        current = next((t for t in self.takeovers if t.id == self.current), None)
+        if current is None:
+            return
+        if takeover_id is None:
+            if current.owner == owner:
+                self.current = None
+        elif takeover_id == current.id:
+            if current.owner != owner and not granted(current.source):
+                raise PermissionError(f"the media grant does not cover {current.source!r}")
+            self.current = None

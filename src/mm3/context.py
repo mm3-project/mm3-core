@@ -2,9 +2,9 @@
 
 Provided so far: identity, ``now()``, messaging, state, tasks,
 ``run_blocking``, the scheduler, storage, the logger, ``health``, ``t``,
-``format_date``, ``format_number``, the current page and pages, ``http``
-and ``mqtt`` (checked against capabilities and grants; their transports
-arrive in milestones 5 and 7, the test kit fakes them) and ``layout``
+``format_date``, ``format_number``, the current page and pages, ``http``,
+``mqtt`` and ``media`` (checked against capabilities and grants; their transports
+arrive in milestones 5, 7 and 8, the test kit fakes them) and ``layout``
 (capability ``layout.control``), ``router`` (capability ``api.routes``,
 CORE-332) and ``system`` (capability ``system.power``, CORE-52, CORE-346).
 
@@ -20,6 +20,7 @@ Implements:
     MOD-85: Module Contract 1.0 rev 9, §9 Logging, health and errors.
     MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
     CORE-52, CORE-53, CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
+    MOD-100, MOD-101: Module Contract 1.0 rev 16, §4.5 Media.
 """
 
 from __future__ import annotations
@@ -36,6 +37,7 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter
 
 from mm3.http import HttpClient
+from mm3.media import Media
 from mm3.mqtt import Mqtt
 from mm3.scheduler import Scheduler
 
@@ -330,6 +332,15 @@ class ModuleContext(Protocol):
     @property
     def system(self) -> System:
         """Suspend, resume and display power; needs ``system.power`` (CORE-52, CORE-346)."""
+        ...
+
+    @property
+    def media(self) -> Media:
+        """Media sources, URLs, files and the takeover (Contract 4.5, MOD-100, MOD-101).
+
+        Needs ``media.play`` (``sources``, ``url``, ``files``) or ``media.takeover``
+        (``takeover``, ``stop``), and a ``media`` grant for the sources.
+        """
         ...
 
     @property

@@ -11,6 +11,7 @@ Implements:
     -: Module Contract 1.0 rev 9, §12.2 mm3.testing kit.
     CORE-278: Core spec 0.17, §3.3 Scheduler.
     MOD-74: Module Contract 1.0 rev 13, §8 Capabilities and grants.
+    MOD-103: Module Contract 1.0 rev 16, §4.5 Media.
     CORE-52, CORE-53, CORE-346: Core spec 0.34, §9.2 Presence and power: module boundary.
 """
 
@@ -45,7 +46,7 @@ from mm3.errors import ConfigurationError, RemoteError, RequestTimeoutError, Tra
 from mm3.messages import ClientMessage, Notification
 from mm3.module import MirrorModule
 from mm3.notifications import validate_payload
-from mm3.testing.fakes import FakeHttp, FakeMqtt, FakeSystem
+from mm3.testing.fakes import FakeHttp, FakeMedia, FakeMqtt, FakeSystem
 from mm3.testing.loop import CountingExecutor, LoopClock
 from mm3.testing.recorders import ClientRecord, LogRecords, NotificationLog
 
@@ -134,6 +135,8 @@ class ModuleHarness:
         http: Fake behind ``ctx.http``.
         mqtt: Fake behind ``ctx.mqtt``.
         system: Fake display behind ``ctx.system.set_display_power`` (CORE-346).
+        media: Fake media service behind ``ctx.media``: sources, files and states set by
+            the test, recorded takeovers and stops (MOD-103).
         notifications: Notifications the instance sent.
         client_messages: Messages the backend sent to its front-end.
         state_history: Full state after every ``set_state``/``patch_state``.
@@ -175,6 +178,7 @@ class ModuleHarness:
         self.http = FakeHttp()
         self.mqtt = FakeMqtt()
         self.system = FakeSystem()
+        self.media = FakeMedia()
         self.notifications = NotificationLog()
         self.received = NotificationLog()
         self.client_messages: list[ClientRecord] = []
@@ -236,6 +240,7 @@ class ModuleHarness:
         sup = engine.supervisor
         sup.http_transport = self.http
         sup.mqtt_broker = self.mqtt
+        sup.media = self.media
         sup.power = PowerService(sup, self.system.set_display_power)
         sup.on_denied = self._on_denied
         sup.pages = self._pages

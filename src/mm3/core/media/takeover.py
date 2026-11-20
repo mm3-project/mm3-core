@@ -36,17 +36,16 @@ import contextlib
 import os
 import secrets
 import shutil
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Any, Protocol
-from urllib.parse import quote
 
 from mm3.core.logging import get_logger
 from mm3.core.media.command import ffprobe_command, parse_duration
 from mm3.core.media.files import FileRefused, run_folder
-from mm3.core.media.folder import MEDIA_EXTENSIONS, open_file, split_media_path
+from mm3.core.media.folder import MEDIA_EXTENSIONS, media_url, open_file, split_media_path
 
 if TYPE_CHECKING:
     from mm3.core.config.diff import ReloadPlan
@@ -195,6 +194,7 @@ class TakeoverService:
         self.listeners: list[Callable[[], None]] = []
         self._lock = asyncio.Lock()
         self._tasks: set[asyncio.Task[Any]] = set()
+        self._last: asyncio.Task[Any] | None = None
         media.takeover_state = self.payload
         media.ended_listeners.append(self._source_ended)
 
@@ -226,12 +226,7 @@ class TakeoverService:
     @staticmethod
     def src_url(t: Takeover) -> str:
         """The path on the engine's origin the shell plays (CORE-400, CORE-418)."""
-        if t.rel is not None:
-            return "/media/files/" + "/".join(quote(p, safe="") for p in t.rel.split("/"))
-        name = quote(t.source, safe="")
-        if t.src.how == "mjpeg":
-            return f"/media/{name}/stream.mjpg"
-        return f"/media/{name}/hls/index.m3u8"
+        return media_url(t.source, t.src.how, t.rel)
 
     def select_options(self) -> list[str]:
         """The sources the Home Assistant select offers: those that start without a file."""
@@ -462,6 +457,72 @@ class TakeoverService:
         self._tasks.add(task)
         task.add_done_callback(self._tasks.discard)
 
+    def _enqueue(self, make: Callable[[], Coroutine[Any, Any, None]]) -> None:
+        """Run a start or stop command after the one before it, so they keep their order.
+
+        ``make`` builds the coroutine only when its turn comes, so a command that is
+        cancelled while it waits (engine shutdown) leaves no coroutine never awaited.
+        """
+        prev = self._last
+
+        async def run() -> None:
+            if prev is not None:
+                await asyncio.wait({prev})
+            await make()
+
+        task = asyncio.create_task(run(), name="mm3-media-takeover-command")
+        self._last = task
+        self._tasks.add(task)
+        task.add_done_callback(self._tasks.discard)
+
+    def submit(
+        self,
+        source: str,
+        *,
+        file: str | None = None,
+        duration: float | None = None,
+        takeover_id: str | None = None,
+        owner: str = "core",
+    ) -> None:
+        """Start a takeover like ``MEDIA_TAKEOVER``: queued in order, a refusal is logged.
+
+        This is what ``ctx.media.takeover()`` calls (Module Contract MOD-101); the
+        caller has checked the capability and the grant.
+
+        Args:
+            source: A source of the ``media`` key.
+            file: For a ``files`` source: a file relative to its ``path``.
+            duration: Seconds; see :meth:`start`.
+            takeover_id: The id the caller chose.
+            owner: The instance that starts it.
+
+        Implements:
+            CORE-411: Core spec 0.54, §9.7 Media service.
+        """
+        self._enqueue(lambda: self._start_dropping(source, file, duration, takeover_id, owner))
+
+    def submit_stop(self, takeover_id: str | None, owner: str | None) -> None:
+        """Stop like ``MEDIA_STOP``, queued after the commands before it (MOD-101)."""
+        self._enqueue(lambda: self._stop_ignoring(takeover_id, owner))
+
+    async def _stop_ignoring(self, takeover_id: str | None, owner: str | None) -> None:
+        await self.stop(takeover_id, owner=owner)
+
+    async def _start_dropping(
+        self,
+        source: str,
+        file: str | None,
+        duration: float | None,
+        takeover_id: str | None,
+        owner: str,
+    ) -> None:
+        try:
+            await self.start(
+                source, file=file, duration=duration, takeover_id=takeover_id, owner=owner
+            )
+        except TakeoverRefused as exc:
+            _log.warning("media_takeover_dropped", source=source, origin=owner, reason=exc.reason)
+
     # --- the bus (CORE-411) -------------------------------------------------------------
 
     def deliver(self, n: Notification, exclude_instance: str | None) -> None:
@@ -477,7 +538,7 @@ class TakeoverService:
             if self.current is not None and n.payload.get("kind") == "touch":
                 self._spawn(self._end(self.current, "touch"))
         elif n.name in ("MEDIA_TAKEOVER", "MEDIA_STOP"):
-            self._spawn(self._command(n))
+            self._enqueue(lambda: self._command(n))
 
     async def _command(self, n: Notification) -> None:
         owner, instance = self._origin(n.source)
@@ -489,18 +550,13 @@ class TakeoverService:
             if instance is not None and not self._allowed(instance, source):
                 return
             duration = p.get("duration")
-            try:
-                await self.start(
-                    source,
-                    file=p.get("file") if isinstance(p.get("file"), str) else None,
-                    duration=float(duration) if isinstance(duration, int | float) else None,
-                    takeover_id=p.get("id") if isinstance(p.get("id"), str) else None,
-                    owner=owner,
-                )
-            except TakeoverRefused as exc:
-                _log.warning(
-                    "media_takeover_dropped", source=source, origin=owner, reason=exc.reason
-                )
+            await self._start_dropping(
+                source,
+                p.get("file") if isinstance(p.get("file"), str) else None,
+                float(duration) if isinstance(duration, int | float) else None,
+                p.get("id") if isinstance(p.get("id"), str) else None,
+                owner,
+            )
             return
         tid = p.get("id") if isinstance(p.get("id"), str) else None
         if instance is not None:

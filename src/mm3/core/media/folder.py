@@ -11,6 +11,7 @@ These functions block; the service and the routes call them through a
 thread with a timeout, so a hung mount never blocks the event loop.
 
 Implements:
+    CORE-400: Core spec 0.57, §9.7 Media service.
     CORE-404: Core spec 0.48, §9.7 Media service.
 """
 
@@ -21,6 +22,7 @@ import os
 import stat
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
+from urllib.parse import quote
 
 __all__ = [
     "CONTENT_TYPES",
@@ -28,6 +30,7 @@ __all__ = [
     "MediaFile",
     "list_files",
     "media_root",
+    "media_url",
     "open_file",
     "prepare",
     "split_media_path",
@@ -62,6 +65,29 @@ _FILE_FLAGS = os.O_RDONLY | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK
 def media_root(state_dir: Path) -> Path:
     """Return the media folder ``<state>/media/`` (CORE-404)."""
     return state_dir / "media"
+
+
+def media_url(name: str, how: str, rel: str | None = None) -> str:
+    """Return the path on the engine's origin from which a source or file plays (CORE-400).
+
+    Args:
+        name: The source name.
+        how: Its delivery.
+        rel: For a file: its path under the media folder, such as ``files/a.mp4``.
+
+    Returns:
+        ``/media/files/<rel>``, ``/media/<name>/stream.mjpg`` or
+        ``/media/<name>/hls/index.m3u8``, with every part percent-encoded.
+
+    Implements:
+        CORE-400: Core spec 0.51, §9.7 Media service.
+    """
+    if rel is not None:
+        return "/media/files/" + "/".join(quote(p, safe="") for p in rel.split("/"))
+    path = quote(name, safe="")
+    if how == "mjpeg":
+        return f"/media/{path}/stream.mjpg"
+    return f"/media/{path}/hls/index.m3u8"
 
 
 def split_media_path(rel: str) -> list[str] | None:
