@@ -142,6 +142,11 @@ class Layout:
         return self.engine_state / "kv"
 
     @property
+    def media_files(self) -> Path:
+        """The media folder's ``files/``, the ``media`` backup part (CORE-404, CORE-408)."""
+        return self.engine_state / "media" / "files"
+
+    @property
     def backups(self) -> Path:
         """Local backups, scheduled and manual (CORE-360, CORE-362)."""
         return self.engine_state / "backups"

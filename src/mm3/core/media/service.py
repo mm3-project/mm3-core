@@ -40,6 +40,7 @@ Implements:
     CORE-403: Core spec 0.48, §9.7 Media service.
     CORE-410: Core spec 0.54, §9.7 Media service.
     CORE-412: Core spec 0.51, §9.7 Media service.
+    CORE-405: Core spec 0.55, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -290,6 +291,8 @@ class MediaService:
         self.playlist_wait = playlist_wait
         self.limits_processes = 4
         self.limits_transcode = 1
+        self.upload_max_mb = 2048
+        """``media.limits.upload_max_mb``, the largest admin upload (CORE-405)."""
         self.sources: dict[str, _Source] = {}
         self.images: dict[str, bool] = {}
         self.takeover_durations: tuple[int, int] = (60, 3600)
@@ -335,6 +338,7 @@ class MediaService:
         """
         self.limits_processes = media.limits.processes
         self.limits_transcode = media.limits.transcode
+        self.upload_max_mb = media.limits.upload_max_mb
         self.takeover_durations = (media.takeover.duration, media.takeover.max_duration)
         self.images = {d.name: d.config.images for d in devices}
         by_name: Mapping[str, ResolvedDevice] = {d.name: d for d in devices}

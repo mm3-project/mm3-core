@@ -19,6 +19,7 @@ Implements:
     CORE-388: Core spec 0.50, §6.11 Camera devices.
     CORE-398: Core spec 0.50, §9.7 Media service.
     CORE-417: Core spec 0.53, §9.7 Media service.
+    CORE-408: Core spec 0.55, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -579,7 +580,8 @@ class BackupRemote(_Model):
     )
 
 
-BackupPart = Literal["config", "data", "modules", "secrets"]
+BackupPart = Literal["config", "data", "modules", "secrets", "media"]
+"""A backup part; ``media`` (CORE-408) is never in the default."""
 
 
 class BackupConfig(_Model):
