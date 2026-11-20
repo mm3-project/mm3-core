@@ -418,6 +418,7 @@ status = "in_progress"
 #   and the engine reads their states, the mount options; settled before building step 6).
 # Core 0.56 changes CORE-406 and CORE-407 again (a root systemd generator makes the mount
 #   units, named after their mount point; share states; rclone without capabilities).
+# Core 0.57 changes CORE-405, CORE-406 and CORE-407 (decisions after the step 6 review).
 # Development: step 1 (PR #141) the config base (CORE-388..393, 398, 399, 416);
 #   step 2 the media service and delivery (CORE-397, 400, 401, 403, 404, 412: ffmpeg
 #   children, limits and backoff, MJPEG, HLS and file routes, remux and transcode, TLS,
