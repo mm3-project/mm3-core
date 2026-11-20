@@ -13,7 +13,7 @@ Implements:
     MOD-52: Module Contract 1.0 rev 10, §6.3 Layout and preview.
     MOD-60, MOD-61, MOD-62, MOD-63, MOD-67: Module Contract 1.0 rev 10, §7 Internationalization.
     MOD-70, MOD-71: Module Contract 1.0 rev 10, §8 Capabilities and grants.
-    MOD-103: Module Contract 1.0 rev 16, §4.5 Media.
+    MOD-102, MOD-103: Module Contract 1.0 rev 17, §4.5 Media.
     MOD-80, MOD-86: Module Contract 1.0 rev 10, §9 Logging, health and errors.
 """
 
@@ -28,7 +28,7 @@ from packaging.specifiers import SpecifierSet
 from packaging.version import Version
 
 from mm3.core.i18n import REQUIRED_LOCALES
-from mm3.core.modcheck.jsscan import JsContext, notified_names, scan_js
+from mm3.core.modcheck.jsscan import JsContext, notified_names, scan_js, scan_media
 from mm3.core.modcheck.project import GROUP, ModuleProject
 from mm3.core.modcheck.pyscan import (
     UPPER_SNAKE,
@@ -354,6 +354,7 @@ class _Static:
             self.scans.append(PyScan())
             for name, line in notified_names(text):
                 self._emitted_js.append((name, rel, line))
+        self.media_frontend(admin)
         if facts.element is not None and defines != 1:
             self.add(
                 "MOD-30",
@@ -457,6 +458,35 @@ class _Static:
                 facts.file,
                 facts.line,
             )
+
+    def media_frontend(self, admin: set[str]) -> None:
+        """MOD-102: media only through ``mm3-player`` and ``mm3-youtube``, errors handled, stops."""
+        facts = self.facts
+        if facts is None or not self.mod.pkg_dir:
+            return
+        static = (self.mod.pkg_dir / "static").resolve()
+        scans = []
+        for rel, text in sorted(self.mod.js.items()):
+            inside = Path(self.mod.root, rel).resolve().relative_to(static).as_posix()
+            if inside not in admin:
+                scans.append((rel, scan_media(rel, text)))
+        players = [(rel, s) for rel, s in scans if s.players]
+        media_module = bool(players) or any(c.startswith("media.") for c in facts.capabilities)
+        if not media_module:
+            return
+        for _, scan in scans:
+            self.found["MOD-102"].extend(scan.findings)
+        if not players:
+            return
+        if not any(s.listens for _, s in players):
+            rel = players[0][0]
+            self.add("MOD-102", "mm3-media-error is never handled; show a message for it", rel)
+        suspend = [(rel, s.suspend) for rel, s in players if s.suspend is not None]
+        if not suspend:
+            self.add("MOD-102", "onSuspend is not defined; stop the players in it", players[0][0])
+        for rel, (line, stops) in suspend:
+            if not stops:
+                self.add("MOD-102", "onSuspend does not stop the players", rel, line)
 
     # --- §8 capabilities -------------------------------------------------------------
     def capabilities(self) -> None:

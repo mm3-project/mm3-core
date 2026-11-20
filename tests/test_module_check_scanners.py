@@ -6,7 +6,7 @@ import ast
 
 import pytest
 
-from mm3.core.modcheck.jsscan import JsContext, notified_names, scan_js, tokenize
+from mm3.core.modcheck.jsscan import JsContext, notified_names, scan_js, scan_media, tokenize
 from mm3.core.modcheck.pyscan import config_findings, find_class, scan_python
 
 CTX = JsContext("demo", "mm3-demo", "demo.js")
@@ -381,3 +381,68 @@ def test_mod_38_admin_script_tag_imports_and_timers() -> None:
     # Admin elements extend HTMLElement: plain timers are not MOD-35 findings there.
     assert js_ids('setInterval(f, 1000);\ncustomElements.define("mm3-demo-admin", E);', ADMIN) == []
     assert "MOD-35" in js_ids("setInterval(f, 1000);\n" + DEFINE)
+
+
+# --- MOD-102: media only through the engine elements ----------------------------------------
+
+GOOD_MEDIA = """
+import { MirrorElement, html } from "/core/mm3.js";
+class E extends MirrorElement {
+  onSuspend() { for (const p of this._players()) p.stop(); }
+  render() {
+    return html`<div @mm3-media-error=${(e) => this._on(e)}>
+      <mm3-player src=${this.state.src}></mm3-player></div>`;
+  }
+}
+"""
+
+
+def test_mod_102_a_front_end_that_follows_the_rule_has_no_finding() -> None:
+    scan = scan_media("m.js", GOOD_MEDIA)
+    assert (scan.players, scan.listens, scan.findings) == (True, True, [])
+    assert scan.suspend is not None
+    assert scan.suspend[1] is True
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        "const t = html`<video src=${u}></video>`;",
+        "const t = html`<audio></audio>`;",
+        "const t = html`<iframe src=${u}></iframe>`;",
+        "const t = html`<img src=${state.url}>`;",
+        "const a = new Audio(u);",
+        "const i = new Image();",
+        "el.src = u;",
+        "el.srcObject = s;",
+        "el.setAttribute('src', u);",
+    ],
+)
+def test_mod_102_media_of_its_own_is_found(src: str) -> None:
+    assert len(scan_media("m.js", src).findings) == 1
+
+
+@pytest.mark.parametrize(
+    "src",
+    [
+        'const t = html`<img src="/static/logo.png" alt="">`;',
+        "const src = 1;",
+        "// new Audio(u) in a comment",
+        "x.setAttribute('class', 'a');",
+    ],
+)
+def test_mod_102_what_is_not_a_media_url_is_left_alone(src: str) -> None:
+    assert scan_media("m.js", src).findings == []
+
+
+def test_mod_102_the_handler_and_the_stop_are_read_from_the_code() -> None:
+    no_stop = scan_media("m.js", "class E { onSuspend() { this.x = 1; } }")
+    assert no_stop.suspend is not None
+    assert no_stop.suspend[1] is False
+    helper = scan_media("m.js", "class E { onSuspend() { this.stopPlayers(); } }")
+    assert helper.suspend is not None
+    assert helper.suspend[1] is True
+    assert scan_media("m.js", "class E { go() { this.onSuspend(); } }").suspend is None
+    assert scan_media("m.js", "el.addEventListener('mm3-media-error', f);").listens
+    assert scan_media("m.js", "html`<mm3-youtube></mm3-youtube>`").players
+    assert not scan_media("m.js", "html`<div></div>`").players
