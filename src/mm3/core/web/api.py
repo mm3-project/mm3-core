@@ -36,6 +36,7 @@ Implements:
     CORE-393: Core spec 0.47, §6.11 Camera devices.
     CORE-412: Core spec 0.51, §9.7 Media service.
     CORE-411: Core spec 0.54, §9.7 Media service.
+    CORE-405: Core spec 0.55, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -69,6 +70,7 @@ from mm3.core.web.catalogapi import CatalogRoutes, register_catalog_routes
 from mm3.core.web.extensions import header_label
 from mm3.core.web.installer import SYSTEM_ACTIONS, UNAVAILABLE, InstallerLink
 from mm3.core.web.kiosk import KioskStatus
+from mm3.core.web.mediafiles import register_media_file_routes
 from mm3.core.web.modroutes import ModuleRoutes
 from mm3.core.web.modroutes import register as register_module_routes
 from mm3.core.web.problems import ApiError
@@ -583,6 +585,8 @@ def api_router(auth: WebAuth | None, services: ApiServices) -> APIRouter:
         except TakeoverRefused as exc:
             raise ApiError("CORE_API_INVALID_REQUEST", _TAKEOVER_REFUSED[exc.reason]) from None
         return {"id": tid}
+
+    register_media_file_routes(router, services.media)  # CORE-405
 
     @router.delete("/media/takeover", status_code=204)
     async def stop_takeover(id: str | None = None) -> Response:

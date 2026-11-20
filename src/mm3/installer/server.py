@@ -24,6 +24,7 @@ Implements:
     CORE-364: Core spec 0.37, §10.8 Backup and restore.
     CORE-365: Core spec 0.37, §10.8 Backup and restore.
     CORE-382: Core spec 0.42, §9.1 Remote-control API.
+    CORE-408: Core spec 0.55, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -47,7 +48,7 @@ from mm3.core.catalog import CatalogError
 from mm3.core.logging import get_logger
 from mm3.installer.age import valid_recipient
 from mm3.installer.auth import Auth, AuthError, LockedError
-from mm3.installer.backup import BackupError
+from mm3.installer.backup import PARTS, BackupError
 from mm3.installer.operations import FINAL, BusyError, Installer, Operation, Request
 from mm3.installer.remotes import REMOTE_NAME, RemoteError
 from mm3.installer.schedule import BackupScheduler
@@ -78,7 +79,7 @@ _SYSTEM_PATH = re.compile(r"^/v1/system/(" + "|".join(ACTIONS) + ")$")
 _OP_PATH = re.compile(r"^/v1/operations/([0-9a-f]{16})(/events)?$")
 _BACKUP_PATH = re.compile(r"^/v1/backups/([A-Za-z0-9][A-Za-z0-9._-]{0,200}\.mm3backup)$")
 _REMOTE_PATH = re.compile(r"^/v1/backups/remotes/([^/]+)(/test)?$")
-_PARTS = ("config", "data", "modules", "secrets")
+_PARTS = PARTS  # media too (CORE-408)
 MAX_SECRET = 16 * 1024
 
 _log = get_logger("installer")

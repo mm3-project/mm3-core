@@ -13,6 +13,7 @@ Implements:
     CORE-361: Core spec 0.45, §10.8 Backup and restore.
     CORE-364: Core spec 0.37, §10.8 Backup and restore.
     CORE-162: Core spec 0.37, §10.8 Backup and restore.
+    CORE-408: Core spec 0.55, §9.7 Media service.
 """
 
 from __future__ import annotations
@@ -32,7 +33,7 @@ __all__ = ["add_backup_parser", "run_backup"]
 
 EXIT_OK, EXIT_FAILED, EXIT_TOOL = 0, 1, 2
 Ask = Callable[[str], str]
-_PARTS = "config,data,modules,secrets"
+_PARTS = "config,data,modules,secrets,media"  # media: CORE-408 (never a default)
 
 
 def _parts(text: str) -> list[str]:
