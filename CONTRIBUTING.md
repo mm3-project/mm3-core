@@ -110,6 +110,13 @@ When a push or a comment is refused (a missing permission gives HTTP 403), the
 workflow log shows the error output of `git push` or `gh` as an `::error::` or
 `::warning::` line; a failed comment does not stop the other PRs, but the run fails.
 
+Restack can only follow a stack whose branches contain each other's commits:
+create each stacked branch from the branch of the PR below it, keep one straight
+line, and never copy (cherry-pick) commits of another open PR into a branch. When
+a lower PR is rebased by hand, rebase the PRs above it onto its new head too.
+PRs that are not stacked all change `CHANGELOG.md`, so the second one needs a
+hand rebase after the first is merged (`docs/rules.md`, Stacked pull requests).
+
 By hand, the same steps are:
 
 ```bash
