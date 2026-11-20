@@ -48,7 +48,7 @@ COMMENT_GLOBS = [
     "*.toml",
     "mm3-build/pyproject.toml",
 ]
-TEST_RE = re.compile(r"def (test_(core|wgt|clk|wth|prs|mod)_(\d+)\w*)\(", re.I)
+TEST_RE = re.compile(r"def (test_(core|wgt|clk|wth|prs|med|mod)_(\d+)\w*)\(", re.I)
 
 
 @dataclass

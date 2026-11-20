@@ -55,6 +55,8 @@ CAPABILITY_USE = (
     (re.compile(r"(?:^|\.)ctx\.system\b"), "system.power"),
     (re.compile(r"(?:^|\.)ctx\.router\b"), "api.routes"),
     (re.compile(r"(?:^|\.)ctx\.layout\.(?:hide|show)\b"), "layout.control"),
+    (re.compile(r"(?:^|\.)ctx\.media\.(?:sources|url|files)\b"), "media.play"),
+    (re.compile(r"(?:^|\.)ctx\.media\.(?:takeover|stop)\b"), "media.takeover"),
 )
 
 

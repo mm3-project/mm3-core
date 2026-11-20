@@ -7,6 +7,33 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (milestone 8 step 8: the reference module `mm3-media`; MED-01..08, MOD-102)
+
+- `modules/mm3-media`, the fourth reference module (MED-01): one distribution, published with the
+  other default modules and listed in `mm3-modules-default` (CORE-294). Kinds `video`, `image`,
+  `slideshow`, `audio` and `youtube` through `ctx.media`; capabilities `media.play`,
+  `media.takeover`, `media.youtube` and `input.touch`, grant `media: [<source>]` (MED-01, MED-02).
+  The configuration is validated at load with messages from the catalog (a `youtube` kind needs
+  `video_id` and takes no `source` or takeover, the other kinds need a `source`).
+- Slideshow (MED-03): the files of a folder (optionally with subfolders) in `random` rounds
+  without repeats or in `name` or `date` order (oldest first), shown every `interval` seconds
+  (at least 3) with a fade; the list is read again every 10 minutes and on
+  `CORE_CONFIG_CHANGED`, a folder that does not answer in time keeps the old list.
+- Messages in the cell for a missing grant, a missing file, an empty folder and every
+  `mm3-media-error` reason of the player, which stays in place and tries again (MED-04); a touch
+  on the cell starts a takeover when `on_touch` is `takeover` (MED-05); the players stop in
+  `onSuspend` and the slideshow timer pauses (MED-06); texts in EN, IT, FR, ES and DE (MED-07);
+  tests with the fake media service and in a browser, `mm3 module check` and a README with the
+  grants table (MED-08). The front-end uses only `mm3-player` and `mm3-youtube` with URLs from
+  the state, and sets no media URL of its own (MOD-102).
+- `mm3 module check` counts `ctx.media.sources`, `url` and `files` as uses of `media.play` and
+  `takeover` and `stop` as uses of `media.takeover` (MOD-70); the check still warns that
+  `mm3-media` declares `input.touch` without using it (MOD-71), because it cannot see touch
+  input in the front-end. **Part not built:** the row of
+  MOD-102 in Contract section 11 and its static check (they need a Contract and spec change).
+- CI and the release workflow build and publish `mm3-media` with the other default modules; the
+  PyPI project needs its trusted publisher set up once, like the others.
+
 ### Added (milestone 8 step 7: `ctx.media`, the fake media service; MOD-100, MOD-101, MOD-103)
 
 - `ctx.media` (`mm3.media`, `mm3.core.media.instance`): `sources()` lists the granted sources

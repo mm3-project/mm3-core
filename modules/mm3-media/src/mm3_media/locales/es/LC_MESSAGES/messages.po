@@ -1,0 +1,129 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HEADER"
+msgstr "Medios"
+
+msgid "MEDIA_LOADING"
+msgstr "Cargando el contenido…"
+
+msgid "MEDIA_ERROR_UNAVAILABLE"
+msgstr "Este contenido no está disponible."
+
+msgid "MEDIA_ERROR_FORBIDDEN"
+msgstr "Este contenido no está permitido aquí."
+
+msgid "MEDIA_ERROR_NETWORK"
+msgstr "El servidor de contenidos no responde."
+
+msgid "MEDIA_ERROR_DECODE"
+msgstr "Este contenido no se puede reproducir."
+
+msgid "MEDIA_ERROR_UNSUPPORTED"
+msgstr "Este navegador no puede reproducir esta transmisión."
+
+msgid "MEDIA_GRANT_MISSING"
+msgstr "Falta el permiso de medios para «{source}». Añádelo a los permisos de esta instancia."
+
+msgid "MEDIA_GRANT_YOUTUBE"
+msgstr "YouTube necesita el permiso youtube: true en esta instancia."
+
+msgid "MEDIA_NO_IMAGES"
+msgstr "No hay imágenes que mostrar."
+
+msgid "CFG_KIND"
+msgstr "Qué mostrar"
+
+msgid "CFG_KIND_HELP"
+msgstr "video, image, slideshow, audio o youtube."
+
+msgid "CFG_SOURCE"
+msgstr "Fuente"
+
+msgid "CFG_SOURCE_HELP"
+msgstr "Una fuente de la clave media de la configuración; no se usa con youtube."
+
+msgid "CFG_FILE"
+msgstr "Archivo"
+
+msgid "CFG_FILE_HELP"
+msgstr "Un archivo de una fuente files, para video, image y audio."
+
+msgid "CFG_VIDEO_ID"
+msgstr "ID del vídeo de YouTube"
+
+msgid "CFG_VIDEO_ID_HELP"
+msgstr "Los 11 caracteres después de v= en la dirección del vídeo; solo para youtube."
+
+msgid "CFG_FIT"
+msgstr "Ajuste"
+
+msgid "CFG_FIT_HELP"
+msgstr "contain muestra todo, cover llena la celda y recorta."
+
+msgid "CFG_LOOP"
+msgstr "Repetir"
+
+msgid "CFG_LOOP_HELP"
+msgstr "Reproducir de nuevo al terminar."
+
+msgid "CFG_MUTED"
+msgstr "Silenciado"
+
+msgid "CFG_MUTED_HELP"
+msgstr "No reproducir nunca el sonido, ni siquiera en el quiosco."
+
+msgid "CFG_OPACITY"
+msgstr "Opacidad"
+
+msgid "CFG_OPACITY_HELP"
+msgstr "De 0 (invisible) a 1 (opaco); bájala para un fondo o una superposición."
+
+msgid "CFG_INTERVAL"
+msgstr "Intervalo (segundos)"
+
+msgid "CFG_INTERVAL_HELP"
+msgstr "Segundos entre dos imágenes de una presentación; al menos 3."
+
+msgid "CFG_ORDER"
+msgstr "Orden"
+
+msgid "CFG_ORDER_HELP"
+msgstr "name, date (la más antigua primero) o random (cada imagen una vez antes de repetir)."
+
+msgid "CFG_TRANSITION"
+msgstr "Transición"
+
+msgid "CFG_TRANSITION_HELP"
+msgstr "fade (1 segundo) o none."
+
+msgid "CFG_RECURSIVE"
+msgstr "Incluir subcarpetas"
+
+msgid "CFG_RECURSIVE_HELP"
+msgstr "Mostrar también las imágenes de las subcarpetas."
+
+msgid "CFG_ON_TOUCH"
+msgstr "Al tocar"
+
+msgid "CFG_ON_TOUCH_HELP"
+msgstr "none, o takeover para mostrar la misma fuente o el mismo archivo a pantalla completa (requiere el permiso media.takeover y engine.input.touch)."
+
+msgid "CFG_YOUTUBE_NEEDS_VIDEO_ID"
+msgstr "kind youtube necesita video_id."
+
+msgid "CFG_YOUTUBE_NO_SOURCE"
+msgstr "kind youtube no lleva source ni file."
+
+msgid "CFG_YOUTUBE_NO_TAKEOVER"
+msgstr "on_touch takeover necesita una fuente, no un vídeo de YouTube."
+
+msgid "CFG_SOURCE_REQUIRED"
+msgstr "Este tipo necesita una fuente."
+
+msgid "CFG_VIDEO_ID_YOUTUBE_ONLY"
+msgstr "video_id es solo para kind youtube."
+
+msgid "CFG_SLIDESHOW_NO_FILE"
+msgstr "Una presentación muestra la carpeta de su fuente, no un solo archivo."

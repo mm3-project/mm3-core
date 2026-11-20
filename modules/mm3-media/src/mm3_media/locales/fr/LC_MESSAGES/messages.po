@@ -1,0 +1,129 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+
+msgid "HEADER"
+msgstr "Médias"
+
+msgid "MEDIA_LOADING"
+msgstr "Chargement du média…"
+
+msgid "MEDIA_ERROR_UNAVAILABLE"
+msgstr "Ce média n'est pas disponible."
+
+msgid "MEDIA_ERROR_FORBIDDEN"
+msgstr "Ce média n'est pas autorisé ici."
+
+msgid "MEDIA_ERROR_NETWORK"
+msgstr "Le serveur de médias ne répond pas."
+
+msgid "MEDIA_ERROR_DECODE"
+msgstr "Ce média ne peut pas être lu."
+
+msgid "MEDIA_ERROR_UNSUPPORTED"
+msgstr "Ce navigateur ne peut pas lire ce flux."
+
+msgid "MEDIA_GRANT_MISSING"
+msgstr "Aucune autorisation média pour « {source} ». Ajoutez-la aux autorisations de cette instance."
+
+msgid "MEDIA_GRANT_YOUTUBE"
+msgstr "YouTube nécessite l'autorisation youtube: true dans cette instance."
+
+msgid "MEDIA_NO_IMAGES"
+msgstr "Il n'y a aucune image à afficher."
+
+msgid "CFG_KIND"
+msgstr "Quoi afficher"
+
+msgid "CFG_KIND_HELP"
+msgstr "video, image, slideshow, audio ou youtube."
+
+msgid "CFG_SOURCE"
+msgstr "Source"
+
+msgid "CFG_SOURCE_HELP"
+msgstr "Une source de la clé media de la configuration ; inutile pour youtube."
+
+msgid "CFG_FILE"
+msgstr "Fichier"
+
+msgid "CFG_FILE_HELP"
+msgstr "Un fichier d'une source files, pour video, image et audio."
+
+msgid "CFG_VIDEO_ID"
+msgstr "Identifiant de la vidéo YouTube"
+
+msgid "CFG_VIDEO_ID_HELP"
+msgstr "Les 11 caractères après v= dans l'adresse de la vidéo ; pour youtube seulement."
+
+msgid "CFG_FIT"
+msgstr "Ajustement"
+
+msgid "CFG_FIT_HELP"
+msgstr "contain montre tout, cover remplit la cellule et recadre."
+
+msgid "CFG_LOOP"
+msgstr "Boucle"
+
+msgid "CFG_LOOP_HELP"
+msgstr "Relire à la fin."
+
+msgid "CFG_MUTED"
+msgstr "Muet"
+
+msgid "CFG_MUTED_HELP"
+msgstr "Ne jamais jouer le son, même sur la borne."
+
+msgid "CFG_OPACITY"
+msgstr "Opacité"
+
+msgid "CFG_OPACITY_HELP"
+msgstr "De 0 (invisible) à 1 (opaque) ; baissez-la pour un fond ou une superposition."
+
+msgid "CFG_INTERVAL"
+msgstr "Intervalle (secondes)"
+
+msgid "CFG_INTERVAL_HELP"
+msgstr "Secondes entre deux images d'un diaporama ; au moins 3."
+
+msgid "CFG_ORDER"
+msgstr "Ordre"
+
+msgid "CFG_ORDER_HELP"
+msgstr "name, date (la plus ancienne d'abord) ou random (chaque image une fois avant toute répétition)."
+
+msgid "CFG_TRANSITION"
+msgstr "Transition"
+
+msgid "CFG_TRANSITION_HELP"
+msgstr "fade (1 seconde) ou none."
+
+msgid "CFG_RECURSIVE"
+msgstr "Inclure les sous-dossiers"
+
+msgid "CFG_RECURSIVE_HELP"
+msgstr "Afficher aussi les images des sous-dossiers."
+
+msgid "CFG_ON_TOUCH"
+msgstr "Au toucher"
+
+msgid "CFG_ON_TOUCH_HELP"
+msgstr "none, ou takeover pour afficher la même source ou le même fichier en plein écran (nécessite l'autorisation media.takeover et engine.input.touch)."
+
+msgid "CFG_YOUTUBE_NEEDS_VIDEO_ID"
+msgstr "kind youtube nécessite video_id."
+
+msgid "CFG_YOUTUBE_NO_SOURCE"
+msgstr "kind youtube n'a ni source ni file."
+
+msgid "CFG_YOUTUBE_NO_TAKEOVER"
+msgstr "on_touch takeover nécessite une source, pas une vidéo YouTube."
+
+msgid "CFG_SOURCE_REQUIRED"
+msgstr "Ce type nécessite une source."
+
+msgid "CFG_VIDEO_ID_YOUTUBE_ONLY"
+msgstr "video_id ne concerne que kind youtube."
+
+msgid "CFG_SLIDESHOW_NO_FILE"
+msgstr "Un diaporama affiche le dossier de sa source, pas un seul fichier."

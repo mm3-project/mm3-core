@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling", "mm3-build>=1.0,<2"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mm3-media"
+version = "1.0.0"
+description = "Video, images, slideshows, audio and YouTube for MM3"
+requires-python = ">=3.11"
+dependencies = ["mm3-core>=1.0,<2"]
+readme = "README.md"
+
+[project.entry-points."mm3.modules"]
+media = "mm3_media:MediaModule"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mm3_media"]
+
+[tool.hatch.build.hooks.mm3-i18n]
+
+[tool.mm3]
+category = "media"
+screenshot = "docs/screenshot.png"
+
+# The module needs a source of the user's media key, which the kit does not have.
+[tool.mm3.check]
+config = { kind = "video", source = "door" }
+grants = { media = ["door"] }
