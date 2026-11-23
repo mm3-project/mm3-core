@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0  # merge base for the stale-citation check (CORE-77)
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           python-version: "3.11"
       # Implements CORE-171 (Core spec 0.6, §10.9 Dependency management)
@@ -61,7 +61,7 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           python-version: ${{ matrix.python-version }}
       - run: uv sync --frozen --all-extras
@@ -86,7 +86,7 @@ jobs:
         module: [mm3-greeting, mm3-clock, mm3-weather, mm3-media, mm3-presence]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.4.0
         with:
           python-version: "3.13"
       - run: uv sync --frozen --all-extras
@@ -108,7 +108,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.4.0
       # Workspace members (mm3-core, mm3-build) are built here, not downloaded.
       - run: uv export --frozen --all-extras --no-emit-workspace --format requirements-txt -o requirements.lock.txt
       # Every ignored advisory is listed in .pip-audit-ignore with its reason.
@@ -123,7 +123,7 @@ jobs:
     needs: [lint, test, audit]
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.4.0
       # Implements CORE-280 (Core spec 0.17, §10.2 Packaging and deployment):
       # mm3-build is built with the engine; the core wheel compiles its
       # catalogs with the mm3-i18n hook.

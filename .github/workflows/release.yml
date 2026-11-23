@@ -26,7 +26,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v10.4.0
       - run: uv lock --check
       - run: uv build --all-packages
       - name: Default modules and mm3-modules-default (CORE-294)
