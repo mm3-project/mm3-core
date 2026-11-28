@@ -51,3 +51,13 @@ def test_mod_95_existing_directory_is_not_overwritten(
     assert main(["new-module", "twice", "--path", str(tmp_path)]) == 0
     assert main(["new-module", "twice", "--path", str(tmp_path)]) == 1
     assert "already exists" in capsys.readouterr().err
+
+
+def test_core_263_scaffold_catalogs_declare_plural_forms(tmp_path: Path) -> None:
+    # Without Plural-Forms, the compiled .mo would depend on the CLDR data of
+    # the Babel release that builds the wheel (ISS-021).
+    root = scaffold("plurals", "full", tmp_path)
+    for po in sorted((root / "src" / "mm3_plurals" / "locales").glob("*/LC_MESSAGES/*.po")):
+        lang = po.parent.parent.name
+        rule = "(n > 1)" if lang == "fr" else "(n != 1)"
+        assert f'"Plural-Forms: nplurals=2; plural={rule};\\n"' in po.read_text(encoding="utf-8")

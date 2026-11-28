@@ -7,6 +7,18 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Fixed (ISS-021: catalog check and the Babel release; CORE-263, CORE-280)
+
+- `mm3 i18n check` and the catalog check of `mm3 module check` compare a `.mo` by its messages,
+  not by its bytes, and leave out the header line `Generated-By`, so a wheel built with another
+  Babel release than the locked one passes (CORE-263). A `.mo` with other messages, or that is
+  no `.mo` file, still fails.
+- The catalogs of the reference modules (mm3-clock, mm3-weather, mm3-greeting, mm3-presence,
+  mm3-media) declare `Plural-Forms`, as the core catalogs do, so their compiled files no longer
+  depend on Babel's CLDR data (Babel 2.19.0 gives `it`, `es` and `fr` three plural forms). No
+  catalog has plural entries: nothing shown on a mirror changes. `mm3 new-module` writes the same
+  header, so a new module passes `mm3 module check` whatever Babel release builds its wheel.
+
 ### Added (milestone 8 step 9: the Media page; CORE-414, CORE-412; closes milestone 8)
 
 - The admin page `/admin/media` (CORE-414, nav link "Media", session required) with three parts

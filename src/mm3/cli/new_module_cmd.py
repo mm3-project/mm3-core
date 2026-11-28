@@ -254,8 +254,14 @@ async def test_runs_and_meets_the_contract() -> None:
 '''
 
 
-def _po(texts: dict[str, str]) -> str:
-    head = 'msgid ""\nmsgstr ""\n"Content-Type: text/plain; charset=UTF-8\\n"\n\n'
+def _po(texts: dict[str, str], lang: str) -> str:
+    # Plural-Forms is declared, as in the core catalogs, so the compiled .mo
+    # does not depend on the CLDR data of the Babel release (ISS-021).
+    rule = "(n > 1)" if lang == "fr" else "(n != 1)"
+    head = (
+        'msgid ""\nmsgstr ""\n"Content-Type: text/plain; charset=UTF-8\\n"\n'
+        f'"Plural-Forms: nplurals=2; plural={rule};\\n"\n\n'
+    )
     return head + "".join(f'msgid "{k}"\nmsgstr "{v}"\n\n' for k, v in texts.items())
 
 
@@ -341,7 +347,7 @@ def scaffold(name: str, kind: str, parent: Path) -> Path:
         catalog = {"HEADER": title, **{k: v[i] for k, v in messages.items()}}
         po = root / "src" / pkg / "locales" / lang / "LC_MESSAGES" / "messages.po"
         po.parent.mkdir(parents=True, exist_ok=True)
-        po.write_text(_po(catalog), encoding="utf-8")
+        po.write_text(_po(catalog, lang), encoding="utf-8")
     shot = root / "docs" / "screenshot.png"
     shot.parent.mkdir(parents=True, exist_ok=True)
     shot.write_bytes(_PNG)

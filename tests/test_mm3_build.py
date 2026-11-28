@@ -172,3 +172,42 @@ def test_core_280_check_reports_unreadable_catalog(tmp_path: Path) -> None:
     bad.write_text('msgid "HELLO"\nnot a po line\nmsgstr "Ciao"\n', encoding="utf-8")
     problems = check_locales(root, required=["en", "it"])
     assert any(p.path == bad for p in problems)
+
+
+def _compiled_root(tmp_path: Path) -> Path:
+    root = tmp_path / "locales"
+    for lang, (hello, one, other) in TEXTS.items():
+        write_po(root, lang, hello, one, other)
+    catalogs.compile_locales(root)
+    return root
+
+
+def test_core_263_mo_from_another_babel_version_matches(tmp_path: Path) -> None:
+    # A .mo written by another Babel release differs only in its Generated-By
+    # header line; the check compares messages, not bytes (ISS-021).
+    root = _compiled_root(tmp_path)
+    mo = root / "it" / "LC_MESSAGES" / "messages.mo"
+    data = mo.read_bytes()
+    marker = b"Generated-By: Babel "
+    start = data.index(marker) + len(marker)
+    version = data[start : data.index(b"\n", start)]
+    other = b"9" * len(version)  # same length, so every offset stays valid
+    mo.write_bytes(data.replace(marker + version, marker + other))
+    assert mo.read_bytes() != data
+    assert check_locales(root, required=["en", "it"]) == []
+
+
+def test_core_263_mo_with_other_messages_does_not_match(tmp_path: Path) -> None:
+    root = _compiled_root(tmp_path)
+    it = root / "it" / "LC_MESSAGES" / "messages.mo"
+    it.write_bytes((root / "en" / "LC_MESSAGES" / "messages.mo").read_bytes())
+    problems = check_locales(root, required=["en", "it"])
+    assert [p.path for p in problems] == [it]
+    assert "does not match its .po" in problems[0].message
+
+
+def test_core_263_unreadable_mo_does_not_match(tmp_path: Path) -> None:
+    root = _compiled_root(tmp_path)
+    it = root / "it" / "LC_MESSAGES" / "messages.mo"
+    it.write_bytes(b"not a catalog")
+    assert [p.path for p in check_locales(root, required=["en", "it"])] == [it]

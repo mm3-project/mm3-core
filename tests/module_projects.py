@@ -135,7 +135,11 @@ MESSAGES = {
 
 def po(messages: dict[str, str], lang: str) -> str:
     """Return a ``.po`` file; non-English texts are marked with the language."""
-    head = 'msgid ""\nmsgstr ""\n"Content-Type: text/plain; charset=UTF-8\\n"\n\n'
+    rule = "(n > 1)" if lang == "fr" else "(n != 1)"  # as the reference modules (ISS-021)
+    head = (
+        'msgid ""\nmsgstr ""\n"Content-Type: text/plain; charset=UTF-8\\n"\n'
+        f'"Plural-Forms: nplurals=2; plural={rule};\\n"\n\n'
+    )
     body = "".join(
         f'msgid "{k}"\nmsgstr "{v if lang == "en" else f"[{lang}] {v}"}"\n\n'
         for k, v in messages.items()
