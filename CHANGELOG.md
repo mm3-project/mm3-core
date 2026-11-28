@@ -16,7 +16,8 @@ separately under **Module API** in each release (Module Contract, section 10).
 - The catalogs of the reference modules (mm3-clock, mm3-weather, mm3-greeting, mm3-presence,
   mm3-media) declare `Plural-Forms`, as the core catalogs do, so their compiled files no longer
   depend on Babel's CLDR data (Babel 2.19.0 gives `it`, `es` and `fr` three plural forms). No
-  catalog has plural entries: nothing shown on a mirror changes.
+  catalog has plural entries: nothing shown on a mirror changes. `mm3 new-module` writes the same
+  header, so a new module passes `mm3 module check` whatever Babel release builds its wheel.
 
 ### Added (milestone 8 step 9: the Media page; CORE-414, CORE-412; closes milestone 8)
 
