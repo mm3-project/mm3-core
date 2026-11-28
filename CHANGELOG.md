@@ -7,6 +7,12 @@ separately under **Module API** in each release (Module Contract, section 10).
 
 ## [Unreleased]
 
+### Added (documentation: test plan for milestones 0-8)
+
+- `docs/test-plan/m0-m8.csv` and its README: one acceptance test case for each of the 473
+  requirements of milestones 0 to 8 (Core spec 0.58, Module Contract 1.0 rev 17), with the
+  requirement id, the steps, the expected result, the mode (automatic, manual on the mirror, CI or
+  review) and the existing test that cites the requirement (CORE-71, CORE-78).
 ### Fixed (ISS-021: catalog check and the Babel release; CORE-263, CORE-280)
 
 - `mm3 i18n check` and the catalog check of `mm3 module check` compare a `.mo` by its messages,
