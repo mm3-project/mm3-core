@@ -10,8 +10,10 @@ A catalog root (a module's ``locales/`` or the engine's) holds
 text, where an entry with plural forms is an object keyed by CLDR plural
 category, converted from the ``.po`` plural indices. The engine never
 compiles at run time; ``check`` fails when a compiled file is missing or
-does not match its ``.po``, when a locale lacks a key of ``en``, or when a
-placeholder set differs from ``en``.
+does not match its ``.po`` (a ``.mo`` is compared by its messages, not by
+its bytes, so the Babel version that wrote it does not count), when a
+locale lacks a key of ``en``, or when a placeholder set differs from
+``en``.
 
 Implements:
     CORE-40: Core spec 0.15, §8 Internationalization.
@@ -26,6 +28,7 @@ import gettext
 import io
 import json
 import re
+import struct
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -58,6 +61,8 @@ Entry = str | dict[str, str]
 _PLACEHOLDER = re.compile(r"\{(\w+)\}")
 _EPOCH = datetime(1970, 1, 1, tzinfo=UTC)
 _SAMPLES = [*range(0, 1001), 1_000_000, 2_000_000]
+_MO_MAGIC = {0x950412DE: "<", 0xDE120495: ">"}
+_GENERATED_BY = re.compile(rb"^Generated-By:[^\n]*\n?", re.MULTILINE)
 
 
 class CatalogError(ValueError):
@@ -183,6 +188,54 @@ def compiled(po: Path) -> tuple[bytes, bytes, dict[str, Entry]]:
     return mo.getvalue(), data.encode("utf-8"), entries
 
 
+def _mo_messages(data: bytes) -> dict[bytes, bytes] | None:
+    """Read the messages of a ``.mo`` file, for a comparison by content.
+
+    The ``Generated-By`` line of the header names the Babel version that
+    wrote the file, so it is left out: two Babel releases that write the same
+    messages give equal results (ISS-021).
+
+    Args:
+        data: The ``.mo`` bytes.
+
+    Returns:
+        Each original string (with its context and plural forms, as stored)
+        mapped to its translation, or None when the data is no ``.mo`` file.
+    """
+    if len(data) < 20:
+        return None
+    order = _MO_MAGIC.get(struct.unpack("<I", data[:4])[0])
+    if order is None:
+        return None
+    try:
+        _, count, originals, translations = struct.unpack(order + "4I", data[4:20])
+        messages: dict[bytes, bytes] = {}
+        for i in range(count):
+            olen, ooff = struct.unpack(
+                order + "2I", data[originals + 8 * i : originals + 8 * i + 8]
+            )
+            tlen, toff = struct.unpack(
+                order + "2I", data[translations + 8 * i : translations + 8 * i + 8]
+            )
+            if ooff + olen > len(data) or toff + tlen > len(data):
+                return None
+            messages[data[ooff : ooff + olen]] = data[toff : toff + tlen]
+    except struct.error:
+        return None
+    if b"" in messages:
+        messages[b""] = _GENERATED_BY.sub(b"", messages[b""])
+    return messages
+
+
+def _mo_matches(path: Path, data: bytes) -> bool:
+    """Tell whether a committed ``.mo`` holds the messages of a fresh compilation."""
+    current = path.read_bytes()
+    if current == data:
+        return True
+    found = _mo_messages(current)
+    return found is not None and found == _mo_messages(data)
+
+
 def targets(po: Path) -> tuple[Path, Path]:
     """Return where the ``.mo`` and ``messages.json`` of a ``.po`` belong.
 
@@ -237,10 +290,11 @@ def check_locales(root: Path, required: Iterable[str] = REQUIRED_LOCALES) -> lis
             problems.append(CatalogProblem(po, exc.reason))
             continue
         tables[lang] = entries
-        for path, data in zip(targets(po), (mo_bytes, json_bytes), strict=True):
+        mo_path, json_path = targets(po)
+        for path, data in ((mo_path, mo_bytes), (json_path, json_bytes)):
             if not path.is_file():
                 problems.append(CatalogProblem(path, "not compiled; run mm3 i18n compile"))
-            elif path.read_bytes() != data:
+            elif not (_mo_matches(path, data) if path == mo_path else path.read_bytes() == data):
                 problems.append(
                     CatalogProblem(path, "does not match its .po; run mm3 i18n compile")
                 )
